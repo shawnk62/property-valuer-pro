@@ -1,0 +1,3239 @@
+{
+  "form_name": "Queensland Subject Property Inspection Form",
+  "version": "4",
+  "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
+  "condition_scale": [
+    "Poor",
+    "Fair",
+    "Average",
+    "Good",
+    "Very Good",
+    "Excellent"
+  ],
+  "sections": [
+    {
+      "id": "1",
+      "title": "Property Identification & Inspection Details",
+      "fields": [
+        {
+          "name": "prop_address",
+          "label": "Property Address",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_suburb",
+          "label": "Suburb",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_state",
+          "label": "State",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_postcode",
+          "label": "Postcode",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_lotplan",
+          "label": "Lot / Plan",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_title",
+          "label": "Title Reference",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_legal",
+          "label": "Legal Description",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_lga",
+          "label": "Local Government Area",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_parish",
+          "label": "Parish / County",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_owner",
+          "label": "Owner of Record",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_occupant",
+          "label": "Occupant",
+          "type": "select",
+          "options": [
+            "Owner",
+            "Tenant",
+            "Vacant",
+            "Partially Occupied",
+            "Other"
+          ]
+        },
+        {
+          "name": "prop_rights",
+          "label": "Property Rights",
+          "type": "select",
+          "options": [
+            "Fee Simple",
+            "Leasehold",
+            "Other"
+          ]
+        },
+        {
+          "name": "prop_assignment",
+          "label": "Assignment Type",
+          "type": "select",
+          "options": [
+            "Purchase",
+            "Refinance",
+            "ATO / CGT",
+            "Resumption",
+            "Dispute",
+            "Other"
+          ]
+        },
+        {
+          "name": "prop_sitearea",
+          "label": "Site Area",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_areaunit",
+          "label": "Area Unit",
+          "type": "select",
+          "options": [
+            "m2",
+            "ha"
+          ]
+        },
+        {
+          "name": "prop_dimensions",
+          "label": "Dimensions",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_shape",
+          "label": "Shape",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_view",
+          "label": "View",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_zoning",
+          "label": "Zoning Classification",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_zoning_desc",
+          "label": "Zoning Description",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_zoning_comp",
+          "label": "Zoning Compliance",
+          "type": "select",
+          "options": [
+            "Legal",
+            "Legal Nonconforming",
+            "No Zoning",
+            "Illegal",
+            "Other"
+          ]
+        },
+        {
+          "name": "prop_hbu",
+          "label": "Highest & Best Use as improved is present use?",
+          "type": "select",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "name": "prop_flood",
+          "label": "Flood Hazard / Overland Flow",
+          "type": "select",
+          "options": [
+            "Yes",
+            "No",
+            "Unknown"
+          ]
+        },
+        {
+          "name": "prop_flood_map",
+          "label": "Flood Map / Source",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_adverse_site",
+          "label": "Adverse site conditions / external factors",
+          "type": "text",
+          "multiline": true
+        },
+        {
+          "name": "prop_offered",
+          "label": "Currently offered for sale or offered in last 12 months?",
+          "type": "select",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "name": "prop_offer_details",
+          "label": "Offer data source / price / date",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_contract_price",
+          "label": "Contract Price $",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_contract_date",
+          "label": "Date of Contract",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "prop_seller_owner",
+          "label": "Seller = Owner of Record?",
+          "type": "select",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "name": "prop_assistance",
+          "label": "Financial assistance / concessions paid on behalf of buyer?",
+          "type": "select",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "name": "prop_assistance_details",
+          "label": "Assistance details",
+          "type": "text",
+          "multiline": true
+        },
+        {
+          "name": "insp_date",
+          "label": "Inspection Date",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "insp_time",
+          "label": "Time",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "insp_weather",
+          "label": "Weather",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "insp_valuer",
+          "label": "Valuer",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "insp_firm",
+          "label": "Firm",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "insp_purpose",
+          "label": "Purpose of Valuation",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "insp_access_limits",
+          "label": "Access Limitations / Restrictions",
+          "type": "text",
+          "multiline": true
+        },
+        {
+          "name": "imp_units",
+          "label": "No. of Units",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "imp_storeys",
+          "label": "Storeys",
+          "type": "select",
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "Split level"
+          ]
+        },
+        {
+          "name": "imp_yearbuilt",
+          "label": "Year Built",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "imp_effage",
+          "label": "Effective Age (yrs)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "imp_design",
+          "label": "Design / Style",
+          "type": "select",
+          "options": [
+            "Queenslander",
+            "Highset Queenslander",
+            "Ashgrovian",
+            "Workers Cottage",
+            "Colonial",
+            "Victorian",
+            "Federation",
+            "Federation Filigree",
+            "Federation Bungalow",
+            "Interwar",
+            "Art Deco",
+            "Post-war Timber",
+            "Post-war Brick",
+            "Mid-century Modern",
+            "Contemporary",
+            "Brick and Tile",
+            "Hamptons",
+            "Coastal",
+            "Acreage or Rural",
+            "Townhouse or Terrace",
+            "Other"
+          ]
+        },
+        {
+          "name": "imp_highset",
+          "label": "High set",
+          "type": "checkbox"
+        },
+        {
+          "name": "imp_midset",
+          "label": "Mid set",
+          "type": "checkbox"
+        },
+        {
+          "name": "imp_lowset",
+          "label": "Low set",
+          "type": "checkbox"
+        },
+        {
+          "name": "imp_rooms",
+          "label": "Rooms",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "imp_beds",
+          "label": "Bedrooms",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "imp_baths",
+          "label": "Baths",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "imp_gla",
+          "label": "GLA m²",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "imp_add_features",
+          "label": "Additional features (special energy-efficient items, etc.)",
+          "type": "text",
+          "multiline": true
+        }
+      ]
+    },
+    {
+      "id": "1A",
+      "title": "Neighbourhood & Off-site Improvements",
+      "fields": [
+        {
+          "name": "nbhd_location",
+          "label": "Location",
+          "type": "select",
+          "options": [
+            "Urban",
+            "Suburban",
+            "Rural"
+          ]
+        },
+        {
+          "name": "nbhd_builtup",
+          "label": "Built-up",
+          "type": "select",
+          "options": [
+            "Over 75%",
+            "25% to 75%",
+            "Under 25%"
+          ]
+        },
+        {
+          "name": "nbhd_growth",
+          "label": "Growth",
+          "type": "select",
+          "options": [
+            "Rapid",
+            "Stable",
+            "Slow"
+          ]
+        },
+        {
+          "name": "nbhd_values",
+          "label": "Property Values",
+          "type": "select",
+          "options": [
+            "Increasing",
+            "Stable",
+            "Declining"
+          ]
+        },
+        {
+          "name": "nbhd_demand",
+          "label": "Demand / Supply",
+          "type": "select",
+          "options": [
+            "Shortage",
+            "In Balance",
+            "Over Supply"
+          ]
+        },
+        {
+          "name": "nbhd_marketing",
+          "label": "Marketing Time",
+          "type": "select",
+          "options": [
+            "Under 3 mths",
+            "3 to 6 mths",
+            "Over 6 mths"
+          ]
+        },
+        {
+          "name": "nbhd_price_range",
+          "label": "Predominant Price Range $",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "nbhd_age",
+          "label": "Predominant Age (yrs)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "nbhd_use_one",
+          "label": "Present Land Use % – One-Unit",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "nbhd_use_24",
+          "label": "Present Land Use % – 2-4 Unit",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "nbhd_use_mf",
+          "label": "Present Land Use % – Multi-Family",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "nbhd_use_comm",
+          "label": "Present Land Use % – Commercial",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "nbhd_boundaries",
+          "label": "Neighbourhood Boundaries",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "nbhd_description",
+          "label": "Neighbourhood Description",
+          "type": "text",
+          "multiline": true
+        },
+        {
+          "name": "nbhd_market_conditions",
+          "label": "Market Conditions",
+          "type": "text",
+          "multiline": true
+        },
+        {
+          "name": "offsite_road_type",
+          "label": "Road / Street Type",
+          "type": "select",
+          "options": [
+            "Access Place",
+            "Access Street",
+            "Cul-de-sac",
+            "Collector Street",
+            "Neighbourhood Connector",
+            "Suburban Road",
+            "District Road",
+            "Arterial Road",
+            "Industrial Street",
+            "Rural Road",
+            "Private Road",
+            "Other"
+          ]
+        },
+        {
+          "name": "offsite_road_surface",
+          "label": "Road Surface",
+          "type": "select",
+          "options": [
+            "Bitumen sealed",
+            "Asphalt",
+            "Concrete",
+            "Gravel",
+            "Unsealed",
+            "Other"
+          ]
+        },
+        {
+          "name": "offsite_road_ownership",
+          "label": "Road Ownership",
+          "type": "select",
+          "options": [
+            "Public",
+            "Private",
+            "Other"
+          ]
+        },
+        {
+          "name": "offsite_carriageway",
+          "label": "Carriageway",
+          "type": "select",
+          "options": [
+            "Single lane",
+            "Dual lane",
+            "Divided dual carriageway",
+            "One-way",
+            "Other"
+          ]
+        },
+        {
+          "name": "offsite_terminates",
+          "label": "Terminates in",
+          "type": "select",
+          "options": [
+            "Through road",
+            "Cul-de-sac",
+            "T-head",
+            "Court",
+            "Other"
+          ]
+        },
+        {
+          "name": "offsite_kerb",
+          "label": "Kerb & Channel",
+          "type": "select",
+          "options": [
+            "Barrier kerb and channel",
+            "Mountable kerb and channel",
+            "Semi-mountable kerb and channel",
+            "Flush kerb",
+            "Kerb only",
+            "Table drain",
+            "None",
+            "Other"
+          ]
+        },
+        {
+          "name": "offsite_footpaths",
+          "label": "Footpaths",
+          "type": "select",
+          "options": [
+            "Concrete both sides",
+            "Concrete one side",
+            "Bitumen",
+            "Paved",
+            "Earth formed",
+            "None",
+            "Other"
+          ]
+        },
+        {
+          "name": "offsite_verge",
+          "label": "Verge / Nature Strip",
+          "type": "select",
+          "options": [
+            "Grassed",
+            "Landscaped",
+            "Earth",
+            "None",
+            "Other"
+          ]
+        },
+        {
+          "name": "offsite_lighting",
+          "label": "Street Lighting",
+          "type": "select",
+          "options": [
+            "Full street lighting",
+            "Partial street lighting",
+            "None"
+          ]
+        },
+        {
+          "name": "offsite_drainage",
+          "label": "Stormwater Drainage",
+          "type": "select",
+          "options": [
+            "Appears adequate",
+            "Appears inadequate",
+            "Kerbside only",
+            "Piped system",
+            "Open drains",
+            "Unknown",
+            "Other"
+          ]
+        },
+        {
+          "name": "offsite_alley",
+          "label": "Alley / Rear Lane",
+          "type": "select",
+          "options": [
+            "Public",
+            "Private",
+            "None",
+            "Other"
+          ]
+        },
+        {
+          "name": "offsite_typical",
+          "label": "Typical for market area?",
+          "type": "select",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "name": "offsite_notes",
+          "label": "Off-site improvements notes",
+          "type": "text",
+          "multiline": true
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "title": "Site",
+      "fields": [
+        {
+          "name": "svc_water",
+          "label": "Water Supply",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "svc_water_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Town water",
+                "Bore",
+                "Rooftop / Tank",
+                "Nil"
+              ]
+            },
+            {
+              "name": "svc_water_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "svc_water_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "svc_sewer",
+          "label": "Sewerage",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "svc_sewer_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Sewer",
+                "Septic",
+                "Aerated Wastewater Treatment System (AWTS)",
+                "Composting toilets",
+                "Biofilters",
+                "Activated sludge systems",
+                "Common effluent drainage"
+              ]
+            },
+            {
+              "name": "svc_sewer_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "svc_sewer_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "svc_elec",
+          "label": "Electricity",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "svc_elec_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Mains power only",
+                "Solar photovoltaic panels only",
+                "Wind generation only",
+                "Mains power with solar PV",
+                "Mains power with solar PV and wind",
+                "Mains power with solar and battery storage",
+                "Mains power with solar, wind and battery storage"
+              ]
+            },
+            {
+              "name": "svc_elec_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "svc_elec_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "svc_elec_3phase",
+          "label": "3-phase power",
+          "type": "select",
+          "options": [
+            "Yes",
+            "No",
+            "Unknown",
+            "Not applicable"
+          ]
+        },
+        {
+          "name": "svc_gas",
+          "label": "Gas",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "svc_gas_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Natural gas",
+                "LPG",
+                "Not applicable"
+              ]
+            },
+            {
+              "name": "svc_gas_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "svc_gas_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "svc_storm",
+          "label": "Stormwater Drainage",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "svc_storm_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Appears adequate",
+                "Appears inadequate"
+              ]
+            },
+            {
+              "name": "svc_storm_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "svc_storm_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "svc_tel",
+          "label": "Telephone",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "svc_tel_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Landline",
+                "Not applicable"
+              ]
+            },
+            {
+              "name": "svc_tel_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "svc_tel_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "svc_internet",
+          "label": "Internet",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "svc_internet_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Fibre to the Premises (FTTP)",
+                "Fibre to the Building (FTTB)",
+                "Fibre to the Curb (FTTC)",
+                "Fibre to the Node (FTTN)",
+                "Hybrid Fibre Coaxial (HFC)",
+                "Fixed Wireless NBN",
+                "Mobile Broadband 4G",
+                "Mobile Broadband 5G",
+                "Starlink",
+                "ADSL"
+              ]
+            },
+            {
+              "name": "svc_internet_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "svc_internet_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "exc",
+          "label": "Excavations",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "exc_cut_fill",
+              "label": "Cut and fill"
+            },
+            {
+              "id": "exc_levelled",
+              "label": "Levelled site"
+            },
+            {
+              "id": "exc_significant_cut",
+              "label": "Significant cut"
+            },
+            {
+              "id": "exc_significant_fill",
+              "label": "Significant fill"
+            },
+            {
+              "id": "exc_retaining_present",
+              "label": "Retaining walls present"
+            },
+            {
+              "id": "exc_timber_sleeper",
+              "label": "Timber sleeper retaining walls"
+            },
+            {
+              "id": "exc_concrete_sleeper",
+              "label": "Concrete sleeper retaining walls"
+            },
+            {
+              "id": "exc_block",
+              "label": "Block retaining walls"
+            },
+            {
+              "id": "exc_stone",
+              "label": "Stone retaining walls"
+            },
+            {
+              "id": "exc_engineered",
+              "label": "Engineered retaining walls"
+            },
+            {
+              "id": "exc_terracing",
+              "label": "Stepped terracing"
+            },
+            {
+              "id": "exc_slope_concern",
+              "label": "Slope stability concerns noted"
+            },
+            {
+              "id": "exc_drainage",
+              "label": "Drainage associated with excavation"
+            },
+            {
+              "id": "exc_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "exc_cond",
+          "notes_field": "exc_notes"
+        },
+        {
+          "name": "land",
+          "label": "Landscaping",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "land_soft",
+              "label": "Soft landscaping present"
+            },
+            {
+              "id": "land_hard",
+              "label": "Hard landscaping present"
+            },
+            {
+              "id": "land_mature_trees",
+              "label": "Established mature trees"
+            },
+            {
+              "id": "land_native",
+              "label": "Native planting"
+            },
+            {
+              "id": "land_turf",
+              "label": "Turf"
+            },
+            {
+              "id": "land_lawn",
+              "label": "Lawn areas"
+            },
+            {
+              "id": "land_garden_beds",
+              "label": "Garden beds"
+            },
+            {
+              "id": "land_irrigation",
+              "label": "Irrigation system"
+            },
+            {
+              "id": "land_lighting",
+              "label": "Outdoor lighting"
+            },
+            {
+              "id": "land_paving",
+              "label": "Paving"
+            },
+            {
+              "id": "land_pathways",
+              "label": "Pathways"
+            },
+            {
+              "id": "land_feature_walls",
+              "label": "Feature walls"
+            },
+            {
+              "id": "land_water_feature",
+              "label": "Water feature"
+            },
+            {
+              "id": "land_outdoor_living",
+              "label": "Outdoor living areas"
+            },
+            {
+              "id": "land_entertaining",
+              "label": "Outdoor entertaining areas"
+            },
+            {
+              "id": "land_pool",
+              "label": "Pool landscaping"
+            },
+            {
+              "id": "land_spa",
+              "label": "Spa landscaping"
+            },
+            {
+              "id": "land_neglected",
+              "label": "Neglected"
+            },
+            {
+              "id": "land_overgrown",
+              "label": "Overgrown"
+            },
+            {
+              "id": "land_high_quality",
+              "label": "High quality"
+            },
+            {
+              "id": "land_manicured",
+              "label": "Manicured"
+            },
+            {
+              "id": "land_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "land_cond",
+          "notes_field": "land_notes"
+        },
+        {
+          "name": "va",
+          "label": "Vehicular Access and Manoeuvring",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "va_single_driveway",
+              "label": "Single driveway"
+            },
+            {
+              "id": "va_double_driveway",
+              "label": "Double driveway"
+            },
+            {
+              "id": "va_circular",
+              "label": "Circular driveway"
+            },
+            {
+              "id": "va_loop",
+              "label": "Loop driveway"
+            },
+            {
+              "id": "va_shared",
+              "label": "Shared access"
+            },
+            {
+              "id": "va_rear_access",
+              "label": "Rear access"
+            },
+            {
+              "id": "va_side_access",
+              "label": "Side access"
+            },
+            {
+              "id": "va_adequate_turning",
+              "label": "Adequate turning area"
+            },
+            {
+              "id": "va_restricted",
+              "label": "Restricted manoeuvring"
+            },
+            {
+              "id": "va_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "va_cond",
+          "notes_field": "va_notes"
+        },
+        {
+          "name": "fence",
+          "label": "Fencing",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "fence_fenced",
+              "label": "Fenced"
+            },
+            {
+              "id": "fence_cross",
+              "label": "Cross fenced"
+            },
+            {
+              "id": "fence_colorbond",
+              "label": "Colorbond fencing"
+            },
+            {
+              "id": "fence_timber",
+              "label": "Timber fencing"
+            },
+            {
+              "id": "fence_aluminium_slat",
+              "label": "Aluminium slat fencing"
+            },
+            {
+              "id": "fence_glass",
+              "label": "Glass fencing"
+            },
+            {
+              "id": "fence_pool_compliant",
+              "label": "Pool compliant fencing"
+            },
+            {
+              "id": "fence_brick",
+              "label": "Brick fencing"
+            },
+            {
+              "id": "fence_masonry",
+              "label": "Masonry fencing"
+            },
+            {
+              "id": "fence_pvc",
+              "label": "PVC fencing"
+            },
+            {
+              "id": "fence_vinyl",
+              "label": "Vinyl fencing"
+            },
+            {
+              "id": "fence_chainwire",
+              "label": "Chainwire fencing"
+            },
+            {
+              "id": "fence_picket",
+              "label": "Picket fencing"
+            },
+            {
+              "id": "fence_two_wire",
+              "label": "Two wire"
+            },
+            {
+              "id": "fence_three_wire",
+              "label": "Three wire"
+            },
+            {
+              "id": "fence_four_wire",
+              "label": "Four wire"
+            },
+            {
+              "id": "fence_five_wire",
+              "label": "Five wire"
+            },
+            {
+              "id": "fence_star_picket",
+              "label": "Star picket"
+            },
+            {
+              "id": "fence_timber_post",
+              "label": "Timber post"
+            },
+            {
+              "id": "fence_concrete_post",
+              "label": "Concrete post"
+            },
+            {
+              "id": "fence_stockyards",
+              "label": "Stockyards"
+            },
+            {
+              "id": "fence_front",
+              "label": "Front boundary fencing"
+            },
+            {
+              "id": "fence_side",
+              "label": "Side boundary fencing"
+            },
+            {
+              "id": "fence_rear",
+              "label": "Rear boundary fencing"
+            },
+            {
+              "id": "fence_vehicle_gates",
+              "label": "Vehicle gates"
+            },
+            {
+              "id": "fence_pedestrian_gates",
+              "label": "Pedestrian gates"
+            },
+            {
+              "id": "fence_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "fence_cond",
+          "notes_field": "fence_notes"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "title": "Building Construction",
+      "fields": [
+        {
+          "name": "wall_framing",
+          "label": "Wall Framing",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "wall_framing_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Timber softwood",
+                "Timber hardwood",
+                "Steel light gauge",
+                "Steel structural",
+                "Masonry brick",
+                "Masonry block",
+                "Concrete tilt-up",
+                "Concrete precast",
+                "Concrete in-situ",
+                "Composite",
+                "Other"
+              ]
+            },
+            {
+              "name": "wall_framing_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "wall_framing_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "roof_framing",
+          "label": "Roof Framing",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "roof_framing_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Timber trusses",
+                "Timber rafters conventional",
+                "Steel trusses",
+                "Steel purlins",
+                "Concrete",
+                "Other"
+              ]
+            },
+            {
+              "name": "roof_framing_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "roof_framing_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "ceil_heights",
+          "label": "Ceiling Heights",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "ceil_heights_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Standard residential 2.4 to 2.7 metres",
+                "High ceilings 2.7 to 3.0 metres",
+                "High ceilings over 3.0 metres",
+                "Cathedral ceilings",
+                "Raked ceilings",
+                "Vaulted ceilings",
+                "Varied by room",
+                "Commercial heights",
+                "Other"
+              ]
+            },
+            {
+              "name": "ceil_heights_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "ceil_heights_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "ext",
+          "label": "External Wall Coverings / Cladding",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "ext_brick_veneer",
+              "label": "Brick veneer"
+            },
+            {
+              "id": "ext_double_brick",
+              "label": "Double brick"
+            },
+            {
+              "id": "ext_solid_masonry",
+              "label": "Solid masonry"
+            },
+            {
+              "id": "ext_timber_weatherboard",
+              "label": "Timber weatherboard"
+            },
+            {
+              "id": "ext_timber_chamferboard",
+              "label": "Timber chamferboard"
+            },
+            {
+              "id": "ext_timber_vj",
+              "label": "Timber VJ"
+            },
+            {
+              "id": "ext_fc_weatherboard",
+              "label": "Fibre cement weatherboard"
+            },
+            {
+              "id": "ext_fc_sheet",
+              "label": "Fibre cement sheet"
+            },
+            {
+              "id": "ext_rendered_cement",
+              "label": "Rendered cement"
+            },
+            {
+              "id": "ext_rendered_acrylic",
+              "label": "Rendered acrylic"
+            },
+            {
+              "id": "ext_metal_colorbond",
+              "label": "Metal Colorbond cladding"
+            },
+            {
+              "id": "ext_stone",
+              "label": "Stone"
+            },
+            {
+              "id": "ext_stone_veneer",
+              "label": "Stone veneer"
+            },
+            {
+              "id": "ext_composite",
+              "label": "Composite panels"
+            },
+            {
+              "id": "ext_aluminium",
+              "label": "Aluminium panels"
+            },
+            {
+              "id": "ext_other",
+              "label": "Other"
+            },
+            {
+              "id": "ext_mixed",
+              "label": "Mixed cladding types"
+            }
+          ],
+          "condition_field": "ext_cond",
+          "notes_field": "ext_notes"
+        },
+        {
+          "name": "rc",
+          "label": "Roof Coverings",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "rc_colorbond",
+              "label": "Colorbond metal sheet"
+            },
+            {
+              "id": "rc_corrugated",
+              "label": "Corrugated metal"
+            },
+            {
+              "id": "rc_trimdek",
+              "label": "Trimdek"
+            },
+            {
+              "id": "rc_standing_seam",
+              "label": "Standing seam metal"
+            },
+            {
+              "id": "rc_concrete_tiles",
+              "label": "Concrete tiles"
+            },
+            {
+              "id": "rc_terracotta",
+              "label": "Terracotta tiles"
+            },
+            {
+              "id": "rc_clay",
+              "label": "Clay tiles"
+            },
+            {
+              "id": "rc_slate",
+              "label": "Slate"
+            },
+            {
+              "id": "rc_membrane_flat",
+              "label": "Membrane flat roof"
+            },
+            {
+              "id": "rc_membrane_low",
+              "label": "Membrane low pitch"
+            },
+            {
+              "id": "rc_other",
+              "label": "Other"
+            },
+            {
+              "id": "rc_mixed",
+              "label": "Mixed roof covering types"
+            }
+          ],
+          "condition_field": "rc_cond",
+          "notes_field": "rc_notes"
+        },
+        {
+          "name": "rd",
+          "label": "Roof Drainage",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "rd_colorbond",
+              "label": "Colorbond metal gutters and downpipes"
+            },
+            {
+              "id": "rd_pvc",
+              "label": "PVC gutters and downpipes"
+            },
+            {
+              "id": "rd_copper",
+              "label": "Copper gutters and downpipes"
+            },
+            {
+              "id": "rd_box",
+              "label": "Box gutters"
+            },
+            {
+              "id": "rd_internal",
+              "label": "Internal drainage"
+            },
+            {
+              "id": "rd_other",
+              "label": "Other"
+            },
+            {
+              "id": "rd_mixed",
+              "label": "Mixed drainage systems"
+            }
+          ],
+          "condition_field": "rd_cond",
+          "notes_field": "rd_notes"
+        },
+        {
+          "name": "vent",
+          "label": "Ventilation",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "vent_natural",
+              "label": "Natural ventilation"
+            },
+            {
+              "id": "vent_mechanical_exhaust",
+              "label": "Mechanical exhaust"
+            },
+            {
+              "id": "vent_hrv",
+              "label": "Heat recovery ventilation"
+            },
+            {
+              "id": "vent_subfloor",
+              "label": "Sub-floor ventilation"
+            },
+            {
+              "id": "vent_roof_space",
+              "label": "Roof space ventilation"
+            },
+            {
+              "id": "vent_mixed",
+              "label": "Mixed ventilation systems"
+            },
+            {
+              "id": "vent_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "vent_cond",
+          "notes_field": "vent_notes"
+        },
+        {
+          "name": "flr",
+          "label": "Flooring",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "flr_solid_timber",
+              "label": "Solid timber hardwood"
+            },
+            {
+              "id": "flr_engineered",
+              "label": "Engineered timber"
+            },
+            {
+              "id": "flr_laminate",
+              "label": "Laminate"
+            },
+            {
+              "id": "flr_hybrid_spc",
+              "label": "Hybrid SPC"
+            },
+            {
+              "id": "flr_vinyl_plank",
+              "label": "Vinyl plank"
+            },
+            {
+              "id": "flr_vinyl",
+              "label": "Vinyl"
+            },
+            {
+              "id": "flr_porcelain",
+              "label": "Porcelain tiles"
+            },
+            {
+              "id": "flr_ceramic",
+              "label": "Ceramic tiles"
+            },
+            {
+              "id": "flr_natural_stone",
+              "label": "Natural stone"
+            },
+            {
+              "id": "flr_slate",
+              "label": "Slate"
+            },
+            {
+              "id": "flr_carpet",
+              "label": "Carpet"
+            },
+            {
+              "id": "flr_polished_concrete",
+              "label": "Polished concrete"
+            },
+            {
+              "id": "flr_particleboard",
+              "label": "Particleboard structural sheet"
+            },
+            {
+              "id": "flr_other",
+              "label": "Other"
+            },
+            {
+              "id": "flr_mixed",
+              "label": "Mixed flooring types"
+            }
+          ],
+          "condition_field": "flr_cond",
+          "notes_field": "flr_notes"
+        },
+        {
+          "name": "il",
+          "label": "Internal Linings (Walls)",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "il_plasterboard",
+              "label": "Plasterboard"
+            },
+            {
+              "id": "il_fibre_cement",
+              "label": "Fibre cement sheet"
+            },
+            {
+              "id": "il_rendered",
+              "label": "Rendered masonry"
+            },
+            {
+              "id": "il_timber",
+              "label": "Timber lining"
+            },
+            {
+              "id": "il_vj",
+              "label": "VJ boards"
+            },
+            {
+              "id": "il_other",
+              "label": "Other"
+            },
+            {
+              "id": "il_mixed",
+              "label": "Mixed internal linings"
+            }
+          ],
+          "condition_field": "il_cond",
+          "notes_field": "il_notes"
+        },
+        {
+          "name": "ceil",
+          "label": "Ceilings",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "ceil_plasterboard",
+              "label": "Plasterboard"
+            },
+            {
+              "id": "ceil_timber",
+              "label": "Timber lining"
+            },
+            {
+              "id": "ceil_suspended",
+              "label": "Suspended acoustic tiles"
+            },
+            {
+              "id": "ceil_exposed_structure",
+              "label": "Exposed structure"
+            },
+            {
+              "id": "ceil_exposed_beams",
+              "label": "Exposed beams"
+            },
+            {
+              "id": "ceil_other",
+              "label": "Other"
+            },
+            {
+              "id": "ceil_mixed",
+              "label": "Mixed ceiling types"
+            }
+          ],
+          "condition_field": "ceil_cond",
+          "notes_field": "ceil_notes"
+        }
+      ]
+    },
+    {
+      "id": "special_design",
+      "title": "Special Design / Architectural Features",
+      "fields": [
+        {
+          "name": "sd",
+          "label": "Special Design / Architectural Features",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "sd_climate_responsive",
+              "label": "Climate-responsive design"
+            },
+            {
+              "id": "sd_site_responsive",
+              "label": "Site-responsive design"
+            },
+            {
+              "id": "sd_passive",
+              "label": "Passive design"
+            },
+            {
+              "id": "sd_sustainability",
+              "label": "Sustainability features"
+            },
+            {
+              "id": "sd_elevated_design",
+              "label": "Elevated design"
+            },
+            {
+              "id": "sd_multi_level",
+              "label": "Multi-level design"
+            },
+            {
+              "id": "sd_heritage",
+              "label": "Heritage features"
+            },
+            {
+              "id": "sd_character",
+              "label": "Character features"
+            },
+            {
+              "id": "sd_open_plan",
+              "label": "Open-plan living space"
+            },
+            {
+              "id": "sd_indoor_outdoor",
+              "label": "Indoor-outdoor connection"
+            },
+            {
+              "id": "sd_seamless_flow",
+              "label": "Seamless indoor-outdoor flow"
+            },
+            {
+              "id": "sd_multi_gen",
+              "label": "Multi-generational layout"
+            },
+            {
+              "id": "sd_flexible",
+              "label": "Flexible living layout"
+            },
+            {
+              "id": "sd_high_ceiling",
+              "label": "High ceiling"
+            },
+            {
+              "id": "sd_vaulted_ceiling",
+              "label": "Vaulted ceiling"
+            },
+            {
+              "id": "sd_double_height",
+              "label": "Double-height voids"
+            },
+            {
+              "id": "sd_high_volume",
+              "label": "High volume spaces"
+            },
+            {
+              "id": "sd_atrium",
+              "label": "Atrium"
+            },
+            {
+              "id": "sd_courtyard",
+              "label": "Internal courtyard"
+            },
+            {
+              "id": "sd_staircase",
+              "label": "Feature staircase"
+            },
+            {
+              "id": "sd_deep_eaves",
+              "label": "Deep eaves"
+            },
+            {
+              "id": "sd_wide_overhang",
+              "label": "Wide overhang"
+            },
+            {
+              "id": "sd_operable_shading",
+              "label": "Operable shading"
+            },
+            {
+              "id": "sd_cross_vent",
+              "label": "Cross-ventilation"
+            },
+            {
+              "id": "sd_floor_ceiling_glass",
+              "label": "Floor-to-ceiling glass"
+            },
+            {
+              "id": "sd_large_glazed",
+              "label": "Large glazed opening"
+            },
+            {
+              "id": "sd_large_openings",
+              "label": "Large openings"
+            },
+            {
+              "id": "sd_bifolds",
+              "label": "Bifold doors"
+            },
+            {
+              "id": "sd_high_perf_glazing",
+              "label": "High-performance glazing"
+            },
+            {
+              "id": "sd_insulation",
+              "label": "Insulation"
+            },
+            {
+              "id": "sd_energy_efficient",
+              "label": "Energy-efficient feature"
+            },
+            {
+              "id": "sd_extensive_outdoor",
+              "label": "Extensive outdoor living area"
+            },
+            {
+              "id": "sd_alfresco",
+              "label": "Alfresco area"
+            },
+            {
+              "id": "sd_outdoor_zone",
+              "label": "Outdoor zone"
+            },
+            {
+              "id": "sd_veranda",
+              "label": "Veranda"
+            },
+            {
+              "id": "sd_verandas",
+              "label": "Verandas"
+            },
+            {
+              "id": "sd_balcony",
+              "label": "Balcony"
+            },
+            {
+              "id": "sd_balconies",
+              "label": "Balconies"
+            },
+            {
+              "id": "sd_covered_terrace",
+              "label": "Covered entertaining terrace"
+            },
+            {
+              "id": "sd_alfresco_kitchen",
+              "label": "Alfresco kitchen"
+            },
+            {
+              "id": "sd_landscaped_garden",
+              "label": "Integrated landscaped garden"
+            },
+            {
+              "id": "sd_swimming_pool",
+              "label": "Swimming pool"
+            },
+            {
+              "id": "sd_plunge_pool",
+              "label": "Plunge pool"
+            },
+            {
+              "id": "sd_spa_area",
+              "label": "Spa area"
+            },
+            {
+              "id": "sd_spa",
+              "label": "Spa"
+            },
+            {
+              "id": "sd_gourmet_kitchen",
+              "label": "Gourmet kitchen"
+            },
+            {
+              "id": "sd_high_end_appliance",
+              "label": "High-end appliance"
+            },
+            {
+              "id": "sd_butlers_pantry",
+              "label": "Butlers pantry"
+            },
+            {
+              "id": "sd_spa_bathroom",
+              "label": "Spa-like bathroom"
+            },
+            {
+              "id": "sd_premium_fitting",
+              "label": "Premium fitting"
+            },
+            {
+              "id": "sd_joinery",
+              "label": "Custom joinery"
+            },
+            {
+              "id": "sd_millwork",
+              "label": "Custom millwork"
+            },
+            {
+              "id": "sd_bespoke_cabinetry",
+              "label": "Bespoke cabinetry"
+            },
+            {
+              "id": "sd_cornice",
+              "label": "Cornice mouldings"
+            },
+            {
+              "id": "sd_ornate_cornice",
+              "label": "Ornate cornice mouldings"
+            },
+            {
+              "id": "sd_skirting",
+              "label": "Skirting boards"
+            },
+            {
+              "id": "sd_ornate_skirting",
+              "label": "Ornate skirting boards"
+            },
+            {
+              "id": "sd_thoughtful_storage",
+              "label": "Thoughtful storage"
+            },
+            {
+              "id": "sd_utility_planning",
+              "label": "Utility planning"
+            },
+            {
+              "id": "sd_materials",
+              "label": "Premium materials"
+            },
+            {
+              "id": "sd_natural_stone",
+              "label": "Natural stone"
+            },
+            {
+              "id": "sd_high_grade_timber",
+              "label": "High-grade timber"
+            },
+            {
+              "id": "sd_architectural_glass",
+              "label": "Architectural glass"
+            },
+            {
+              "id": "sd_smart",
+              "label": "Integrated smart home technology"
+            },
+            {
+              "id": "sd_smart_lighting",
+              "label": "Smart lighting system"
+            },
+            {
+              "id": "sd_smart_climate",
+              "label": "Smart climate system"
+            },
+            {
+              "id": "sd_smart_security",
+              "label": "Smart security system"
+            },
+            {
+              "id": "sd_smart_av",
+              "label": "Smart audiovisual system"
+            },
+            {
+              "id": "sd_gym",
+              "label": "Gym"
+            },
+            {
+              "id": "sd_sauna",
+              "label": "Sauna"
+            },
+            {
+              "id": "sd_wine",
+              "label": "Wine cellar"
+            },
+            {
+              "id": "sd_climate_storage",
+              "label": "Climate-controlled storage"
+            },
+            {
+              "id": "sd_theatre",
+              "label": "Home theatre"
+            },
+            {
+              "id": "sd_media",
+              "label": "Media room"
+            },
+            {
+              "id": "sd_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "sd_cond",
+          "notes_field": "sd_notes"
+        },
+        {
+          "name": "design_features_notes",
+          "label": "Design metrics and clearances (column spacing, clear spans, internal height, roof frame clearances, door clearances H × W)",
+          "type": "text",
+          "multiline": true
+        },
+        {
+          "name": "light",
+          "label": "Natural and Artificial Lighting",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "light_natural",
+              "label": "Natural lighting"
+            },
+            {
+              "id": "light_led",
+              "label": "LED artificial lighting"
+            },
+            {
+              "id": "light_fluorescent",
+              "label": "Fluorescent artificial lighting"
+            },
+            {
+              "id": "light_mixed",
+              "label": "Mixed natural and artificial lighting"
+            },
+            {
+              "id": "light_task",
+              "label": "Task lighting"
+            },
+            {
+              "id": "light_specialised",
+              "label": "Specialised lighting"
+            },
+            {
+              "id": "light_custom",
+              "label": "Custom light fixtures"
+            },
+            {
+              "id": "light_high_quality",
+              "label": "High quality light fixtures"
+            },
+            {
+              "id": "light_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "light_cond",
+          "notes_field": "light_notes"
+        }
+      ]
+    },
+    {
+      "id": "3A",
+      "title": "Kitchen & Bathrooms (Detailed)",
+      "fields": [
+        {
+          "name": "kit_feat",
+          "label": "Kitchen Key Features",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "kit_island",
+              "label": "Island bench"
+            },
+            {
+              "id": "kit_butler",
+              "label": "Butlers pantry"
+            },
+            {
+              "id": "kit_walkin",
+              "label": "Walk-in pantry"
+            },
+            {
+              "id": "kit_integrated",
+              "label": "Integrated appliances"
+            },
+            {
+              "id": "kit_induction",
+              "label": "Induction cooktop"
+            },
+            {
+              "id": "kit_gas",
+              "label": "Gas cooktop"
+            },
+            {
+              "id": "kit_double_oven",
+              "label": "Double oven"
+            },
+            {
+              "id": "kit_rangehood",
+              "label": "Feature rangehood"
+            },
+            {
+              "id": "kit_boiling",
+              "label": "Boiling or filtered water tap"
+            },
+            {
+              "id": "kit_softclose",
+              "label": "Soft-close cabinetry"
+            }
+          ],
+          "condition_field": "kit_feat_cond",
+          "notes_field": "kit_feat_notes"
+        },
+        {
+          "name": "kit_bench",
+          "label": "Kitchen Benchtops",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "kit_bench_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Natural stone marble",
+                "Natural stone granite",
+                "Natural stone quartzite",
+                "Porcelain stone",
+                "Sintered stone",
+                "Engineered stone pre-ban",
+                "Laminate",
+                "Timber",
+                "Other",
+                "Mixed"
+              ]
+            },
+            {
+              "name": "kit_bench_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "kit_bench_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "kit_cab",
+          "label": "Kitchen Cabinetry",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "kit_cab_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Custom joinery soft-close",
+                "Standard melamine",
+                "Two-pack painted",
+                "Timber",
+                "Other"
+              ]
+            },
+            {
+              "name": "kit_cab_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "kit_cab_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "kit_splash",
+          "label": "Kitchen Splashback",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "kit_splash_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Tiled",
+                "Stone slab",
+                "Porcelain slab",
+                "Glass",
+                "Mirror",
+                "Other",
+                "None"
+              ]
+            },
+            {
+              "name": "kit_splash_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "kit_splash_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "kit_tapware",
+          "label": "Kitchen Tapware Finish",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "kit_tapware_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Brushed nickel",
+                "Brushed bronze",
+                "Matte black",
+                "Chrome",
+                "Brushed brass",
+                "Mixed",
+                "Other"
+              ]
+            },
+            {
+              "name": "kit_tapware_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "kit_tapware_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "app",
+          "label": "High-end / Luxury Appliance Brands",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "app_miele",
+              "label": "Miele"
+            },
+            {
+              "id": "app_gaggenau",
+              "label": "Gaggenau"
+            },
+            {
+              "id": "app_subzero",
+              "label": "Sub-Zero"
+            },
+            {
+              "id": "app_wolf",
+              "label": "Wolf"
+            },
+            {
+              "id": "app_vzug",
+              "label": "V-ZUG"
+            },
+            {
+              "id": "app_smeg",
+              "label": "SMEG"
+            },
+            {
+              "id": "app_fisherpaykel",
+              "label": "Fisher and Paykel"
+            },
+            {
+              "id": "app_ilve",
+              "label": "Ilve"
+            },
+            {
+              "id": "app_bora",
+              "label": "Bora"
+            },
+            {
+              "id": "app_bosch",
+              "label": "Bosch"
+            },
+            {
+              "id": "app_siemens",
+              "label": "Siemens"
+            },
+            {
+              "id": "app_liebherr",
+              "label": "Liebherr"
+            },
+            {
+              "id": "app_qasair",
+              "label": "Qasair"
+            },
+            {
+              "id": "app_fhiaba",
+              "label": "Fhiaba"
+            },
+            {
+              "id": "app_other_premium",
+              "label": "Other premium brand"
+            }
+          ],
+          "condition_field": "app_cond",
+          "notes_field": "app_notes"
+        },
+        {
+          "name": "kit_overall_notes",
+          "label": "Kitchen overall notes",
+          "type": "text",
+          "multiline": true
+        },
+        {
+          "name": "bath_feat",
+          "label": "Bathroom Key Features",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "bath_freestanding",
+              "label": "Freestanding bath"
+            },
+            {
+              "id": "bath_frameless",
+              "label": "Frameless shower screen"
+            },
+            {
+              "id": "bath_double_vanity",
+              "label": "Double vanity"
+            },
+            {
+              "id": "bath_underfloor",
+              "label": "Underfloor heating"
+            },
+            {
+              "id": "bath_rain",
+              "label": "Rainfall or feature shower"
+            },
+            {
+              "id": "bath_separate",
+              "label": "Separate WC"
+            },
+            {
+              "id": "bath_heated_towels",
+              "label": "Heated towel rail"
+            },
+            {
+              "id": "bath_niche",
+              "label": "Shower niche"
+            },
+            {
+              "id": "bath_bidet",
+              "label": "Bidet or bidet seat"
+            },
+            {
+              "id": "bath_other",
+              "label": "Other premium feature"
+            }
+          ],
+          "condition_field": "bath_feat_cond",
+          "notes_field": "bath_feat_notes"
+        },
+        {
+          "name": "bath_vanity",
+          "label": "Vanity Benchtops",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "bath_vanity_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Stone benchtop",
+                "Porcelain benchtop",
+                "Laminate",
+                "Timber",
+                "Other"
+              ]
+            },
+            {
+              "name": "bath_vanity_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "bath_vanity_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "bath_tiles",
+          "label": "Wall / Floor Tiling",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "bath_tiles_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Large format porcelain",
+                "Ceramic tiles",
+                "Mosaic tiles",
+                "Natural stone",
+                "Feature tiles",
+                "Mixed",
+                "Other"
+              ]
+            },
+            {
+              "name": "bath_tiles_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "bath_tiles_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "bath_tapware",
+          "label": "Tapware Finish",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "bath_tapware_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Brushed nickel",
+                "Brushed bronze",
+                "Matte black",
+                "Chrome",
+                "Brushed brass",
+                "Mixed",
+                "Other"
+              ]
+            },
+            {
+              "name": "bath_tapware_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "bath_tapware_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "bath_overall_notes",
+          "label": "Number of bathrooms / ensuites / powder rooms and overall notes",
+          "type": "text",
+          "multiline": true
+        },
+        {
+          "name": "am",
+          "label": "Amenity and Storage Areas",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "am_toilets",
+              "label": "Toilets and sanitary facilities"
+            },
+            {
+              "id": "am_kitchen",
+              "label": "Kitchen"
+            },
+            {
+              "id": "am_tearoom",
+              "label": "Tea room"
+            },
+            {
+              "id": "am_lockers",
+              "label": "Lockers"
+            },
+            {
+              "id": "am_change",
+              "label": "Change rooms"
+            },
+            {
+              "id": "am_storage",
+              "label": "Storage rooms"
+            },
+            {
+              "id": "am_cleaners",
+              "label": "Cleaners facilities"
+            },
+            {
+              "id": "am_mixed",
+              "label": "Mixed amenities"
+            },
+            {
+              "id": "am_none",
+              "label": "None"
+            },
+            {
+              "id": "am_limited",
+              "label": "Limited"
+            },
+            {
+              "id": "am_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "am_cond",
+          "notes_field": "am_notes"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "title": "Building Services",
+      "fields": [
+        {
+          "name": "fire",
+          "label": "Fire Services",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "fire_wet_sprinklers",
+              "label": "Automatic wet sprinklers"
+            },
+            {
+              "id": "fire_dry_sprinklers",
+              "label": "Automatic dry sprinklers"
+            },
+            {
+              "id": "fire_deluge",
+              "label": "Deluge sprinklers"
+            },
+            {
+              "id": "fire_internal_hydrants",
+              "label": "Internal fire hydrants"
+            },
+            {
+              "id": "fire_external_hydrants",
+              "label": "External fire hydrants"
+            },
+            {
+              "id": "fire_hose_reels",
+              "label": "Hose reels"
+            },
+            {
+              "id": "fire_conventional_alarm",
+              "label": "Conventional fire detection and alarm"
+            },
+            {
+              "id": "fire_addressable_alarm",
+              "label": "Addressable fire detection and alarm"
+            },
+            {
+              "id": "fire_combined",
+              "label": "Combined sprinkler and hydrant system"
+            },
+            {
+              "id": "fire_extinguishers",
+              "label": "Portable extinguishers only"
+            },
+            {
+              "id": "fire_none",
+              "label": "None"
+            },
+            {
+              "id": "fire_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "fire_cond",
+          "notes_field": "fire_notes"
+        },
+        {
+          "name": "hvac",
+          "label": "Ventilation / Air Conditioning",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "hvac_split_single",
+              "label": "Split system single"
+            },
+            {
+              "id": "hvac_split_multi",
+              "label": "Split system multi"
+            },
+            {
+              "id": "hvac_ducted_ac",
+              "label": "Ducted air conditioning"
+            },
+            {
+              "id": "hvac_ducted_heating",
+              "label": "Ducted heating"
+            },
+            {
+              "id": "hvac_ducted_heating_ac",
+              "label": "Ducted heating and air conditioning"
+            },
+            {
+              "id": "hvac_vrf",
+              "label": "VRF"
+            },
+            {
+              "id": "hvac_vrv",
+              "label": "VRV"
+            },
+            {
+              "id": "hvac_packaged",
+              "label": "Packaged rooftop units"
+            },
+            {
+              "id": "hvac_chilled_water",
+              "label": "Chilled water central plant"
+            },
+            {
+              "id": "hvac_evaporative",
+              "label": "Evaporative cooling"
+            },
+            {
+              "id": "hvac_mechanical_only",
+              "label": "Mechanical ventilation only"
+            },
+            {
+              "id": "hvac_natural_only",
+              "label": "Natural ventilation only"
+            },
+            {
+              "id": "hvac_none",
+              "label": "None"
+            },
+            {
+              "id": "hvac_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "hvac_cond",
+          "notes_field": "hvac_notes"
+        },
+        {
+          "name": "sec",
+          "label": "Security Systems",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "sec_monitored_alarm",
+              "label": "Monitored alarm system"
+            },
+            {
+              "id": "sec_local_alarm",
+              "label": "Local alarm system"
+            },
+            {
+              "id": "sec_cctv",
+              "label": "CCTV cameras"
+            },
+            {
+              "id": "sec_ip_cameras",
+              "label": "IP cameras"
+            },
+            {
+              "id": "sec_card_access",
+              "label": "Card access control"
+            },
+            {
+              "id": "sec_biometric",
+              "label": "Biometric access control"
+            },
+            {
+              "id": "sec_keypad",
+              "label": "Keypad access control"
+            },
+            {
+              "id": "sec_intercom",
+              "label": "Intercom"
+            },
+            {
+              "id": "sec_video_intercom",
+              "label": "Video intercom"
+            },
+            {
+              "id": "sec_integrated",
+              "label": "Integrated security system"
+            },
+            {
+              "id": "sec_none",
+              "label": "None"
+            },
+            {
+              "id": "sec_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "sec_cond",
+          "notes_field": "sec_notes"
+        },
+        {
+          "name": "aux",
+          "label": "Auxiliary Power & Emergency Lighting",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "aux_diesel",
+              "label": "Diesel generator"
+            },
+            {
+              "id": "aux_gas",
+              "label": "Gas generator"
+            },
+            {
+              "id": "aux_ups",
+              "label": "UPS battery backup"
+            },
+            {
+              "id": "aux_maintained_lighting",
+              "label": "Maintained emergency lighting"
+            },
+            {
+              "id": "aux_nonmaintained_lighting",
+              "label": "Non-maintained emergency lighting"
+            },
+            {
+              "id": "aux_solar_battery",
+              "label": "Solar with battery backup"
+            },
+            {
+              "id": "aux_none",
+              "label": "None"
+            },
+            {
+              "id": "aux_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "aux_cond",
+          "notes_field": "aux_notes"
+        },
+        {
+          "name": "lift",
+          "label": "Escalators and Elevators",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "lift_passenger",
+              "label": "Passenger lift"
+            },
+            {
+              "id": "lift_goods",
+              "label": "Goods lift"
+            },
+            {
+              "id": "lift_service",
+              "label": "Service lift"
+            },
+            {
+              "id": "lift_escalator",
+              "label": "Escalator"
+            },
+            {
+              "id": "lift_platform",
+              "label": "Platform lift"
+            },
+            {
+              "id": "lift_stairlift",
+              "label": "Stairlift"
+            },
+            {
+              "id": "lift_none",
+              "label": "None"
+            },
+            {
+              "id": "lift_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "lift_cond",
+          "notes_field": "lift_notes"
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "title": "External Areas, Access, Parking & Ancillary",
+      "fields": [
+        {
+          "name": "park",
+          "label": "Car Parking Facilities",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "park_garage_1",
+              "label": "One car garage"
+            },
+            {
+              "id": "park_garage_2",
+              "label": "Two car garage"
+            },
+            {
+              "id": "park_garage_3",
+              "label": "Three car garage"
+            },
+            {
+              "id": "park_garage_4",
+              "label": "Four car garage"
+            },
+            {
+              "id": "park_garage_5",
+              "label": "Five car garage"
+            },
+            {
+              "id": "park_carport_1",
+              "label": "One car carport"
+            },
+            {
+              "id": "park_carport_2",
+              "label": "Two car carport"
+            },
+            {
+              "id": "park_carport_3",
+              "label": "Three car carport"
+            },
+            {
+              "id": "park_carport_4",
+              "label": "Four car carport"
+            },
+            {
+              "id": "park_carport_5",
+              "label": "Five car carport"
+            },
+            {
+              "id": "park_undercover",
+              "label": "Undercover parking"
+            },
+            {
+              "id": "park_open",
+              "label": "Open hardstand parking"
+            },
+            {
+              "id": "park_tandem",
+              "label": "Tandem parking"
+            },
+            {
+              "id": "park_stacked",
+              "label": "Stacked parking"
+            },
+            {
+              "id": "park_mechanical",
+              "label": "Mechanical parking"
+            },
+            {
+              "id": "park_visitor",
+              "label": "Visitor parking"
+            },
+            {
+              "id": "park_disabled",
+              "label": "Accessible parking bay"
+            },
+            {
+              "id": "park_ev",
+              "label": "EV charging provision"
+            },
+            {
+              "id": "park_secure",
+              "label": "Secure parking"
+            },
+            {
+              "id": "park_gated",
+              "label": "Gated parking"
+            },
+            {
+              "id": "park_basement",
+              "label": "Basement parking"
+            },
+            {
+              "id": "park_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "park_cond",
+          "notes_field": "park_notes"
+        },
+        {
+          "name": "load",
+          "label": "Loading, Unloading and Courier Access",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "load_dedicated_bay",
+              "label": "Dedicated loading bay"
+            },
+            {
+              "id": "load_dedicated_dock",
+              "label": "Dedicated loading dock"
+            },
+            {
+              "id": "load_shared",
+              "label": "Shared loading area"
+            },
+            {
+              "id": "load_street",
+              "label": "Street loading only"
+            },
+            {
+              "id": "load_courier_friendly",
+              "label": "Courier friendly access"
+            },
+            {
+              "id": "load_restricted",
+              "label": "Restricted access"
+            },
+            {
+              "id": "load_difficult",
+              "label": "Difficult access"
+            },
+            {
+              "id": "load_none",
+              "label": "No dedicated loading facilities"
+            },
+            {
+              "id": "load_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "load_cond",
+          "notes_field": "load_notes"
+        },
+        {
+          "name": "anc",
+          "label": "Ancillary Structures and Ground Improvements",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "anc_shed",
+              "label": "Shed"
+            },
+            {
+              "id": "anc_workshop",
+              "label": "Workshop"
+            },
+            {
+              "id": "anc_studio",
+              "label": "Studio"
+            },
+            {
+              "id": "anc_granny_flat",
+              "label": "Granny flat"
+            },
+            {
+              "id": "anc_pool_house",
+              "label": "Pool house"
+            },
+            {
+              "id": "anc_cabana",
+              "label": "Cabana"
+            },
+            {
+              "id": "anc_pergola",
+              "label": "Pergola"
+            },
+            {
+              "id": "anc_covered_outdoor",
+              "label": "Covered outdoor structure"
+            },
+            {
+              "id": "anc_deck",
+              "label": "Deck"
+            },
+            {
+              "id": "anc_patio",
+              "label": "Patio"
+            },
+            {
+              "id": "anc_retaining",
+              "label": "Additional retaining structures"
+            },
+            {
+              "id": "anc_water_tank",
+              "label": "Water tank structure"
+            },
+            {
+              "id": "anc_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "anc_cond",
+          "notes_field": "anc_notes"
+        },
+        {
+          "name": "hs",
+          "label": "Hard-stand and Storage Areas",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "hs_concrete",
+              "label": "Concrete hardstand"
+            },
+            {
+              "id": "hs_asphalt",
+              "label": "Asphalt hardstand"
+            },
+            {
+              "id": "hs_gravel",
+              "label": "Gravel hardstand"
+            },
+            {
+              "id": "hs_pavers",
+              "label": "Paved hardstand"
+            },
+            {
+              "id": "hs_storage_yard",
+              "label": "Storage yard"
+            },
+            {
+              "id": "hs_external_store",
+              "label": "External store"
+            },
+            {
+              "id": "hs_lockup",
+              "label": "Lock-up"
+            },
+            {
+              "id": "hs_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "hs_cond",
+          "notes_field": "hs_notes"
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "title": "Overall Condition Summary & Sign-off",
+      "fields": [
+        {
+          "name": "overall_cond",
+          "label": "Overall Condition of Improvements",
+          "type": "select",
+          "options": [
+            "Poor",
+            "Fair",
+            "Average",
+            "Good",
+            "Very Good",
+            "Excellent"
+          ]
+        },
+        {
+          "name": "overall_site_cond",
+          "label": "Overall Condition of Site",
+          "type": "select",
+          "options": [
+            "Poor",
+            "Fair",
+            "Average",
+            "Good",
+            "Very Good",
+            "Excellent"
+          ]
+        },
+        {
+          "name": "defects_notes",
+          "label": "Significant Defects or Issues Observed",
+          "type": "text",
+          "multiline": true
+        },
+        {
+          "name": "other_notes",
+          "label": "Other Observations / Marketability / Functional Obsolescence",
+          "type": "text",
+          "multiline": true
+        },
+        {
+          "name": "photo_refs",
+          "label": "Photos / Attachments Reference",
+          "type": "text",
+          "multiline": true
+        },
+        {
+          "name": "sign_name",
+          "label": "Valuer Name",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "sign_sig",
+          "label": "Signature",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "sign_date",
+          "label": "Date",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "sign_member",
+          "label": "API / RICS Membership No.",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "sign_reg",
+          "label": "QLD Valuer Registration No.",
+          "type": "text",
+          "multiline": false
+        }
+      ]
+    }
+  ]
+}
