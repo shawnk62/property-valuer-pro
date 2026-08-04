@@ -3,6 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Check, ChevronLeft, Save } from "lucide-react";
 import { toast } from "sonner";
 import { FieldRenderer } from "@/components/inspection/fields/FieldRenderer";
+import { ImportPanel } from "@/components/inspection/ImportPanel";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { labelForField, sections } from "@/lib/inspection/schema";
@@ -127,6 +128,12 @@ function InspectionWizard() {
                 <li key={m.name}>{labelForField(m.name)}</li>
               ))}
             </ul>
+          </div>
+        ) : null}
+
+        {step === 0 ? (
+          <div className="mb-6">
+            <ImportPanel values={values} onApply={(patch) => { for (const [k, v] of Object.entries(patch)) setValue(k, v); }} />
           </div>
         ) : null}
 
