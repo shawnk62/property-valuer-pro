@@ -216,3 +216,35 @@ function CheckboxGroup({
     </div>
   );
 }
+
+type CheckboxItem = Extract<InspectionField, { type: "checkbox_group" }>["items"][number];
+type Run = { heading?: string; items: CheckboxItem[] };
+
+/**
+ * Purely presentational grouping: keeps related runs of options together on
+ * screen. Item ids, labels and their schema order are never changed.
+ */
+const RUN_HEADINGS: Record<string, Record<string, string>> = {
+  fence: {
+    fence_fenced: "General",
+    fence_colorbond: "Materials",
+    fence_two_wire: "Rural wire",
+    fence_star_picket: "Posts & yards",
+    fence_front: "Boundaries",
+    fence_vehicle_gates: "Gates",
+    fence_other: "Other",
+  },
+};
+
+function splitIntoRuns(field: Extract<InspectionField, { type: "checkbox_group" }>): Run[] {
+  const headings = RUN_HEADINGS[field.name];
+  if (!headings) return [{ items: field.items }];
+
+  const runs: Run[] = [];
+  for (const item of field.items) {
+    const heading = headings[item.id];
+    if (heading || runs.length === 0) runs.push({ ...(heading ? { heading } : {}), items: [] });
+    runs[runs.length - 1]!.items.push(item);
+  }
+  return runs;
+}
