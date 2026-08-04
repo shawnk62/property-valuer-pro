@@ -100,7 +100,16 @@ export function useNarrative(recordId: string, values: InspectionValues, isSubmi
 
   const generateAll = useCallback(async () => {
     const settings = loadAiSettings();
-    if (!settings.apiKey || !settings.model) return;
+    if (!settings.apiKey || !settings.model) {
+      const error = "AI provider not configured. Go to Settings and add your API key and model.";
+      setState((prev) => ({
+        ...prev,
+        blocks: prev.blocks.map((b) =>
+          b.status === "edited" ? b : { ...b, status: "failed", error },
+        ),
+      }));
+      return;
+    }
 
     setState((prev) => ({ ...prev, startedAt: new Date().toISOString() }));
 
