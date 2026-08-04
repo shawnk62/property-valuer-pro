@@ -35,7 +35,9 @@ function write(records: InspectionRecord[]) {
 export const inspectionStore = {
   subscribe(listener: () => void) {
     listeners.add(listener);
-    return () => listeners.delete(listener);
+    return () => {
+      listeners.delete(listener);
+    };
   },
   list(): InspectionRecord[] {
     return read().sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
