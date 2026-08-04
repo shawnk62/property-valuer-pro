@@ -102,7 +102,7 @@ function InspectionsIndex() {
                       type="button"
                       onClick={() =>
                         void navigate({
-                          to: record.status === "submitted" ? "/inspect/$id/review" : "/inspect/$id",
+                          to: record.status === "submitted" ? "/inspect/$id_/review" : "/inspect/$id",
                           params: { id: record.id },
                         })
                       }

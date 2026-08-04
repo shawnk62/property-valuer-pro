@@ -67,7 +67,7 @@ function InspectionWizard() {
     setShowErrors(false);
     saveNow();
     if (step === sections.length - 1) {
-      void navigate({ to: "/inspect/$id/review", params: { id } });
+      void navigate({ to: "/inspect/$id_/review", params: { id } });
       return;
     }
     setStep((s) => s + 1);
