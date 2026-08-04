@@ -8,9 +8,11 @@ Answer to your question: no — nothing currently pulls from Landchecker. Sectio
 
 A Settings screen where you choose:
 
-- Provider: OpenAI, Anthropic, or Google
+- Provider: OpenAI, Google (Gemini), or Anthropic — these are the providers supported by the Lovable AI Gateway. Grok / xAI is not supported by the gateway, so it cannot be selected here.
 - Model: list per provider, editable free-text so a new model name works without an app update
 - API key for that provider
+
+If you specifically need Grok, the only path is a separate "Custom OpenAI-compatible endpoint" option where you supply the xAI base URL (`https://api.x.ai/v1`) and model name (e.g. `grok-3-latest`) plus your xAI key. That call bypasses the Lovable AI Gateway entirely and goes straight to xAI from the server function. It works, but it is not the default flow and won't share gateway logging or billing.
 
 The choice is saved and becomes the default for every future report until you change it. Keys stay on the device you enter them on and are sent only to the provider you selected — never stored in a shared database, never shown in the report or exports. A "Test connection" button confirms the key works before you rely on it. If no key is configured, the app says so plainly at submit instead of failing silently.
 
