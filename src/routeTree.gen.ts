@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as InspectIdRouteImport } from './routes/inspect.$id'
 import { Route as InspectIdReviewRouteImport } from './routes/inspect.$id_.review'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InspectIdRoute = InspectIdRouteImport.update({
@@ -31,30 +37,34 @@ const InspectIdReviewRoute = InspectIdReviewRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/inspect/$id': typeof InspectIdRoute
   '/inspect/$id/review': typeof InspectIdReviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/inspect/$id': typeof InspectIdRoute
   '/inspect/$id/review': typeof InspectIdReviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/inspect/$id': typeof InspectIdRoute
   '/inspect/$id_/review': typeof InspectIdReviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/inspect/$id' | '/inspect/$id/review'
+  fullPaths: '/' | '/settings' | '/inspect/$id' | '/inspect/$id/review'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/inspect/$id' | '/inspect/$id/review'
-  id: '__root__' | '/' | '/inspect/$id' | '/inspect/$id_/review'
+  to: '/' | '/settings' | '/inspect/$id' | '/inspect/$id/review'
+  id: '__root__' | '/' | '/settings' | '/inspect/$id' | '/inspect/$id_/review'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SettingsRoute: typeof SettingsRoute
   InspectIdRoute: typeof InspectIdRoute
   InspectIdReviewRoute: typeof InspectIdReviewRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inspect/$id': {
@@ -87,19 +104,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SettingsRoute: SettingsRoute,
   InspectIdRoute: InspectIdRoute,
   InspectIdReviewRoute: InspectIdReviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

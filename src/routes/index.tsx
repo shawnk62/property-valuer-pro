@@ -1,5 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { FileText, Plus, Trash2 } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { FileText, Plus, Settings, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { schema } from "@/lib/inspection/schema";
 import { inspectionStore } from "@/lib/inspection/storage";
@@ -49,15 +49,24 @@ function InspectionsIndex() {
     <div className="min-h-screen bg-muted/40">
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-4xl flex-col gap-1 px-4 py-6 sm:px-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Queensland Registered Valuers
-          </p>
-          <h1 className="font-serif text-2xl font-semibold text-foreground sm:text-3xl">
-            {schema.form_name}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Schema version {schema.version} · {schema.sections.length} sections
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                Queensland Registered Valuers
+              </p>
+              <h1 className="font-serif text-2xl font-semibold text-foreground sm:text-3xl">
+                {schema.form_name}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Schema version {schema.version} · {schema.sections.length} sections
+              </p>
+            </div>
+            <Button variant="ghost" size="icon" asChild aria-label="AI settings">
+              <Link to="/settings">
+                <Settings className="size-5" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
 
