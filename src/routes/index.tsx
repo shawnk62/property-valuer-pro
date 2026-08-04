@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { FileText, Plus, Settings, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { schema } from "@/lib/inspection/schema";
 import { inspectionStore } from "@/lib/inspection/storage";
 import { useInspectionList } from "@/lib/inspection/useInspection";
 import { missingFields } from "@/lib/inspection/validation";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -37,12 +39,35 @@ function formatDate(iso: string) {
 }
 
 function InspectionsIndex() {
-  const records = useInspectionList();
+  const { records, loading, error } = useInspectionList();
   const navigate = useNavigate();
+  const [creating, setCreating] = useState(false);
+  const { user, loading: authLoading, signOut } = useAuth();
 
-  const startNew = () => {
-    const record = inspectionStore.create();
-    void navigate({ to: "/inspect/$id", params: { id: record.id } });
+  if (!authLoading && !user) {
+    void navigate({ to: "/login" });
+    return null;
+  }
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        Checking session…
+      </div>
+    );
+  }
+
+  const startNew = async () => {
+    setCreating(true);
+    try {
+      const record = await inspectionStore.create();
+      void navigate({ to: "/inspect/$id", params: { id: record.id } });
+    } catch (err) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : "Failed to create inspection");
+    } finally {
+      setCreating(false);
+    }
   };
 
   return (
@@ -61,6 +86,13 @@ function InspectionsIndex() {
                 Schema version {schema.version} · {schema.sections.length} sections
               </p>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void signOut().then(() => navigate({ to: "/login" }))}
+            >
+              Sign out
+            </Button>
             <Button variant="ghost" size="icon" asChild aria-label="AI settings">
               <Link to="/settings">
                 <Settings className="size-5" />
@@ -71,7 +103,7 @@ function InspectionsIndex() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
-        <Button onClick={startNew} size="lg" className="w-full sm:w-auto">
+        <Button onClick={() => void startNew()} disabled={creating} size="lg" className="w-full sm:w-auto">
           <Plus className="size-4" />
           New inspection
         </Button>
@@ -79,7 +111,15 @@ function InspectionsIndex() {
         <section className="mt-8">
           <h2 className="font-serif text-lg font-semibold text-foreground">Saved inspections</h2>
 
-          {records.length === 0 ? (
+          {loading ? (
+            <div className="mt-4 rounded-lg border border-dashed border-border bg-card px-6 py-12 text-center text-sm text-muted-foreground">
+              Loading inspections…
+            </div>
+          ) : error ? (
+            <div className="mt-4 rounded-lg border border-destructive/40 bg-card px-6 py-12 text-center text-sm text-destructive">
+              {error}
+            </div>
+          ) : records.length === 0 ? (
             <div className="mt-4 rounded-lg border border-dashed border-border bg-card px-6 py-12 text-center">
               <FileText className="mx-auto size-8 text-muted-foreground" />
               <p className="mt-3 text-sm text-muted-foreground">
@@ -141,7 +181,7 @@ function InspectionsIndex() {
                       variant="ghost"
                       size="icon"
                       aria-label="Delete inspection"
-                      onClick={() => inspectionStore.remove(record.id)}
+                      onClick={() => void inspectionStore.remove(record.id).catch(console.error)}
                     >
                       <Trash2 className="size-4" />
                     </Button>

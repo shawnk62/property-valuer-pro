@@ -1,35 +1,48 @@
 import { schema } from "./schema";
 import type { InspectionRecord, InspectionValues } from "./types";
+import { supabase } from "@/lib/supabase";
 
 /**
- * Repository boundary. Phase 1 persists to the device; Phase 2 swaps the
- * implementation for Lovable Cloud without touching the form components.
+ * Repository boundary.
+ * Phase 1 was localStorage. This implementation uses Supabase so the same
+ * authenticated user sees the same inspections on every device.
  */
 
-const KEY = "qld-inspections-v1";
+type DbRow = {
+  id: string;
+  user_id: string;
+  status: "draft" | "submitted";
+  form_values: InspectionValues;
+  schema_version: string;
+  created_at: string;
+  updated_at: string;
+  submitted_at: string | null;
+};
+
+function rowToRecord(row: DbRow): InspectionRecord {
+  return {
+    id: row.id,
+    status: row.status,
+    values: row.form_values ?? {},
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    submittedAt: row.submitted_at ?? undefined,
+    schemaVersion: row.schema_version,
+  };
+}
+
+async function requireUserId(): Promise<string> {
+  const { data, error } = await supabase.auth.getUser();
+  if (error) throw error;
+  const user = data.user;
+  if (!user) throw new Error("Not signed in");
+  return user.id;
+}
 
 const listeners = new Set<() => void>();
 
 function emit() {
   for (const l of listeners) l();
-}
-
-function read(): InspectionRecord[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as InspectionRecord[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function write(records: InspectionRecord[]) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(KEY, JSON.stringify(records));
-  emit();
 }
 
 export const inspectionStore = {
@@ -39,46 +52,73 @@ export const inspectionStore = {
       listeners.delete(listener);
     };
   },
-  list(): InspectionRecord[] {
-    return read().sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+
+  async list(): Promise<InspectionRecord[]> {
+    const { data, error } = await supabase
+      .from("inspections")
+      .select("*")
+      .order("updated_at", { ascending: false });
+    if (error) throw error;
+    return (data as DbRow[]).map(rowToRecord);
   },
-  get(id: string): InspectionRecord | undefined {
-    return read().find((r) => r.id === id);
+
+  async get(id: string): Promise<InspectionRecord | undefined> {
+    const { data, error } = await supabase
+      .from("inspections")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? rowToRecord(data as DbRow) : undefined;
   },
-  create(): InspectionRecord {
-    const now = new Date().toISOString();
-    const record: InspectionRecord = {
-      id:
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `insp-${Date.now()}`,
-      status: "draft",
-      values: {},
-      createdAt: now,
-      updatedAt: now,
-      schemaVersion: schema.version,
-    };
-    write([record, ...read()]);
+
+  async create(): Promise<InspectionRecord> {
+    const userId = await requireUserId();
+    const { data, error } = await supabase
+      .from("inspections")
+      .insert({
+        user_id: userId,
+        status: "draft",
+        form_values: {},
+        schema_version: schema.version,
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+    const record = rowToRecord(data as DbRow);
+    emit();
     return record;
   },
-  save(id: string, values: InspectionValues) {
-    const records = read();
-    const index = records.findIndex((r) => r.id === id);
-    const existing = records[index];
-    if (!existing) return;
-    records[index] = { ...existing, values, updatedAt: new Date().toISOString() };
-    write(records);
+
+  async save(id: string, values: InspectionValues): Promise<void> {
+    const { error } = await supabase
+      .from("inspections")
+      .update({
+        form_values: values,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+    if (error) throw error;
+    emit();
   },
-  submit(id: string) {
-    const records = read();
-    const index = records.findIndex((r) => r.id === id);
-    const existing = records[index];
-    if (!existing) return;
+
+  async submit(id: string): Promise<void> {
     const now = new Date().toISOString();
-    records[index] = { ...existing, status: "submitted", submittedAt: now, updatedAt: now };
-    write(records);
+    const { error } = await supabase
+      .from("inspections")
+      .update({
+        status: "submitted",
+        submitted_at: now,
+        updated_at: now,
+      })
+      .eq("id", id);
+    if (error) throw error;
+    emit();
   },
-  remove(id: string) {
-    write(read().filter((r) => r.id !== id));
+
+  async remove(id: string): Promise<void> {
+    const { error } = await supabase.from("inspections").delete().eq("id", id);
+    if (error) throw error;
+    emit();
   },
 };
