@@ -47,11 +47,11 @@ Failures (bad key, rate limit, no credit, provider outage) surface as a clear me
 On a new inspection, an "Import property data" panel above Section 1:
 
 - paste a Landchecker (or similar) property summary, or drop the PDF
-- the configured model extracts Address, Suburb, State, Postcode, Lot/Plan, Title Reference, Legal Description, LGA, land area, zoning and any other Section 1 fields present
+- the **same LLM provider and model selected for narrative generation** extracts Address, Suburb, State, Postcode, Lot/Plan, Title Reference, Legal Description, LGA, land area, zoning and any other Section 1 fields present
 - results are shown as a side-by-side review — existing value vs extracted value — and nothing is written until you accept, per field or all at once
 - every imported field is tagged with its source so it's clear what came from the import versus your own entry
 
-The extractor sits behind an adapter interface, so when real Landchecker or Cotality API credentials become available, that becomes another source feeding the same review step with no change to the form.
+The extractor sits behind an adapter interface, so when real Landchecker or Cotality API credentials become available, that becomes another source feeding the same review step with no change to the form. The extraction prompt is lightweight and separate from the narrative prompts, but it runs through the same provider helper so there is only one key and one model to configure.
 
 ## Technical notes
 
