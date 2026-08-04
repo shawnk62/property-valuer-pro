@@ -85,7 +85,7 @@ export function SelectInput({
   onChange: (v: string) => void;
 }) {
   return (
-    <Select value={value || undefined} onValueChange={onChange}>
+    <Select {...(value ? { value } : {})} onValueChange={onChange}>
       <SelectTrigger id={id} className={cn("h-12 text-base", invalid && "border-destructive")}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
