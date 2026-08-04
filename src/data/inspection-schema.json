@@ -2831,6 +2831,10 @@
               "label": "Diesel generator"
             },
             {
+              "id": "aux_petrol",
+              "label": "Petrol generator"
+            },
+            {
               "id": "aux_gas",
               "label": "Gas generator"
             },
