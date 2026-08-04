@@ -128,9 +128,15 @@ function CheckboxGroup({
   const [open, setOpen] = useState(selected.length > 0 || field.items.length <= 12);
 
   const toggle = (id: string) => {
-    const next = selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id];
-    onChange(field.name, next);
+    const next = selected.includes(id)
+      ? selected.filter((s) => s !== id)
+      : [...selected, id];
+    // Keep stored order identical to schema order, not tap order.
+    const ordered = field.items.map((i) => i.id).filter((i) => next.includes(i));
+    onChange(field.name, ordered);
   };
+
+  const runs = splitIntoRuns(field);
 
   return (
     <div className="rounded-lg border border-border bg-card">
@@ -152,15 +158,28 @@ function CheckboxGroup({
 
       {open ? (
         <div className="space-y-4 border-t border-border px-4 py-4">
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {field.items.map((item) => (
-              <CheckboxRow
-                key={item.id}
-                id={item.id}
-                label={item.label}
-                checked={selected.includes(item.id)}
-                onChange={() => toggle(item.id)}
-              />
+          <div className="space-y-4">
+            {runs.map((run, i) => (
+              <div key={run.heading ?? i} className="space-y-2">
+                {run.heading ? (
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {run.heading}
+                  </p>
+                ) : null}
+                {/* Column flow: reading down each column follows schema order. */}
+                <div className="gap-2 [column-fill:balance] sm:columns-2 lg:columns-3">
+                  {run.items.map((item) => (
+                    <div key={item.id} className="mb-2 break-inside-avoid">
+                      <CheckboxRow
+                        id={item.id}
+                        label={item.label}
+                        checked={selected.includes(item.id)}
+                        onChange={() => toggle(item.id)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
