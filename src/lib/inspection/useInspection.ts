@@ -42,7 +42,12 @@ export function useInspection(id: string) {
     flush(values);
   }, [flush, values]);
 
-  useEffect(() => () => (timer.current ? clearTimeout(timer.current) : undefined), []);
+  useEffect(() => {
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, []);
+
 
   return { record, values, setValue, saveNow, savedAt, loaded };
 }
