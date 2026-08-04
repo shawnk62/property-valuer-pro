@@ -62,16 +62,18 @@ export const inspectionStore = {
   save(id: string, values: InspectionValues) {
     const records = read();
     const index = records.findIndex((r) => r.id === id);
-    if (index === -1) return;
-    records[index] = { ...records[index], values, updatedAt: new Date().toISOString() };
+    const existing = records[index];
+    if (!existing) return;
+    records[index] = { ...existing, values, updatedAt: new Date().toISOString() };
     write(records);
   },
   submit(id: string) {
     const records = read();
     const index = records.findIndex((r) => r.id === id);
-    if (index === -1) return;
+    const existing = records[index];
+    if (!existing) return;
     const now = new Date().toISOString();
-    records[index] = { ...records[index], status: "submitted", submittedAt: now, updatedAt: now };
+    records[index] = { ...existing, status: "submitted", submittedAt: now, updatedAt: now };
     write(records);
   },
   remove(id: string) {
