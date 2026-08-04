@@ -2,6 +2,29 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { inspectionStore } from "@/lib/inspection/storage";
 import type { InspectionRecord, InspectionValues } from "@/lib/inspection/types";
 
+/**
+ * Sign-off fields that mirror an earlier answer until the valuer edits them
+ * by hand. Source field name -> sign-off field name.
+ */
+const MIRRORED_FIELDS: Record<string, string> = {
+  insp_valuer: "sign_name",
+  insp_date: "sign_date",
+};
+
+function asText(v: InspectionValues[string]): string {
+  return typeof v === "string" ? v : "";
+}
+
+/** Pre-fills empty sign-off fields from their source field. */
+function applyMirrors(values: InspectionValues): InspectionValues {
+  let next = values;
+  for (const [source, target] of Object.entries(MIRRORED_FIELDS)) {
+    const from = asText(values[source]);
+    if (from && !asText(values[target])) next = { ...next, [target]: from };
+  }
+  return next;
+}
+
 /** Loads a record on the client and autosaves value changes. */
 export function useInspection(id: string) {
   const [record, setRecord] = useState<InspectionRecord | null>(null);
@@ -13,7 +36,7 @@ export function useInspection(id: string) {
   useEffect(() => {
     const found = inspectionStore.get(id) ?? null;
     setRecord(found);
-    setValues(found?.values ?? {});
+    setValues(applyMirrors(found?.values ?? {}));
     setLoaded(true);
   }, [id]);
 
@@ -28,7 +51,15 @@ export function useInspection(id: string) {
   const setValue = useCallback(
     (key: string, value: InspectionValues[string]) => {
       setValues((prev) => {
-        const next = { ...prev, [key]: value };
+        let next: InspectionValues = { ...prev, [key]: value };
+        const target = MIRRORED_FIELDS[key];
+        if (target) {
+          // Keep the sign-off copy in sync unless it was edited by hand.
+          const current = asText(prev[target]);
+          if (!current || current === asText(prev[key])) {
+            next = { ...next, [target]: typeof value === "string" ? value : "" };
+          }
+        }
         if (timer.current) clearTimeout(timer.current);
         timer.current = setTimeout(() => flush(next), 400);
         return next;
@@ -36,6 +67,7 @@ export function useInspection(id: string) {
     },
     [flush],
   );
+
 
   const saveNow = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
