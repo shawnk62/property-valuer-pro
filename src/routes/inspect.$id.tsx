@@ -62,8 +62,20 @@ function InspectionWizard() {
     if (missing.length > 0) {
       setShowErrors(true);
       toast.error(`Complete ${missing.length} required field${missing.length === 1 ? "" : "s"} on this step.`);
+      // Make the reason visible: jump to the first outstanding field.
+      requestAnimationFrame(() => {
+        const first = missing[0];
+        const el = first ? document.getElementById(first.name) : null;
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          if (el instanceof HTMLElement) el.focus({ preventScroll: true });
+        } else {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      });
       return;
     }
+
     setShowErrors(false);
     saveNow();
     if (step === sections.length - 1) {
