@@ -10,6 +10,10 @@ import { useInspection } from "@/lib/inspection/useInspection";
 import { missingForStep } from "@/lib/inspection/validation";
 
 export const Route = createFileRoute("/inspect/$id")({
+  validateSearch: (search: Record<string, unknown>): { step?: number } => {
+    const raw = Number(search["step"]);
+    return Number.isFinite(raw) && raw >= 0 ? { step: Math.floor(raw) } : {};
+  },
   head: () => ({
     meta: [
       { title: "Subject Property Inspection — QLD Inspections" },
@@ -31,13 +35,15 @@ export const Route = createFileRoute("/inspect/$id")({
 
 function InspectionWizard() {
   const { id } = Route.useParams();
+  const { step: initialStep } = Route.useSearch();
   const navigate = useNavigate();
   const { record, values, setValue, saveNow, loaded } = useInspection(id);
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(Math.min(initialStep ?? 0, sections.length - 1));
   const [showErrors, setShowErrors] = useState(false);
 
   const section = sections[step];
   const missing = useMemo(() => missingForStep(values, step), [values, step]);
+
 
   if (loaded && !record) {
     return (

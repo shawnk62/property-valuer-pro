@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InspectIdRouteImport } from './routes/inspect.$id'
+import { Route as InspectIdReviewRouteImport } from './routes/inspect.$id_.review'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,40 @@ const InspectIdRoute = InspectIdRouteImport.update({
   path: '/inspect/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InspectIdReviewRoute = InspectIdReviewRouteImport.update({
+  id: '/inspect/$id_/review',
+  path: '/inspect/$id/review',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/inspect/$id': typeof InspectIdRoute
+  '/inspect/$id/review': typeof InspectIdReviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/inspect/$id': typeof InspectIdRoute
+  '/inspect/$id/review': typeof InspectIdReviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/inspect/$id': typeof InspectIdRoute
+  '/inspect/$id_/review': typeof InspectIdReviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/inspect/$id'
+  fullPaths: '/' | '/inspect/$id' | '/inspect/$id/review'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/inspect/$id'
-  id: '__root__' | '/' | '/inspect/$id'
+  to: '/' | '/inspect/$id' | '/inspect/$id/review'
+  id: '__root__' | '/' | '/inspect/$id' | '/inspect/$id_/review'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   InspectIdRoute: typeof InspectIdRoute
+  InspectIdReviewRoute: typeof InspectIdReviewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InspectIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/inspect/$id_/review': {
+      id: '/inspect/$id_/review'
+      path: '/inspect/$id/review'
+      fullPath: '/inspect/$id/review'
+      preLoaderRoute: typeof InspectIdReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   InspectIdRoute: InspectIdRoute,
+  InspectIdReviewRoute: InspectIdReviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
