@@ -75,15 +75,19 @@ function ReviewScreen() {
     );
   }
 
-  const submit = () => {
+  const submit = async () => {
     if (missing.length > 0) {
       toast.error("Complete all required fields before submitting.");
       return;
     }
-    inspectionStore.submit(id);
-    setSubmitted(true);
-    window.scrollTo({ top: 0 });
-    toast.success("Inspection submitted");
+    try {
+      await inspectionStore.submit(id);
+      setSubmitted(true);
+      window.scrollTo({ top: 0 });
+      toast.success("Inspection submitted");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Submit failed");
+    }
   };
 
   const copyJson = async () => {
@@ -289,7 +293,7 @@ function ReviewScreen() {
             >
               Continue editing
             </Button>
-            <Button size="lg" onClick={submit} className="flex-1">
+            <Button size="lg" onClick={() => void submit()} className="flex-1">
               <Send className="size-4" />
               Submit inspection
             </Button>

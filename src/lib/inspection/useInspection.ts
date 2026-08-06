@@ -31,19 +31,39 @@ export function useInspection(id: string) {
   const [values, setValues] = useState<InspectionValues>({});
   const [loaded, setLoaded] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const found = inspectionStore.get(id) ?? null;
-    setRecord(found);
-    setValues(applyMirrors(found?.values ?? {}));
-    setLoaded(true);
+    let cancelled = false;
+    setLoaded(false);
+    setError(null);
+    inspectionStore
+      .get(id)
+      .then((found) => {
+        if (cancelled) return;
+        setRecord(found ?? null);
+        setValues(applyMirrors(found?.values ?? {}));
+        setLoaded(true);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Failed to load inspection");
+        setLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   const flush = useCallback(
     (next: InspectionValues) => {
-      inspectionStore.save(id, next);
-      setSavedAt(new Date().toISOString());
+      void inspectionStore
+        .save(id, next)
+        .then(() => setSavedAt(new Date().toISOString()))
+        .catch((err: unknown) => {
+          setError(err instanceof Error ? err.message : "Failed to save");
+        });
     },
     [id],
   );
@@ -54,7 +74,6 @@ export function useInspection(id: string) {
         let next: InspectionValues = { ...prev, [key]: value };
         const target = MIRRORED_FIELDS[key];
         if (target) {
-          // Keep the sign-off copy in sync unless it was edited by hand.
           const current = asText(prev[target]);
           if (!current || current === asText(prev[key])) {
             next = { ...next, [target]: typeof value === "string" ? value : "" };
@@ -68,7 +87,6 @@ export function useInspection(id: string) {
     [flush],
   );
 
-
   const saveNow = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
     flush(values);
@@ -80,16 +98,38 @@ export function useInspection(id: string) {
     };
   }, []);
 
-
-  return { record, values, setValue, saveNow, savedAt, loaded };
+  return { record, values, setValue, saveNow, savedAt, loaded, error };
 }
 
 export function useInspectionList() {
   const [records, setRecords] = useState<InspectionRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    const sync = () => setRecords(inspectionStore.list());
+    let cancelled = false;
+
+    const sync = () => {
+      setLoading(true);
+      inspectionStore
+        .list()
+        .then((list) => {
+          if (cancelled) return;
+          setRecords(list);
+          setError(null);
+        })
+        .catch((err: unknown) => {
+          if (cancelled) return;
+          setError(err instanceof Error ? err.message : "Failed to list inspections");
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    };
+
     sync();
     return inspectionStore.subscribe(sync);
   }, []);
-  return records;
+
+  return { records, loading, error };
 }
