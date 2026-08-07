@@ -140,8 +140,95 @@
         {
           "name": "prop_view",
           "label": "View",
-          "type": "text",
-          "multiline": false
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "view_neighbourhood",
+              "label": "Neighbourhood view"
+            },
+            {
+              "id": "view_surrounding",
+              "label": "Surrounding area view"
+            },
+            {
+              "id": "view_streetscape",
+              "label": "Streetscape view"
+            },
+            {
+              "id": "view_parkland",
+              "label": "Parkland / reserve view"
+            },
+            {
+              "id": "view_bushland",
+              "label": "Bushland view"
+            },
+            {
+              "id": "view_hills",
+              "label": "Hills view"
+            },
+            {
+              "id": "view_mountain",
+              "label": "Mountain view"
+            },
+            {
+              "id": "view_ocean",
+              "label": "Ocean view"
+            },
+            {
+              "id": "view_bay",
+              "label": "Bay view"
+            },
+            {
+              "id": "view_river",
+              "label": "River view"
+            },
+            {
+              "id": "view_creek",
+              "label": "Creek / waterway view"
+            },
+            {
+              "id": "view_lake",
+              "label": "Lake / lagoon view"
+            },
+            {
+              "id": "view_city",
+              "label": "City view"
+            },
+            {
+              "id": "view_city_skyline",
+              "label": "City skyline view"
+            },
+            {
+              "id": "view_panoramic",
+              "label": "Panoramic view"
+            },
+            {
+              "id": "view_district",
+              "label": "District view"
+            },
+            {
+              "id": "view_rural",
+              "label": "Rural outlook"
+            },
+            {
+              "id": "view_golf",
+              "label": "Golf course view"
+            },
+            {
+              "id": "view_limited",
+              "label": "Limited view"
+            },
+            {
+              "id": "view_none",
+              "label": "No significant view"
+            },
+            {
+              "id": "view_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "prop_view_cond",
+          "notes_field": "prop_view_notes"
         },
         {
           "name": "prop_zoning",
@@ -389,8 +476,169 @@
           "multiline": false
         },
         {
+          "name": "accom",
+          "label": "Accommodation Layout and Rooms",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "accom_open_plan_ldk",
+              "label": "Open plan lounge / dining / kitchen"
+            },
+            {
+              "id": "accom_separate_kitchen",
+              "label": "Separate kitchen"
+            },
+            {
+              "id": "accom_lounge_dining",
+              "label": "Lounge / dining"
+            },
+            {
+              "id": "accom_bir_bedrooms",
+              "label": "Built-in bedrooms"
+            },
+            {
+              "id": "accom_main_wir_ensuite",
+              "label": "Main bedroom with walk-in wardrobe and ensuite"
+            },
+            {
+              "id": "accom_office",
+              "label": "Office"
+            },
+            {
+              "id": "accom_media",
+              "label": "Media room"
+            },
+            {
+              "id": "accom_rumpus",
+              "label": "Rumpus"
+            },
+            {
+              "id": "accom_powder",
+              "label": "Powder room"
+            },
+            {
+              "id": "accom_bathroom",
+              "label": "Bathroom"
+            },
+            {
+              "id": "accom_bathroom_toilet",
+              "label": "Bathroom / toilet"
+            },
+            {
+              "id": "accom_separate_toilet",
+              "label": "Separate toilet"
+            },
+            {
+              "id": "accom_laundry",
+              "label": "Laundry"
+            },
+            {
+              "id": "accom_front_patio_covered",
+              "label": "Front patio - covered"
+            },
+            {
+              "id": "accom_front_patio_uncovered",
+              "label": "Front patio - uncovered"
+            },
+            {
+              "id": "accom_rear_patio_covered",
+              "label": "Rear patio - covered"
+            },
+            {
+              "id": "accom_rear_patio_uncovered",
+              "label": "Rear patio - uncovered"
+            },
+            {
+              "id": "accom_front_deck_covered",
+              "label": "Front deck - covered"
+            },
+            {
+              "id": "accom_front_deck_uncovered",
+              "label": "Front deck - uncovered"
+            },
+            {
+              "id": "accom_rear_deck_covered",
+              "label": "Rear deck - covered"
+            },
+            {
+              "id": "accom_rear_deck_uncovered",
+              "label": "Rear deck - uncovered"
+            },
+            {
+              "id": "accom_front_verandah",
+              "label": "Front verandah"
+            },
+            {
+              "id": "accom_rear_verandah",
+              "label": "Rear verandah"
+            },
+            {
+              "id": "accom_downstairs",
+              "label": "Downstairs accommodation"
+            },
+            {
+              "id": "accom_upstairs",
+              "label": "Upstairs accommodation"
+            },
+            {
+              "id": "accom_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "accom_cond",
+          "notes_field": "accom_notes"
+        },
+        {
           "name": "imp_gla",
           "label": "GLA m²",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "area_living_upstairs",
+          "label": "Living Area Upstairs (m²)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "area_living_downstairs",
+          "label": "Living Area Downstairs (m²)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "area_covered_front_patio",
+          "label": "Covered Front Patio / Deck (m²)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "area_covered_rear_patio",
+          "label": "Covered Rear Patio / Deck (m²)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "area_verandahs",
+          "label": "Verandahs (m²)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "area_shed",
+          "label": "Shed/s (m²)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "area_garage",
+          "label": "Garage (m²)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "area_carport",
+          "label": "Carport (m²)",
           "type": "text",
           "multiline": false
         },
@@ -513,6 +761,67 @@
           "label": "Neighbourhood Description",
           "type": "text",
           "multiline": true
+        },
+        {
+          "name": "nbhd_character",
+          "label": "Neighbourhood Character",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "nbhd_char_neighbourhood",
+              "label": "Neighbourhood"
+            },
+            {
+              "id": "nbhd_char_established",
+              "label": "Established neighbourhood"
+            },
+            {
+              "id": "nbhd_char_mature_trees",
+              "label": "Mature trees"
+            },
+            {
+              "id": "nbhd_char_leafy",
+              "label": "Leafy streetscape"
+            },
+            {
+              "id": "nbhd_char_hilly",
+              "label": "Hilly"
+            },
+            {
+              "id": "nbhd_char_elevated",
+              "label": "Elevated"
+            },
+            {
+              "id": "nbhd_char_flat",
+              "label": "Predominantly flat"
+            },
+            {
+              "id": "nbhd_char_canal",
+              "label": "Canal / waterfront precinct"
+            },
+            {
+              "id": "nbhd_char_coastal",
+              "label": "Coastal"
+            },
+            {
+              "id": "nbhd_char_hinterland",
+              "label": "Hinterland"
+            },
+            {
+              "id": "nbhd_char_quiet",
+              "label": "Quiet residential"
+            },
+            {
+              "id": "nbhd_char_busy",
+              "label": "Busy thoroughfare influence"
+            },
+            {
+              "id": "nbhd_char_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "nbhd_character_cond",
+          "notes_field": "nbhd_character_notes"
         },
         {
           "name": "nbhd_market_conditions",
@@ -1019,6 +1328,111 @@
           "notes_field": "exc_notes"
         },
         {
+          "name": "topo",
+          "label": "Topography",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "topo_level",
+              "label": "Level"
+            },
+            {
+              "id": "topo_slope_front",
+              "label": "Slopes to front"
+            },
+            {
+              "id": "topo_slope_rear",
+              "label": "Slopes to rear"
+            },
+            {
+              "id": "topo_slope_right",
+              "label": "Slopes to right"
+            },
+            {
+              "id": "topo_slope_left",
+              "label": "Slopes to left"
+            },
+            {
+              "id": "topo_slope_north",
+              "label": "Slopes to north"
+            },
+            {
+              "id": "topo_slope_south",
+              "label": "Slopes to south"
+            },
+            {
+              "id": "topo_slope_east",
+              "label": "Slopes to east"
+            },
+            {
+              "id": "topo_slope_west",
+              "label": "Slopes to west"
+            },
+            {
+              "id": "topo_gentle",
+              "label": "Gentle fall"
+            },
+            {
+              "id": "topo_moderate",
+              "label": "Moderate fall"
+            },
+            {
+              "id": "topo_steep",
+              "label": "Steep fall"
+            },
+            {
+              "id": "topo_undulating",
+              "label": "Undulating"
+            },
+            {
+              "id": "topo_other",
+              "label": "Other"
+            },
+            {
+              "id": "topo_fall_to_road",
+              "label": "Falls to the road"
+            },
+            {
+              "id": "topo_fall_from_road",
+              "label": "Falls from the road"
+            },
+            {
+              "id": "topo_gentle_to_road",
+              "label": "Falls gently to the road"
+            },
+            {
+              "id": "topo_moderate_to_road",
+              "label": "Falls moderately to the road"
+            },
+            {
+              "id": "topo_steep_to_road",
+              "label": "Falls steeply to the road"
+            },
+            {
+              "id": "topo_gentle_from_road",
+              "label": "Falls gently from the road"
+            },
+            {
+              "id": "topo_moderate_from_road",
+              "label": "Falls moderately from the road"
+            },
+            {
+              "id": "topo_steep_from_road",
+              "label": "Falls steeply from the road"
+            },
+            {
+              "id": "topo_well_drained",
+              "label": "Well drained"
+            },
+            {
+              "id": "topo_poorly_drained",
+              "label": "Poorly drained"
+            }
+          ],
+          "condition_field": "topo_cond",
+          "notes_field": "topo_notes"
+        },
+        {
           "name": "land",
           "label": "Landscaping",
           "type": "checkbox_group",
@@ -1129,6 +1543,10 @@
               "label": "Double driveway"
             },
             {
+              "id": "va_stamped_concrete",
+              "label": "Stamped concrete driveway"
+            },
+            {
               "id": "va_circular",
               "label": "Circular driveway"
             },
@@ -1204,6 +1622,14 @@
             {
               "id": "fence_masonry",
               "label": "Masonry fencing"
+            },
+            {
+              "id": "fence_rendered",
+              "label": "Rendered fencing"
+            },
+            {
+              "id": "fence_automatic_gate",
+              "label": "Automatic gate"
             },
             {
               "id": "fence_pvc",
@@ -1287,6 +1713,72 @@
       "id": "3",
       "title": "Building Construction",
       "fields": [
+        {
+          "name": "foundations",
+          "label": "Foundations",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "found_concrete_slab",
+              "label": "Concrete slab"
+            },
+            {
+              "id": "found_concrete_strip",
+              "label": "Concrete strip footings"
+            },
+            {
+              "id": "found_steel_posts",
+              "label": "Steel posts"
+            },
+            {
+              "id": "found_timber_stumps",
+              "label": "Timber stumps"
+            },
+            {
+              "id": "found_concrete_stumps",
+              "label": "Concrete stumps"
+            },
+            {
+              "id": "found_piers",
+              "label": "Piers"
+            },
+            {
+              "id": "found_combined",
+              "label": "Combined foundation types"
+            },
+            {
+              "id": "found_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "foundations_cond",
+          "notes_field": "foundations_notes"
+        },
+        {
+          "name": "floor_structure",
+          "label": "Floor Structure",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "floor_struct_concrete",
+              "label": "Concrete"
+            },
+            {
+              "id": "floor_struct_timber",
+              "label": "Timber"
+            },
+            {
+              "id": "floor_struct_mixed",
+              "label": "Mixed concrete and timber"
+            },
+            {
+              "id": "floor_struct_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "floor_structure_cond",
+          "notes_field": "floor_structure_notes"
+        },
         {
           "name": "wall_framing",
           "label": "Wall Framing",
@@ -1423,12 +1915,28 @@
               "label": "Double brick"
             },
             {
+              "id": "ext_rendered_brick",
+              "label": "Rendered brick"
+            },
+            {
+              "id": "ext_bag_washed_brick",
+              "label": "Bag washed brick"
+            },
+            {
               "id": "ext_solid_masonry",
               "label": "Solid masonry"
             },
             {
               "id": "ext_timber_weatherboard",
               "label": "Timber weatherboard"
+            },
+            {
+              "id": "ext_plank",
+              "label": "Plank"
+            },
+            {
+              "id": "ext_flatsheet",
+              "label": "Flatsheet"
             },
             {
               "id": "ext_timber_chamferboard",
@@ -1492,6 +2000,10 @@
           "type": "checkbox_group",
           "items": [
             {
+              "id": "rc_metal",
+              "label": "Metal"
+            },
+            {
               "id": "rc_colorbond",
               "label": "Colorbond metal sheet"
             },
@@ -1551,6 +2063,10 @@
             {
               "id": "rd_colorbond",
               "label": "Colorbond metal gutters and downpipes"
+            },
+            {
+              "id": "rd_metal",
+              "label": "Metal gutters"
             },
             {
               "id": "rd_pvc",
@@ -1718,6 +2234,14 @@
             {
               "id": "il_mixed",
               "label": "Mixed internal linings"
+            },
+            {
+              "id": "il_flatsheet",
+              "label": "Flatsheet"
+            },
+            {
+              "id": "il_vj_timber",
+              "label": "VJ timber"
             }
           ],
           "condition_field": "il_cond",
@@ -1755,6 +2279,14 @@
             {
               "id": "ceil_mixed",
               "label": "Mixed ceiling types"
+            },
+            {
+              "id": "ceil_flatsheet",
+              "label": "Flatsheet"
+            },
+            {
+              "id": "ceil_vj_timber",
+              "label": "VJ timber"
             }
           ],
           "condition_field": "ceil_cond",
@@ -1896,6 +2428,10 @@
               "label": "Energy-efficient feature"
             },
             {
+              "id": "sd_solar",
+              "label": "Solar"
+            },
+            {
               "id": "sd_extensive_outdoor",
               "label": "Extensive outdoor living area"
             },
@@ -2000,6 +2536,10 @@
               "label": "Ornate skirting boards"
             },
             {
+              "id": "sd_plantation_shutters",
+              "label": "Plantation shutters"
+            },
+            {
               "id": "sd_thoughtful_storage",
               "label": "Thoughtful storage"
             },
@@ -2074,6 +2614,55 @@
           ],
           "condition_field": "sd_cond",
           "notes_field": "sd_notes"
+        },
+        {
+          "name": "pool",
+          "label": "Pool",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "pool_inground",
+              "label": "In-ground pool"
+            },
+            {
+              "id": "pool_above_ground",
+              "label": "Above ground pool"
+            },
+            {
+              "id": "pool_infinity",
+              "label": "Infinity edge pool"
+            },
+            {
+              "id": "pool_heated",
+              "label": "Heated pool"
+            },
+            {
+              "id": "pool_auto_cleaner",
+              "label": "Automatic cleaner"
+            },
+            {
+              "id": "pool_salt",
+              "label": "Salt water system"
+            },
+            {
+              "id": "pool_chlorine",
+              "label": "Chlorine system"
+            },
+            {
+              "id": "pool_covered",
+              "label": "Pool cover"
+            },
+            {
+              "id": "pool_fencing_compliant",
+              "label": "Pool fencing appears compliant"
+            },
+            {
+              "id": "pool_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "pool_cond",
+          "notes_field": "pool_notes"
         },
         {
           "name": "design_features_notes",
@@ -2197,6 +2786,7 @@
                 "Porcelain stone",
                 "Sintered stone",
                 "Engineered stone pre-ban",
+                "Engineered benchtop",
                 "Laminate",
                 "Timber",
                 "Other",
@@ -2613,6 +3203,14 @@
               "label": "Storage rooms"
             },
             {
+              "id": "am_wir",
+              "label": "Walk-in wardrobe"
+            },
+            {
+              "id": "am_bir",
+              "label": "Built-in wardrobe"
+            },
+            {
               "id": "am_cleaners",
               "label": "Cleaners facilities"
             },
@@ -2937,6 +3535,10 @@
             {
               "id": "park_garage_5",
               "label": "Five car garage"
+            },
+            {
+              "id": "park_electric_door",
+              "label": "Electric garage door"
             },
             {
               "id": "park_carport_1",
