@@ -49,6 +49,7 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
   }
 
   if (field.type === "select") {
+    const isDesign = field.name === "imp_design";
     return (
       <div className="space-y-2">
         <FieldLabel htmlFor={field.name} required={required}>
@@ -61,6 +62,11 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
           invalid={invalid}
           onChange={(v) => onChange(field.name, v)}
         />
+        {isDesign ? (
+          <p className="text-xs text-muted-foreground">
+            Selecting a style pre-fills typical construction features (foundations, cladding, roof, linings, verandahs, etc.). You can change or clear any item afterwards.
+          </p>
+        ) : null}
       </div>
     );
   }

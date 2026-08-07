@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { applyDesignPreset, DESIGN_PRESETS } from "@/lib/inspection/design-presets";
 import { inspectionStore } from "@/lib/inspection/storage";
 import type { InspectionRecord, InspectionValues } from "@/lib/inspection/types";
 
@@ -72,6 +74,8 @@ export function useInspection(id: string) {
     (key: string, value: InspectionValues[string]) => {
       setValues((prev) => {
         let next: InspectionValues = { ...prev, [key]: value };
+
+        // Mirror selected source fields into sign-off until the user edits them.
         const target = MIRRORED_FIELDS[key];
         if (target) {
           const current = asText(prev[target]);
@@ -79,6 +83,18 @@ export function useInspection(id: string) {
             next = { ...next, [target]: typeof value === "string" ? value : "" };
           }
         }
+
+        // When Design / Style is chosen, pre-fill typical construction features
+        // that are still empty. Existing answers are never overwritten.
+        if (key === "imp_design" && typeof value === "string" && value && DESIGN_PRESETS[value]) {
+          const before = next;
+          next = applyDesignPreset(next, value);
+          // Notify only when something actually changed.
+          if (next !== before) {
+            toast.success(`Typical features for “${value}” pre-selected. Adjust any that do not apply.`);
+          }
+        }
+
         if (timer.current) clearTimeout(timer.current);
         timer.current = setTimeout(() => flush(next), 400);
         return next;
