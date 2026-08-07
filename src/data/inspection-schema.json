@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "9",
+  "version": "10",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -136,99 +136,6 @@
           "label": "Shape",
           "type": "text",
           "multiline": false
-        },
-        {
-          "name": "prop_view",
-          "label": "View",
-          "type": "checkbox_group",
-          "items": [
-            {
-              "id": "view_neighbourhood",
-              "label": "Neighbourhood view"
-            },
-            {
-              "id": "view_surrounding",
-              "label": "Surrounding area view"
-            },
-            {
-              "id": "view_streetscape",
-              "label": "Streetscape view"
-            },
-            {
-              "id": "view_parkland",
-              "label": "Parkland / reserve view"
-            },
-            {
-              "id": "view_bushland",
-              "label": "Bushland view"
-            },
-            {
-              "id": "view_hills",
-              "label": "Hills view"
-            },
-            {
-              "id": "view_mountain",
-              "label": "Mountain view"
-            },
-            {
-              "id": "view_ocean",
-              "label": "Ocean view"
-            },
-            {
-              "id": "view_bay",
-              "label": "Bay view"
-            },
-            {
-              "id": "view_river",
-              "label": "River view"
-            },
-            {
-              "id": "view_creek",
-              "label": "Creek / waterway view"
-            },
-            {
-              "id": "view_lake",
-              "label": "Lake / lagoon view"
-            },
-            {
-              "id": "view_city",
-              "label": "City view"
-            },
-            {
-              "id": "view_city_skyline",
-              "label": "City skyline view"
-            },
-            {
-              "id": "view_panoramic",
-              "label": "Panoramic view"
-            },
-            {
-              "id": "view_district",
-              "label": "District view"
-            },
-            {
-              "id": "view_rural",
-              "label": "Rural outlook"
-            },
-            {
-              "id": "view_golf",
-              "label": "Golf course view"
-            },
-            {
-              "id": "view_limited",
-              "label": "Limited view"
-            },
-            {
-              "id": "view_none",
-              "label": "No significant view"
-            },
-            {
-              "id": "view_other",
-              "label": "Other"
-            }
-          ],
-          "condition_field": "prop_view_cond",
-          "notes_field": "prop_view_notes"
         },
         {
           "name": "prop_zoning",
@@ -718,6 +625,99 @@
       "id": "2",
       "title": "Site",
       "fields": [
+        {
+          "name": "prop_view",
+          "label": "View",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "view_neighbourhood",
+              "label": "Neighbourhood view"
+            },
+            {
+              "id": "view_surrounding",
+              "label": "Surrounding area view"
+            },
+            {
+              "id": "view_streetscape",
+              "label": "Streetscape view"
+            },
+            {
+              "id": "view_parkland",
+              "label": "Parkland / reserve view"
+            },
+            {
+              "id": "view_bushland",
+              "label": "Bushland view"
+            },
+            {
+              "id": "view_hills",
+              "label": "Hills view"
+            },
+            {
+              "id": "view_mountain",
+              "label": "Mountain view"
+            },
+            {
+              "id": "view_ocean",
+              "label": "Ocean view"
+            },
+            {
+              "id": "view_bay",
+              "label": "Bay view"
+            },
+            {
+              "id": "view_river",
+              "label": "River view"
+            },
+            {
+              "id": "view_creek",
+              "label": "Creek / waterway view"
+            },
+            {
+              "id": "view_lake",
+              "label": "Lake / lagoon view"
+            },
+            {
+              "id": "view_city",
+              "label": "City view"
+            },
+            {
+              "id": "view_city_skyline",
+              "label": "City skyline view"
+            },
+            {
+              "id": "view_panoramic",
+              "label": "Panoramic view"
+            },
+            {
+              "id": "view_district",
+              "label": "District view"
+            },
+            {
+              "id": "view_rural",
+              "label": "Rural outlook"
+            },
+            {
+              "id": "view_golf",
+              "label": "Golf course view"
+            },
+            {
+              "id": "view_limited",
+              "label": "Limited view"
+            },
+            {
+              "id": "view_none",
+              "label": "No significant view"
+            },
+            {
+              "id": "view_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "prop_view_cond",
+          "notes_field": "prop_view_notes"
+        },
         {
           "name": "svc_water",
           "label": "Water Supply",
@@ -1322,8 +1322,20 @@
               "label": "Cross fenced"
             },
             {
+              "id": "fence_front",
+              "label": "Front boundary fencing"
+            },
+            {
+              "id": "fence_side",
+              "label": "Side boundary fencing"
+            },
+            {
+              "id": "fence_rear",
+              "label": "Rear boundary fencing"
+            },
+            {
               "id": "fence_colorbond",
-              "label": "Colorbond fencing"
+              "label": "Colourbond fencing"
             },
             {
               "id": "fence_timber",
@@ -1352,10 +1364,6 @@
             {
               "id": "fence_rendered",
               "label": "Rendered fencing"
-            },
-            {
-              "id": "fence_automatic_gate",
-              "label": "Automatic gate"
             },
             {
               "id": "fence_pvc",
@@ -1406,16 +1414,8 @@
               "label": "Stockyards"
             },
             {
-              "id": "fence_front",
-              "label": "Front boundary fencing"
-            },
-            {
-              "id": "fence_side",
-              "label": "Side boundary fencing"
-            },
-            {
-              "id": "fence_rear",
-              "label": "Rear boundary fencing"
+              "id": "fence_automatic_gate",
+              "label": "Automatic gate"
             },
             {
               "id": "fence_vehicle_gates",
@@ -1587,7 +1587,7 @@
             },
             {
               "id": "ext_metal_colorbond",
-              "label": "Metal Colorbond cladding"
+              "label": "Metal Colourbond cladding"
             },
             {
               "id": "ext_stone",
@@ -1628,7 +1628,7 @@
             },
             {
               "id": "rc_colorbond",
-              "label": "Colorbond metal sheet"
+              "label": "Colourbond metal sheet"
             },
             {
               "id": "rc_corrugated",
@@ -1723,7 +1723,7 @@
           "items": [
             {
               "id": "rd_colorbond",
-              "label": "Colorbond metal gutters and downpipes"
+              "label": "Colourbond metal gutters and downpipes"
             },
             {
               "id": "rd_metal",

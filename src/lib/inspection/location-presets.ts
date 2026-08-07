@@ -40,7 +40,7 @@ export const LOCATION_PRESETS: Record<string, InspectionValues> = {
     svc_internet_type: "Fibre to the Node (FTTN)",
 
     // Fencing — urban/suburban assumed fenced back and sides
-    fence: ["fence_fenced", "fence_side", "fence_rear", "fence_colorbond"],
+    fence: ["fence_fenced", "fence_side", "fence_rear", "fence_colorbond", "fence_pedestrian_gates"],
   },
 
   Suburban: {
@@ -66,7 +66,7 @@ export const LOCATION_PRESETS: Record<string, InspectionValues> = {
     svc_storm_type: "Appears adequate",
     svc_internet_type: "Fibre to the Node (FTTN)",
 
-    fence: ["fence_fenced", "fence_side", "fence_rear", "fence_colorbond"],
+    fence: ["fence_fenced", "fence_side", "fence_rear", "fence_colorbond", "fence_pedestrian_gates"],
   },
 
   Rural: {
@@ -94,7 +94,7 @@ export const LOCATION_PRESETS: Record<string, InspectionValues> = {
     svc_internet_type: "Fixed Wireless NBN",
 
     // Rural fencing more often wire / post; still mark side + rear where present
-    fence: ["fence_fenced", "fence_side", "fence_rear", "fence_timber_post", "fence_four_wire"],
+    fence: ["fence_fenced", "fence_side", "fence_rear", "fence_timber_post", "fence_four_wire", "fence_pedestrian_gates"],
   },
 };
 
