@@ -82,7 +82,7 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     imp_units: "1",
     foundations: ["found_timber_stumps"],
     floor_structure: ["floor_struct_timber"],
-    wall_framing_type: "Timber softwood",
+    wall_framing_type: "Timber hardwood",
     roof_framing_type: "Timber rafters conventional",
     ext: ["ext_timber_weatherboard"],
     rc: ["rc_corrugated"],

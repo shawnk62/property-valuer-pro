@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { FileText, Plus, Settings, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { schema } from "@/lib/inspection/schema";
 import { inspectionStore } from "@/lib/inspection/storage";
@@ -42,7 +52,12 @@ function InspectionsIndex() {
   const { records, loading, error } = useInspectionList();
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const { user, loading: authLoading, signOut } = useAuth();
+
+  const pendingDelete = pendingDeleteId
+    ? records.find((r) => r.id === pendingDeleteId)
+    : undefined;
 
   if (!authLoading && !user) {
     void navigate({ to: "/login" });
@@ -181,7 +196,7 @@ function InspectionsIndex() {
                       variant="ghost"
                       size="icon"
                       aria-label="Delete inspection"
-                      onClick={() => void inspectionStore.remove(record.id).catch(console.error)}
+                      onClick={() => setPendingDeleteId(record.id)}
                     >
                       <Trash2 className="size-4" />
                     </Button>
@@ -192,6 +207,44 @@ function InspectionsIndex() {
           )}
         </section>
       </main>
+
+      <AlertDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeleteId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this inspection?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete
+                ? `This will permanently delete the inspection for ${
+                    String(pendingDelete.values.prop_address ?? "").trim() || "this property"
+                  }${
+                    String(pendingDelete.values.prop_suburb ?? "").trim()
+                      ? `, ${String(pendingDelete.values.prop_suburb).trim()}`
+                      : ""
+                  }. This cannot be undone.`
+                : "This will permanently delete the inspection. This cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (!pendingDeleteId) return;
+                const id = pendingDeleteId;
+                setPendingDeleteId(null);
+                void inspectionStore.remove(id).catch(console.error);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
