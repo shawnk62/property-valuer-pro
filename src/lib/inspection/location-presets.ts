@@ -17,7 +17,7 @@ export const LOCATION_PRESETS: Record<string, InspectionValues> = {
     // Neighbourhood intensity
     nbhd_builtup: "Over 75%",
     nbhd_growth: "Stable",
-    nbhd_character: ["nbhd_char_neighbourhood", "nbhd_char_established"],
+    nbhd_character: ["nbhd_char_established"],
 
     // Off-site / streetscape
     offsite_road_type: "Access Street",
@@ -46,7 +46,7 @@ export const LOCATION_PRESETS: Record<string, InspectionValues> = {
   Suburban: {
     nbhd_builtup: "Over 75%",
     nbhd_growth: "Stable",
-    nbhd_character: ["nbhd_char_neighbourhood", "nbhd_char_established", "nbhd_char_quiet"],
+    nbhd_character: ["nbhd_char_established", "nbhd_char_quiet"],
 
     offsite_road_type: "Suburban Road",
     offsite_road_surface: "Bitumen sealed",
@@ -72,7 +72,7 @@ export const LOCATION_PRESETS: Record<string, InspectionValues> = {
   Rural: {
     nbhd_builtup: "Under 25%",
     nbhd_growth: "Slow",
-    nbhd_character: ["nbhd_char_hinterland", "nbhd_char_quiet"],
+    nbhd_character: ["nbhd_char_established", "nbhd_char_hinterland", "nbhd_char_quiet"],
 
     offsite_road_type: "Rural Road",
     offsite_road_surface: "Bitumen sealed",

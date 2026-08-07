@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "8",
+  "version": "9",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -497,10 +497,6 @@
           "label": "Neighbourhood Character",
           "type": "checkbox_group",
           "items": [
-            {
-              "id": "nbhd_char_neighbourhood",
-              "label": "Neighbourhood"
-            },
             {
               "id": "nbhd_char_established",
               "label": "Established neighbourhood"
@@ -2263,28 +2259,28 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "am_storage",
-              "label": "Storage rooms"
+              "id": "am_bir",
+              "label": "Built-in wardrobe"
             },
             {
               "id": "am_wir",
               "label": "Walk-in wardrobe"
             },
             {
-              "id": "am_bir",
-              "label": "Built-in wardrobe"
+              "id": "am_storage",
+              "label": "Storage rooms"
             },
             {
               "id": "am_mixed",
               "label": "Mixed amenities"
             },
             {
-              "id": "am_none",
-              "label": "None"
-            },
-            {
               "id": "am_limited",
               "label": "Limited"
+            },
+            {
+              "id": "am_none",
+              "label": "None"
             },
             {
               "id": "am_other",
@@ -2345,34 +2341,6 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "vent_natural",
-              "label": "Natural ventilation"
-            },
-            {
-              "id": "vent_mechanical_exhaust",
-              "label": "Mechanical exhaust"
-            },
-            {
-              "id": "vent_hrv",
-              "label": "Heat recovery ventilation"
-            },
-            {
-              "id": "vent_subfloor",
-              "label": "Sub-floor ventilation"
-            },
-            {
-              "id": "vent_roof_space",
-              "label": "Roof space ventilation"
-            },
-            {
-              "id": "vent_mixed",
-              "label": "Mixed ventilation systems"
-            },
-            {
-              "id": "vent_other",
-              "label": "Other"
-            },
-            {
               "id": "hvac_split_single",
               "label": "Split system single"
             },
@@ -2393,6 +2361,10 @@
               "label": "Ducted heating and air conditioning"
             },
             {
+              "id": "hvac_evaporative",
+              "label": "Evaporative cooling"
+            },
+            {
               "id": "hvac_vrf",
               "label": "VRF"
             },
@@ -2409,8 +2381,24 @@
               "label": "Chilled water central plant"
             },
             {
-              "id": "hvac_evaporative",
-              "label": "Evaporative cooling"
+              "id": "vent_natural",
+              "label": "Natural ventilation"
+            },
+            {
+              "id": "vent_mechanical_exhaust",
+              "label": "Mechanical exhaust"
+            },
+            {
+              "id": "vent_hrv",
+              "label": "Heat recovery ventilation"
+            },
+            {
+              "id": "vent_subfloor",
+              "label": "Sub-floor ventilation"
+            },
+            {
+              "id": "vent_roof_space",
+              "label": "Roof space ventilation"
             },
             {
               "id": "hvac_mechanical_only",
@@ -2421,8 +2409,16 @@
               "label": "Natural ventilation only"
             },
             {
+              "id": "vent_mixed",
+              "label": "Mixed ventilation systems"
+            },
+            {
               "id": "hvac_none",
               "label": "None"
+            },
+            {
+              "id": "vent_other",
+              "label": "Other"
             },
             {
               "id": "hvac_other",
@@ -3081,8 +3077,12 @@
               "label": "Underfloor heating"
             },
             {
-              "id": "bath_rain",
-              "label": "Rainfall or feature shower"
+              "id": "bath_rainfall",
+              "label": "Rainfall shower"
+            },
+            {
+              "id": "bath_feature_shower",
+              "label": "Feature shower"
             },
             {
               "id": "bath_separate",
@@ -3098,7 +3098,11 @@
             },
             {
               "id": "bath_bidet",
-              "label": "Bidet or bidet seat"
+              "label": "Bidet"
+            },
+            {
+              "id": "bath_bidet_seat",
+              "label": "Bidet seat"
             },
             {
               "id": "bath_other",
@@ -3268,6 +3272,14 @@
           "type": "checkbox_group",
           "items": [
             {
+              "id": "fire_conventional_alarm",
+              "label": "Conventional fire detection and alarm"
+            },
+            {
+              "id": "fire_addressable_alarm",
+              "label": "Addressable fire detection and alarm"
+            },
+            {
               "id": "fire_wet_sprinklers",
               "label": "Automatic wet sprinklers"
             },
@@ -3290,14 +3302,6 @@
             {
               "id": "fire_hose_reels",
               "label": "Hose reels"
-            },
-            {
-              "id": "fire_conventional_alarm",
-              "label": "Conventional fire detection and alarm"
-            },
-            {
-              "id": "fire_addressable_alarm",
-              "label": "Addressable fire detection and alarm"
             },
             {
               "id": "fire_combined",
@@ -3325,6 +3329,30 @@
           "type": "checkbox_group",
           "items": [
             {
+              "id": "sec_video_intercom",
+              "label": "Video intercom"
+            },
+            {
+              "id": "sec_intercom",
+              "label": "Intercom"
+            },
+            {
+              "id": "sec_ip_cameras",
+              "label": "IP cameras"
+            },
+            {
+              "id": "sec_keypad",
+              "label": "Keypad access control"
+            },
+            {
+              "id": "sec_card_access",
+              "label": "Card access control"
+            },
+            {
+              "id": "sec_cctv",
+              "label": "CCTV cameras"
+            },
+            {
               "id": "sec_monitored_alarm",
               "label": "Monitored alarm system"
             },
@@ -3333,32 +3361,8 @@
               "label": "Local alarm system"
             },
             {
-              "id": "sec_cctv",
-              "label": "CCTV cameras"
-            },
-            {
-              "id": "sec_ip_cameras",
-              "label": "IP cameras"
-            },
-            {
-              "id": "sec_card_access",
-              "label": "Card access control"
-            },
-            {
               "id": "sec_biometric",
               "label": "Biometric access control"
-            },
-            {
-              "id": "sec_keypad",
-              "label": "Keypad access control"
-            },
-            {
-              "id": "sec_intercom",
-              "label": "Intercom"
-            },
-            {
-              "id": "sec_video_intercom",
-              "label": "Video intercom"
             },
             {
               "id": "sec_integrated",
@@ -3427,6 +3431,14 @@
           "type": "checkbox_group",
           "items": [
             {
+              "id": "lift_stairlift",
+              "label": "Stair lift"
+            },
+            {
+              "id": "lift_dumbwaiter",
+              "label": "Dumbwaiter"
+            },
+            {
               "id": "lift_passenger",
               "label": "Passenger lift"
             },
@@ -3445,10 +3457,6 @@
             {
               "id": "lift_platform",
               "label": "Platform lift"
-            },
-            {
-              "id": "lift_stairlift",
-              "label": "Stair lift"
             },
             {
               "id": "lift_none",

@@ -1,22 +1,10 @@
 import type { InspectionValues } from "./types";
 
 /**
- * Design / Style presets.
- *
- * When the valuer selects a value in `imp_design`, fields listed here that are
- * still empty are pre-filled. Existing answers are never overwritten.
- *
- * Rules:
- * - Every value is a single primary typical answer (one item only) unless a
- *   minimal required set is needed (e.g. fire detection).
- * - Checkbox groups receive arrays of item ids.
- * - Selects receive one string.
- * - Booleans (high/mid/low set) are applied only when still undefined.
+ * Design / Style presets for Queensland / Australian residential stock.
+ * Single primary values only. Existing answers are never overwritten.
  */
 export const DESIGN_PRESETS: Record<string, InspectionValues> = {
-  /* ------------------------------------------------------------------ */
-  /* Timber high-set family                                              */
-  /* ------------------------------------------------------------------ */
   Queenslander: {
     imp_highset: true,
     imp_units: "1",
@@ -136,9 +124,147 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     am: ["am_bir"],
   },
 
-  /* ------------------------------------------------------------------ */
-  /* Post-war family                                                     */
-  /* ------------------------------------------------------------------ */
+  Victorian: {
+    imp_highset: true,
+    imp_units: "1",
+    foundations: ["found_timber_stumps"],
+    floor_structure: ["floor_struct_timber"],
+    wall_framing_type: "Timber hardwood",
+    roof_framing_type: "Timber rafters conventional",
+    ext: ["ext_timber_weatherboard"],
+    rc: ["rc_corrugated"],
+    rd: ["rd_colorbond"],
+    il: ["il_timber"],
+    ceil: ["ceil_plasterboard"],
+    flr: ["flr_solid_timber"],
+    ceil_heights_type: "3.5 metres",
+    light: ["light_natural"],
+    accom: ["accom_front_verandah"],
+    vent: ["vent_subfloor"],
+    fire: ["fire_conventional_alarm"],
+    bath_tiles_type: "Ceramic tiles",
+    bath_floor: "Ceramic tiles",
+    bath_surround: "Ceramic tiles",
+    am: ["am_bir"],
+  },
+
+  Federation: {
+    imp_highset: true,
+    imp_units: "1",
+    foundations: ["found_timber_stumps"],
+    floor_structure: ["floor_struct_timber"],
+    wall_framing_type: "Timber hardwood",
+    roof_framing_type: "Timber rafters conventional",
+    ext: ["ext_timber_weatherboard"],
+    rc: ["rc_terracotta"],
+    rd: ["rd_colorbond"],
+    il: ["il_timber"],
+    ceil: ["ceil_plasterboard"],
+    flr: ["flr_solid_timber"],
+    ceil_heights_type: "3.0 metres",
+    light: ["light_natural"],
+    accom: ["accom_front_verandah"],
+    vent: ["vent_subfloor"],
+    fire: ["fire_conventional_alarm"],
+    bath_tiles_type: "Ceramic tiles",
+    bath_floor: "Ceramic tiles",
+    bath_surround: "Ceramic tiles",
+    am: ["am_bir"],
+  },
+
+  "Federation Filigree": {
+    imp_highset: true,
+    imp_units: "1",
+    foundations: ["found_timber_stumps"],
+    floor_structure: ["floor_struct_timber"],
+    wall_framing_type: "Timber hardwood",
+    roof_framing_type: "Timber rafters conventional",
+    ext: ["ext_timber_weatherboard"],
+    rc: ["rc_corrugated"],
+    rd: ["rd_colorbond"],
+    il: ["il_timber"],
+    ceil: ["ceil_plasterboard"],
+    flr: ["flr_solid_timber"],
+    ceil_heights_type: "3.0 metres",
+    light: ["light_natural"],
+    accom: ["accom_front_verandah"],
+    vent: ["vent_subfloor"],
+    fire: ["fire_conventional_alarm"],
+    bath_tiles_type: "Ceramic tiles",
+    bath_floor: "Ceramic tiles",
+    bath_surround: "Ceramic tiles",
+    am: ["am_bir"],
+  },
+
+  "Federation Bungalow": {
+    imp_lowset: true,
+    imp_units: "1",
+    foundations: ["found_timber_stumps"],
+    floor_structure: ["floor_struct_timber"],
+    wall_framing_type: "Timber hardwood",
+    roof_framing_type: "Timber rafters conventional",
+    ext: ["ext_timber_weatherboard"],
+    rc: ["rc_terracotta"],
+    rd: ["rd_colorbond"],
+    il: ["il_timber"],
+    ceil: ["ceil_plasterboard"],
+    flr: ["flr_solid_timber"],
+    ceil_heights_type: "3.0 metres",
+    light: ["light_natural"],
+    accom: ["accom_front_verandah"],
+    vent: ["vent_subfloor"],
+    fire: ["fire_conventional_alarm"],
+    bath_tiles_type: "Ceramic tiles",
+    bath_floor: "Ceramic tiles",
+    bath_surround: "Ceramic tiles",
+    am: ["am_bir"],
+  },
+
+  Interwar: {
+    imp_lowset: true,
+    imp_units: "1",
+    foundations: ["found_concrete_stumps"],
+    floor_structure: ["floor_struct_timber"],
+    wall_framing_type: "Timber softwood",
+    roof_framing_type: "Timber rafters conventional",
+    ext: ["ext_timber_weatherboard"],
+    rc: ["rc_corrugated"],
+    rd: ["rd_colorbond"],
+    il: ["il_plasterboard"],
+    ceil: ["ceil_plasterboard"],
+    flr: ["flr_solid_timber"],
+    ceil_heights_type: "3.0 metres",
+    light: ["light_natural"],
+    vent: ["vent_subfloor"],
+    fire: ["fire_conventional_alarm"],
+    bath_tiles_type: "Ceramic tiles",
+    bath_floor: "Ceramic tiles",
+    bath_surround: "Ceramic tiles",
+    am: ["am_bir"],
+  },
+
+  "Art Deco": {
+    imp_lowset: true,
+    imp_units: "1",
+    foundations: ["found_concrete_stumps"],
+    floor_structure: ["floor_struct_timber"],
+    wall_framing_type: "Timber softwood",
+    roof_framing_type: "Timber rafters conventional",
+    ext: ["ext_rendered_cement"],
+    rc: ["rc_terracotta"],
+    rd: ["rd_colorbond"],
+    il: ["il_plasterboard"],
+    ceil: ["ceil_plasterboard"],
+    flr: ["flr_solid_timber"],
+    ceil_heights_type: "3.0 metres",
+    light: ["light_natural"],
+    fire: ["fire_conventional_alarm"],
+    bath_tiles_type: "Ceramic tiles",
+    bath_floor: "Ceramic tiles",
+    bath_surround: "Ceramic tiles",
+    am: ["am_bir"],
+  },
+
   "Post-war Timber": {
     imp_lowset: true,
     imp_units: "1",
@@ -167,7 +293,6 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     imp_units: "1",
     foundations: ["found_concrete_slab"],
     floor_structure: ["floor_struct_concrete"],
-    // Brick veneer is timber-framed in almost all Australian houses
     wall_framing_type: "Timber softwood",
     roof_framing_type: "Timber trusses",
     ext: ["ext_brick_veneer"],
@@ -183,6 +308,28 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_floor: "Ceramic tiles",
     bath_surround: "Ceramic tiles",
     kit_feat: ["kit_gas"],
+    am: ["am_bir"],
+  },
+
+  "Mid-century Modern": {
+    imp_lowset: true,
+    imp_units: "1",
+    foundations: ["found_concrete_slab"],
+    floor_structure: ["floor_struct_concrete"],
+    wall_framing_type: "Timber softwood",
+    roof_framing_type: "Timber trusses",
+    ext: ["ext_brick_veneer"],
+    rc: ["rc_concrete_tiles"],
+    rd: ["rd_colorbond"],
+    il: ["il_plasterboard"],
+    ceil: ["ceil_plasterboard"],
+    flr: ["flr_solid_timber"],
+    ceil_heights_type: "Typical",
+    light: ["light_natural"],
+    fire: ["fire_conventional_alarm"],
+    bath_tiles_type: "Ceramic tiles",
+    bath_floor: "Ceramic tiles",
+    bath_surround: "Ceramic tiles",
     am: ["am_bir"],
   },
 
@@ -191,7 +338,6 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     imp_units: "1",
     foundations: ["found_concrete_slab"],
     floor_structure: ["floor_struct_concrete"],
-    // Brick veneer is timber-framed
     wall_framing_type: "Timber softwood",
     roof_framing_type: "Timber trusses",
     ext: ["ext_brick_veneer"],
@@ -210,9 +356,6 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     am: ["am_bir"],
   },
 
-  /* ------------------------------------------------------------------ */
-  /* Contemporary / lifestyle styles                                     */
-  /* ------------------------------------------------------------------ */
   Contemporary: {
     imp_lowset: true,
     imp_units: "1",
@@ -237,7 +380,6 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_surround: "Porcelain tiles",
     bath_feat: ["bath_frameless"],
     am: ["am_bir"],
-    sd: ["sd_large_glazed"],
   },
 
   Hamptons: {
@@ -265,7 +407,6 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_feat: ["bath_freestanding"],
     am: ["am_wir"],
     accom: ["accom_front_verandah"],
-    sd: ["sd_indoor_outdoor"],
   },
 
   Coastal: {
@@ -292,11 +433,55 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_surround: "Porcelain tiles",
     bath_feat: ["bath_frameless"],
     am: ["am_bir"],
-    sd: ["sd_indoor_outdoor"],
+  },
+
+  "Acreage or Rural": {
+    imp_lowset: true,
+    imp_units: "1",
+    foundations: ["found_concrete_slab"],
+    floor_structure: ["floor_struct_concrete"],
+    wall_framing_type: "Timber softwood",
+    roof_framing_type: "Timber trusses",
+    ext: ["ext_brick_veneer"],
+    rc: ["rc_colorbond"],
+    rd: ["rd_colorbond"],
+    il: ["il_plasterboard"],
+    ceil: ["ceil_plasterboard"],
+    flr: ["flr_engineered"],
+    ceil_heights_type: "2.7 metres",
+    light: ["light_mixed"],
+    vent: ["hvac_split_multi"],
+    fire: ["fire_conventional_alarm"],
+    bath_tiles_type: "Ceramic tiles",
+    bath_floor: "Ceramic tiles",
+    bath_surround: "Ceramic tiles",
+    am: ["am_bir"],
+  },
+
+  "Townhouse or Terrace": {
+    imp_lowset: true,
+    imp_units: "1",
+    foundations: ["found_concrete_slab"],
+    floor_structure: ["floor_struct_concrete"],
+    wall_framing_type: "Timber softwood",
+    roof_framing_type: "Timber trusses",
+    ext: ["ext_brick_veneer"],
+    rc: ["rc_colorbond"],
+    rd: ["rd_colorbond"],
+    il: ["il_plasterboard"],
+    ceil: ["ceil_plasterboard"],
+    flr: ["flr_engineered"],
+    ceil_heights_type: "2.7 metres",
+    light: ["light_led"],
+    vent: ["hvac_split_single"],
+    fire: ["fire_conventional_alarm"],
+    bath_tiles_type: "Porcelain tiles",
+    bath_floor: "Porcelain tiles",
+    bath_surround: "Porcelain tiles",
+    am: ["am_bir"],
   },
 };
 
-/** Returns true when the stored value has not been set by the user yet. */
 export function isUnset(value: InspectionValues[string]): boolean {
   if (value === undefined || value === null) return true;
   if (typeof value === "string") return value.trim() === "";
@@ -304,12 +489,6 @@ export function isUnset(value: InspectionValues[string]): boolean {
   return false;
 }
 
-/**
- * Apply a design preset on top of the current values.
- *
- * - Checkbox groups (string[]): merge — typical items are added if missing.
- * - Other fields (string / boolean): only written when still unset.
- */
 export function applyDesignPreset(
   current: InspectionValues,
   design: string,
