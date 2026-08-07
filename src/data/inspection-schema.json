@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "10",
+  "version": "11",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -2104,6 +2104,14 @@
               "label": "Solid timber hardwood"
             },
             {
+              "id": "flr_pine",
+              "label": "Pine"
+            },
+            {
+              "id": "flr_polished",
+              "label": "Polished"
+            },
+            {
               "id": "flr_engineered",
               "label": "Engineered timber"
             },
@@ -2189,6 +2197,10 @@
               "label": "VJ boards"
             },
             {
+              "id": "il_likely_asbestos",
+              "label": "Likely asbestos"
+            },
+            {
               "id": "il_other",
               "label": "Other"
             },
@@ -2232,6 +2244,10 @@
             {
               "id": "ceil_exposed_beams",
               "label": "Exposed beams"
+            },
+            {
+              "id": "ceil_likely_asbestos",
+              "label": "Likely asbestos"
             },
             {
               "id": "ceil_other",
