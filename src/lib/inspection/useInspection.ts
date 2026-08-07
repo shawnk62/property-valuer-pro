@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { applyDesignPreset, DESIGN_PRESETS } from "@/lib/inspection/design-presets";
+import { applyLocationPreset, LOCATION_PRESETS } from "@/lib/inspection/location-presets";
 import { inspectionStore } from "@/lib/inspection/storage";
 import type { InspectionRecord, InspectionValues } from "@/lib/inspection/types";
 
@@ -89,9 +90,17 @@ export function useInspection(id: string) {
         if (key === "imp_design" && typeof value === "string" && value && DESIGN_PRESETS[value]) {
           const before = next;
           next = applyDesignPreset(next, value);
-          // Notify only when something actually changed.
           if (next !== before) {
             toast.success(`Typical features for “${value}” pre-selected. Adjust any that do not apply.`);
+          }
+        }
+
+        // When Location is chosen, pre-fill typical neighbourhood / site features.
+        if (key === "nbhd_location" && typeof value === "string" && value && LOCATION_PRESETS[value]) {
+          const before = next;
+          next = applyLocationPreset(next, value);
+          if (next !== before) {
+            toast.success(`Typical ${value.toLowerCase()} neighbourhood and site features pre-selected. Adjust any that do not apply.`);
           }
         }
 

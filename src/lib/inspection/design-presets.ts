@@ -3,33 +3,42 @@ import type { InspectionValues } from "./types";
 /**
  * Design / Style presets.
  *
- * When the valuer selects a value in `imp_design`, any fields listed here that
- * are still empty are pre-filled. Existing answers are never overwritten, so
- * the valuer can freely change or clear any pre-filled item.
+ * When the valuer selects a value in `imp_design`, fields listed here that are
+ * still empty are pre-filled. Existing answers are never overwritten.
  *
- * To add or adjust a style:
- * 1. Use the exact option string from the Design / Style select (imp_design).
- * 2. Use exact field names and checkbox-group item ids from the schema.
- * 3. Only include structural / typical features — leave condition and notes alone.
+ * Rules for this file:
+ * - Every value is a single primary typical answer (one item only).
+ * - Checkbox groups receive a single-item array of the most typical id.
+ * - Selects receive one string.
+ * - Booleans are applied only when still undefined.
+ * - Leave condition and notes fields alone.
  *
- * Arrays are set wholesale when the target group is empty.
- * Booleans are applied only when the key is still undefined.
- * Strings are applied only when empty/undefined.
+ * To adjust a style: edit the exact keys below. Field names and item ids must
+ * match the schema exactly.
  */
 export const DESIGN_PRESETS: Record<string, InspectionValues> = {
+  /* ------------------------------------------------------------------ */
+  /* Timber high-set family                                              */
+  /* ------------------------------------------------------------------ */
   Queenslander: {
-    // Classic high-set timber Queenslander
     imp_highset: true,
     foundations: ["found_timber_stumps"],
     floor_structure: ["floor_struct_timber"],
     wall_framing_type: "Timber hardwood",
     roof_framing_type: "Timber rafters conventional",
-    ext: ["ext_timber_weatherboard", "ext_timber_vj"],
+    ext: ["ext_timber_weatherboard"],
     rc: ["rc_corrugated"],
-    il: ["il_vj", "il_vj_timber"],
+    il: ["il_vj"],
     ceil: ["ceil_vj_timber"],
-    accom: ["accom_front_verandah", "accom_rear_verandah"],
-    vent: ["vent_natural", "vent_subfloor"],
+    flr: ["flr_solid_timber"],
+    ceil_heights_type: "3.0 metres",
+    light: ["light_natural"],
+    accom: ["accom_front_verandah"],
+    vent: ["vent_subfloor"],
+    bath_tiles_type: "Ceramic tiles",
+    bath_floor: "Ceramic tiles",
+    bath_surround: "Ceramic tiles",
+    am: ["am_bir"],
   },
 
   "Highset Queenslander": {
@@ -38,31 +47,43 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     floor_structure: ["floor_struct_timber"],
     wall_framing_type: "Timber hardwood",
     roof_framing_type: "Timber rafters conventional",
-    ext: ["ext_timber_weatherboard", "ext_timber_vj"],
+    ext: ["ext_timber_weatherboard"],
     rc: ["rc_corrugated"],
-    il: ["il_vj", "il_vj_timber"],
+    il: ["il_vj"],
     ceil: ["ceil_vj_timber"],
-    accom: ["accom_front_verandah", "accom_rear_verandah"],
-    vent: ["vent_natural", "vent_subfloor"],
+    flr: ["flr_solid_timber"],
+    ceil_heights_type: "3.0 metres",
+    light: ["light_natural"],
+    accom: ["accom_front_verandah"],
+    vent: ["vent_subfloor"],
+    bath_tiles_type: "Ceramic tiles",
+    bath_floor: "Ceramic tiles",
+    bath_surround: "Ceramic tiles",
+    am: ["am_bir"],
   },
 
   Ashgrovian: {
-    // Decorative Queenslander variant (often Ashgrove / inner-north)
     imp_highset: true,
     foundations: ["found_timber_stumps"],
     floor_structure: ["floor_struct_timber"],
     wall_framing_type: "Timber hardwood",
     roof_framing_type: "Timber rafters conventional",
-    ext: ["ext_timber_weatherboard", "ext_timber_vj"],
+    ext: ["ext_timber_weatherboard"],
     rc: ["rc_corrugated"],
-    il: ["il_vj", "il_vj_timber"],
-    ceil: ["ceil_vj_timber"],
-    accom: ["accom_front_verandah", "accom_rear_verandah"],
-    vent: ["vent_natural", "vent_subfloor"],
+    il: ["il_vj"],
+    ceil: ["ceil_plasterboard"],
+    flr: ["flr_solid_timber"],
+    ceil_heights_type: "3.0 metres",
+    light: ["light_natural"],
+    accom: ["accom_front_verandah"],
+    vent: ["vent_subfloor"],
+    bath_tiles_type: "Ceramic tiles",
+    bath_floor: "Ceramic tiles",
+    bath_surround: "Ceramic tiles",
+    am: ["am_bir"],
   },
 
   "Workers Cottage": {
-    // Smaller, often lower-set timber cottage
     imp_lowset: true,
     foundations: ["found_timber_stumps"],
     floor_structure: ["floor_struct_timber"],
@@ -70,46 +91,79 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     roof_framing_type: "Timber rafters conventional",
     ext: ["ext_timber_weatherboard"],
     rc: ["rc_corrugated"],
-    il: ["il_vj", "il_timber"],
-    ceil: ["ceil_timber", "ceil_vj_timber"],
+    il: ["il_vj"],
+    ceil: ["ceil_timber"],
+    flr: ["flr_solid_timber"],
+    ceil_heights_type: "3.0 metres",
+    light: ["light_natural"],
     accom: ["accom_front_verandah"],
-    vent: ["vent_natural", "vent_subfloor"],
+    vent: ["vent_subfloor"],
+    bath_tiles_type: "Ceramic tiles",
+    bath_floor: "Ceramic tiles",
+    bath_surround: "Ceramic tiles",
+    am: ["am_bir"],
   },
 
   Colonial: {
-    foundations: ["found_timber_stumps", "found_concrete_stumps"],
+    foundations: ["found_timber_stumps"],
     floor_structure: ["floor_struct_timber"],
     wall_framing_type: "Timber hardwood",
     roof_framing_type: "Timber rafters conventional",
     ext: ["ext_timber_weatherboard"],
-    rc: ["rc_corrugated", "rc_metal"],
-    il: ["il_timber", "il_vj"],
+    rc: ["rc_corrugated"],
+    il: ["il_timber"],
     ceil: ["ceil_timber"],
+    flr: ["flr_solid_timber"],
+    ceil_heights_type: "3.0 metres",
+    light: ["light_natural"],
     accom: ["accom_front_verandah"],
+    bath_tiles_type: "Ceramic tiles",
+    bath_floor: "Ceramic tiles",
+    bath_surround: "Ceramic tiles",
+    am: ["am_bir"],
   },
 
+  /* ------------------------------------------------------------------ */
+  /* Post-war family                                                     */
+  /* ------------------------------------------------------------------ */
   "Post-war Timber": {
     imp_lowset: true,
-    foundations: ["found_concrete_stumps", "found_timber_stumps"],
+    foundations: ["found_concrete_stumps"],
     floor_structure: ["floor_struct_timber"],
     wall_framing_type: "Timber softwood",
     roof_framing_type: "Timber trusses",
-    ext: ["ext_timber_weatherboard", "ext_fc_weatherboard"],
-    rc: ["rc_corrugated", "rc_colorbond"],
-    il: ["il_plasterboard", "il_fibre_cement"],
+    ext: ["ext_timber_weatherboard"],
+    rc: ["rc_corrugated"],
+    il: ["il_plasterboard"],
     ceil: ["ceil_plasterboard"],
+    flr: ["flr_solid_timber"],
+    ceil_heights_type: "Typical",
+    light: ["light_mixed"],
+    bath_tiles_type: "Ceramic tiles",
+    bath_floor: "Ceramic tiles",
+    bath_surround: "Ceramic tiles",
+    kit_feat: ["kit_gas"],
+    am: ["am_bir"],
   },
 
   "Post-war Brick": {
     imp_lowset: true,
-    foundations: ["found_concrete_slab", "found_concrete_strip"],
+    foundations: ["found_concrete_slab"],
     floor_structure: ["floor_struct_concrete"],
     wall_framing_type: "Masonry brick",
     roof_framing_type: "Timber trusses",
     ext: ["ext_brick_veneer"],
-    rc: ["rc_concrete_tiles", "rc_terracotta"],
+    rc: ["rc_concrete_tiles"],
     il: ["il_plasterboard"],
     ceil: ["ceil_plasterboard"],
+    flr: ["flr_carpet"],
+    ceil_heights_type: "Typical",
+    light: ["light_mixed"],
+    bath_tiles_type: "Ceramic tiles",
+    bath_floor: "Ceramic tiles",
+    bath_surround: "Ceramic tiles",
+    kit_feat: ["kit_gas"],
+    am: ["am_bir"],
   },
 
   "Brick and Tile": {
@@ -121,40 +175,84 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     rc: ["rc_concrete_tiles"],
     il: ["il_plasterboard"],
     ceil: ["ceil_plasterboard"],
+    flr: ["flr_carpet"],
+    ceil_heights_type: "Typical",
+    light: ["light_mixed"],
+    bath_tiles_type: "Ceramic tiles",
+    bath_floor: "Ceramic tiles",
+    bath_surround: "Ceramic tiles",
+    kit_feat: ["kit_gas"],
+    am: ["am_bir"],
   },
 
+  /* ------------------------------------------------------------------ */
+  /* Contemporary / lifestyle styles                                     */
+  /* ------------------------------------------------------------------ */
   Contemporary: {
     foundations: ["found_concrete_slab"],
     floor_structure: ["floor_struct_concrete"],
     wall_framing_type: "Timber softwood",
     roof_framing_type: "Timber trusses",
-    ext: ["ext_brick_veneer", "ext_rendered_acrylic", "ext_fc_sheet"],
-    rc: ["rc_colorbond", "rc_metal"],
+    ext: ["ext_brick_veneer"],
+    rc: ["rc_colorbond"],
     il: ["il_plasterboard"],
     ceil: ["ceil_plasterboard"],
+    flr: ["flr_engineered"],
+    ceil_heights_type: "2.7 metres",
+    light: ["light_led"],
+    kit_feat: ["kit_induction"],
+    app: ["app_bosch"],
+    bath_tiles_type: "Large format porcelain",
+    bath_floor: "Porcelain tiles",
+    bath_surround: "Porcelain tiles",
+    bath_feat: ["bath_frameless"],
+    am: ["am_bir"],
+    sd: ["sd_large_glazed"],
   },
 
   Hamptons: {
     foundations: ["found_concrete_slab"],
-    floor_structure: ["floor_struct_concrete", "floor_struct_timber"],
+    floor_structure: ["floor_struct_concrete"],
     wall_framing_type: "Timber softwood",
     roof_framing_type: "Timber trusses",
-    ext: ["ext_timber_weatherboard", "ext_fc_weatherboard", "ext_rendered_acrylic"],
+    ext: ["ext_fc_weatherboard"],
     rc: ["rc_colorbond"],
     il: ["il_plasterboard"],
     ceil: ["ceil_plasterboard"],
-    accom: ["accom_front_verandah", "accom_rear_verandah"],
+    flr: ["flr_engineered"],
+    ceil_heights_type: "3.0 metres",
+    light: ["light_high_quality"],
+    kit_feat: ["kit_softclose"],
+    app: ["app_fisherpaykel"],
+    bath_tiles_type: "Large format porcelain",
+    bath_floor: "Porcelain tiles",
+    bath_surround: "Porcelain tiles",
+    bath_feat: ["bath_freestanding"],
+    am: ["am_wir"],
+    accom: ["accom_front_verandah"],
+    sd: ["sd_indoor_outdoor"],
   },
 
   Coastal: {
-    foundations: ["found_concrete_slab", "found_concrete_stumps"],
-    floor_structure: ["floor_struct_concrete", "floor_struct_timber"],
+    foundations: ["found_concrete_slab"],
+    floor_structure: ["floor_struct_concrete"],
     wall_framing_type: "Timber softwood",
     roof_framing_type: "Timber trusses",
-    ext: ["ext_fc_weatherboard", "ext_timber_weatherboard", "ext_rendered_acrylic"],
-    rc: ["rc_colorbond", "rc_metal"],
+    ext: ["ext_fc_weatherboard"],
+    rc: ["rc_colorbond"],
     il: ["il_plasterboard"],
     ceil: ["ceil_plasterboard"],
+    flr: ["flr_engineered"],
+    ceil_heights_type: "2.7 metres",
+    light: ["light_natural"],
+    kit_feat: ["kit_induction"],
+    app: ["app_fisherpaykel"],
+    bath_tiles_type: "Large format porcelain",
+    bath_floor: "Porcelain tiles",
+    bath_surround: "Porcelain tiles",
+    bath_feat: ["bath_frameless"],
+    am: ["am_bir"],
+    sd: ["sd_indoor_outdoor"],
   },
 };
 
@@ -163,18 +261,14 @@ export function isUnset(value: InspectionValues[string]): boolean {
   if (value === undefined || value === null) return true;
   if (typeof value === "string") return value.trim() === "";
   if (Array.isArray(value)) return value.length === 0;
-  // boolean: only apply when still undefined (already handled above)
   return false;
 }
 
 /**
  * Apply a design preset on top of the current values.
  *
- * - Checkbox groups (string[]): merge — typical items are added if missing.
- *   Existing selections are never removed.
+ * - Checkbox groups (string[]): merge — the typical item is added if missing.
  * - Other fields (string / boolean): only written when still unset.
- *
- * This keeps the form fully editable while still giving a useful starting point.
  */
 export function applyDesignPreset(
   current: InspectionValues,
@@ -195,12 +289,10 @@ export function applyDesignPreset(
         next = { ...current };
         changed = true;
       }
-      // Preserve existing order, append new items.
       next[key] = [...existing, ...toAdd];
       continue;
     }
 
-    // string / boolean — only fill when still empty
     if (!isUnset(current[key])) continue;
     if (!changed) {
       next = { ...current };

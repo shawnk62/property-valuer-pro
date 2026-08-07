@@ -50,6 +50,7 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
 
   if (field.type === "select") {
     const isDesign = field.name === "imp_design";
+    const isLocation = field.name === "nbhd_location";
     return (
       <div className="space-y-2">
         <FieldLabel htmlFor={field.name} required={required}>
@@ -65,6 +66,11 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
         {isDesign ? (
           <p className="text-xs text-muted-foreground">
             Selecting a style pre-fills typical construction features (foundations, cladding, roof, linings, verandahs, etc.). You can change or clear any item afterwards.
+          </p>
+        ) : null}
+        {isLocation ? (
+          <p className="text-xs text-muted-foreground">
+            Selecting a location pre-fills typical neighbourhood, street and site features (built-up density, roads, lighting, services, fencing, etc.). You can change or clear any item afterwards.
           </p>
         ) : null}
       </div>

@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "4",
+  "version": "6",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -377,276 +377,6 @@
           "label": "Access Limitations / Restrictions",
           "type": "text",
           "multiline": true
-        },
-        {
-          "name": "imp_units",
-          "label": "No. of Units",
-          "type": "text",
-          "multiline": false
-        },
-        {
-          "name": "imp_storeys",
-          "label": "Storeys",
-          "type": "select",
-          "options": [
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "10",
-            "Split level"
-          ]
-        },
-        {
-          "name": "imp_yearbuilt",
-          "label": "Year Built",
-          "type": "text",
-          "multiline": false
-        },
-        {
-          "name": "imp_effage",
-          "label": "Effective Age (yrs)",
-          "type": "text",
-          "multiline": false
-        },
-        {
-          "name": "imp_design",
-          "label": "Design / Style",
-          "type": "select",
-          "options": [
-            "Queenslander",
-            "Highset Queenslander",
-            "Ashgrovian",
-            "Workers Cottage",
-            "Colonial",
-            "Victorian",
-            "Federation",
-            "Federation Filigree",
-            "Federation Bungalow",
-            "Interwar",
-            "Art Deco",
-            "Post-war Timber",
-            "Post-war Brick",
-            "Mid-century Modern",
-            "Contemporary",
-            "Brick and Tile",
-            "Hamptons",
-            "Coastal",
-            "Acreage or Rural",
-            "Townhouse or Terrace",
-            "Other"
-          ]
-        },
-        {
-          "name": "imp_highset",
-          "label": "High set",
-          "type": "checkbox"
-        },
-        {
-          "name": "imp_midset",
-          "label": "Mid set",
-          "type": "checkbox"
-        },
-        {
-          "name": "imp_lowset",
-          "label": "Low set",
-          "type": "checkbox"
-        },
-        {
-          "name": "imp_rooms",
-          "label": "Rooms",
-          "type": "text",
-          "multiline": false
-        },
-        {
-          "name": "imp_beds",
-          "label": "Bedrooms",
-          "type": "text",
-          "multiline": false
-        },
-        {
-          "name": "imp_baths",
-          "label": "Baths",
-          "type": "text",
-          "multiline": false
-        },
-        {
-          "name": "accom",
-          "label": "Accommodation Layout and Rooms",
-          "type": "checkbox_group",
-          "items": [
-            {
-              "id": "accom_open_plan_ldk",
-              "label": "Open plan lounge / dining / kitchen"
-            },
-            {
-              "id": "accom_separate_kitchen",
-              "label": "Separate kitchen"
-            },
-            {
-              "id": "accom_lounge_dining",
-              "label": "Lounge / dining"
-            },
-            {
-              "id": "accom_bir_bedrooms",
-              "label": "Built-in bedrooms"
-            },
-            {
-              "id": "accom_main_wir_ensuite",
-              "label": "Main bedroom with walk-in wardrobe and ensuite"
-            },
-            {
-              "id": "accom_office",
-              "label": "Office"
-            },
-            {
-              "id": "accom_media",
-              "label": "Media room"
-            },
-            {
-              "id": "accom_rumpus",
-              "label": "Rumpus"
-            },
-            {
-              "id": "accom_powder",
-              "label": "Powder room"
-            },
-            {
-              "id": "accom_bathroom",
-              "label": "Bathroom"
-            },
-            {
-              "id": "accom_bathroom_toilet",
-              "label": "Bathroom / toilet"
-            },
-            {
-              "id": "accom_separate_toilet",
-              "label": "Separate toilet"
-            },
-            {
-              "id": "accom_laundry",
-              "label": "Laundry"
-            },
-            {
-              "id": "accom_front_patio_covered",
-              "label": "Front patio - covered"
-            },
-            {
-              "id": "accom_front_patio_uncovered",
-              "label": "Front patio - uncovered"
-            },
-            {
-              "id": "accom_rear_patio_covered",
-              "label": "Rear patio - covered"
-            },
-            {
-              "id": "accom_rear_patio_uncovered",
-              "label": "Rear patio - uncovered"
-            },
-            {
-              "id": "accom_front_deck_covered",
-              "label": "Front deck - covered"
-            },
-            {
-              "id": "accom_front_deck_uncovered",
-              "label": "Front deck - uncovered"
-            },
-            {
-              "id": "accom_rear_deck_covered",
-              "label": "Rear deck - covered"
-            },
-            {
-              "id": "accom_rear_deck_uncovered",
-              "label": "Rear deck - uncovered"
-            },
-            {
-              "id": "accom_front_verandah",
-              "label": "Front verandah"
-            },
-            {
-              "id": "accom_rear_verandah",
-              "label": "Rear verandah"
-            },
-            {
-              "id": "accom_downstairs",
-              "label": "Downstairs accommodation"
-            },
-            {
-              "id": "accom_upstairs",
-              "label": "Upstairs accommodation"
-            },
-            {
-              "id": "accom_other",
-              "label": "Other"
-            }
-          ],
-          "condition_field": "accom_cond",
-          "notes_field": "accom_notes"
-        },
-        {
-          "name": "imp_gla",
-          "label": "GLA m²",
-          "type": "text",
-          "multiline": false
-        },
-        {
-          "name": "area_living_upstairs",
-          "label": "Living Area Upstairs (m²)",
-          "type": "text",
-          "multiline": false
-        },
-        {
-          "name": "area_living_downstairs",
-          "label": "Living Area Downstairs (m²)",
-          "type": "text",
-          "multiline": false
-        },
-        {
-          "name": "area_covered_front_patio",
-          "label": "Covered Front Patio / Deck (m²)",
-          "type": "text",
-          "multiline": false
-        },
-        {
-          "name": "area_covered_rear_patio",
-          "label": "Covered Rear Patio / Deck (m²)",
-          "type": "text",
-          "multiline": false
-        },
-        {
-          "name": "area_verandahs",
-          "label": "Verandahs (m²)",
-          "type": "text",
-          "multiline": false
-        },
-        {
-          "name": "area_shed",
-          "label": "Shed/s (m²)",
-          "type": "text",
-          "multiline": false
-        },
-        {
-          "name": "area_garage",
-          "label": "Garage (m²)",
-          "type": "text",
-          "multiline": false
-        },
-        {
-          "name": "area_carport",
-          "label": "Carport (m²)",
-          "type": "text",
-          "multiline": false
-        },
-        {
-          "name": "imp_add_features",
-          "label": "Additional features (special energy-efficient items, etc.)",
-          "type": "text",
-          "multiline": true
         }
       ]
     },
@@ -728,25 +458,25 @@
         },
         {
           "name": "nbhd_use_one",
-          "label": "Present Land Use % – One-Unit",
+          "label": "Present Land Use % \u2013 One-Unit",
           "type": "text",
           "multiline": false
         },
         {
           "name": "nbhd_use_24",
-          "label": "Present Land Use % – 2-4 Unit",
+          "label": "Present Land Use % \u2013 2-4 Unit",
           "type": "text",
           "multiline": false
         },
         {
           "name": "nbhd_use_mf",
-          "label": "Present Land Use % – Multi-Family",
+          "label": "Present Land Use % \u2013 Multi-Family",
           "type": "text",
           "multiline": false
         },
         {
           "name": "nbhd_use_comm",
-          "label": "Present Land Use % – Commercial",
+          "label": "Present Land Use % \u2013 Commercial",
           "type": "text",
           "multiline": false
         },
@@ -1711,195 +1441,86 @@
     },
     {
       "id": "3",
-      "title": "Building Construction",
+      "title": "Subject Improvements & Building Construction",
       "fields": [
         {
-          "name": "foundations",
-          "label": "Foundations",
-          "type": "checkbox_group",
-          "items": [
-            {
-              "id": "found_concrete_slab",
-              "label": "Concrete slab"
-            },
-            {
-              "id": "found_concrete_strip",
-              "label": "Concrete strip footings"
-            },
-            {
-              "id": "found_steel_posts",
-              "label": "Steel posts"
-            },
-            {
-              "id": "found_timber_stumps",
-              "label": "Timber stumps"
-            },
-            {
-              "id": "found_concrete_stumps",
-              "label": "Concrete stumps"
-            },
-            {
-              "id": "found_piers",
-              "label": "Piers"
-            },
-            {
-              "id": "found_combined",
-              "label": "Combined foundation types"
-            },
-            {
-              "id": "found_other",
-              "label": "Other"
-            }
-          ],
-          "condition_field": "foundations_cond",
-          "notes_field": "foundations_notes"
-        },
-        {
-          "name": "floor_structure",
-          "label": "Floor Structure",
-          "type": "checkbox_group",
-          "items": [
-            {
-              "id": "floor_struct_concrete",
-              "label": "Concrete"
-            },
-            {
-              "id": "floor_struct_timber",
-              "label": "Timber"
-            },
-            {
-              "id": "floor_struct_mixed",
-              "label": "Mixed concrete and timber"
-            },
-            {
-              "id": "floor_struct_other",
-              "label": "Other"
-            }
-          ],
-          "condition_field": "floor_structure_cond",
-          "notes_field": "floor_structure_notes"
-        },
-        {
-          "name": "wall_framing",
-          "label": "Wall Framing",
-          "type": "single_row",
-          "fields": [
-            {
-              "name": "wall_framing_type",
-              "label": "Type",
-              "type": "select",
-              "options": [
-                "Timber softwood",
-                "Timber hardwood",
-                "Steel light gauge",
-                "Steel structural",
-                "Masonry brick",
-                "Masonry block",
-                "Concrete tilt-up",
-                "Concrete precast",
-                "Concrete in-situ",
-                "Composite",
-                "Other"
-              ]
-            },
-            {
-              "name": "wall_framing_cond",
-              "label": "Condition",
-              "type": "select",
-              "options": [
-                "Poor",
-                "Fair",
-                "Average",
-                "Good",
-                "Very Good",
-                "Excellent"
-              ]
-            },
-            {
-              "name": "wall_framing_notes",
-              "label": "Notes",
-              "type": "text"
-            }
+          "name": "imp_design",
+          "label": "Design / Style",
+          "type": "select",
+          "options": [
+            "Queenslander",
+            "Highset Queenslander",
+            "Ashgrovian",
+            "Workers Cottage",
+            "Colonial",
+            "Victorian",
+            "Federation",
+            "Federation Filigree",
+            "Federation Bungalow",
+            "Interwar",
+            "Art Deco",
+            "Post-war Timber",
+            "Post-war Brick",
+            "Mid-century Modern",
+            "Contemporary",
+            "Brick and Tile",
+            "Hamptons",
+            "Coastal",
+            "Acreage or Rural",
+            "Townhouse or Terrace",
+            "Other"
           ]
         },
         {
-          "name": "roof_framing",
-          "label": "Roof Framing",
-          "type": "single_row",
-          "fields": [
-            {
-              "name": "roof_framing_type",
-              "label": "Type",
-              "type": "select",
-              "options": [
-                "Timber trusses",
-                "Timber rafters conventional",
-                "Steel trusses",
-                "Steel purlins",
-                "Concrete",
-                "Other"
-              ]
-            },
-            {
-              "name": "roof_framing_cond",
-              "label": "Condition",
-              "type": "select",
-              "options": [
-                "Poor",
-                "Fair",
-                "Average",
-                "Good",
-                "Very Good",
-                "Excellent"
-              ]
-            },
-            {
-              "name": "roof_framing_notes",
-              "label": "Notes",
-              "type": "text"
-            }
+          "name": "imp_highset",
+          "label": "High set",
+          "type": "checkbox"
+        },
+        {
+          "name": "imp_midset",
+          "label": "Mid set",
+          "type": "checkbox"
+        },
+        {
+          "name": "imp_lowset",
+          "label": "Low set",
+          "type": "checkbox"
+        },
+        {
+          "name": "imp_storeys",
+          "label": "Storeys",
+          "type": "select",
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "Split level"
           ]
         },
         {
-          "name": "ceil_heights",
-          "label": "Ceiling Heights",
-          "type": "single_row",
-          "fields": [
-            {
-              "name": "ceil_heights_type",
-              "label": "Type",
-              "type": "select",
-              "options": [
-                "Standard residential 2.4 to 2.7 metres",
-                "High ceilings 2.7 to 3.0 metres",
-                "High ceilings over 3.0 metres",
-                "Cathedral ceilings",
-                "Raked ceilings",
-                "Vaulted ceilings",
-                "Varied by room",
-                "Commercial heights",
-                "Other"
-              ]
-            },
-            {
-              "name": "ceil_heights_cond",
-              "label": "Condition",
-              "type": "select",
-              "options": [
-                "Poor",
-                "Fair",
-                "Average",
-                "Good",
-                "Very Good",
-                "Excellent"
-              ]
-            },
-            {
-              "name": "ceil_heights_notes",
-              "label": "Notes",
-              "type": "text"
-            }
-          ]
+          "name": "imp_yearbuilt",
+          "label": "Year Built",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "imp_effage",
+          "label": "Effective Age (yrs)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "imp_units",
+          "label": "No. of Units",
+          "type": "text",
+          "multiline": false
         },
         {
           "name": "ext",
@@ -2056,6 +1677,44 @@
           "notes_field": "rc_notes"
         },
         {
+          "name": "roof_framing",
+          "label": "Roof Framing",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "roof_framing_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Timber trusses",
+                "Timber rafters conventional",
+                "Steel trusses",
+                "Steel purlins",
+                "Concrete",
+                "Other"
+              ]
+            },
+            {
+              "name": "roof_framing_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "roof_framing_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
           "name": "rd",
           "label": "Roof Drainage",
           "type": "checkbox_group",
@@ -2097,41 +1756,341 @@
           "notes_field": "rd_notes"
         },
         {
-          "name": "vent",
-          "label": "Ventilation",
+          "name": "foundations",
+          "label": "Foundations",
           "type": "checkbox_group",
           "items": [
             {
-              "id": "vent_natural",
-              "label": "Natural ventilation"
+              "id": "found_concrete_slab",
+              "label": "Concrete slab"
             },
             {
-              "id": "vent_mechanical_exhaust",
-              "label": "Mechanical exhaust"
+              "id": "found_concrete_strip",
+              "label": "Concrete strip footings"
             },
             {
-              "id": "vent_hrv",
-              "label": "Heat recovery ventilation"
+              "id": "found_steel_posts",
+              "label": "Steel posts"
             },
             {
-              "id": "vent_subfloor",
-              "label": "Sub-floor ventilation"
+              "id": "found_timber_stumps",
+              "label": "Timber stumps"
             },
             {
-              "id": "vent_roof_space",
-              "label": "Roof space ventilation"
+              "id": "found_concrete_stumps",
+              "label": "Concrete stumps"
             },
             {
-              "id": "vent_mixed",
-              "label": "Mixed ventilation systems"
+              "id": "found_piers",
+              "label": "Piers"
             },
             {
-              "id": "vent_other",
+              "id": "found_combined",
+              "label": "Combined foundation types"
+            },
+            {
+              "id": "found_other",
               "label": "Other"
             }
           ],
-          "condition_field": "vent_cond",
-          "notes_field": "vent_notes"
+          "condition_field": "foundations_cond",
+          "notes_field": "foundations_notes"
+        },
+        {
+          "name": "floor_structure",
+          "label": "Floor Structure",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "floor_struct_concrete",
+              "label": "Concrete"
+            },
+            {
+              "id": "floor_struct_timber",
+              "label": "Timber"
+            },
+            {
+              "id": "floor_struct_mixed",
+              "label": "Mixed concrete and timber"
+            },
+            {
+              "id": "floor_struct_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "floor_structure_cond",
+          "notes_field": "floor_structure_notes"
+        },
+        {
+          "name": "wall_framing",
+          "label": "Wall Framing",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "wall_framing_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Timber softwood",
+                "Timber hardwood",
+                "Steel light gauge",
+                "Steel structural",
+                "Masonry brick",
+                "Masonry block",
+                "Concrete tilt-up",
+                "Concrete precast",
+                "Concrete in-situ",
+                "Composite",
+                "Other"
+              ]
+            },
+            {
+              "name": "wall_framing_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "wall_framing_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "imp_gla",
+          "label": "GLA m\u00b2",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "area_living_upstairs",
+          "label": "Living Area Upstairs (m\u00b2)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "area_living_downstairs",
+          "label": "Living Area Downstairs (m\u00b2)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "area_verandahs",
+          "label": "Verandahs (m\u00b2)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "area_covered_front_patio",
+          "label": "Covered Front Patio / Deck (m\u00b2)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "area_covered_rear_patio",
+          "label": "Covered Rear Patio / Deck (m\u00b2)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "area_garage",
+          "label": "Garage (m\u00b2)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "area_carport",
+          "label": "Carport (m\u00b2)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "area_shed",
+          "label": "Shed/s (m\u00b2)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "imp_rooms",
+          "label": "Rooms",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "imp_beds",
+          "label": "Bedrooms",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "imp_baths",
+          "label": "Baths",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "accom",
+          "label": "Accommodation Layout and Rooms",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "accom_open_plan_ldk",
+              "label": "Open plan lounge / dining / kitchen"
+            },
+            {
+              "id": "accom_separate_kitchen",
+              "label": "Separate kitchen"
+            },
+            {
+              "id": "accom_lounge_dining",
+              "label": "Lounge / dining"
+            },
+            {
+              "id": "accom_bir_bedrooms",
+              "label": "Built-in bedrooms"
+            },
+            {
+              "id": "accom_main_wir_ensuite",
+              "label": "Main bedroom with walk-in wardrobe and ensuite"
+            },
+            {
+              "id": "accom_office",
+              "label": "Office"
+            },
+            {
+              "id": "accom_media",
+              "label": "Media room"
+            },
+            {
+              "id": "accom_rumpus",
+              "label": "Rumpus"
+            },
+            {
+              "id": "accom_powder",
+              "label": "Powder room"
+            },
+            {
+              "id": "accom_bathroom",
+              "label": "Bathroom"
+            },
+            {
+              "id": "accom_bathroom_toilet",
+              "label": "Bathroom / toilet"
+            },
+            {
+              "id": "accom_separate_toilet",
+              "label": "Separate toilet"
+            },
+            {
+              "id": "accom_laundry",
+              "label": "Laundry"
+            },
+            {
+              "id": "accom_front_patio_covered",
+              "label": "Front patio - covered"
+            },
+            {
+              "id": "accom_front_patio_uncovered",
+              "label": "Front patio - uncovered"
+            },
+            {
+              "id": "accom_rear_patio_covered",
+              "label": "Rear patio - covered"
+            },
+            {
+              "id": "accom_rear_patio_uncovered",
+              "label": "Rear patio - uncovered"
+            },
+            {
+              "id": "accom_front_deck_covered",
+              "label": "Front deck - covered"
+            },
+            {
+              "id": "accom_front_deck_uncovered",
+              "label": "Front deck - uncovered"
+            },
+            {
+              "id": "accom_rear_deck_covered",
+              "label": "Rear deck - covered"
+            },
+            {
+              "id": "accom_rear_deck_uncovered",
+              "label": "Rear deck - uncovered"
+            },
+            {
+              "id": "accom_front_verandah",
+              "label": "Front verandah"
+            },
+            {
+              "id": "accom_rear_verandah",
+              "label": "Rear verandah"
+            },
+            {
+              "id": "accom_downstairs",
+              "label": "Downstairs accommodation"
+            },
+            {
+              "id": "accom_upstairs",
+              "label": "Upstairs accommodation"
+            },
+            {
+              "id": "accom_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "accom_cond",
+          "notes_field": "accom_notes"
+        },
+        {
+          "name": "ceil_heights",
+          "label": "Ceiling Heights",
+          "type": "single_row",
+          "fields": [
+            {
+              "name": "ceil_heights_type",
+              "label": "Type",
+              "type": "select",
+              "options": [
+                "Typical",
+                "2.7 metres",
+                "3.0 metres",
+                "3.5 metres",
+                "High",
+                "Cathedral ceilings",
+                "Raked ceilings",
+                "Vaulted ceilings",
+                "Varied by room",
+                "Commercial heights",
+                "Other"
+              ]
+            },
+            {
+              "name": "ceil_heights_cond",
+              "label": "Condition",
+              "type": "select",
+              "options": [
+                "Poor",
+                "Fair",
+                "Average",
+                "Good",
+                "Very Good",
+                "Excellent"
+              ]
+            },
+            {
+              "name": "ceil_heights_notes",
+              "label": "Notes",
+              "type": "text"
+            }
+          ]
         },
         {
           "name": "flr",
@@ -2291,6 +2250,49 @@
           ],
           "condition_field": "ceil_cond",
           "notes_field": "ceil_notes"
+        },
+        {
+          "name": "vent",
+          "label": "Ventilation",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "vent_natural",
+              "label": "Natural ventilation"
+            },
+            {
+              "id": "vent_mechanical_exhaust",
+              "label": "Mechanical exhaust"
+            },
+            {
+              "id": "vent_hrv",
+              "label": "Heat recovery ventilation"
+            },
+            {
+              "id": "vent_subfloor",
+              "label": "Sub-floor ventilation"
+            },
+            {
+              "id": "vent_roof_space",
+              "label": "Roof space ventilation"
+            },
+            {
+              "id": "vent_mixed",
+              "label": "Mixed ventilation systems"
+            },
+            {
+              "id": "vent_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "vent_cond",
+          "notes_field": "vent_notes"
+        },
+        {
+          "name": "imp_add_features",
+          "label": "Additional features (special energy-efficient items, etc.)",
+          "type": "text",
+          "multiline": true
         }
       ]
     },
@@ -2666,7 +2668,7 @@
         },
         {
           "name": "design_features_notes",
-          "label": "Design metrics and clearances (column spacing, clear spans, internal height, roof frame clearances, door clearances H × W)",
+          "label": "Design metrics and clearances (column spacing, clear spans, internal height, roof frame clearances, door clearances H \u00d7 W)",
           "type": "text",
           "multiline": true
         },
@@ -3091,7 +3093,7 @@
         },
         {
           "name": "bath_tiles",
-          "label": "Wall / Floor Tiling",
+          "label": "Bathroom Wall Tiling",
           "type": "single_row",
           "fields": [
             {
@@ -3126,6 +3128,33 @@
               "label": "Notes",
               "type": "text"
             }
+          ]
+        },
+        {
+          "name": "bath_floor",
+          "label": "Bathroom Floor Covering",
+          "type": "select",
+          "options": [
+            "Porcelain tiles",
+            "Ceramic tiles",
+            "Natural stone",
+            "Mosaic tiles",
+            "Vinyl",
+            "Other"
+          ]
+        },
+        {
+          "name": "bath_surround",
+          "label": "Tub / Shower Surround",
+          "type": "select",
+          "options": [
+            "Ceramic tiles",
+            "Porcelain tiles",
+            "Natural stone",
+            "Mosaic tiles",
+            "Acrylic",
+            "Glass",
+            "Other"
           ]
         },
         {
