@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "6",
+  "version": "8",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -1519,8 +1519,14 @@
         {
           "name": "imp_units",
           "label": "No. of Units",
-          "type": "text",
-          "multiline": false
+          "type": "select",
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ]
         },
         {
           "name": "ext",
@@ -2252,8 +2258,90 @@
           "notes_field": "ceil_notes"
         },
         {
+          "name": "am",
+          "label": "Storage Areas",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "am_storage",
+              "label": "Storage rooms"
+            },
+            {
+              "id": "am_wir",
+              "label": "Walk-in wardrobe"
+            },
+            {
+              "id": "am_bir",
+              "label": "Built-in wardrobe"
+            },
+            {
+              "id": "am_mixed",
+              "label": "Mixed amenities"
+            },
+            {
+              "id": "am_none",
+              "label": "None"
+            },
+            {
+              "id": "am_limited",
+              "label": "Limited"
+            },
+            {
+              "id": "am_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "am_cond",
+          "notes_field": "am_notes"
+        },
+        {
+          "name": "light",
+          "label": "Natural and Artificial Lighting",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "light_natural",
+              "label": "Natural lighting"
+            },
+            {
+              "id": "light_led",
+              "label": "LED artificial lighting"
+            },
+            {
+              "id": "light_fluorescent",
+              "label": "Fluorescent artificial lighting"
+            },
+            {
+              "id": "light_mixed",
+              "label": "Mixed natural and artificial lighting"
+            },
+            {
+              "id": "light_task",
+              "label": "Task lighting"
+            },
+            {
+              "id": "light_specialised",
+              "label": "Specialised lighting"
+            },
+            {
+              "id": "light_custom",
+              "label": "Custom light fixtures"
+            },
+            {
+              "id": "light_high_quality",
+              "label": "High quality light fixtures"
+            },
+            {
+              "id": "light_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "light_cond",
+          "notes_field": "light_notes"
+        },
+        {
           "name": "vent",
-          "label": "Ventilation",
+          "label": "HVAC",
           "type": "checkbox_group",
           "items": [
             {
@@ -2282,6 +2370,62 @@
             },
             {
               "id": "vent_other",
+              "label": "Other"
+            },
+            {
+              "id": "hvac_split_single",
+              "label": "Split system single"
+            },
+            {
+              "id": "hvac_split_multi",
+              "label": "Split system multi"
+            },
+            {
+              "id": "hvac_ducted_ac",
+              "label": "Ducted air conditioning"
+            },
+            {
+              "id": "hvac_ducted_heating",
+              "label": "Ducted heating"
+            },
+            {
+              "id": "hvac_ducted_heating_ac",
+              "label": "Ducted heating and air conditioning"
+            },
+            {
+              "id": "hvac_vrf",
+              "label": "VRF"
+            },
+            {
+              "id": "hvac_vrv",
+              "label": "VRV"
+            },
+            {
+              "id": "hvac_packaged",
+              "label": "Packaged rooftop units"
+            },
+            {
+              "id": "hvac_chilled_water",
+              "label": "Chilled water central plant"
+            },
+            {
+              "id": "hvac_evaporative",
+              "label": "Evaporative cooling"
+            },
+            {
+              "id": "hvac_mechanical_only",
+              "label": "Mechanical ventilation only"
+            },
+            {
+              "id": "hvac_natural_only",
+              "label": "Natural ventilation only"
+            },
+            {
+              "id": "hvac_none",
+              "label": "None"
+            },
+            {
+              "id": "hvac_other",
               "label": "Other"
             }
           ],
@@ -2618,104 +2762,10 @@
           "notes_field": "sd_notes"
         },
         {
-          "name": "pool",
-          "label": "Pool",
-          "type": "checkbox_group",
-          "items": [
-            {
-              "id": "pool_inground",
-              "label": "In-ground pool"
-            },
-            {
-              "id": "pool_above_ground",
-              "label": "Above ground pool"
-            },
-            {
-              "id": "pool_infinity",
-              "label": "Infinity edge pool"
-            },
-            {
-              "id": "pool_heated",
-              "label": "Heated pool"
-            },
-            {
-              "id": "pool_auto_cleaner",
-              "label": "Automatic cleaner"
-            },
-            {
-              "id": "pool_salt",
-              "label": "Salt water system"
-            },
-            {
-              "id": "pool_chlorine",
-              "label": "Chlorine system"
-            },
-            {
-              "id": "pool_covered",
-              "label": "Pool cover"
-            },
-            {
-              "id": "pool_fencing_compliant",
-              "label": "Pool fencing appears compliant"
-            },
-            {
-              "id": "pool_other",
-              "label": "Other"
-            }
-          ],
-          "condition_field": "pool_cond",
-          "notes_field": "pool_notes"
-        },
-        {
           "name": "design_features_notes",
           "label": "Design metrics and clearances (column spacing, clear spans, internal height, roof frame clearances, door clearances H \u00d7 W)",
           "type": "text",
           "multiline": true
-        },
-        {
-          "name": "light",
-          "label": "Natural and Artificial Lighting",
-          "type": "checkbox_group",
-          "items": [
-            {
-              "id": "light_natural",
-              "label": "Natural lighting"
-            },
-            {
-              "id": "light_led",
-              "label": "LED artificial lighting"
-            },
-            {
-              "id": "light_fluorescent",
-              "label": "Fluorescent artificial lighting"
-            },
-            {
-              "id": "light_mixed",
-              "label": "Mixed natural and artificial lighting"
-            },
-            {
-              "id": "light_task",
-              "label": "Task lighting"
-            },
-            {
-              "id": "light_specialised",
-              "label": "Specialised lighting"
-            },
-            {
-              "id": "light_custom",
-              "label": "Custom light fixtures"
-            },
-            {
-              "id": "light_high_quality",
-              "label": "High quality light fixtures"
-            },
-            {
-              "id": "light_other",
-              "label": "Other"
-            }
-          ],
-          "condition_field": "light_cond",
-          "notes_field": "light_notes"
         }
       ]
     },
@@ -2762,7 +2812,11 @@
             },
             {
               "id": "kit_boiling",
-              "label": "Boiling or filtered water tap"
+              "label": "Boiling water tap"
+            },
+            {
+              "id": "kit_filtered",
+              "label": "Filtered water tap"
             },
             {
               "id": "kit_softclose",
@@ -3201,67 +3255,6 @@
           "label": "Number of bathrooms / ensuites / powder rooms and overall notes",
           "type": "text",
           "multiline": true
-        },
-        {
-          "name": "am",
-          "label": "Amenity and Storage Areas",
-          "type": "checkbox_group",
-          "items": [
-            {
-              "id": "am_toilets",
-              "label": "Toilets and sanitary facilities"
-            },
-            {
-              "id": "am_kitchen",
-              "label": "Kitchen"
-            },
-            {
-              "id": "am_tearoom",
-              "label": "Tea room"
-            },
-            {
-              "id": "am_lockers",
-              "label": "Lockers"
-            },
-            {
-              "id": "am_change",
-              "label": "Change rooms"
-            },
-            {
-              "id": "am_storage",
-              "label": "Storage rooms"
-            },
-            {
-              "id": "am_wir",
-              "label": "Walk-in wardrobe"
-            },
-            {
-              "id": "am_bir",
-              "label": "Built-in wardrobe"
-            },
-            {
-              "id": "am_cleaners",
-              "label": "Cleaners facilities"
-            },
-            {
-              "id": "am_mixed",
-              "label": "Mixed amenities"
-            },
-            {
-              "id": "am_none",
-              "label": "None"
-            },
-            {
-              "id": "am_limited",
-              "label": "Limited"
-            },
-            {
-              "id": "am_other",
-              "label": "Other"
-            }
-          ],
-          "condition_field": "am_cond",
-          "notes_field": "am_notes"
         }
       ]
     },
@@ -3325,71 +3318,6 @@
           ],
           "condition_field": "fire_cond",
           "notes_field": "fire_notes"
-        },
-        {
-          "name": "hvac",
-          "label": "Ventilation / Air Conditioning",
-          "type": "checkbox_group",
-          "items": [
-            {
-              "id": "hvac_split_single",
-              "label": "Split system single"
-            },
-            {
-              "id": "hvac_split_multi",
-              "label": "Split system multi"
-            },
-            {
-              "id": "hvac_ducted_ac",
-              "label": "Ducted air conditioning"
-            },
-            {
-              "id": "hvac_ducted_heating",
-              "label": "Ducted heating"
-            },
-            {
-              "id": "hvac_ducted_heating_ac",
-              "label": "Ducted heating and air conditioning"
-            },
-            {
-              "id": "hvac_vrf",
-              "label": "VRF"
-            },
-            {
-              "id": "hvac_vrv",
-              "label": "VRV"
-            },
-            {
-              "id": "hvac_packaged",
-              "label": "Packaged rooftop units"
-            },
-            {
-              "id": "hvac_chilled_water",
-              "label": "Chilled water central plant"
-            },
-            {
-              "id": "hvac_evaporative",
-              "label": "Evaporative cooling"
-            },
-            {
-              "id": "hvac_mechanical_only",
-              "label": "Mechanical ventilation only"
-            },
-            {
-              "id": "hvac_natural_only",
-              "label": "Natural ventilation only"
-            },
-            {
-              "id": "hvac_none",
-              "label": "None"
-            },
-            {
-              "id": "hvac_other",
-              "label": "Other"
-            }
-          ],
-          "condition_field": "hvac_cond",
-          "notes_field": "hvac_notes"
         },
         {
           "name": "sec",
@@ -3520,7 +3448,7 @@
             },
             {
               "id": "lift_stairlift",
-              "label": "Stairlift"
+              "label": "Stair lift"
             },
             {
               "id": "lift_none",
@@ -3533,6 +3461,61 @@
           ],
           "condition_field": "lift_cond",
           "notes_field": "lift_notes"
+        }
+      ]
+    },
+    {
+      "id": "4A",
+      "title": "Pool",
+      "fields": [
+        {
+          "name": "pool",
+          "label": "Pool",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "pool_inground",
+              "label": "In-ground pool"
+            },
+            {
+              "id": "pool_above_ground",
+              "label": "Above ground pool"
+            },
+            {
+              "id": "pool_infinity",
+              "label": "Infinity edge pool"
+            },
+            {
+              "id": "pool_heated",
+              "label": "Heated pool"
+            },
+            {
+              "id": "pool_auto_cleaner",
+              "label": "Automatic cleaner"
+            },
+            {
+              "id": "pool_salt",
+              "label": "Salt water system"
+            },
+            {
+              "id": "pool_chlorine",
+              "label": "Chlorine system"
+            },
+            {
+              "id": "pool_covered",
+              "label": "Pool cover"
+            },
+            {
+              "id": "pool_fencing_compliant",
+              "label": "Pool fencing appears compliant"
+            },
+            {
+              "id": "pool_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "pool_cond",
+          "notes_field": "pool_notes"
         }
       ]
     },

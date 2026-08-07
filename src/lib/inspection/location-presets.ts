@@ -52,7 +52,7 @@ export const LOCATION_PRESETS: Record<string, InspectionValues> = {
     offsite_road_surface: "Bitumen sealed",
     offsite_road_ownership: "Public",
     offsite_carriageway: "Dual lane",
-    offsite_kerb: "Mountable kerb and channel",
+    offsite_kerb: "Barrier kerb and channel",
     offsite_footpaths: "Concrete one side",
     offsite_verge: "Grassed",
     offsite_lighting: "Full street lighting",
