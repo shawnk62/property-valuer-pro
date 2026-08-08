@@ -12,45 +12,23 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     floor_structure: ["floor_struct_timber"],
     wall_framing_type: "Timber hardwood",
     roof_framing_type: "Timber rafters conventional",
-    ext: ["ext_timber_weatherboard"],
+    ext: ["ext_timber_weatherboard", "ext_timber_vj"],
     rc: ["rc_corrugated"],
     rd: ["rd_metal"],
-    il: ["il_vj", "il_likely_asbestos"],
-    ceil: ["ceil_vj_timber", "ceil_likely_asbestos"],
+    il: ["il_vj"],
+    ceil: ["ceil_vj_timber"],
     flr: ["flr_solid_timber", "flr_polished"],
     ceil_heights_type: "3.0 metres",
     light: ["light_mixed"],
-    accom: ["accom_front_verandah"],
+    accom: ["accom_front_verandah", "accom_rear_verandah", "accom_side_verandah"],
     vent: ["vent_subfloor"],
     fire: ["fire_conventional_alarm"],
     bath_tiles_type: "Ceramic tiles",
     bath_floor: "Ceramic tiles",
     bath_surround: "Ceramic tiles",
     am: ["am_bir"],
-  },
-
-  "Highset Queenslander": {
-    imp_highset: true,
-    imp_units: "1",
-    foundations: ["found_timber_stumps"],
-    floor_structure: ["floor_struct_timber"],
-    wall_framing_type: "Timber hardwood",
-    roof_framing_type: "Timber rafters conventional",
-    ext: ["ext_timber_weatherboard"],
-    rc: ["rc_corrugated"],
-    rd: ["rd_metal"],
-    il: ["il_vj", "il_likely_asbestos"],
-    ceil: ["ceil_vj_timber", "ceil_likely_asbestos"],
-    flr: ["flr_solid_timber", "flr_polished"],
-    ceil_heights_type: "3.0 metres",
-    light: ["light_mixed"],
-    accom: ["accom_front_verandah"],
-    vent: ["vent_subfloor"],
-    fire: ["fire_conventional_alarm"],
-    bath_tiles_type: "Ceramic tiles",
-    bath_floor: "Ceramic tiles",
-    bath_surround: "Ceramic tiles",
-    am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   Ashgrovian: {
@@ -63,8 +41,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     ext: ["ext_timber_weatherboard"],
     rc: ["rc_corrugated"],
     rd: ["rd_metal"],
-    il: ["il_vj", "il_likely_asbestos"],
-    ceil: ["ceil_plasterboard", "ceil_likely_asbestos"],
+    il: ["il_vj"],
+    ceil: ["ceil_plasterboard"],
     flr: ["flr_solid_timber", "flr_polished"],
     ceil_heights_type: "3.0 metres",
     light: ["light_mixed"],
@@ -75,6 +53,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_floor: "Ceramic tiles",
     bath_surround: "Ceramic tiles",
     am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   "Workers Cottage": {
@@ -87,8 +67,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     ext: ["ext_timber_weatherboard"],
     rc: ["rc_corrugated"],
     rd: ["rd_metal"],
-    il: ["il_vj", "il_likely_asbestos"],
-    ceil: ["ceil_timber", "ceil_likely_asbestos"],
+    il: ["il_vj"],
+    ceil: ["ceil_timber"],
     flr: ["flr_solid_timber", "flr_pine", "flr_polished"],
     ceil_heights_type: "3.0 metres",
     light: ["light_mixed"],
@@ -99,6 +79,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_floor: "Ceramic tiles",
     bath_surround: "Ceramic tiles",
     am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   Colonial: {
@@ -111,8 +93,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     ext: ["ext_timber_weatherboard"],
     rc: ["rc_corrugated"],
     rd: ["rd_metal"],
-    il: ["il_timber", "il_likely_asbestos"],
-    ceil: ["ceil_timber", "ceil_likely_asbestos"],
+    il: ["il_timber"],
+    ceil: ["ceil_timber"],
     flr: ["flr_solid_timber", "flr_polished"],
     ceil_heights_type: "3.0 metres",
     light: ["light_mixed"],
@@ -122,6 +104,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_floor: "Ceramic tiles",
     bath_surround: "Ceramic tiles",
     am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   Victorian: {
@@ -134,8 +118,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     ext: ["ext_timber_weatherboard"],
     rc: ["rc_corrugated"],
     rd: ["rd_metal"],
-    il: ["il_timber", "il_likely_asbestos"],
-    ceil: ["ceil_plasterboard", "ceil_likely_asbestos"],
+    il: ["il_timber"],
+    ceil: ["ceil_plasterboard"],
     flr: ["flr_solid_timber", "flr_polished"],
     ceil_heights_type: "3.5 metres",
     light: ["light_mixed"],
@@ -146,6 +130,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_floor: "Ceramic tiles",
     bath_surround: "Ceramic tiles",
     am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   Federation: {
@@ -158,8 +144,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     ext: ["ext_timber_weatherboard"],
     rc: ["rc_terracotta"],
     rd: ["rd_metal"],
-    il: ["il_timber", "il_likely_asbestos"],
-    ceil: ["ceil_plasterboard", "ceil_likely_asbestos"],
+    il: ["il_timber"],
+    ceil: ["ceil_plasterboard"],
     flr: ["flr_solid_timber", "flr_polished"],
     ceil_heights_type: "3.0 metres",
     light: ["light_mixed"],
@@ -170,6 +156,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_floor: "Ceramic tiles",
     bath_surround: "Ceramic tiles",
     am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   "Federation Filigree": {
@@ -182,8 +170,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     ext: ["ext_timber_weatherboard"],
     rc: ["rc_corrugated"],
     rd: ["rd_metal"],
-    il: ["il_timber", "il_likely_asbestos"],
-    ceil: ["ceil_plasterboard", "ceil_likely_asbestos"],
+    il: ["il_timber"],
+    ceil: ["ceil_plasterboard"],
     flr: ["flr_solid_timber", "flr_polished"],
     ceil_heights_type: "3.0 metres",
     light: ["light_mixed"],
@@ -194,6 +182,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_floor: "Ceramic tiles",
     bath_surround: "Ceramic tiles",
     am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   "Federation Bungalow": {
@@ -206,8 +196,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     ext: ["ext_timber_weatherboard"],
     rc: ["rc_terracotta"],
     rd: ["rd_metal"],
-    il: ["il_timber", "il_likely_asbestos"],
-    ceil: ["ceil_plasterboard", "ceil_likely_asbestos"],
+    il: ["il_timber"],
+    ceil: ["ceil_plasterboard"],
     flr: ["flr_solid_timber", "flr_polished"],
     ceil_heights_type: "3.0 metres",
     light: ["light_mixed"],
@@ -218,6 +208,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_floor: "Ceramic tiles",
     bath_surround: "Ceramic tiles",
     am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   Interwar: {
@@ -230,8 +222,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     ext: ["ext_timber_weatherboard"],
     rc: ["rc_corrugated"],
     rd: ["rd_metal"],
-    il: ["il_plasterboard", "il_likely_asbestos"],
-    ceil: ["ceil_plasterboard", "ceil_likely_asbestos"],
+    il: ["il_plasterboard"],
+    ceil: ["ceil_plasterboard"],
     flr: ["flr_solid_timber", "flr_polished"],
     ceil_heights_type: "3.0 metres",
     light: ["light_mixed"],
@@ -241,6 +233,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_floor: "Ceramic tiles",
     bath_surround: "Ceramic tiles",
     am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   "Art Deco": {
@@ -250,11 +244,11 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     floor_structure: ["floor_struct_timber"],
     wall_framing_type: "Timber softwood",
     roof_framing_type: "Timber rafters conventional",
-    ext: ["ext_rendered_cement"],
+    ext: ["ext_rendered"],
     rc: ["rc_terracotta"],
     rd: ["rd_metal"],
-    il: ["il_plasterboard", "il_likely_asbestos"],
-    ceil: ["ceil_plasterboard", "ceil_likely_asbestos"],
+    il: ["il_plasterboard"],
+    ceil: ["ceil_plasterboard"],
     flr: ["flr_solid_timber", "flr_polished"],
     ceil_heights_type: "3.0 metres",
     light: ["light_mixed"],
@@ -263,6 +257,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_floor: "Ceramic tiles",
     bath_surround: "Ceramic tiles",
     am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   "Post-war Timber": {
@@ -286,6 +282,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_surround: "Ceramic tiles",
     kit_feat: ["kit_gas"],
     am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   "Post-war Brick": {
@@ -309,6 +307,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_surround: "Ceramic tiles",
     kit_feat: ["kit_gas"],
     am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   "Mid-century Modern": {
@@ -321,8 +321,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     ext: ["ext_brick_veneer"],
     rc: ["rc_concrete_tiles"],
     rd: ["rd_metal"],
-    il: ["il_plasterboard"],
-    ceil: ["ceil_plasterboard"],
+    il: ["il_plasterboard", "il_likely_asbestos"],
+    ceil: ["ceil_plasterboard", "ceil_likely_asbestos"],
     flr: ["flr_solid_timber"],
     ceil_heights_type: "Typical",
     light: ["light_mixed"],
@@ -331,6 +331,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_floor: "Ceramic tiles",
     bath_surround: "Ceramic tiles",
     am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   "Brick and Tile": {
@@ -343,8 +345,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     ext: ["ext_brick_veneer"],
     rc: ["rc_concrete_tiles"],
     rd: ["rd_metal"],
-    il: ["il_plasterboard"],
-    ceil: ["ceil_plasterboard"],
+    il: ["il_plasterboard", "il_likely_asbestos"],
+    ceil: ["ceil_plasterboard", "ceil_likely_asbestos"],
     flr: ["flr_carpet"],
     ceil_heights_type: "Typical",
     light: ["light_mixed"],
@@ -354,6 +356,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_surround: "Ceramic tiles",
     kit_feat: ["kit_gas"],
     am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   Contemporary: {
@@ -380,6 +384,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_surround: "Porcelain tiles",
     bath_feat: ["bath_frameless"],
     am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   Hamptons: {
@@ -407,6 +413,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_feat: ["bath_freestanding"],
     am: ["am_wir"],
     accom: ["accom_front_verandah"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   Coastal: {
@@ -433,6 +441,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_surround: "Porcelain tiles",
     bath_feat: ["bath_frameless"],
     am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   "Acreage or Rural": {
@@ -456,6 +466,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_floor: "Ceramic tiles",
     bath_surround: "Ceramic tiles",
     am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 
   "Townhouse or Terrace": {
@@ -479,6 +491,8 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_floor: "Porcelain tiles",
     bath_surround: "Porcelain tiles",
     am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
   },
 };
 

@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "11",
+  "version": "12",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -1445,7 +1445,6 @@
           "type": "select",
           "options": [
             "Queenslander",
-            "Highset Queenslander",
             "Ashgrovian",
             "Workers Cottage",
             "Colonial",
@@ -1542,6 +1541,10 @@
               "label": "Rendered brick"
             },
             {
+              "id": "ext_rendered",
+              "label": "Rendered"
+            },
+            {
               "id": "ext_bag_washed_brick",
               "label": "Bag washed brick"
             },
@@ -1576,14 +1579,6 @@
             {
               "id": "ext_fc_sheet",
               "label": "Fibre cement sheet"
-            },
-            {
-              "id": "ext_rendered_cement",
-              "label": "Rendered cement"
-            },
-            {
-              "id": "ext_rendered_acrylic",
-              "label": "Rendered acrylic"
             },
             {
               "id": "ext_metal_colorbond",
@@ -1785,6 +1780,10 @@
             {
               "id": "found_piers",
               "label": "Piers"
+            },
+            {
+              "id": "found_concrete_undercroft",
+              "label": "Concrete floor to the undercroft"
             },
             {
               "id": "found_combined",
@@ -2034,6 +2033,10 @@
             {
               "id": "accom_rear_verandah",
               "label": "Rear verandah"
+            },
+            {
+              "id": "accom_side_verandah",
+              "label": "Side verandah"
             },
             {
               "id": "accom_downstairs",
@@ -2478,44 +2481,12 @@
               "label": "Sustainability features"
             },
             {
-              "id": "sd_elevated_design",
-              "label": "Elevated design"
-            },
-            {
-              "id": "sd_multi_level",
-              "label": "Multi-level design"
-            },
-            {
               "id": "sd_heritage",
               "label": "Heritage features"
             },
             {
               "id": "sd_character",
               "label": "Character features"
-            },
-            {
-              "id": "sd_open_plan",
-              "label": "Open-plan living space"
-            },
-            {
-              "id": "sd_indoor_outdoor",
-              "label": "Indoor-outdoor connection"
-            },
-            {
-              "id": "sd_seamless_flow",
-              "label": "Seamless indoor-outdoor flow"
-            },
-            {
-              "id": "sd_multi_gen",
-              "label": "Multi-generational layout"
-            },
-            {
-              "id": "sd_flexible",
-              "label": "Flexible living layout"
-            },
-            {
-              "id": "sd_high_ceiling",
-              "label": "High ceiling"
             },
             {
               "id": "sd_vaulted_ceiling",
@@ -2578,6 +2549,26 @@
               "label": "High-performance glazing"
             },
             {
+              "id": "sd_indoor_outdoor",
+              "label": "Indoor-outdoor connection"
+            },
+            {
+              "id": "sd_seamless_flow",
+              "label": "Seamless indoor-outdoor flow"
+            },
+            {
+              "id": "sd_multi_gen",
+              "label": "Multi-generational layout"
+            },
+            {
+              "id": "sd_flexible",
+              "label": "Flexible living layout"
+            },
+            {
+              "id": "sd_landscaped_garden",
+              "label": "Integrated landscaped garden"
+            },
+            {
               "id": "sd_insulation",
               "label": "Insulation"
             },
@@ -2586,84 +2577,20 @@
               "label": "Energy-efficient feature"
             },
             {
-              "id": "sd_solar",
-              "label": "Solar"
+              "id": "sd_materials",
+              "label": "Premium materials"
             },
             {
-              "id": "sd_extensive_outdoor",
-              "label": "Extensive outdoor living area"
+              "id": "sd_natural_stone",
+              "label": "Natural stone"
             },
             {
-              "id": "sd_alfresco",
-              "label": "Alfresco area"
+              "id": "sd_high_grade_timber",
+              "label": "High-grade timber"
             },
             {
-              "id": "sd_outdoor_zone",
-              "label": "Outdoor zone"
-            },
-            {
-              "id": "sd_veranda",
-              "label": "Veranda"
-            },
-            {
-              "id": "sd_verandas",
-              "label": "Verandas"
-            },
-            {
-              "id": "sd_balcony",
-              "label": "Balcony"
-            },
-            {
-              "id": "sd_balconies",
-              "label": "Balconies"
-            },
-            {
-              "id": "sd_covered_terrace",
-              "label": "Covered entertaining terrace"
-            },
-            {
-              "id": "sd_alfresco_kitchen",
-              "label": "Alfresco kitchen"
-            },
-            {
-              "id": "sd_landscaped_garden",
-              "label": "Integrated landscaped garden"
-            },
-            {
-              "id": "sd_swimming_pool",
-              "label": "Swimming pool"
-            },
-            {
-              "id": "sd_plunge_pool",
-              "label": "Plunge pool"
-            },
-            {
-              "id": "sd_spa_area",
-              "label": "Spa area"
-            },
-            {
-              "id": "sd_spa",
-              "label": "Spa"
-            },
-            {
-              "id": "sd_gourmet_kitchen",
-              "label": "Gourmet kitchen"
-            },
-            {
-              "id": "sd_high_end_appliance",
-              "label": "High-end appliance"
-            },
-            {
-              "id": "sd_butlers_pantry",
-              "label": "Butlers pantry"
-            },
-            {
-              "id": "sd_spa_bathroom",
-              "label": "Spa-like bathroom"
-            },
-            {
-              "id": "sd_premium_fitting",
-              "label": "Premium fitting"
+              "id": "sd_architectural_glass",
+              "label": "Architectural glass"
             },
             {
               "id": "sd_joinery",
@@ -2706,20 +2633,8 @@
               "label": "Utility planning"
             },
             {
-              "id": "sd_materials",
-              "label": "Premium materials"
-            },
-            {
-              "id": "sd_natural_stone",
-              "label": "Natural stone"
-            },
-            {
-              "id": "sd_high_grade_timber",
-              "label": "High-grade timber"
-            },
-            {
-              "id": "sd_architectural_glass",
-              "label": "Architectural glass"
+              "id": "sd_premium_fitting",
+              "label": "Premium fitting"
             },
             {
               "id": "sd_smart",
@@ -2760,10 +2675,6 @@
             {
               "id": "sd_theatre",
               "label": "Home theatre"
-            },
-            {
-              "id": "sd_media",
-              "label": "Media room"
             },
             {
               "id": "sd_other",
@@ -3002,38 +2913,6 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "app_miele",
-              "label": "Miele"
-            },
-            {
-              "id": "app_gaggenau",
-              "label": "Gaggenau"
-            },
-            {
-              "id": "app_subzero",
-              "label": "Sub-Zero"
-            },
-            {
-              "id": "app_wolf",
-              "label": "Wolf"
-            },
-            {
-              "id": "app_vzug",
-              "label": "V-ZUG"
-            },
-            {
-              "id": "app_smeg",
-              "label": "SMEG"
-            },
-            {
-              "id": "app_fisherpaykel",
-              "label": "Fisher and Paykel"
-            },
-            {
-              "id": "app_ilve",
-              "label": "Ilve"
-            },
-            {
               "id": "app_bora",
               "label": "Bora"
             },
@@ -3042,20 +2921,52 @@
               "label": "Bosch"
             },
             {
-              "id": "app_siemens",
-              "label": "Siemens"
+              "id": "app_fhiaba",
+              "label": "Fhiaba"
+            },
+            {
+              "id": "app_fisherpaykel",
+              "label": "Fisher and Paykel"
+            },
+            {
+              "id": "app_gaggenau",
+              "label": "Gaggenau"
+            },
+            {
+              "id": "app_ilve",
+              "label": "Ilve"
             },
             {
               "id": "app_liebherr",
               "label": "Liebherr"
             },
             {
+              "id": "app_miele",
+              "label": "Miele"
+            },
+            {
               "id": "app_qasair",
               "label": "Qasair"
             },
             {
-              "id": "app_fhiaba",
-              "label": "Fhiaba"
+              "id": "app_siemens",
+              "label": "Siemens"
+            },
+            {
+              "id": "app_smeg",
+              "label": "SMEG"
+            },
+            {
+              "id": "app_subzero",
+              "label": "Sub-Zero"
+            },
+            {
+              "id": "app_vzug",
+              "label": "V-ZUG"
+            },
+            {
+              "id": "app_wolf",
+              "label": "Wolf"
             },
             {
               "id": "app_other_premium",
@@ -3412,6 +3323,18 @@
             {
               "id": "aux_gas",
               "label": "Gas generator"
+            },
+            {
+              "id": "aux_manual_transfer",
+              "label": "Manual transfer switch"
+            },
+            {
+              "id": "aux_auto_transfer",
+              "label": "Automatic transfer switch"
+            },
+            {
+              "id": "aux_interlock_backfeed",
+              "label": "Interlock kit with a backfeed breaker"
             },
             {
               "id": "aux_ups",
