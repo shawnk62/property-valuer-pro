@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "12",
+  "version": "13",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -15,6 +15,35 @@
       "id": "1",
       "title": "Property Identification & Inspection Details",
       "fields": [
+        {
+          "name": "prop_assignment",
+          "label": "Report Type",
+          "type": "select",
+          "options": [
+            "Purchase",
+            "Refinance",
+            "ATO / CGT",
+            "Resumption",
+            "Dispute",
+            "Other"
+          ]
+        },
+        {
+          "name": "insp_purpose",
+          "label": "Purpose of Report",
+          "type": "select",
+          "multiline": false,
+          "options": [
+            "CGT",
+            "Purchase from third party",
+            "Client purchasing from partner",
+            "Partner purchasing from client",
+            "One partner purchasing from another, both relying on this report",
+            "Stamp duty",
+            "State resuming land from client",
+            "Client resuming land from owner"
+          ]
+        },
         {
           "name": "prop_address",
           "label": "Property Address",
@@ -94,19 +123,6 @@
           "options": [
             "Fee Simple",
             "Leasehold",
-            "Other"
-          ]
-        },
-        {
-          "name": "prop_assignment",
-          "label": "Assignment Type",
-          "type": "select",
-          "options": [
-            "Purchase",
-            "Refinance",
-            "ATO / CGT",
-            "Resumption",
-            "Dispute",
             "Other"
           ]
         },
@@ -270,12 +286,6 @@
         {
           "name": "insp_firm",
           "label": "Firm",
-          "type": "text",
-          "multiline": false
-        },
-        {
-          "name": "insp_purpose",
-          "label": "Purpose of Valuation",
           "type": "text",
           "multiline": false
         },
@@ -1510,6 +1520,19 @@
           "label": "Effective Age (yrs)",
           "type": "text",
           "multiline": false
+        },
+        {
+          "name": "imp_quality",
+          "label": "Overall Quality of Construction",
+          "type": "select",
+          "options": [
+            "Poor",
+            "Fair",
+            "Average",
+            "High",
+            "Very high",
+            "Extremely high"
+          ]
         },
         {
           "name": "imp_units",
