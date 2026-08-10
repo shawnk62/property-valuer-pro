@@ -178,7 +178,11 @@
 }
 
 
-/* ---- Report PDF / print: only the preview sheet ---- */
+/* ---- Report PDF / print ----
+ * IMPORTANT: do NOT use position:absolute or body * { visibility:hidden }.
+ * Those break CSS page-break rules in Chromium/WebKit, which is why
+ * sections were still stacking mid-page despite break-before:page.
+ */
 @media print {
   @page {
     size: A4 portrait;
@@ -191,22 +195,28 @@
     color: black !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
+    height: auto !important;
+    overflow: visible !important;
   }
 
-  /* Hide app chrome; show only the report article */
-  body * {
-    visibility: hidden !important;
+  /* Hide app chrome only — keep report in normal document flow */
+  header,
+  nav,
+  button,
+  [data-sonner-toaster],
+  .no-print {
+    display: none !important;
   }
 
-  #report-preview-sheet,
-  #report-preview-sheet * {
-    visibility: visible !important;
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
   }
 
   #report-preview-sheet {
-    position: absolute;
-    left: 0;
-    top: 0;
+    position: static !important;
+    display: block !important;
     width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
@@ -223,15 +233,10 @@
     color: inherit !important;
   }
 
-  /*
-   * PAGE 1 = cover only: logo, address, market value, summary facts,
-   * brief, disclaimer, valuer signature. Must not spill to page 2.
-   */
+  /* Page 1: cover (value + signature) */
   #report-cover {
-    break-after: page;
-    page-break-after: always;
-    break-inside: avoid;
-    page-break-inside: avoid;
+    break-after: page !important;
+    page-break-after: always !important;
   }
 
   #report-cover header img {
@@ -245,50 +250,25 @@
     font-size: 14pt !important;
   }
 
-  #report-cover header p {
-    margin-top: 2pt !important;
-    font-size: 8.5pt !important;
-  }
-
-  #report-cover .mt-8 {
-    margin-top: 8pt !important;
-  }
-
-  #report-cover .mt-6 {
-    margin-top: 6pt !important;
-  }
-
-  #report-cover .mt-5 {
-    margin-top: 4pt !important;
-  }
-
-  #report-cover .mt-10 {
-    margin-top: 10pt !important;
-  }
-
+  #report-cover .mt-8 { margin-top: 8pt !important; }
+  #report-cover .mt-6 { margin-top: 6pt !important; }
+  #report-cover .mt-5 { margin-top: 4pt !important; }
+  #report-cover .mt-10 { margin-top: 10pt !important; }
   #report-cover .py-6 {
     padding-top: 6pt !important;
     padding-bottom: 6pt !important;
   }
-
-  #report-cover .pt-6 {
-    padding-top: 6pt !important;
-  }
-
-  #report-cover table {
-    font-size: 9pt !important;
-  }
-
+  #report-cover .pt-6 { padding-top: 6pt !important; }
+  #report-cover table { font-size: 9pt !important; }
   #report-cover th,
   #report-cover td {
     padding-top: 2pt !important;
     padding-bottom: 2pt !important;
   }
 
-  /* Market value + signature stay on the cover page */
   .report-signature {
-    break-inside: avoid;
-    page-break-inside: avoid;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
     margin-top: 10pt !important;
   }
 
@@ -296,26 +276,20 @@
     height: 28px !important;
   }
 
-  /* TOC on its own page */
+  /* TOC alone on a page */
   .report-toc {
-    break-before: page;
-    page-break-before: always;
-    break-after: page;
-    page-break-after: always;
-    break-inside: avoid;
-    page-break-inside: avoid;
+    break-before: page !important;
+    page-break-before: always !important;
+    break-after: page !important;
+    page-break-after: always !important;
   }
 
-  /*
-   * Every numbered section starts at the TOP of a new page.
-   * Content may continue onto following pages; the next section
-   * still starts on a fresh page.
-   */
+  /* Every numbered section starts at the top of a new page */
   .report-section {
-    break-before: page;
-    page-break-before: always;
-    break-inside: auto;
-    page-break-inside: auto;
+    break-before: page !important;
+    page-break-before: always !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
   }
 
   #report-preview-sheet h1,
@@ -323,21 +297,21 @@
   #report-preview-sheet h3,
   #report-preview-sheet .report-h1,
   #report-preview-sheet .report-h2 {
-    break-after: avoid;
-    page-break-after: avoid;
-    break-inside: avoid;
-    page-break-inside: avoid;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   #report-preview-sheet table {
-    break-inside: auto;
-    page-break-inside: auto;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
     font-size: 9pt !important;
   }
 
   #report-preview-sheet tr {
-    break-inside: avoid;
-    page-break-inside: avoid;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   #report-preview-sheet th,
@@ -352,26 +326,25 @@
   }
 
   #report-preview-sheet li {
-    break-inside: avoid;
-    page-break-inside: avoid;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
-  /* Photo annexure always starts on a new page */
   .report-annexure {
-    break-before: page;
-    page-break-before: always;
+    break-before: page !important;
+    page-break-before: always !important;
   }
 
   .report-photo-figure {
-    break-inside: avoid;
-    page-break-inside: avoid;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
     margin-bottom: 10pt;
   }
 
   #report-preview-sheet img {
     max-width: 100% !important;
     height: auto !important;
-    break-inside: avoid;
-    page-break-inside: avoid;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 }
