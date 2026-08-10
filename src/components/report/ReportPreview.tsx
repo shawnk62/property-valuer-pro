@@ -358,11 +358,9 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         {get(v, "prop_lotplan") ? (
           <p className="mt-1 text-sm">{get(v, "prop_lotplan")}</p>
         ) : null}
-        {m.valueAmount ? (
-          <p className="mt-5 font-serif text-2xl font-bold">
-            Market Value: ${m.valueAmount}
-          </p>
-        ) : null}
+        <p className="mt-5 font-serif text-2xl font-bold">
+          Market Value: {m.valueAmount ? `$${m.valueAmount}` : "—"}
+        </p>
         {m.valueDate ? (
           <p className="mt-1 text-sm">As at {m.valueDate}</p>
         ) : null}

@@ -182,7 +182,7 @@
 @media print {
   @page {
     size: A4 portrait;
-    margin: 14mm 14mm 16mm 14mm;
+    margin: 12mm 12mm 14mm 12mm;
   }
 
   html,
@@ -214,8 +214,8 @@
     box-shadow: none !important;
     background: white !important;
     color: black !important;
-    font-size: 10.5pt !important;
-    line-height: 1.45 !important;
+    font-size: 9.5pt !important;
+    line-height: 1.35 !important;
   }
 
   #report-preview-sheet a {
@@ -223,28 +223,97 @@
     color: inherit !important;
   }
 
-  /* Cover = page 1; body starts after */
+  /*
+   * PAGE 1 = cover only: logo, address, market value, summary facts,
+   * brief, disclaimer, valuer signature. Must not spill to page 2.
+   */
   #report-cover {
     break-after: page;
     page-break-after: always;
-  }
-
-  .report-signature {
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
-  /* TOC starts cleanly on its own page region */
+  #report-cover header img {
+    height: 56px !important;
+    max-height: 56px !important;
+    width: auto !important;
+  }
+
+  #report-cover header .report-h1 {
+    margin-top: 8pt !important;
+    font-size: 14pt !important;
+  }
+
+  #report-cover header p {
+    margin-top: 2pt !important;
+    font-size: 8.5pt !important;
+  }
+
+  #report-cover .mt-8 {
+    margin-top: 8pt !important;
+  }
+
+  #report-cover .mt-6 {
+    margin-top: 6pt !important;
+  }
+
+  #report-cover .mt-5 {
+    margin-top: 4pt !important;
+  }
+
+  #report-cover .mt-10 {
+    margin-top: 10pt !important;
+  }
+
+  #report-cover .py-6 {
+    padding-top: 6pt !important;
+    padding-bottom: 6pt !important;
+  }
+
+  #report-cover .pt-6 {
+    padding-top: 6pt !important;
+  }
+
+  #report-cover table {
+    font-size: 9pt !important;
+  }
+
+  #report-cover th,
+  #report-cover td {
+    padding-top: 2pt !important;
+    padding-bottom: 2pt !important;
+  }
+
+  /* Market value + signature stay on the cover page */
+  .report-signature {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-top: 10pt !important;
+  }
+
+  .report-signature .h-14 {
+    height: 28px !important;
+  }
+
+  /* TOC on its own page */
   .report-toc {
+    break-before: page;
+    page-break-before: always;
     break-after: page;
     page-break-after: always;
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
-  /* Do NOT keep entire long sections together — that left huge blank pages.
-     Instead keep headings with the content that follows. */
+  /*
+   * Every numbered section starts at the TOP of a new page.
+   * Content may continue onto following pages; the next section
+   * still starts on a fresh page.
+   */
   .report-section {
+    break-before: page;
+    page-break-before: always;
     break-inside: auto;
     page-break-inside: auto;
   }
@@ -260,15 +329,21 @@
     page-break-inside: avoid;
   }
 
-  /* Avoid orphan table header rows and split label/value pairs when possible */
   #report-preview-sheet table {
     break-inside: auto;
     page-break-inside: auto;
+    font-size: 9pt !important;
   }
 
   #report-preview-sheet tr {
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+
+  #report-preview-sheet th,
+  #report-preview-sheet td {
+    padding-top: 2pt !important;
+    padding-bottom: 2pt !important;
   }
 
   #report-preview-sheet p {
@@ -281,7 +356,7 @@
     page-break-inside: avoid;
   }
 
-  /* Photo annexure on a new page; each figure stays intact */
+  /* Photo annexure always starts on a new page */
   .report-annexure {
     break-before: page;
     page-break-before: always;
@@ -290,18 +365,12 @@
   .report-photo-figure {
     break-inside: avoid;
     page-break-inside: avoid;
-    margin-bottom: 12pt;
+    margin-bottom: 10pt;
   }
 
   #report-preview-sheet img {
     max-width: 100% !important;
     height: auto !important;
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  /* Valuation statement block before annexure */
-  #sec-valuation {
     break-inside: avoid;
     page-break-inside: avoid;
   }
