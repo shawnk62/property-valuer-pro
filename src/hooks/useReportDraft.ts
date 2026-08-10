@@ -153,29 +153,33 @@ export function useReportDraft(inspectionId: string) {
     setDirty(true);
   }, []);
 
-  const setPhotos = useCallback((next: ReportPhoto[]) => {
-    setDraft((prev) => {
-      const updated = { ...prev, photos: next };
-      // Persist durable photo URLs immediately so uploads survive reload without a manual save.
-      if (typeof window !== "undefined") {
-        try {
-          const raw = window.localStorage.getItem(storageKey(prev.inspectionId));
-          const base = raw ? (JSON.parse(raw) as ReportDraft) : prev;
-          const toStore: ReportDraft = {
-            ...base,
-            ...updated,
-            values: prev.values,
-            photos: next.filter((ph) => isDurablePhotoUrl(ph.url)),
-          };
-          window.localStorage.setItem(storageKey(prev.inspectionId), JSON.stringify(toStore));
-        } catch {
-          // ignore persistence errors
+  const setPhotos = useCallback(
+    (next: ReportPhoto[] | ((prev: ReportPhoto[]) => ReportPhoto[])) => {
+      setDraft((prev) => {
+        const photos = typeof next === "function" ? next(prev.photos) : next;
+        const updated = { ...prev, photos };
+        // Persist durable photo URLs immediately so uploads survive reload without a manual save.
+        if (typeof window !== "undefined") {
+          try {
+            const raw = window.localStorage.getItem(storageKey(prev.inspectionId));
+            const base = raw ? (JSON.parse(raw) as ReportDraft) : prev;
+            const toStore: ReportDraft = {
+              ...base,
+              ...updated,
+              values: prev.values,
+              photos: photos.filter((ph) => isDurablePhotoUrl(ph.url)),
+            };
+            window.localStorage.setItem(storageKey(prev.inspectionId), JSON.stringify(toStore));
+          } catch {
+            // ignore persistence errors
+          }
         }
-      }
-      return updated;
-    });
-    setDirty(true);
-  }, []);
+        return updated;
+      });
+      setDirty(true);
+    },
+    [],
+  );
 
   const setSales = useCallback((next: ComparableSale[]) => {
     setDraft((prev) => ({ ...prev, sales: next }));

@@ -116,81 +116,69 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     replaceId?: string;
   }) {
     const photoId = opts.replaceId ?? newId();
-    const snapshot = photos;
-    const existing = opts.replaceId
-      ? snapshot.find((p) => p.id === opts.replaceId)
-      : undefined;
-
     const previewUrl = URL.createObjectURL(opts.file);
-    const optimistic: ReportPhoto = {
-      id: photoId,
-      slot: opts.slot,
-      caption: opts.caption,
-      url: previewUrl,
-      storagePath: existing?.storagePath,
-    };
 
-    if (opts.replaceId) {
-      setPhotos(snapshot.map((p) => (p.id === opts.replaceId ? optimistic : p)));
-    } else {
-      setPhotos([...snapshot, optimistic]);
-    }
+    // Optimistic preview — functional update so concurrent "Add photo" files don't clobber each other.
+    setPhotos((prev) => {
+      const optimistic: ReportPhoto = {
+        id: photoId,
+        slot: opts.slot,
+        caption: opts.caption,
+        url: previewUrl,
+      };
+      if (opts.replaceId) {
+        return prev.map((p) => (p.id === opts.replaceId ? { ...optimistic, storagePath: p.storagePath } : p));
+      }
+      if (opts.slot) {
+        const withoutSlot = prev.filter((p) => p.slot !== opts.slot && p.id !== photoId);
+        return [...withoutSlot, optimistic];
+      }
+      return [...prev.filter((p) => p.id !== photoId), optimistic];
+    });
 
     markUploading(photoId, true);
     try {
-      if (existing?.storagePath) {
-        await deleteReportPhoto(existing.storagePath);
-      }
       const { url, storagePath } = await uploadReportPhoto({
         inspectionId,
         photoId,
         file: opts.file,
       });
       URL.revokeObjectURL(previewUrl);
-
-      const saved: ReportPhoto = {
-        id: photoId,
-        slot: opts.slot,
-        caption: opts.caption,
-        url,
-        storagePath,
-      };
-
-      // Merge against latest controller state via snapshot + saved id
-      const latest = controller.draft.photos;
-      const without = latest.filter((p) => p.id !== photoId && p.id !== opts.replaceId);
-      if (opts.slot) {
-        // Ensure only one photo per fixed slot
-        setPhotos([
-          ...without.filter((p) => p.slot !== opts.slot),
-          saved,
-        ]);
-      } else {
-        setPhotos([...without, saved]);
-      }
+      setPhotos((prev) => {
+        const saved: ReportPhoto = {
+          id: photoId,
+          slot: opts.slot,
+          caption: opts.caption || prev.find((p) => p.id === photoId)?.caption || "",
+          url,
+          storagePath,
+        };
+        if (opts.slot) {
+          return [...prev.filter((p) => p.slot !== opts.slot && p.id !== photoId), saved];
+        }
+        return prev.map((p) => (p.id === photoId ? saved : p));
+      });
       toast.success("Photo uploaded");
     } catch (err) {
-      URL.revokeObjectURL(previewUrl);
-      if (opts.replaceId && existing) {
-        setPhotos(
-          controller.draft.photos.map((p) => (p.id === photoId ? existing : p)),
-        );
-      } else {
-        setPhotos(controller.draft.photos.filter((p) => p.id !== photoId));
-      }
-      toast.error(err instanceof Error ? err.message : "Photo upload failed");
+      // Keep local preview so the annexure still works if Storage bucket is not set up yet.
+      const message = err instanceof Error ? err.message : "Photo upload failed";
+      toast.error(
+        `${message} Photo kept for this session only — set up the report-photos bucket to persist.`,
+        { duration: 6000 },
+      );
+      // Leave blob: URL in place; user can still see it in preview until refresh.
     } finally {
       markUploading(photoId, false);
     }
   }
 
   function upsertSlotCaption(slot: PhotoSlot, label: string, caption: string) {
-    const existing = photos.find((p) => p.slot === slot);
-    if (existing) {
-      setPhotos(photos.map((p) => (p.id === existing.id ? { ...p, caption } : p)));
-      return;
-    }
-    setPhotos([...photos, { id: newId(), slot, caption, url: "" }]);
+    setPhotos((prev) => {
+      const existing = prev.find((p) => p.slot === slot);
+      if (existing) {
+        return prev.map((p) => (p.id === existing.id ? { ...p, caption } : p));
+      }
+      return [...prev, { id: newId(), slot, caption, url: "" }];
+    });
   }
 
   async function onSlotFile(slot: PhotoSlot, label: string, file: File) {
@@ -209,7 +197,32 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     } catch {
       // ignore
     }
-    setPhotos(photos.filter((p) => p.id !== photo.id));
+    if (photo.url.startsWith("blob:")) {
+      try {
+        URL.revokeObjectURL(photo.url);
+      } catch {
+        // ignore
+      }
+    }
+    setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
+  }
+
+  function onAddPhotosClick() {
+    extraInputRef.current?.click();
+  }
+
+  function onExtraFilesSelected(fileList: FileList | null) {
+    const files = Array.from(fileList ?? []).filter((f) => f.type.startsWith("image/") || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(f.name));
+    if (files.length === 0) {
+      toast.error("No image files selected");
+      return;
+    }
+    // Sequential so UI stays ordered and toasts stay readable; state updates are still functional.
+    void (async () => {
+      for (const file of files) {
+        await uploadAndAttach({ file, slot: null, caption: file.name.replace(/\.[^.]+$/, "") });
+      }
+    })();
   }
 
   const extras = photos.filter((p) => p.slot === null);
@@ -219,8 +232,8 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
       <div className="rounded-md border border-border bg-card p-4">
         <h3 className="text-sm font-semibold text-foreground">Photo annexure</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Photos are stored in Supabase and stay attached to this report across sessions.
-          Captions print beneath each image in Annexure 2 and in the Word export.
+          Use each slot for the standard views, or Add photo for extras. Drag-and-drop works without
+          opening the system file dialog. Captions print in Annexure 2 and the Word export.
         </p>
       </div>
 
@@ -245,13 +258,13 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
-          onClick={() => extraInputRef.current?.click()}
+          onClick={onAddPhotosClick}
           className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
         >
           Add photo
         </button>
         <span className="text-sm text-muted-foreground">
-          Additional images with custom captions.
+          Additional images with custom captions (multiple allowed).
         </span>
         <input
           ref={extraInputRef}
@@ -260,11 +273,8 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
           multiple
           className="hidden"
           onChange={(e) => {
-            const files = Array.from(e.target.files ?? []);
+            onExtraFilesSelected(e.target.files);
             e.target.value = "";
-            for (const file of files) {
-              void uploadAndAttach({ file, slot: null, caption: "" });
-            }
           }}
         />
       </div>
@@ -286,7 +296,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
                 })
               }
               onCaption={(caption) =>
-                setPhotos(photos.map((p) => (p.id === photo.id ? { ...p, caption } : p)))
+                setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, caption } : p)))
               }
               onRemove={() => void removePhoto(photo)}
             />
