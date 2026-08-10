@@ -98,6 +98,11 @@
   --sidebar-accent-foreground: oklch(0.29 0.04 253);
   --sidebar-border: oklch(0.9 0.008 250);
   --sidebar-ring: oklch(0.34 0.072 253);
+  --page: oklch(1 0 0);
+  --page-foreground: oklch(0.18 0.008 150);
+  --rule: oklch(0.82 0.01 150);
+  --gold: oklch(0.75 0.12 87);
+  --gold-foreground: oklch(0.25 0.03 87);
 }
 
 
@@ -145,4 +150,29 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+}
+
+
+/* Report preview page surface — A4-like sheet with print typography. */
+@utility report-sheet {
+  background-color: var(--page);
+  color: var(--page-foreground);
+  font-family: var(--font-serif);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+@utility report-h1 {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: 1.125rem;
+}
+
+@utility report-h2 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1rem;
 }

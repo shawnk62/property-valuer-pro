@@ -39,16 +39,16 @@ function SettingsScreen() {
   const [testing, setTesting] = useState(false);
 
   const meta = PROVIDERS.find((p) => p.id === provider)!;
-  const isCustom = !meta.usesLovableGateway;
+  const showBaseUrl = meta.requiresBaseUrl || provider === "xai" || provider === "custom";
 
   const settings = useMemo(
     () => ({
       provider,
       model: model.trim(),
       apiKey: apiKey.trim(),
-      baseUrl: isCustom ? baseUrl.trim() || undefined : undefined,
+      baseUrl: showBaseUrl ? baseUrl.trim() || meta.baseUrl || undefined : meta.baseUrl,
     }),
-    [provider, model, apiKey, baseUrl, isCustom],
+    [provider, model, apiKey, baseUrl, showBaseUrl, meta.baseUrl],
   );
 
   const save = () => {
@@ -168,14 +168,14 @@ function SettingsScreen() {
               <p className="text-xs text-muted-foreground">Never shared outside this app.</p>
             </div>
 
-            {isCustom && (
+            {showBaseUrl && (
               <div className="space-y-2">
                 <Label htmlFor="baseUrl">Base URL</Label>
                 <Input
                   id="baseUrl"
                   value={baseUrl}
                   onChange={(e) => setBaseUrl(e.target.value)}
-                  placeholder="https://api.x.ai/v1"
+                  placeholder={meta.baseUrl ?? "https://api.example.com/v1"}
                 />
               </div>
             )}

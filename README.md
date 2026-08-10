@@ -168,7 +168,7 @@ Parts of Remarks / Assessment that describe the subject
 
 Other sections (Introduction, Basis of Valuation, Limitations, Critical Assumptions, Sales Evidence commentary, etc.) should be driven mainly by the chosen template + Assignment Type, with light insertion of subject-specific facts where appropriate.
 
-Technical preferences for Lovable
+Technical preferences
 
 Mobile-first for the inspection form (valuers work on site).
 
@@ -226,23 +226,15 @@ Start with Phase 1. Keep the architecture open for the later phases.
 
 I have the json file for the inspection form and a copy of the template for the inspection form, but have not been able to attach them. I have attached a sample of a valuation report that was done for the purpose of estimating the value for a dissolution of marriage as a place to start, but there will be other formats for different types of reports. The information captured by the inspection form will be used for all types.
 
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/b1169652-b3e2-4281-8440-33b06162983f).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Standalone TanStack Start + Vite + React + Supabase application.
 
 ```sh
 git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+cd property-valuer-pro
+bun install   # or npm i
+bun run dev   # or npm run dev
 ```
+
+Deployed to Vercel / g-h2o-websites.com. No third-party editor coupling.

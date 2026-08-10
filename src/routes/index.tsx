@@ -101,18 +101,23 @@ function InspectionsIndex() {
                 Schema version {schema.version} · {schema.sections.length} sections
               </p>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => void signOut().then(() => navigate({ to: "/login" }))}
-            >
-              Sign out
-            </Button>
-            <Button variant="ghost" size="icon" asChild aria-label="AI settings">
-              <Link to="/settings">
-                <Settings className="size-5" />
-              </Link>
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/reports">Reports</Link>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => void signOut().then(() => navigate({ to: "/login" }))}
+              >
+                Sign out
+              </Button>
+              <Button variant="ghost" size="icon" asChild aria-label="AI settings">
+                <Link to="/settings">
+                  <Settings className="size-5" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </header>

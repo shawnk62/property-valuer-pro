@@ -1,14 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { generateText, Output } from "ai";
 import { z } from "zod";
-import { createCustomOpenAiProvider, createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { createAiProvider } from "./ai-gateway.server";
 import type { AiSettings } from "./types";
 import { providerMeta } from "./types";
 import { buildBlockPrompt } from "@/lib/narrative/promptBuilders";
 import type { InspectionValues } from "@/lib/inspection/types";
 
 const SettingsInput = z.object({
-  provider: z.enum(["openai", "google", "anthropic", "xai"]),
+  provider: z.enum(["openai", "xai", "custom"]),
   model: z.string().min(1),
   apiKey: z.string().min(1),
   baseUrl: z.string().optional(),
@@ -40,22 +40,8 @@ const ExtractPropertyInput = z.object({
 function createModel(settings: AiSettings) {
   const meta = providerMeta(settings.provider);
   if (!meta) throw new Error("Unknown AI provider");
-
-  if (settings.provider === "xai") {
-    const provider = createCustomOpenAiProvider(settings);
-    return provider(settings.model);
-  }
-
-  const provider = createLovableAiGatewayProvider(settings.apiKey);
+  const provider = createAiProvider(settings);
   return provider(settings.model);
-}
-
-function providerOptions(settings: AiSettings) {
-  // GPT-5.6 models on the Lovable gateway require reasoningEffort: "none".
-  if (settings.provider === "openai" && settings.model.includes("gpt-5.6")) {
-    return { lovable: { reasoningEffort: "none" as const } };
-  }
-  return undefined;
 }
 
 export const testAiConnection = createServerFn({ method: "POST" })
@@ -63,11 +49,9 @@ export const testAiConnection = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const settings = asAiSettings(data);
     const model = createModel(settings);
-    const options = providerOptions(settings);
     const { text } = await generateText({
       model,
       prompt: "Reply with exactly: connection ok",
-      ...(options ? { providerOptions: options } : {}),
     });
     return { ok: text.toLowerCase().includes("ok"), response: text };
   });
@@ -78,13 +62,11 @@ export const generateNarrativeBlock = createServerFn({ method: "POST" })
     const settings = asAiSettings(data.settings);
     const model = createModel(settings);
     const { system, prompt } = buildBlockPrompt(data.blockKey, data.values as InspectionValues);
-    const options = providerOptions(settings);
 
     const { text } = await generateText({
       model,
       system,
       prompt,
-      ...(options ? { providerOptions: options } : {}),
     });
 
     return { text: text.trim() };
@@ -123,17 +105,12 @@ Use null when a field is not present. Do not guess — only extract what is expl
 ${fieldList.join(", ")}
 
 Property summary:
-${data.source === "text" ? data.text ?? "" : "[file attached]"}`;
-
-    const options = providerOptions(settings);
+${data.source === "text" ? (data.text ?? "") : "[file attached]"}`;
 
     if (data.source === "file" && data.file) {
-      const gateway = createLovableAiGatewayProvider(settings.apiKey, { structuredOutputs: true });
-      const structuredModel = gateway(settings.model);
-
       try {
         const { output } = await generateText({
-          model: structuredModel,
+          model,
           output: Output.object({ schema: ExtractionSchema }),
           messages: [
             { role: "system", content: system },
@@ -149,16 +126,13 @@ ${data.source === "text" ? data.text ?? "" : "[file attached]"}`;
               ],
             },
           ],
-          ...(options ? { providerOptions: options } : {}),
         });
         return output;
-      } catch (error) {
-        // Fallback: ask for plain JSON if structured output fails.
+      } catch {
         const { text } = await generateText({
           model,
           system,
           prompt: extractionPrompt,
-          ...(options ? { providerOptions: options } : {}),
         });
         try {
           const parsed = JSON.parse(text);
@@ -173,7 +147,6 @@ ${data.source === "text" ? data.text ?? "" : "[file attached]"}`;
       model,
       system,
       prompt: extractionPrompt,
-      ...(options ? { providerOptions: options } : {}),
     });
 
     try {

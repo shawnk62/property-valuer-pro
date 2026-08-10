@@ -1,10 +1,10 @@
-export type AiProviderId = "openai" | "google" | "anthropic" | "xai";
+export type AiProviderId = "openai" | "xai" | "custom";
 
 export interface AiSettings {
   provider: AiProviderId;
   model: string;
   apiKey: string;
-  // Only used for the xAI / custom OpenAI-compatible option.
+  /** Required for xAI and custom OpenAI-compatible providers. */
   baseUrl?: string | undefined;
 }
 
@@ -14,51 +14,36 @@ export interface ProviderMeta {
   description: string;
   defaultModel: string;
   modelSuggestions: string[];
-  usesLovableGateway: boolean;
   baseUrl?: string;
+  requiresBaseUrl: boolean;
 }
 
 export const PROVIDERS: ProviderMeta[] = [
   {
     id: "openai",
     label: "OpenAI",
-    description: "GPT models via the Lovable AI Gateway.",
-    defaultModel: "openai/gpt-5.6-sol",
-    modelSuggestions: ["openai/gpt-5.6-sol", "openai/gpt-4.1", "openai/gpt-4o-mini"],
-    usesLovableGateway: true,
-  },
-  {
-    id: "google",
-    label: "Google (Gemini)",
-    description: "Gemini models via the Lovable AI Gateway.",
-    defaultModel: "google/gemini-2.5-flash-preview",
-    modelSuggestions: [
-      "google/gemini-2.5-flash-preview",
-      "google/gemini-2.5-pro-preview",
-      "google/gemini-2.0-flash-001",
-    ],
-    usesLovableGateway: true,
-  },
-  {
-    id: "anthropic",
-    label: "Anthropic (Claude)",
-    description: "Claude models via the Lovable AI Gateway.",
-    defaultModel: "anthropic/claude-sonnet-4-20250514",
-    modelSuggestions: [
-      "anthropic/claude-sonnet-4-20250514",
-      "anthropic/claude-opus-4-20250514",
-      "anthropic/claude-3-5-haiku-20241022",
-    ],
-    usesLovableGateway: true,
+    description: "Official OpenAI API (GPT models).",
+    defaultModel: "gpt-4o",
+    modelSuggestions: ["gpt-4o", "gpt-4o-mini", "gpt-4.1", "o3-mini"],
+    baseUrl: "https://api.openai.com/v1",
+    requiresBaseUrl: false,
   },
   {
     id: "xai",
-    label: "xAI (Grok) — custom endpoint",
+    label: "xAI (Grok)",
     description: "Direct connection to the xAI OpenAI-compatible API.",
     defaultModel: "grok-3-latest",
     modelSuggestions: ["grok-3-latest", "grok-3-mini-latest", "grok-2-latest"],
-    usesLovableGateway: false,
     baseUrl: "https://api.x.ai/v1",
+    requiresBaseUrl: false,
+  },
+  {
+    id: "custom",
+    label: "Custom OpenAI-compatible",
+    description: "Any OpenAI-compatible endpoint (bring your own base URL).",
+    defaultModel: "gpt-4o",
+    modelSuggestions: ["gpt-4o", "gpt-4o-mini"],
+    requiresBaseUrl: true,
   },
 ];
 

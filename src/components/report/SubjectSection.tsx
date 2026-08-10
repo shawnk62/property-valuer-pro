@@ -1,0 +1,159 @@
+import type { ReportDraftController } from "@/hooks/useReportDraft";
+import { pick } from "@/lib/report/schema";
+
+const IDENTITY_FIELDS = [
+  "prop_assignment",
+  "insp_purpose",
+  "prop_address",
+  "prop_suburb",
+  "prop_state",
+  "prop_postcode",
+  "prop_lotplan",
+  "prop_title",
+  "prop_legal",
+  "prop_lga",
+  "prop_parish",
+  "prop_owner",
+  "prop_occupant",
+  "prop_rights",
+];
+
+const SITE_FIELDS = [
+  "prop_sitearea",
+  "prop_areaunit",
+  "prop_dimensions",
+  "prop_shape",
+  "prop_zoning",
+  "prop_zoning_desc",
+  "prop_zoning_comp",
+  "prop_hbu",
+  "prop_flood",
+  "prop_flood_map",
+  "prop_adverse_site",
+];
+
+const TRANSACTION_FIELDS = [
+  "prop_offered",
+  "prop_offer_details",
+  "prop_contract_price",
+  "prop_contract_date",
+  "prop_seller_owner",
+  "prop_assistance",
+  "prop_assistance_details",
+];
+
+function FactTable({
+  title,
+  rows,
+}: {
+  title: string;
+  rows: { name: string; label: string; value: string }[];
+}) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="rounded-md border border-border bg-card">
+      <h3 className="border-b border-border px-4 py-2.5 text-sm font-semibold text-foreground">
+        {title}
+      </h3>
+      <dl className="divide-y divide-border">
+        {rows.map((row) => (
+          <div key={row.name} className="grid grid-cols-1 gap-1 px-4 py-2.5 sm:grid-cols-[minmax(0,15rem)_1fr] sm:gap-4">
+            <dt className="text-sm text-muted-foreground">
+              {row.label}
+              <span className="ml-2 font-mono text-[11px] text-muted-foreground/70">
+                {row.name}
+              </span>
+            </dt>
+            <dd className="text-sm text-foreground">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
+function MetaInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  prefix,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  prefix?: string;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-sm font-medium text-foreground">{label}</span>
+      <div className="flex items-center rounded-md border border-input bg-card focus-within:ring-2 focus-within:ring-ring">
+        {prefix ? (
+          <span className="pl-3 text-sm text-muted-foreground">{prefix}</span>
+        ) : null}
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="w-full bg-transparent px-3 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+        />
+      </div>
+    </label>
+  );
+}
+
+export function SubjectSection({ controller }: { controller: ReportDraftController }) {
+  const { draft, setMeta } = controller;
+  const { values, reportMeta } = draft;
+
+  return (
+    <div className="space-y-6">
+      <section className="rounded-md border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold text-foreground">Valuation figures</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Entered here for the report; not part of the inspection record.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <MetaInput
+            label="Assessed market value"
+            prefix="$"
+            value={reportMeta.valueAmount}
+            onChange={(v) => setMeta({ valueAmount: v })}
+            placeholder="895,000"
+          />
+          <MetaInput
+            label="Date of valuation"
+            value={reportMeta.valueDate}
+            onChange={(v) => setMeta({ valueDate: v })}
+            placeholder="dd/mm/yyyy"
+          />
+          <MetaInput
+            label="Date of inspection"
+            value={reportMeta.inspectionDate}
+            onChange={(v) => setMeta({ inspectionDate: v })}
+            placeholder="dd/mm/yyyy"
+          />
+          <MetaInput
+            label="Valuer"
+            value={reportMeta.valuerName}
+            onChange={(v) => setMeta({ valuerName: v })}
+          />
+          <MetaInput
+            label="Firm"
+            value={reportMeta.firmName}
+            onChange={(v) => setMeta({ firmName: v })}
+          />
+        </div>
+      </section>
+
+      <FactTable title="Property identification" rows={pick(values, IDENTITY_FIELDS)} />
+      <FactTable title="Site and planning" rows={pick(values, SITE_FIELDS)} />
+      <FactTable title="Transaction" rows={pick(values, TRANSACTION_FIELDS)} />
+      <p className="text-sm text-muted-foreground">
+        Subject facts are read-only here — they come from the inspection record. Fields
+        left unset in the inspection are omitted entirely, in the report as well as above.
+      </p>
+    </div>
+  );
+}
