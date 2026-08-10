@@ -20,7 +20,10 @@ export interface ReportPhoto {
   id: string;
   slot: PhotoSlot | null;
   caption: string;
+  /** Public or signed URL for display and Word export. */
   url: string;
+  /** Supabase Storage object path — used for delete. */
+  storagePath?: string;
 }
 
 export interface ComparableSale {

@@ -1,4 +1,9 @@
 import { useState } from "react";
+import {
+  downloadBlob,
+  generateValuationDocx,
+  suggestedDocxFilename,
+} from "@/lib/report/generateDocx";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { NarrativeSection } from "@/components/report/NarrativeSection";
@@ -21,8 +26,24 @@ type TabId = (typeof TABS)[number]["id"];
 
 export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
   const controller = useReportDraft(inspectionId);
-  const [tab, setTab] = useState<TabId>("subject");
   const { draft, dirty, savedAt, save, loaded, loadError } = controller;
+  const [tab, setTab] = useState<TabId>("subject");
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownloadWord() {
+    setDownloading(true);
+    try {
+      save();
+      const blob = await generateValuationDocx(draft);
+      downloadBlob(blob, suggestedDocxFilename(draft));
+      toast.success("Word report downloaded");
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Failed to generate Word report");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   const heading =
     [get(draft.values, "prop_address"), get(draft.values, "prop_suburb")]
@@ -91,11 +112,11 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
             </button>
             <button
               type="button"
-              disabled
-              title="Available once Word generation is wired"
-              className="cursor-not-allowed rounded-md border border-input bg-muted px-4 py-2.5 text-sm font-semibold text-muted-foreground"
+              disabled={downloading}
+              onClick={() => void handleDownloadWord()}
+              className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
             >
-              Download Word
+              {downloading ? "Preparing Word…" : "Download Word"}
             </button>
           </div>
         </div>

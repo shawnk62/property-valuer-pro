@@ -49,18 +49,26 @@ function createEmptyDraft(inspectionId: string, values: Record<string, FieldValu
   };
 }
 
+function isDurablePhotoUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  // Keep Supabase (and other http) URLs; drop ephemeral blob: object URLs.
+  return /^https?:\/\//i.test(url);
+}
+
 function loadPersistedExtras(inspectionId: string): Partial<ReportDraft> | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(storageKey(inspectionId));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as ReportDraft;
-    // Photos use object URLs which do not survive a reload.
+    const photos = Array.isArray(parsed.photos)
+      ? parsed.photos.filter((p) => isDurablePhotoUrl(p?.url))
+      : [];
     return {
       narrative: parsed.narrative,
       sales: parsed.sales,
       reportMeta: parsed.reportMeta,
-      photos: [],
+      photos,
     };
   } catch {
     return null;
@@ -146,7 +154,26 @@ export function useReportDraft(inspectionId: string) {
   }, []);
 
   const setPhotos = useCallback((next: ReportPhoto[]) => {
-    setDraft((prev) => ({ ...prev, photos: next }));
+    setDraft((prev) => {
+      const updated = { ...prev, photos: next };
+      // Persist durable photo URLs immediately so uploads survive reload without a manual save.
+      if (typeof window !== "undefined") {
+        try {
+          const raw = window.localStorage.getItem(storageKey(prev.inspectionId));
+          const base = raw ? (JSON.parse(raw) as ReportDraft) : prev;
+          const toStore: ReportDraft = {
+            ...base,
+            ...updated,
+            values: prev.values,
+            photos: next.filter((ph) => isDurablePhotoUrl(ph.url)),
+          };
+          window.localStorage.setItem(storageKey(prev.inspectionId), JSON.stringify(toStore));
+        } catch {
+          // ignore persistence errors
+        }
+      }
+      return updated;
+    });
     setDirty(true);
   }, []);
 
@@ -157,10 +184,10 @@ export function useReportDraft(inspectionId: string) {
 
   const save = useCallback(() => {
     if (typeof window === "undefined") return;
-    // Persist only the editable extras — values stay owned by the inspection record.
+    // Persist editable extras. Keep only durable photo URLs (Supabase), not blob: previews.
     const toStore: ReportDraft = {
       ...draft,
-      photos: [], // object URLs are not durable
+      photos: draft.photos.filter((p) => isDurablePhotoUrl(p.url)),
     };
     window.localStorage.setItem(storageKey(draft.inspectionId), JSON.stringify(toStore));
     setSavedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
