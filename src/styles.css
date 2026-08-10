@@ -205,11 +205,10 @@
     overflow: visible !important;
   }
 
-  header,
-  nav,
+  /* Only app chrome — never the report cover <header> with the logo */
+  .no-print,
   button,
-  [data-sonner-toaster],
-  .no-print {
+  [data-sonner-toaster] {
     display: none !important;
   }
 
