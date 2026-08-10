@@ -16,7 +16,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className="mt-8 scroll-mt-24 break-inside-avoid">
+    <section id={id} className="report-section mt-8 scroll-mt-24">
       <h2 className="report-h2 border-b border-[var(--rule)] pb-1 uppercase tracking-wide">
         <span className="mr-3 tabular-nums">{number}</span>
         {title}
@@ -222,7 +222,7 @@ function TableOfContents({ draft }: { draft: ReportDraft }) {
   if (entries.length === 0) return null;
 
   return (
-    <nav id="table-of-contents" className="mt-10 break-inside-avoid" aria-label="Table of contents">
+    <nav id="table-of-contents" className="report-toc mt-10" aria-label="Table of contents">
       <h2 className="report-h2 border-b border-[var(--rule)] pb-1 uppercase tracking-wide">
         Table of Contents
       </h2>
@@ -334,7 +334,8 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
   return (
     <article id="report-preview-sheet" className="report-sheet mx-auto max-w-[52rem] px-8 py-10 shadow-sm sm:px-12 sm:py-14">
-      {/* ---- Cover / valuation summary ---- */}
+      {/* ---- Cover / valuation summary (kept on first printed page) ---- */}
+      <div id="report-cover" className="report-cover">
       <header className="text-center">
         <img
           src="/ppv-logo.jpeg"
@@ -388,7 +389,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         </p>
       </div>
 
-      <div className="mt-10">
+      <div className="report-signature mt-10">
         <div className="h-14 w-56 border-b border-[var(--page-foreground)]/70" />
         <p className="mt-2 font-semibold">{m.valuerName || get(v, "insp_valuer")}</p>
         {get(v, "sign_member") ? (
@@ -397,6 +398,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         <p className="text-sm">{m.firmName || get(v, "insp_firm")}</p>
         {m.valueDate ? <p className="mt-1 text-sm">{m.valueDate}</p> : null}
       </div>
+      </div>{/* end report-cover */}
 
       <TableOfContents draft={draft} />
 
@@ -715,7 +717,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </Section>
 
       {/* ---- Photo annexure ---- */}
-      <section className="mt-12 break-before-page">
+      <section id="report-annexure-photos" className="report-annexure mt-12">
         <h2 className="report-h1 text-center">Annexure 2 — Photographs</h2>
         {annexurePhotos.length === 0 ? (
           <p className="mt-4 text-center text-sm italic text-[var(--page-foreground)]/70">
@@ -724,7 +726,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         ) : (
           <div className="mt-6 grid gap-6 sm:grid-cols-2">
             {annexurePhotos.map((photo) => (
-              <figure key={photo.id}>
+              <figure key={photo.id} className="report-photo-figure">
                 <img
                   src={photo.url}
                   alt={photo.caption}

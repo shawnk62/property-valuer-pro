@@ -181,8 +181,8 @@
 /* ---- Report PDF / print: only the preview sheet ---- */
 @media print {
   @page {
-    size: A4;
-    margin: 12mm;
+    size: A4 portrait;
+    margin: 14mm 14mm 16mm 14mm;
   }
 
   html,
@@ -193,7 +193,7 @@
     -webkit-print-color-adjust: exact;
   }
 
-  /* Hide app chrome */
+  /* Hide app chrome; show only the report article */
   body * {
     visibility: hidden !important;
   }
@@ -207,13 +207,15 @@
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
+    width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
     padding: 0 !important;
     box-shadow: none !important;
     background: white !important;
     color: black !important;
+    font-size: 10.5pt !important;
+    line-height: 1.45 !important;
   }
 
   #report-preview-sheet a {
@@ -221,14 +223,86 @@
     color: inherit !important;
   }
 
-  #report-preview-sheet img {
-    max-width: 100% !important;
-    break-inside: avoid;
+  /* Cover = page 1; body starts after */
+  #report-cover {
+    break-after: page;
+    page-break-after: always;
   }
 
-  #report-preview-sheet section,
-  #report-preview-sheet table,
-  #report-preview-sheet figure {
+  .report-signature {
     break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* TOC starts cleanly on its own page region */
+  .report-toc {
+    break-after: page;
+    page-break-after: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Do NOT keep entire long sections together — that left huge blank pages.
+     Instead keep headings with the content that follows. */
+  .report-section {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  #report-preview-sheet h1,
+  #report-preview-sheet h2,
+  #report-preview-sheet h3,
+  #report-preview-sheet .report-h1,
+  #report-preview-sheet .report-h2 {
+    break-after: avoid;
+    page-break-after: avoid;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Avoid orphan table header rows and split label/value pairs when possible */
+  #report-preview-sheet table {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  #report-preview-sheet tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  #report-preview-sheet p {
+    orphans: 3;
+    widows: 3;
+  }
+
+  #report-preview-sheet li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Photo annexure on a new page; each figure stays intact */
+  .report-annexure {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .report-photo-figure {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 12pt;
+  }
+
+  #report-preview-sheet img {
+    max-width: 100% !important;
+    height: auto !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Valuation statement block before annexure */
+  #sec-valuation {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }

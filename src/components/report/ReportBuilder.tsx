@@ -74,7 +74,7 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
     const onAfterPrint = () => {
       window.removeEventListener("afterprint", onAfterPrint);
       setPrinting(false);
-      toast.message("Use “Save as PDF” in the print dialog if you need a file.");
+      toast.message("In the print dialog: Save as PDF, A4, and turn off headers/footers if shown.");
     };
     window.addEventListener("afterprint", onAfterPrint);
     window.print();
