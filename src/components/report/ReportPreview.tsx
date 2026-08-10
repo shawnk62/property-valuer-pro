@@ -5,22 +5,69 @@ import { PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
 /* ---------- primitives ---------- */
 
 function Section({
+  id,
   number,
   title,
   children,
 }: {
+  id: string;
   number: string;
   title: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="mt-8 break-inside-avoid">
+    <section id={id} className="mt-8 scroll-mt-24 break-inside-avoid">
       <h2 className="report-h2 border-b border-[var(--rule)] pb-1 uppercase tracking-wide">
         <span className="mr-3 tabular-nums">{number}</span>
         {title}
       </h2>
       <div className="mt-3 space-y-3">{children}</div>
     </section>
+  );
+}
+
+/** Template-aligned TOC with in-page jump links. */
+const TOC_ENTRIES: { id: string; number: string; title: string }[] = [
+  { id: "sec-instructions", number: "1.", title: "Instructions and Purpose" },
+  { id: "sec-property", number: "2.", title: "Property Details" },
+  { id: "sec-statutory", number: "3.", title: "Statutory Information" },
+  { id: "sec-planning", number: "4.", title: "Town Planning" },
+  { id: "sec-location", number: "5.", title: "Location" },
+  { id: "sec-site", number: "6.", title: "Site Details" },
+  { id: "sec-improvements", number: "7.", title: "Improvements" },
+  { id: "sec-accommodation", number: "8.", title: "Accommodation – Fixtures and Fittings" },
+  { id: "sec-other", number: "9.", title: "Improvements – Other Valuation Issues" },
+  { id: "sec-environmental", number: "10.", title: "Environmental Matters" },
+  { id: "sec-basis", number: "11.", title: "Basis of Valuation" },
+  { id: "sec-sales", number: "12.", title: "Sales Evidence" },
+  { id: "sec-remarks", number: "13.", title: "Remarks" },
+  { id: "sec-limitations", number: "14.", title: "Limitations" },
+  { id: "sec-assumptions", number: "15.", title: "Critical Assumptions" },
+  { id: "sec-valuation", number: "16.", title: "Valuation Statement" },
+];
+
+function TableOfContents() {
+  return (
+    <nav id="table-of-contents" className="mt-10 break-inside-avoid" aria-label="Table of contents">
+      <h2 className="report-h2 border-b border-[var(--rule)] pb-1 uppercase tracking-wide">
+        Table of Contents
+      </h2>
+      <ol className="mt-4 space-y-1.5 text-[0.9375rem]">
+        {TOC_ENTRIES.map((entry) => (
+          <li key={entry.id} className="flex gap-2">
+            <span className="w-8 shrink-0 tabular-nums text-[var(--page-foreground)]/70">
+              {entry.number}
+            </span>
+            <a
+              href={`#${entry.id}`}
+              className="flex-1 border-b border-dotted border-[var(--rule)] pb-0.5 text-[var(--page-foreground)] no-underline transition-colors hover:text-primary hover:border-primary"
+            >
+              {entry.title}
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }
 
@@ -177,8 +224,10 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         {m.valueDate ? <p className="mt-1 text-sm">{m.valueDate}</p> : null}
       </div>
 
+      <TableOfContents />
+
       {/* ---- 1. Instructions & purpose ---- */}
-      <Section number="1." title="Instructions and Purpose of Valuation">
+      <Section id="sec-instructions" number="1." title="Instructions and Purpose of Valuation">
         <Facts
           values={v}
           fields={["insp_purpose", "prop_assignment", "prop_rights"]}
@@ -191,7 +240,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </Section>
 
       {/* ---- 2. Property details ---- */}
-      <Section number="2." title="Property Details">
+      <Section id="sec-property" number="2." title="Property Details">
         <Facts
           values={v}
           fields={[
@@ -211,7 +260,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </Section>
 
       {/* ---- 3. Statutory ---- */}
-      <Section number="3." title="Statutory Details">
+      <Section id="sec-statutory" number="3." title="Statutory Information">
         <Facts
           values={v}
           fields={[
@@ -228,7 +277,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </Section>
 
       {/* ---- 4. Town planning ---- */}
-      <Section number="4." title="Town Planning">
+      <Section id="sec-planning" number="4." title="Town Planning">
         <Facts
           values={v}
           fields={["prop_zoning", "prop_zoning_desc", "prop_zoning_comp", "prop_hbu"]}
@@ -240,7 +289,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </Section>
 
       {/* ---- 5. Location ---- */}
-      <Section number="5." title="Location and Neighbourhood">
+      <Section id="sec-location" number="5." title="Location and Neighbourhood">
         <Prose text={get(v, "nbhd_description")} />
         <Prose text={get(v, "nbhd_market_conditions")} />
         <Facts
@@ -274,7 +323,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </Section>
 
       {/* ---- 6. Site ---- */}
-      <Section number="6." title="Site Details">
+      <Section id="sec-site" number="6." title="Site Details">
         <Facts
           values={v}
           fields={["prop_dimensions", "prop_shape", "topo", "land", "va", "fence", "exc", "prop_view"]}
@@ -300,7 +349,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </Section>
 
       {/* ---- 7. Improvements ---- */}
-      <Section number="7." title="Improvements">
+      <Section id="sec-improvements" number="7." title="Improvements">
         <Sub title="7.1  General description">
           <Prose text={draft.narrative.improvements} />
         </Sub>
@@ -347,7 +396,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </Section>
 
       {/* ---- 8. Accommodation ---- */}
-      <Section number="8." title="Accommodation">
+      <Section id="sec-accommodation" number="8." title="Accommodation – Fixtures and Fittings">
         <Prose text={draft.narrative.accommodation} />
         <Facts
           values={v}
@@ -356,14 +405,14 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </Section>
 
       {/* ---- 9. Other issues ---- */}
-      <Section number="9." title="Other Issues">
+      <Section id="sec-other" number="9." title="Improvements – Other Valuation Issues">
         <Prose text={get(v, "other_notes")} />
         <Prose text={get(v, "defects_notes")} />
         <Para>{BOILERPLATE.addedValue}</Para>
       </Section>
 
       {/* ---- 10. Environmental ---- */}
-      <Section number="10." title="Environmental Issues">
+      <Section id="sec-environmental" number="10." title="Environmental Matters">
         <Facts values={v} fields={["prop_flood", "prop_flood_map", "prop_adverse_site"]} />
         <Para>{BOILERPLATE.contaminatedLand}</Para>
         <Para>{BOILERPLATE.heritageListing}</Para>
@@ -372,7 +421,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </Section>
 
       {/* ---- 11. Basis of valuation ---- */}
-      <Section number="11." title="Basis of Valuation">
+      <Section id="sec-basis" number="11." title="Basis of Valuation">
         <Para>{BOILERPLATE.basisOfValuation}</Para>
         <Sub title="Market value">
           <Para>{BOILERPLATE.marketValueDefinition}</Para>
@@ -395,7 +444,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </Section>
 
       {/* ---- 12. Sales evidence ---- */}
-      <Section number="12." title="Sales Evidence">
+      <Section id="sec-sales" number="12." title="Sales Evidence">
         {draft.sales.length === 0 ? (
           <Para>No sales evidence has been recorded.</Para>
         ) : (
@@ -436,12 +485,12 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </Section>
 
       {/* ---- 13. Remarks ---- */}
-      <Section number="13." title="Remarks">
+      <Section id="sec-remarks" number="13." title="Remarks">
         <Prose text={draft.narrative.remarks || BOILERPLATE.remarksDefault} />
       </Section>
 
       {/* ---- 14. Limitations ---- */}
-      <Section number="14." title="Limitations">
+      <Section id="sec-limitations" number="14." title="Limitations">
         <Para>{BOILERPLATE.assumptionsAndLimitations}</Para>
         {BOILERPLATE.limitations.map((l) => (
           <Para key={l}>{l}</Para>
@@ -449,7 +498,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </Section>
 
       {/* ---- 15. Critical assumptions ---- */}
-      <Section number="15." title="Critical Assumptions">
+      <Section id="sec-assumptions" number="15." title="Critical Assumptions">
         <Para>{BOILERPLATE.criticalAssumptionsIntro}</Para>
         <ol className="ml-6 list-decimal space-y-2">
           {BOILERPLATE.criticalAssumptions.map((a) => (
@@ -462,7 +511,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </Section>
 
       {/* ---- 16. Valuation statement ---- */}
-      <Section number="16." title="Valuation">
+      <Section id="sec-valuation" number="16." title="Valuation Statement">
         <Para>
           Having regard to the foregoing, I am of the opinion that the market value of the
           unencumbered fee simple interest in the subject property
