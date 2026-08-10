@@ -161,10 +161,10 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     } catch (err) {
       // Keep local preview so the annexure still works if Storage bucket is not set up yet.
       const message = err instanceof Error ? err.message : "Photo upload failed";
-      toast.error(
-        `${message} Photo kept for this session only — set up the report-photos bucket to persist.`,
-        { duration: 6000 },
-      );
+      toast.error(message, { duration: 7000 });
+      toast.message("Photo kept for this session only. It will not survive a refresh until Storage upload succeeds.", {
+        duration: 5000,
+      });
       // Leave blob: URL in place; user can still see it in preview until refresh.
     } finally {
       markUploading(photoId, false);
