@@ -17,9 +17,24 @@ import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { get, hasValue, labelFor } from "@/lib/report/schema";
 import { PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
 
-const PAGE_WIDTH = 12240;
-const MARGIN = 1080;
+/** A4 width in DXA (twips). Australian valuation reports use A4. */
+const PAGE_WIDTH = 11906;
+const PAGE_HEIGHT = 16838;
+const MARGIN = 1134; // ~20mm
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
+
+async function loadLogoImage(): Promise<{ data: Uint8Array; type: "jpg" | "png" } | null> {
+  try {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const res = await fetch(`${origin}/ppv-logo.jpeg`);
+    if (!res.ok) return null;
+    const data = new Uint8Array(await res.arrayBuffer());
+    if (!data.byteLength) return null;
+    return { data, type: "jpg" };
+  } catch {
+    return null;
+  }
+}
 
 function text(value: string, opts?: { bold?: boolean; italics?: boolean; size?: number }) {
   return new TextRun({
@@ -177,26 +192,49 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   const addr = addressLine(draft);
   const children: (Paragraph | Table)[] = [];
 
+  const logo = await loadLogoImage();
+  if (logo) {
+    children.push(
+      new Paragraph({
+        children: [
+          new ImageRun({
+            data: logo.data,
+            type: logo.type,
+            transformation: { width: 160, height: 72 },
+            altText: { title: "Logo", description: "Peterson Property Valuations", name: "logo" },
+          }),
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 200 },
+      }),
+    );
+  }
+
   children.push(
     new Paragraph({
       children: [text("PETERSON PROPERTY VALUATIONS", { bold: true, size: 28 })],
       alignment: AlignmentType.CENTER,
-      spacing: { after: 80 },
+      spacing: { after: 60 },
     }),
     new Paragraph({
       children: [text("Real Estate Valuers", { italics: true, size: 20 })],
       alignment: AlignmentType.CENTER,
-      spacing: { after: 280 },
+      spacing: { after: 240 },
     }),
     new Paragraph({
-      children: [text("VALUATION SUMMARY", { bold: true, size: 26 })],
+      children: [text("REPORT AND VALUATION", { bold: true, size: 26 })],
       alignment: AlignmentType.CENTER,
-      spacing: { after: 80 },
+      spacing: { after: 60 },
+    }),
+    new Paragraph({
+      children: [text("VALUATION SUMMARY", { bold: true, size: 24 })],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 60 },
     }),
     new Paragraph({
       children: [text("Residential Valuation Report", { size: 18 })],
       alignment: AlignmentType.CENTER,
-      spacing: { after: 280 },
+      spacing: { after: 240 },
     }),
   );
 
@@ -588,10 +626,33 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     creator: m.firmName || "Peterson Property Valuations",
     title: addr ? `Valuation — ${addr}` : "Valuation Report",
     description: "Queensland residential valuation report",
+    styles: {
+      default: {
+        document: {
+          run: { font: "Times New Roman", size: 20 },
+          paragraph: { spacing: { after: 120, line: 276 } },
+        },
+      },
+      paragraphStyles: [
+        {
+          id: "Heading1",
+          name: "Heading 1",
+          basedOn: "Normal",
+          next: "Normal",
+          quickStyle: true,
+          run: { font: "Times New Roman", size: 22, bold: true },
+          paragraph: { spacing: { before: 280, after: 140 } },
+        },
+      ],
+    },
     sections: [
       {
         properties: {
           page: {
+            size: {
+              width: PAGE_WIDTH,
+              height: PAGE_HEIGHT,
+            },
             margin: {
               top: MARGIN,
               bottom: MARGIN,
