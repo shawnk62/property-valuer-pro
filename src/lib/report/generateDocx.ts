@@ -1,3 +1,7 @@
+/**
+ * Word export — structure and content intentionally mirrored from
+ * src/components/report/ReportPreview.tsx so the .docx matches Preview.
+ */
 import {
   AlignmentType,
   BorderStyle,
@@ -14,65 +18,85 @@ import {
   WidthType,
 } from "docx";
 import { BOILERPLATE } from "@/lib/report/boilerplate";
-import { get, hasValue, labelFor } from "@/lib/report/schema";
-import { PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
+import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
+import { get, hasValue, joinValues, labelFor } from "@/lib/report/schema";
+import { PHOTO_SLOTS, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
 
-/** A4 width in DXA (twips). Australian valuation reports use A4. */
+/** A4 (matches Australian report paper). */
 const PAGE_WIDTH = 11906;
 const PAGE_HEIGHT = 16838;
-const MARGIN = 1134; // ~20mm
+const MARGIN = 1134;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
 
-async function loadLogoImage(): Promise<{ data: Uint8Array; type: "jpg" | "png" } | null> {
-  try {
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const res = await fetch(`${origin}/ppv-logo.jpeg`);
-    if (!res.ok) return null;
-    const data = new Uint8Array(await res.arrayBuffer());
-    if (!data.byteLength) return null;
-    return { data, type: "jpg" };
-  } catch {
-    return null;
-  }
+function base64ToUint8Array(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
 }
 
-function text(value: string, opts?: { bold?: boolean; italics?: boolean; size?: number }) {
+function run(value: string, opts?: { bold?: boolean; italics?: boolean; size?: number }) {
   return new TextRun({
     text: value,
     bold: opts?.bold,
     italics: opts?.italics,
-    size: opts?.size ?? 20,
+    size: opts?.size ?? 20, // 10pt
     font: "Times New Roman",
   });
 }
 
-function para(
+function p(
   content: string,
-  opts?: { spacingAfter?: number; center?: boolean; bold?: boolean },
+  opts?: {
+    after?: number;
+    before?: number;
+    center?: boolean;
+    bold?: boolean;
+    italics?: boolean;
+    size?: number;
+  },
 ) {
   return new Paragraph({
-    children: [text(content, { bold: opts?.bold })],
-    spacing: { after: opts?.spacingAfter ?? 160 },
+    children: [run(content, { bold: opts?.bold, italics: opts?.italics, size: opts?.size })],
+    spacing: { after: opts?.after ?? 160, before: opts?.before ?? 0, line: 276 },
     alignment: opts?.center ? AlignmentType.CENTER : AlignmentType.BOTH,
   });
 }
 
-function heading(number: string, title: string) {
+/** Section heading — mirrors ReportPreview `.report-h2` uppercase + bottom rule. */
+function sectionHeading(number: string, title: string) {
   return new Paragraph({
-    children: [text(`${number}  ${title}`.toUpperCase(), { bold: true, size: 22 })],
+    children: [run(`${number}  ${title}`.toUpperCase(), { bold: true, size: 22 })],
     heading: HeadingLevel.HEADING_1,
-    spacing: { before: 320, after: 160 },
+    spacing: { before: 360, after: 160 },
     border: {
-      bottom: { style: BorderStyle.SINGLE, size: 6, color: "666666", space: 4 },
+      bottom: { style: BorderStyle.SINGLE, size: 12, color: "333333", space: 6 },
     },
   });
 }
 
-function subheading(title: string) {
+function subHeading(title: string) {
   return new Paragraph({
-    children: [text(title, { bold: true, size: 20 })],
+    children: [run(title, { bold: true, size: 20 })],
     spacing: { before: 200, after: 100 },
   });
+}
+
+function prose(body: string): Paragraph[] {
+  return body
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => p(line));
+}
+
+function thinBorder() {
+  return {
+    top: { style: BorderStyle.NIL as const },
+    bottom: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
+    left: { style: BorderStyle.NIL as const },
+    right: { style: BorderStyle.NIL as const },
+  };
 }
 
 function factsTable(
@@ -102,31 +126,21 @@ function factsTable(
           children: [
             new TableCell({
               width: { size: left, type: WidthType.DXA },
-              borders: {
-                top: { style: BorderStyle.NIL },
-                bottom: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
-                left: { style: BorderStyle.NIL },
-                right: { style: BorderStyle.NIL },
-              },
+              borders: thinBorder(),
               children: [
                 new Paragraph({
-                  children: [text(r.label, { size: 18 })],
-                  spacing: { after: 40 },
+                  children: [run(r.label, { size: 18 })],
+                  spacing: { after: 60 },
                 }),
               ],
             }),
             new TableCell({
               width: { size: right, type: WidthType.DXA },
-              borders: {
-                top: { style: BorderStyle.NIL },
-                bottom: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
-                left: { style: BorderStyle.NIL },
-                right: { style: BorderStyle.NIL },
-              },
+              borders: thinBorder(),
               children: [
                 new Paragraph({
-                  children: [text(r.value, { size: 18 })],
-                  spacing: { after: 40 },
+                  children: [run(r.value, { size: 18 })],
+                  spacing: { after: 60 },
                 }),
               ],
             }),
@@ -136,15 +150,64 @@ function factsTable(
   });
 }
 
-function proseBlocks(body: string): Paragraph[] {
-  return body
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => para(line));
+function push(children: (Paragraph | Table)[], item: Paragraph | Table | null | undefined) {
+  if (item) children.push(item);
 }
 
-async function fetchImageBytes(
+function pushAll(children: (Paragraph | Table)[], items: (Paragraph | Table | null | undefined)[]) {
+  for (const item of items) push(children, item);
+}
+
+/* ---- TOC visibility (copied from ReportPreview) ---- */
+
+type TocEntry = {
+  id: string;
+  number: string;
+  title: string;
+  always?: boolean;
+  fields?: string[];
+  narrativeKey?: keyof ReportNarrative;
+  requireSales?: boolean;
+};
+
+const TOC_ENTRIES: TocEntry[] = [
+  { id: "sec-instructions", number: "1.", title: "Instructions and Purpose", fields: ["insp_purpose", "prop_assignment", "prop_rights", "insp_date"] },
+  { id: "sec-property", number: "2.", title: "Property Details", fields: ["prop_address", "prop_suburb", "prop_state", "prop_postcode", "prop_lotplan", "prop_legal", "prop_title", "prop_parish", "prop_lga", "prop_owner", "prop_occupant"] },
+  { id: "sec-statutory", number: "3.", title: "Statutory Information", fields: ["prop_lga", "prop_offered", "prop_offer_details", "prop_contract_price", "prop_contract_date", "prop_seller_owner", "prop_assistance", "prop_assistance_details"] },
+  { id: "sec-planning", number: "4.", title: "Town Planning", fields: ["prop_zoning", "prop_zoning_desc", "prop_zoning_comp", "prop_hbu"] },
+  { id: "sec-location", number: "5.", title: "Location", fields: ["nbhd_description", "nbhd_market_conditions", "nbhd_location", "nbhd_builtup", "nbhd_growth", "nbhd_values", "nbhd_demand", "nbhd_marketing", "nbhd_price_range", "nbhd_age", "offsite_road_type", "offsite_road_surface", "offsite_carriageway", "offsite_kerb", "offsite_footpaths"] },
+  { id: "sec-site", number: "6.", title: "Site Details", fields: ["prop_sitearea", "prop_areaunit", "prop_dimensions", "prop_shape", "topo", "land", "va", "fence", "exc", "prop_view", "svc_water_type", "svc_sewer_type", "svc_elec_type", "svc_storm_type", "svc_tel_type", "prop_flood"] },
+  { id: "sec-improvements", number: "7.", title: "Improvements", fields: ["imp_design", "imp_lowset", "imp_storeys", "imp_yearbuilt", "imp_effage", "imp_quality", "imp_gla", "ext", "rc", "rd", "foundations", "floor_structure", "flr", "overall_cond"], narrativeKey: "improvements" },
+  { id: "sec-accommodation", number: "8.", title: "Accommodation – Fixtures and Fittings", fields: ["imp_rooms", "imp_beds", "imp_baths", "accom", "park", "anc"], narrativeKey: "accommodation" },
+  { id: "sec-other", number: "9.", title: "Improvements – Other Valuation Issues", fields: ["other_notes", "defects_notes", "overall_site_cond"] },
+  { id: "sec-environmental", number: "10.", title: "Environmental Matters", fields: ["prop_flood", "prop_flood_map", "prop_adverse_site"] },
+  { id: "sec-basis", number: "11.", title: "Basis of Valuation", always: true },
+  { id: "sec-sales", number: "12.", title: "Sales Evidence", requireSales: true },
+  { id: "sec-remarks", number: "13.", title: "Remarks", narrativeKey: "remarks", fields: ["other_notes", "defects_notes"] },
+  { id: "sec-limitations", number: "14.", title: "Limitations", always: true },
+  { id: "sec-assumptions", number: "15.", title: "Critical Assumptions", always: true },
+  { id: "sec-valuation", number: "16.", title: "Valuation Statement", always: true },
+];
+
+function sectionHasContent(entry: TocEntry, draft: ReportDraft): boolean {
+  if (entry.always) return true;
+  if (entry.requireSales) {
+    return draft.sales.some(
+      (s) => s.address.trim() || s.saleDate.trim() || s.salePrice.trim() || s.landArea.trim() || s.comments.trim(),
+    );
+  }
+  if (entry.narrativeKey) {
+    const text = draft.narrative[entry.narrativeKey];
+    if (typeof text === "string" && text.trim()) return true;
+  }
+  if (entry.fields?.some((name) => hasValue(draft.values[name]))) return true;
+  if (entry.id === "sec-instructions") {
+    if (draft.reportMeta.inspectionDate.trim() || draft.reportMeta.valueDate.trim()) return true;
+  }
+  return false;
+}
+
+async function imageFromUrl(
   url: string,
 ): Promise<{ data: Uint8Array; type: "jpg" | "png" | "gif" | "bmp" } | null> {
   try {
@@ -152,9 +215,7 @@ async function fetchImageBytes(
       const match = /^data:image\/(\w+);base64,(.+)$/i.exec(url);
       if (!match) return null;
       const subtype = match[1].toLowerCase();
-      const bin = atob(match[2]);
-      const data = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) data[i] = bin.charCodeAt(i);
+      const data = base64ToUint8Array(match[2]);
       let type: "jpg" | "png" | "gif" | "bmp" = "jpg";
       if (subtype.includes("png")) type = "png";
       else if (subtype.includes("gif")) type = "gif";
@@ -176,94 +237,63 @@ async function fetchImageBytes(
 }
 
 function addressLine(draft: ReportDraft): string {
-  return [get(draft.values, "prop_address"), get(draft.values, "prop_suburb")]
+  const v = draft.values;
+  return [
+    get(v, "prop_address"),
+    [get(v, "prop_suburb"), get(v, "prop_state"), get(v, "prop_postcode")].filter(Boolean).join(" "),
+  ]
     .filter(Boolean)
     .join(", ");
 }
 
-function pushTable(children: (Paragraph | Table)[], table: Table | null) {
-  if (table) children.push(table);
-}
-
-/** Build a Peterson-style Sunshine Coast valuation report as a .docx Blob. */
+/** Build Word document matching ReportPreview structure and content. */
 export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   const v = draft.values;
   const m = draft.reportMeta;
   const addr = addressLine(draft);
+  const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], "");
   const children: (Paragraph | Table)[] = [];
 
-  const logo = await loadLogoImage();
-  if (logo) {
-    children.push(
-      new Paragraph({
-        children: [
-          new ImageRun({
-            data: logo.data,
-            type: logo.type,
-            transformation: { width: 160, height: 72 },
-            altText: { title: "Logo", description: "Peterson Property Valuations", name: "logo" },
-          }),
-        ],
-        alignment: AlignmentType.CENTER,
-        spacing: { after: 200 },
-      }),
-    );
-  }
-
+  // ---- Cover (mirrors ReportPreview header + summary band) ----
   children.push(
     new Paragraph({
-      children: [text("PETERSON PROPERTY VALUATIONS", { bold: true, size: 28 })],
+      children: [
+        new ImageRun({
+          data: base64ToUint8Array(PPV_LOGO_JPEG_BASE64),
+          type: "jpg",
+          transformation: { width: 180, height: 80 },
+          altText: {
+            title: "Peterson Property Valuations",
+            description: "Company logo",
+            name: "ppv-logo",
+          },
+        }),
+      ],
       alignment: AlignmentType.CENTER,
-      spacing: { after: 60 },
-    }),
-    new Paragraph({
-      children: [text("Real Estate Valuers", { italics: true, size: 20 })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 240 },
-    }),
-    new Paragraph({
-      children: [text("REPORT AND VALUATION", { bold: true, size: 26 })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 60 },
-    }),
-    new Paragraph({
-      children: [text("VALUATION SUMMARY", { bold: true, size: 24 })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 60 },
-    }),
-    new Paragraph({
-      children: [text("Residential Valuation Report", { size: 18 })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 240 },
+      spacing: { after: 200 },
     }),
   );
 
+  children.push(
+    p("Valuation Summary", { center: true, bold: true, size: 28, after: 60 }),
+    p("Residential Valuation Report", { center: true, size: 18, after: 200 }),
+  );
+
+  // Bordered address / value band
   if (addr) {
-    children.push(
-      new Paragraph({
-        children: [text(addr.toUpperCase(), { bold: true, size: 24 })],
-        alignment: AlignmentType.CENTER,
-        spacing: { after: 80 },
-      }),
-    );
+    children.push(p(addr.toUpperCase(), { center: true, bold: true, size: 24, after: 60, before: 120 }));
   }
   if (get(v, "prop_lotplan")) {
-    children.push(para(get(v, "prop_lotplan"), { center: true, spacingAfter: 80 }));
+    children.push(p(get(v, "prop_lotplan"), { center: true, size: 18, after: 60 }));
   }
   if (m.valueAmount) {
-    children.push(
-      new Paragraph({
-        children: [text(`Market Value: $${m.valueAmount}`, { bold: true, size: 26 })],
-        alignment: AlignmentType.CENTER,
-        spacing: { before: 200, after: 80 },
-      }),
-    );
+    children.push(p(`Market Value: $${m.valueAmount}`, { center: true, bold: true, size: 28, before: 120, after: 60 }));
   }
   if (m.valueDate) {
-    children.push(para(`As at ${m.valueDate}`, { center: true }));
+    children.push(p(`As at ${m.valueDate}`, { center: true, size: 18, after: 200 }));
   }
 
-  pushTable(
+  push(
     children,
     factsTable(
       draft,
@@ -278,45 +308,45 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   );
 
   if (draft.narrative.brief.trim()) {
-    children.push(...proseBlocks(draft.narrative.brief));
-  }
-  children.push(para(BOILERPLATE.summaryDisclaimer, { spacingAfter: 200 }));
-  children.push(para(m.valuerName || get(v, "insp_valuer") || "", { bold: true, spacingAfter: 40 }));
-  if (get(v, "sign_member")) children.push(para(get(v, "sign_member"), { spacingAfter: 40 }));
-  children.push(para(m.firmName || get(v, "insp_firm") || "Peterson Property Valuations Pty Ltd"));
-
-  children.push(
-    new Paragraph({
-      children: [text("TABLE OF CONTENTS", { bold: true, size: 22 })],
-      spacing: { before: 400, after: 160 },
-      border: {
-        bottom: { style: BorderStyle.SINGLE, size: 6, color: "666666", space: 4 },
-      },
-    }),
-  );
-  for (const line of [
-    "1. Instructions and Purpose",
-    "2. Property Details",
-    "3. Statutory Information",
-    "4. Town Planning",
-    "5. Location",
-    "6. Site Details",
-    "7. Improvements",
-    "8. Accommodation – Fixtures and Fittings",
-    "9. Improvements – Other Valuation Issues",
-    "10. Environmental Matters",
-    "11. Basis of Valuation",
-    "12. Sales Evidence",
-    "13. Remarks",
-    "14. Limitations",
-    "15. Critical Assumptions",
-    "16. Valuation Statement",
-  ]) {
-    children.push(para(line, { spacingAfter: 60 }));
+    children.push(...prose(draft.narrative.brief));
   }
 
-  children.push(heading("1.", "Instructions and Purpose of Valuation"));
-  pushTable(
+  children.push(p(BOILERPLATE.summaryDisclaimer, { italics: true, size: 18, after: 200, before: 160 }));
+
+  // Signature block (preview)
+  children.push(p(m.valuerName || get(v, "insp_valuer") || "", { bold: true, after: 40, before: 200 }));
+  if (get(v, "sign_member")) children.push(p(get(v, "sign_member"), { size: 18, after: 40 }));
+  children.push(p(m.firmName || get(v, "insp_firm") || "Peterson Property Valuations Pty Ltd", { size: 18, after: 40 }));
+  if (m.valueDate) children.push(p(m.valueDate, { size: 18, after: 200 }));
+
+  // ---- TOC (same visibility rules as Preview) ----
+  const tocVisible = TOC_ENTRIES.filter((e) => sectionHasContent(e, draft));
+  if (tocVisible.length) {
+    children.push(
+      new Paragraph({
+        children: [run("TABLE OF CONTENTS", { bold: true, size: 22 })],
+        spacing: { before: 360, after: 160 },
+        border: {
+          bottom: { style: BorderStyle.SINGLE, size: 12, color: "333333", space: 6 },
+        },
+      }),
+    );
+    for (const entry of tocVisible) {
+      children.push(
+        new Paragraph({
+          children: [
+            run(`${entry.number}  `, { size: 18 }),
+            run(entry.title, { size: 18 }),
+          ],
+          spacing: { after: 60 },
+        }),
+      );
+    }
+  }
+
+  // ---- 1 ----
+  children.push(sectionHeading("1.", "Instructions and Purpose of Valuation"));
+  push(
     children,
     factsTable(
       draft,
@@ -327,14 +357,11 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
       ],
     ),
   );
-  children.push(para(BOILERPLATE.natureOfInterest));
-  children.push(para(BOILERPLATE.basisOfValuation));
-  children.push(para(BOILERPLATE.marketValueDefinition));
-  children.push(para(BOILERPLATE.highestAndBestUse));
-  children.push(para(BOILERPLATE.assumptionsAndLimitations));
+  children.push(p(BOILERPLATE.natureOfInterest));
 
-  children.push(heading("2.", "Property Details"));
-  pushTable(
+  // ---- 2 ----
+  children.push(sectionHeading("2.", "Property Details"));
+  push(
     children,
     factsTable(draft, [
       "prop_address",
@@ -351,8 +378,9 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     ]),
   );
 
-  children.push(heading("3.", "Statutory Information"));
-  pushTable(
+  // ---- 3 ----
+  children.push(sectionHeading("3.", "Statutory Information"));
+  push(
     children,
     factsTable(draft, [
       "prop_lga",
@@ -366,16 +394,18 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     ]),
   );
 
-  children.push(heading("4.", "Town Planning"));
-  pushTable(children, factsTable(draft, ["prop_zoning", "prop_zoning_desc", "prop_zoning_comp", "prop_hbu"]));
-  children.push(para(BOILERPLATE.townPlanningConsent));
-  children.push(subheading("Development potential"));
-  children.push(para(BOILERPLATE.developmentPotential));
+  // ---- 4 ----
+  children.push(sectionHeading("4.", "Town Planning"));
+  push(children, factsTable(draft, ["prop_zoning", "prop_zoning_desc", "prop_zoning_comp", "prop_hbu"]));
+  children.push(p(BOILERPLATE.townPlanningConsent));
+  children.push(subHeading("Development potential"));
+  children.push(p(BOILERPLATE.developmentPotential));
 
-  children.push(heading("5.", "Location and Neighbourhood"));
-  if (get(v, "nbhd_description")) children.push(...proseBlocks(get(v, "nbhd_description")));
-  if (get(v, "nbhd_market_conditions")) children.push(...proseBlocks(get(v, "nbhd_market_conditions")));
-  pushTable(
+  // ---- 5 ----
+  children.push(sectionHeading("5.", "Location and Neighbourhood"));
+  if (get(v, "nbhd_description")) children.push(...prose(get(v, "nbhd_description")));
+  if (get(v, "nbhd_market_conditions")) children.push(...prose(get(v, "nbhd_market_conditions")));
+  push(
     children,
     factsTable(draft, [
       "nbhd_location",
@@ -399,206 +429,234 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     "offsite_drainage",
   ]);
   if (offsite) {
-    children.push(subheading("Roads and access"));
+    children.push(subHeading("Off-site improvements"));
     children.push(offsite);
   }
 
-  children.push(heading("6.", "Site Details"));
-  pushTable(
+  // ---- 6 ----
+  children.push(sectionHeading("6.", "Site Details"));
+  push(
+    children,
+    factsTable(
+      draft,
+      ["prop_dimensions", "prop_shape", "topo", "land", "va", "fence", "exc", "prop_view"],
+      siteArea ? [{ label: labelFor("prop_sitearea"), value: siteArea }] : [],
+    ),
+  );
+  const services = factsTable(draft, [
+    "svc_water_type",
+    "svc_sewer_type",
+    "svc_elec_type",
+    "svc_storm_type",
+    "svc_tel_type",
+    "svc_internet_type",
+    "svc_gas_type",
+  ]);
+  if (services) {
+    children.push(subHeading("Services"));
+    children.push(services);
+  }
+  children.push(subHeading("Encroachments"));
+  children.push(p(BOILERPLATE.encroachments));
+
+  // ---- 7 ----
+  children.push(sectionHeading("7.", "Improvements"));
+  if (draft.narrative.improvements.trim()) {
+    children.push(subHeading("7.1  General description"));
+    children.push(...prose(draft.narrative.improvements));
+  }
+  push(
     children,
     factsTable(draft, [
-      "prop_sitearea",
-      "prop_areaunit",
-      "prop_dimensions",
-      "prop_shape",
-      "topo",
-      "land",
-      "va",
-      "fence",
-      "exc",
-      "prop_view",
-      "svc_water_type",
-      "svc_sewer_type",
-      "svc_elec_type",
-      "svc_storm_type",
-      "svc_tel_type",
-      "svc_internet_type",
-      "svc_gas_type",
-      "prop_flood",
+      "imp_design",
+      "imp_storeys",
+      "imp_yearbuilt",
+      "imp_effage",
+      "imp_quality",
+      "ext",
+      "rc",
+      "rd",
+      "foundations",
+      "floor_structure",
+      "flr",
+      "il",
+      "ceil",
+      "vent",
+      "imp_gla",
+      "imp_add_features",
     ]),
   );
-
-  children.push(heading("7.", "Improvements"));
-  if (draft.narrative.improvements.trim()) {
-    children.push(subheading("7.1 General description"));
-    children.push(...proseBlocks(draft.narrative.improvements));
-  }
-  const imp = factsTable(draft, [
-    "imp_design",
-    "imp_storeys",
-    "imp_yearbuilt",
-    "imp_effage",
-    "imp_quality",
-    "imp_gla",
-    "imp_add_features",
-    "ext",
-    "rc",
-    "rd",
-    "foundations",
-    "floor_structure",
-    "flr",
-    "il",
-    "ceil",
-    "vent",
-    "overall_cond",
+  const kitBathNotes = [get(v, "kit_overall_notes"), get(v, "bath_overall_notes")].filter(Boolean);
+  const kitBathFacts = factsTable(draft, [
+    "kit_bench_type",
+    "kit_cab_type",
+    "kit_splash_type",
+    "bath_vanity_type",
+    "bath_tiles_type",
+    "bath_tapware_type",
   ]);
-  if (imp) {
-    children.push(subheading("7.3 General construction"));
-    children.push(imp);
+  if (kitBathNotes.length || kitBathFacts) {
+    children.push(subHeading("7.2  Kitchen and bathrooms"));
+    for (const n of kitBathNotes) children.push(...prose(n));
+    push(children, kitBathFacts);
   }
+  children.push(subHeading("7.3  Condition of improvements"));
+  push(children, factsTable(draft, ["overall_cond", "overall_site_cond"]));
+  children.push(p(BOILERPLATE.conditionOfImprovements));
 
-  children.push(heading("8.", "Accommodation – Fixtures and Fittings"));
-  if (draft.narrative.accommodation.trim()) {
-    children.push(...proseBlocks(draft.narrative.accommodation));
-  }
-  pushTable(children, factsTable(draft, ["imp_rooms", "imp_beds", "imp_baths", "accom", "park", "anc"]));
+  // ---- 8 ----
+  children.push(sectionHeading("8.", "Accommodation – Fixtures and Fittings"));
+  if (draft.narrative.accommodation.trim()) children.push(...prose(draft.narrative.accommodation));
+  push(children, factsTable(draft, ["imp_rooms", "imp_beds", "imp_baths", "accom", "park", "anc"]));
 
-  children.push(heading("9.", "Improvements – Other Valuation Issues"));
-  children.push(subheading("Encroachments"));
-  children.push(para(BOILERPLATE.encroachments));
-  children.push(subheading("Condition of improvements"));
-  children.push(para(BOILERPLATE.conditionOfImprovements));
-  children.push(subheading("Development potential"));
-  children.push(para(BOILERPLATE.developmentPotential));
-  pushTable(children, factsTable(draft, ["other_notes", "defects_notes", "overall_site_cond"]));
+  // ---- 9 ----
+  children.push(sectionHeading("9.", "Improvements – Other Valuation Issues"));
+  children.push(subHeading("Encroachments"));
+  children.push(p(BOILERPLATE.encroachments));
+  children.push(subHeading("Condition of improvements"));
+  children.push(p(BOILERPLATE.conditionOfImprovements));
+  children.push(subHeading("Development potential"));
+  children.push(p(BOILERPLATE.developmentPotential));
+  push(children, factsTable(draft, ["other_notes", "defects_notes", "overall_site_cond"]));
 
-  children.push(heading("10.", "Environmental Matters"));
-  children.push(para(BOILERPLATE.contaminatedLand));
-  children.push(para(BOILERPLATE.heritageListing));
-  children.push(para(BOILERPLATE.vegetationProtection));
-  children.push(para(BOILERPLATE.asbestos));
-  pushTable(children, factsTable(draft, ["prop_flood", "prop_flood_map", "prop_adverse_site"]));
+  // ---- 10 ----
+  children.push(sectionHeading("10.", "Environmental Matters"));
+  children.push(p(BOILERPLATE.contaminatedLand));
+  children.push(p(BOILERPLATE.heritageListing));
+  children.push(p(BOILERPLATE.vegetationProtection));
+  children.push(p(BOILERPLATE.asbestos));
+  push(children, factsTable(draft, ["prop_flood", "prop_flood_map", "prop_adverse_site"]));
 
-  children.push(heading("11.", "Basis of Valuation"));
-  children.push(subheading("Direct Comparison"));
-  children.push(para(BOILERPLATE.directComparisonIntro));
-  for (const line of BOILERPLATE.directComparisonBody) {
-    children.push(para(line));
-  }
+  // ---- 11 ----
+  children.push(sectionHeading("11.", "Basis of Valuation"));
+  children.push(subHeading("Direct Comparison"));
+  children.push(p(BOILERPLATE.directComparisonIntro));
+  for (const line of BOILERPLATE.directComparisonBody) children.push(p(line));
   for (const f of BOILERPLATE.directComparisonFactors) {
-    children.push(para(`• ${f}`, { spacingAfter: 40 }));
+    children.push(p(`• ${f}`, { after: 40 }));
   }
-  children.push(para(BOILERPLATE.directComparisonClose));
-  children.push(para(BOILERPLATE.addedValue));
+  children.push(p(BOILERPLATE.directComparisonClose));
+  children.push(p(BOILERPLATE.addedValue));
 
-  children.push(heading("12.", "Sales Evidence"));
+  // ---- 12 ----
+  children.push(sectionHeading("12.", "Sales Evidence"));
   const sales = draft.sales.filter(
     (s) => s.address.trim() || s.salePrice.trim() || s.saleDate.trim(),
   );
   if (sales.length === 0) {
-    children.push(para("No comparable sales have been recorded for this report."));
+    children.push(p("No comparable sales have been recorded for this report."));
   } else {
-    sales.forEach((s, i) => {
-      children.push(subheading(`${i + 1}. ${s.address || "Comparable sale"}`));
-      const saleRows = [
-        { label: "Sale date", value: s.saleDate },
-        { label: "Sale price", value: s.salePrice },
-        { label: "Land area", value: s.landArea },
-        { label: "Comments", value: s.comments },
-      ].filter((r) => r.value.trim());
-      if (saleRows.length) {
-        const left = Math.floor(CONTENT_WIDTH * 0.3);
-        const right = CONTENT_WIDTH - left;
-        children.push(
-          new Table({
-            width: { size: CONTENT_WIDTH, type: WidthType.DXA },
-            columnWidths: [left, right],
-            rows: saleRows.map(
-              (r) =>
-                new TableRow({
-                  children: [
-                    new TableCell({
-                      width: { size: left, type: WidthType.DXA },
-                      borders: {
-                        top: { style: BorderStyle.NIL },
-                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
-                        left: { style: BorderStyle.NIL },
-                        right: { style: BorderStyle.NIL },
-                      },
-                      children: [new Paragraph({ children: [text(r.label, { size: 18 })] })],
-                    }),
-                    new TableCell({
-                      width: { size: right, type: WidthType.DXA },
-                      borders: {
-                        top: { style: BorderStyle.NIL },
-                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
-                        left: { style: BorderStyle.NIL },
-                        right: { style: BorderStyle.NIL },
-                      },
-                      children: [new Paragraph({ children: [text(r.value, { size: 18 })] })],
-                    }),
-                  ],
-                }),
-            ),
+    // Table matching Preview columns
+    const colW = [
+      Math.floor(CONTENT_WIDTH * 0.28),
+      Math.floor(CONTENT_WIDTH * 0.14),
+      Math.floor(CONTENT_WIDTH * 0.14),
+      Math.floor(CONTENT_WIDTH * 0.14),
+      Math.floor(CONTENT_WIDTH * 0.3),
+    ];
+    const headers = ["Address", "Sale date", "Sale price", "Land area", "Comments"];
+    const headerRow = new TableRow({
+      children: headers.map(
+        (h, i) =>
+          new TableCell({
+            width: { size: colW[i], type: WidthType.DXA },
+            borders: {
+              top: { style: BorderStyle.SINGLE, size: 4, color: "999999" },
+              bottom: { style: BorderStyle.SINGLE, size: 8, color: "333333" },
+              left: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
+              right: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
+            },
+            children: [
+              new Paragraph({
+                children: [run(h, { bold: true, size: 16 })],
+                spacing: { after: 40 },
+              }),
+            ],
           }),
-        );
-      }
+      ),
     });
+    const bodyRows = sales.map(
+      (s) =>
+        new TableRow({
+          children: [s.address, s.saleDate, s.salePrice, s.landArea, s.comments].map(
+            (cell, i) =>
+              new TableCell({
+                width: { size: colW[i], type: WidthType.DXA },
+                borders: {
+                  top: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
+                  bottom: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
+                  left: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
+                  right: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
+                },
+                children: [
+                  new Paragraph({
+                    children: [run(cell || "—", { size: 16 })],
+                    spacing: { after: 40 },
+                  }),
+                ],
+              }),
+          ),
+        }),
+    );
+    children.push(
+      new Table({
+        width: { size: CONTENT_WIDTH, type: WidthType.DXA },
+        columnWidths: colW,
+        rows: [headerRow, ...bodyRows],
+      }),
+    );
   }
 
-  children.push(heading("13.", "Remarks"));
-  children.push(...proseBlocks(draft.narrative.remarks || BOILERPLATE.remarksDefault));
+  // ---- 13 ----
+  children.push(sectionHeading("13.", "Remarks"));
+  children.push(...prose(draft.narrative.remarks || BOILERPLATE.remarksDefault));
 
-  children.push(heading("14.", "Limitations"));
-  children.push(para(BOILERPLATE.assumptionsAndLimitations));
-  for (const l of BOILERPLATE.limitations) {
-    children.push(para(l));
-  }
+  // ---- 14 ----
+  children.push(sectionHeading("14.", "Limitations"));
+  children.push(p(BOILERPLATE.assumptionsAndLimitations));
+  for (const l of BOILERPLATE.limitations) children.push(p(l));
 
-  children.push(heading("15.", "Critical Assumptions"));
-  children.push(para(BOILERPLATE.criticalAssumptionsIntro));
+  // ---- 15 ----
+  children.push(sectionHeading("15.", "Critical Assumptions"));
+  children.push(p(BOILERPLATE.criticalAssumptionsIntro));
   BOILERPLATE.criticalAssumptions.forEach((a, i) => {
-    children.push(para(`${i + 1}. ${a}`));
+    children.push(p(`${i + 1}. ${a}`));
   });
-  children.push(para(BOILERPLATE.criticalAssumptionsClose));
+  children.push(p(BOILERPLATE.criticalAssumptionsClose));
 
-  children.push(heading("16.", "Valuation Statement"));
+  // ---- 16 ----
+  children.push(sectionHeading("16.", "Valuation Statement"));
   children.push(
-    para(
+    p(
       `Having regard to the foregoing, I am of the opinion that the market value of the unencumbered fee simple interest in the subject property${addr ? `, ${addr},` : ""} as at ${m.valueDate || "the date of valuation"} is:`,
     ),
   );
   if (m.valueAmount) {
-    children.push(
-      new Paragraph({
-        children: [text(`$${m.valueAmount}`, { bold: true, size: 28 })],
-        alignment: AlignmentType.CENTER,
-        spacing: { before: 200, after: 200 },
-      }),
-    );
+    children.push(p(`$${m.valueAmount}`, { center: true, bold: true, size: 28, before: 160, after: 160 }));
   }
-  children.push(para(m.valuerName || get(v, "insp_valuer") || "", { bold: true, spacingAfter: 40 }));
-  if (get(v, "sign_member")) children.push(para(get(v, "sign_member"), { spacingAfter: 40 }));
-  children.push(para(m.firmName || "Peterson Property Valuations Pty Ltd"));
+  children.push(p(m.valuerName || get(v, "insp_valuer") || "", { bold: true, after: 40, before: 200 }));
+  if (get(v, "sign_member")) children.push(p(get(v, "sign_member"), { size: 18, after: 40 }));
+  children.push(p(m.firmName || get(v, "insp_firm") || "Peterson Property Valuations Pty Ltd", { size: 18, after: 40 }));
   for (const a of BOILERPLATE.annexures) {
-    children.push(para(a, { spacingAfter: 40 }));
+    children.push(p(a, { size: 18, after: 40 }));
   }
 
+  // ---- Annexure 2 photos (same order as Preview) ----
   children.push(new Paragraph({ children: [new PageBreak()] }));
-  children.push(
-    new Paragraph({
-      children: [text("ANNEXURE 2 — PHOTOGRAPHS", { bold: true, size: 24 })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 280 },
-    }),
-  );
+  children.push(p("Annexure 2 — Photographs", { center: true, bold: true, size: 26, after: 240 }));
 
-  const annexure = draft.photos.filter((p) => p.url && (/^https?:\/\//i.test(p.url) || p.url.startsWith("data:image/")));
-  if (annexure.length === 0) {
-    children.push(para("No photographs have been attached.", { center: true }));
+  const slotPhotos = PHOTO_SLOTS.map(({ slot, label }) => {
+    const found = draft.photos.find((ph) => ph.slot === slot);
+    return found ?? { id: slot, slot, caption: label, url: "" };
+  });
+  const extraPhotos = draft.photos.filter((ph) => ph.slot === null);
+  const annexurePhotos = [...slotPhotos, ...extraPhotos].filter((ph) => ph.url);
+
+  if (annexurePhotos.length === 0) {
+    children.push(p("No photographs have been attached.", { center: true, italics: true }));
   } else {
-    for (const photo of annexure) {
-      const img = await fetchImageBytes(photo.url);
+    for (const photo of annexurePhotos) {
+      const img = await imageFromUrl(photo.url);
       if (img) {
         children.push(
           new Paragraph({
@@ -606,11 +664,16 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
               new ImageRun({
                 data: img.data,
                 type: img.type,
-                transformation: { width: 480, height: 360 },
+                transformation: { width: 420, height: 315 },
+                altText: {
+                  title: photo.caption || "Photograph",
+                  description: photo.caption || "Report photograph",
+                  name: photo.id,
+                },
               }),
             ],
             alignment: AlignmentType.CENTER,
-            spacing: { before: 200, after: 80 },
+            spacing: { before: 160, after: 60 },
           }),
         );
       }
@@ -618,7 +681,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
         photo.caption ||
         PHOTO_SLOTS.find((s) => s.slot === photo.slot)?.label ||
         "Photograph";
-      children.push(para(caption, { center: true, spacingAfter: 200 }));
+      children.push(p(caption, { center: true, size: 18, after: 200 }));
     }
   }
 
@@ -649,10 +712,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
       {
         properties: {
           page: {
-            size: {
-              width: PAGE_WIDTH,
-              height: PAGE_HEIGHT,
-            },
+            size: { width: PAGE_WIDTH, height: PAGE_HEIGHT },
             margin: {
               top: MARGIN,
               bottom: MARGIN,
