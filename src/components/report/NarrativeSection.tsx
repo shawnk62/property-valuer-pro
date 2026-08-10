@@ -37,8 +37,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         <div>
           <h3 className="text-sm font-semibold text-foreground">AI narrative</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Mock generator — composes prose from the inspection values. Everything stays
-            editable afterwards.
+            Pre-filled from the inspection values. Edit any block, or regenerate from the current data.
             {generatedAt ? ` Last generated ${generatedAt}.` : ""}
           </p>
         </div>
@@ -47,7 +46,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
           onClick={generate}
           className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
         >
-          Generate AI narrative (mock)
+          Regenerate from inspection data
         </button>
       </div>
 

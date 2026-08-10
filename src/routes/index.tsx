@@ -198,6 +198,19 @@ function InspectionsIndex() {
                       </span>
                     </button>
                     <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        void navigate({
+                          to: "/report/$inspectionId",
+                          params: { inspectionId: record.id },
+                        })
+                      }
+                    >
+                      <FileText className="size-4" />
+                      Report
+                    </Button>
+                    <Button
                       variant="ghost"
                       size="icon"
                       aria-label="Delete inspection"

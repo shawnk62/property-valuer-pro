@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Copy, Download, RefreshCw, Send, Sparkles } from "lucide-react";
+import { ChevronLeft, Copy, Download, FileText, RefreshCw, Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -128,24 +128,41 @@ function ReviewScreen() {
 
       <main className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6">
         {isSubmitted ? (
-          <div className="rounded-lg border border-border bg-card p-4">
-            <p className="font-serif text-base font-semibold text-foreground">Structured record</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Stored as one JSON object keyed by schema field names.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button variant="outline" onClick={() => void copyJson()}>
-                <Copy className="size-4" />
-                Copy JSON
-              </Button>
-              <Button variant="outline" onClick={downloadJson}>
-                <Download className="size-4" />
-                Download JSON
-              </Button>
+          <div className="space-y-4">
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+              <p className="font-serif text-base font-semibold text-foreground">Ready for report</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Inspection data is saved. Open the Report Workspace to build the valuation report — subject fields and narrative are populated from this record.
+              </p>
+              <div className="mt-3">
+                <Button
+                  size="lg"
+                  onClick={() => void navigate({ to: "/report/$inspectionId", params: { inspectionId: id } })}
+                >
+                  <FileText className="size-4" />
+                  Build valuation report
+                </Button>
+              </div>
             </div>
-            <pre className="mt-4 max-h-80 overflow-auto rounded-md bg-muted p-3 text-xs leading-relaxed text-foreground">
-              {json}
-            </pre>
+            <div className="rounded-lg border border-border bg-card p-4">
+              <p className="font-serif text-base font-semibold text-foreground">Structured record</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Stored as one JSON object keyed by schema field names.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button variant="outline" onClick={() => void copyJson()}>
+                  <Copy className="size-4" />
+                  Copy JSON
+                </Button>
+                <Button variant="outline" onClick={downloadJson}>
+                  <Download className="size-4" />
+                  Download JSON
+                </Button>
+              </div>
+              <pre className="mt-4 max-h-80 overflow-auto rounded-md bg-muted p-3 text-xs leading-relaxed text-foreground">
+                {json}
+              </pre>
+            </div>
           </div>
         ) : null}
 

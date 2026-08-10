@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { inspectionStore } from "@/lib/inspection/storage";
+import { generateNarrative } from "@/lib/report/narrative";
 import type {
   ComparableSale,
   FieldValue,
@@ -93,10 +94,17 @@ export function useReportDraft(inspectionId: string) {
         const values = (record.values ?? {}) as Record<string, FieldValue>;
         const base = createEmptyDraft(inspectionId, values);
         const extras = loadPersistedExtras(inspectionId);
+        const narrativeEmpty =
+          !extras?.narrative ||
+          Object.values(extras.narrative).every((s) => !String(s ?? "").trim());
+        const narrative = narrativeEmpty
+          ? generateNarrative(values)
+          : extras!.narrative;
         setDraft({
           ...base,
           ...(extras ?? {}),
           values, // always prefer live inspection values
+          narrative,
           photos: extras?.photos ?? [],
         });
         setLoaded(true);
