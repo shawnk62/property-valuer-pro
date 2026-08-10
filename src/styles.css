@@ -179,9 +179,15 @@
 
 
 /* ---- Report PDF / print ----
- * IMPORTANT: do NOT use position:absolute or body * { visibility:hidden }.
- * Those break CSS page-break rules in Chromium/WebKit, which is why
- * sections were still stacking mid-page despite break-before:page.
+ * Page rules:
+ * - Cover (value + signature) = page 1
+ * - TOC on its own page after cover
+ * - Small sections may share a page if the whole section fits
+ * - A section must not start mid-page only to be split; prefer keeping
+ *   short sections intact (break-inside: avoid). Long sections taller
+ *   than one page are allowed to flow (browser ignores avoid when
+ *   content exceeds page height).
+ * - Do NOT force every section onto a new page (left large blank areas).
  */
 @media print {
   @page {
@@ -199,7 +205,6 @@
     overflow: visible !important;
   }
 
-  /* Hide app chrome only — keep report in normal document flow */
   header,
   nav,
   button,
@@ -233,7 +238,7 @@
     color: inherit !important;
   }
 
-  /* Page 1: cover (value + signature) */
+  /* Page 1: cover only */
   #report-cover {
     break-after: page !important;
     page-break-after: always !important;
@@ -276,20 +281,23 @@
     height: 28px !important;
   }
 
-  /* TOC alone on a page */
+  /* TOC after cover; then body flows */
   .report-toc {
-    break-before: page !important;
-    page-break-before: always !important;
     break-after: page !important;
     page-break-after: always !important;
   }
 
-  /* Every numbered section starts at the top of a new page */
+  /*
+   * Sections: keep intact when they fit on the remainder of a page.
+   * If the section is taller than one page, the browser will split it
+   * (break-inside:avoid is soft when content overflows a page).
+   * No forced break-before — multiple short sections can share a page.
+   */
   .report-section {
-    break-before: page !important;
-    page-break-before: always !important;
-    break-inside: auto !important;
-    page-break-inside: auto !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-before: auto !important;
+    page-break-before: auto !important;
   }
 
   #report-preview-sheet h1,
@@ -330,6 +338,7 @@
     page-break-inside: avoid !important;
   }
 
+  /* Photos still start on a fresh page */
   .report-annexure {
     break-before: page !important;
     page-break-before: always !important;
