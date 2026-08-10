@@ -1,5 +1,5 @@
 import { BOILERPLATE } from "@/lib/report/boilerplate";
-import { get, joinValues, labelFor, pick } from "@/lib/report/schema";
+import { get, hasValue, joinValues, labelFor, pick } from "@/lib/report/schema";
 import { PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
 
 /* ---------- primitives ---------- */
@@ -26,34 +26,208 @@ function Section({
   );
 }
 
-/** Template-aligned TOC with in-page jump links. */
-const TOC_ENTRIES: { id: string; number: string; title: string }[] = [
-  { id: "sec-instructions", number: "1.", title: "Instructions and Purpose" },
-  { id: "sec-property", number: "2.", title: "Property Details" },
-  { id: "sec-statutory", number: "3.", title: "Statutory Information" },
-  { id: "sec-planning", number: "4.", title: "Town Planning" },
-  { id: "sec-location", number: "5.", title: "Location" },
-  { id: "sec-site", number: "6.", title: "Site Details" },
-  { id: "sec-improvements", number: "7.", title: "Improvements" },
-  { id: "sec-accommodation", number: "8.", title: "Accommodation – Fixtures and Fittings" },
-  { id: "sec-other", number: "9.", title: "Improvements – Other Valuation Issues" },
-  { id: "sec-environmental", number: "10.", title: "Environmental Matters" },
-  { id: "sec-basis", number: "11.", title: "Basis of Valuation" },
-  { id: "sec-sales", number: "12.", title: "Sales Evidence" },
-  { id: "sec-remarks", number: "13.", title: "Remarks" },
-  { id: "sec-limitations", number: "14.", title: "Limitations" },
-  { id: "sec-assumptions", number: "15.", title: "Critical Assumptions" },
-  { id: "sec-valuation", number: "16.", title: "Valuation Statement" },
+/** Template-aligned TOC entries. `fields` / narrative / sales drive visibility. */
+type TocEntry = {
+  id: string;
+  number: string;
+  title: string;
+  /** Always shown (boilerplate-only sections). */
+  always?: boolean;
+  fields?: string[];
+  /** Require non-empty narrative key. */
+  narrativeKey?: keyof import("@/lib/report/types").ReportNarrative;
+  /** Require at least one comparable sale. */
+  requireSales?: boolean;
+};
+
+const TOC_ENTRIES: TocEntry[] = [
+  {
+    id: "sec-instructions",
+    number: "1.",
+    title: "Instructions and Purpose",
+    fields: ["insp_purpose", "prop_assignment", "prop_rights", "insp_date"],
+  },
+  {
+    id: "sec-property",
+    number: "2.",
+    title: "Property Details",
+    fields: [
+      "prop_address",
+      "prop_suburb",
+      "prop_state",
+      "prop_postcode",
+      "prop_lotplan",
+      "prop_legal",
+      "prop_title",
+      "prop_parish",
+      "prop_lga",
+      "prop_owner",
+      "prop_occupant",
+    ],
+  },
+  {
+    id: "sec-statutory",
+    number: "3.",
+    title: "Statutory Information",
+    fields: [
+      "prop_lga",
+      "prop_offered",
+      "prop_offer_details",
+      "prop_contract_price",
+      "prop_contract_date",
+      "prop_seller_owner",
+      "prop_assistance",
+      "prop_assistance_details",
+    ],
+  },
+  {
+    id: "sec-planning",
+    number: "4.",
+    title: "Town Planning",
+    fields: ["prop_zoning", "prop_zoning_desc", "prop_zoning_comp", "prop_hbu"],
+  },
+  {
+    id: "sec-location",
+    number: "5.",
+    title: "Location",
+    fields: [
+      "nbhd_description",
+      "nbhd_market_conditions",
+      "nbhd_location",
+      "nbhd_builtup",
+      "nbhd_growth",
+      "nbhd_values",
+      "nbhd_demand",
+      "nbhd_marketing",
+      "nbhd_price_range",
+      "nbhd_age",
+      "offsite_road_type",
+      "offsite_road_surface",
+      "offsite_carriageway",
+      "offsite_kerb",
+      "offsite_footpaths",
+    ],
+  },
+  {
+    id: "sec-site",
+    number: "6.",
+    title: "Site Details",
+    fields: [
+      "prop_sitearea",
+      "prop_areaunit",
+      "prop_dimensions",
+      "prop_shape",
+      "topo",
+      "land",
+      "va",
+      "fence",
+      "exc",
+      "prop_view",
+      "svc_water_type",
+      "svc_sewer_type",
+      "svc_elec_type",
+      "svc_storm_type",
+      "svc_tel_type",
+      "prop_flood",
+    ],
+  },
+  {
+    id: "sec-improvements",
+    number: "7.",
+    title: "Improvements",
+    fields: [
+      "imp_design",
+      "imp_lowset",
+      "imp_storeys",
+      "imp_yearbuilt",
+      "imp_effage",
+      "imp_quality",
+      "imp_gla",
+      "ext",
+      "rc",
+      "rd",
+      "foundations",
+      "floor_structure",
+      "flr",
+      "overall_cond",
+    ],
+    narrativeKey: "improvements",
+  },
+  {
+    id: "sec-accommodation",
+    number: "8.",
+    title: "Accommodation – Fixtures and Fittings",
+    fields: ["imp_rooms", "imp_beds", "imp_baths", "accom", "park", "anc"],
+    narrativeKey: "accommodation",
+  },
+  {
+    id: "sec-other",
+    number: "9.",
+    title: "Improvements – Other Valuation Issues",
+    fields: ["other_notes", "defects_notes", "overall_site_cond"],
+  },
+  {
+    id: "sec-environmental",
+    number: "10.",
+    title: "Environmental Matters",
+    fields: ["prop_flood", "prop_flood_map", "prop_adverse_site"],
+  },
+  { id: "sec-basis", number: "11.", title: "Basis of Valuation", always: true },
+  { id: "sec-sales", number: "12.", title: "Sales Evidence", requireSales: true },
+  {
+    id: "sec-remarks",
+    number: "13.",
+    title: "Remarks",
+    narrativeKey: "remarks",
+    fields: ["other_notes", "defects_notes"],
+  },
+  { id: "sec-limitations", number: "14.", title: "Limitations", always: true },
+  { id: "sec-assumptions", number: "15.", title: "Critical Assumptions", always: true },
+  { id: "sec-valuation", number: "16.", title: "Valuation Statement", always: true },
 ];
 
-function TableOfContents() {
+function sectionHasContent(
+  entry: TocEntry,
+  draft: ReportDraft,
+): boolean {
+  if (entry.always) return true;
+  if (entry.requireSales) {
+    return draft.sales.some(
+      (s) =>
+        s.address.trim() ||
+        s.saleDate.trim() ||
+        s.salePrice.trim() ||
+        s.landArea.trim() ||
+        s.comments.trim(),
+    );
+  }
+  if (entry.narrativeKey) {
+    const text = draft.narrative[entry.narrativeKey];
+    if (typeof text === "string" && text.trim()) return true;
+  }
+  if (entry.fields?.length) {
+    if (entry.fields.some((name) => hasValue(draft.values[name]))) return true;
+  }
+  // Meta dates count for instructions when values are sparse
+  if (entry.id === "sec-instructions") {
+    if (draft.reportMeta.inspectionDate.trim() || draft.reportMeta.valueDate.trim()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function TableOfContents({ draft }: { draft: ReportDraft }) {
+  const entries = TOC_ENTRIES.filter((e) => sectionHasContent(e, draft));
+  if (entries.length === 0) return null;
+
   return (
     <nav id="table-of-contents" className="mt-10 break-inside-avoid" aria-label="Table of contents">
       <h2 className="report-h2 border-b border-[var(--rule)] pb-1 uppercase tracking-wide">
         Table of Contents
       </h2>
       <ol className="mt-4 space-y-1.5 text-[0.9375rem]">
-        {TOC_ENTRIES.map((entry) => (
+        {entries.map((entry) => (
           <li key={entry.id} className="flex gap-2">
             <span className="w-8 shrink-0 tabular-nums text-[var(--page-foreground)]/70">
               {entry.number}
@@ -224,7 +398,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         {m.valueDate ? <p className="mt-1 text-sm">{m.valueDate}</p> : null}
       </div>
 
-      <TableOfContents />
+      <TableOfContents draft={draft} />
 
       {/* ---- 1. Instructions & purpose ---- */}
       <Section id="sec-instructions" number="1." title="Instructions and Purpose of Valuation">
