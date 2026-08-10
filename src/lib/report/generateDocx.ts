@@ -133,6 +133,19 @@ async function fetchImageBytes(
   url: string,
 ): Promise<{ data: Uint8Array; type: "jpg" | "png" | "gif" | "bmp" } | null> {
   try {
+    if (url.startsWith("data:image/")) {
+      const match = /^data:image\/(\w+);base64,(.+)$/i.exec(url);
+      if (!match) return null;
+      const subtype = match[1].toLowerCase();
+      const bin = atob(match[2]);
+      const data = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) data[i] = bin.charCodeAt(i);
+      let type: "jpg" | "png" | "gif" | "bmp" = "jpg";
+      if (subtype.includes("png")) type = "png";
+      else if (subtype.includes("gif")) type = "gif";
+      else if (subtype.includes("bmp")) type = "bmp";
+      return { data, type };
+    }
     if (!/^https?:\/\//i.test(url)) return null;
     const res = await fetch(url);
     if (!res.ok) return null;
@@ -542,7 +555,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     }),
   );
 
-  const annexure = draft.photos.filter((p) => p.url && /^https?:\/\//i.test(p.url));
+  const annexure = draft.photos.filter((p) => p.url && (/^https?:\/\//i.test(p.url) || p.url.startsWith("data:image/")));
   if (annexure.length === 0) {
     children.push(para("No photographs have been attached.", { center: true }));
   } else {

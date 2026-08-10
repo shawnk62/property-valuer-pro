@@ -51,8 +51,8 @@ function createEmptyDraft(inspectionId: string, values: Record<string, FieldValu
 
 function isDurablePhotoUrl(url: string | undefined): boolean {
   if (!url) return false;
-  // Keep Supabase (and other http) URLs; drop ephemeral blob: object URLs.
-  return /^https?:\/\//i.test(url);
+  // Persist https (Supabase) and data:image (local, no Storage required). Drop blob:.
+  return /^https?:\/\//i.test(url) || url.startsWith("data:image/");
 }
 
 function loadPersistedExtras(inspectionId: string): Partial<ReportDraft> | null {
@@ -188,7 +188,7 @@ export function useReportDraft(inspectionId: string) {
 
   const save = useCallback(() => {
     if (typeof window === "undefined") return;
-    // Persist editable extras. Keep only durable photo URLs (Supabase), not blob: previews.
+    // Persist editable extras. Keep https + data:image URLs; drop blob: previews.
     const toStore: ReportDraft = {
       ...draft,
       photos: draft.photos.filter((p) => isDurablePhotoUrl(p.url)),
