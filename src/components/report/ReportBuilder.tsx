@@ -29,6 +29,7 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
   const { draft, dirty, savedAt, save, loaded, loadError } = controller;
   const [tab, setTab] = useState<TabId>("subject");
   const [downloading, setDownloading] = useState(false);
+  const [printing, setPrinting] = useState(false);
 
   async function handleDownloadWord() {
     setDownloading(true);
@@ -43,6 +44,44 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
     } finally {
       setDownloading(false);
     }
+  }
+
+  /** PDF via browser print of the live Preview sheet (matches on-screen report). */
+  async function handleDownloadPdf() {
+    setPrinting(true);
+    save();
+    const previousTab = tab;
+    if (tab !== "preview") {
+      setTab("preview");
+    }
+    // Wait for Preview to paint with current draft, then open the system print dialog.
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => resolve());
+      });
+    });
+    // Extra tick for images
+    await new Promise((r) => setTimeout(r, 150));
+
+    const sheet = document.getElementById("report-preview-sheet");
+    if (!sheet) {
+      toast.error("Report preview is not ready. Open the Preview tab and try again.");
+      setTab(previousTab);
+      setPrinting(false);
+      return;
+    }
+
+    const onAfterPrint = () => {
+      window.removeEventListener("afterprint", onAfterPrint);
+      setPrinting(false);
+      toast.message("Use “Save as PDF” in the print dialog if you need a file.");
+    };
+    window.addEventListener("afterprint", onAfterPrint);
+    window.print();
+    // Fallback if afterprint does not fire (some browsers)
+    window.setTimeout(() => {
+      setPrinting(false);
+    }, 1000);
   }
 
   const heading =
@@ -112,9 +151,19 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
             </button>
             <button
               type="button"
+              disabled={printing}
+              onClick={() => void handleDownloadPdf()}
+              className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+              title="Opens the print dialog — choose Save as PDF for a file matching the Preview"
+            >
+              {printing ? "Preparing PDF…" : "Download PDF"}
+            </button>
+            <button
+              type="button"
               disabled={downloading}
               onClick={() => void handleDownloadWord()}
               className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+              title="Editable Word document (layout is approximate vs Preview)"
             >
               {downloading ? "Preparing Word…" : "Download Word"}
             </button>

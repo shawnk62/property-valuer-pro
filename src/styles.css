@@ -176,3 +176,59 @@
   font-weight: 600;
   font-size: 1rem;
 }
+
+
+/* ---- Report PDF / print: only the preview sheet ---- */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: white !important;
+    color: black !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Hide app chrome */
+  body * {
+    visibility: hidden !important;
+  }
+
+  #report-preview-sheet,
+  #report-preview-sheet * {
+    visibility: visible !important;
+  }
+
+  #report-preview-sheet {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  #report-preview-sheet a {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+
+  #report-preview-sheet img {
+    max-width: 100% !important;
+    break-inside: avoid;
+  }
+
+  #report-preview-sheet section,
+  #report-preview-sheet table,
+  #report-preview-sheet figure {
+    break-inside: avoid;
+  }
+}

@@ -333,7 +333,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
   const annexurePhotos = [...slotPhotos, ...extraPhotos].filter((p) => p.url);
 
   return (
-    <article className="report-sheet mx-auto max-w-[52rem] px-8 py-10 shadow-sm sm:px-12 sm:py-14">
+    <article id="report-preview-sheet" className="report-sheet mx-auto max-w-[52rem] px-8 py-10 shadow-sm sm:px-12 sm:py-14">
       {/* ---- Cover / valuation summary ---- */}
       <header className="text-center">
         <img
