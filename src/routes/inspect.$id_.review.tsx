@@ -56,6 +56,7 @@ function ReviewScreen() {
   const navigate = useNavigate();
   const { record, values, loaded } = useInspection(id);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const isSubmitted = submitted || record?.status === "submitted";
   const { state: narrative, updateBlock, resetBlock } = useNarrative(id, values, isSubmitted);
 
@@ -82,17 +83,25 @@ function ReviewScreen() {
   }
 
   const submit = async () => {
+    if (submitting) return;
     if (missing.length > 0) {
       toast.error("Complete all required fields before submitting.");
       return;
     }
+    setSubmitting(true);
     try {
       await inspectionStore.submit(id);
       setSubmitted(true);
       window.scrollTo({ top: 0 });
       toast.success("Inspection submitted");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Submit failed");
+      const message =
+        err instanceof Error && err.message.trim()
+          ? err.message
+          : "Submit failed — check you are signed in, then try again.";
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -323,9 +332,9 @@ function ReviewScreen() {
             >
               Continue editing
             </Button>
-            <Button size="lg" onClick={() => void submit()} className="flex-1">
+            <Button size="lg" onClick={() => void submit()} className="flex-1" disabled={submitting}>
               <Send className="size-4" />
-              Submit inspection
+              {submitting ? "Submitting…" : "Submit inspection"}
             </Button>
           </div>
         </div>
