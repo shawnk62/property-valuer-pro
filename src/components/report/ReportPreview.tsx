@@ -45,7 +45,7 @@ const TOC_ENTRIES: TocEntry[] = [
     id: "sec-instructions",
     number: "1.",
     title: "Instructions and Purpose",
-    fields: ["insp_purpose", "prop_assignment", "prop_rights", "insp_date"],
+    fields: ["prop_assignment", "prop_rights", "insp_date"],
   },
   {
     id: "sec-property",
@@ -369,7 +369,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       <div className="mt-6">
         <Facts
           values={v}
-          fields={["prop_assignment", "insp_purpose", "prop_owner", "prop_rights"]}
+          fields={["prop_assignment", "prop_owner", "prop_rights"]}
           extra={[
             { label: "Date of inspection", value: m.inspectionDate },
             { label: "Date of valuation", value: m.valueDate },
@@ -404,7 +404,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       <Section id="sec-instructions" number="1." title="Instructions and Purpose of Valuation">
         <Facts
           values={v}
-          fields={["insp_purpose", "prop_assignment", "prop_rights"]}
+          fields={["prop_assignment", "prop_rights"]}
           extra={[
             { label: "Date of inspection", value: m.inspectionDate },
             { label: "Date of valuation", value: m.valueDate },

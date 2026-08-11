@@ -171,7 +171,7 @@ type TocEntry = {
 };
 
 const TOC_ENTRIES: TocEntry[] = [
-  { id: "sec-instructions", number: "1.", title: "Instructions and Purpose", fields: ["insp_purpose", "prop_assignment", "prop_rights", "insp_date"] },
+  { id: "sec-instructions", number: "1.", title: "Instructions and Purpose", fields: ["prop_assignment", "prop_rights", "insp_date"] },
   { id: "sec-property", number: "2.", title: "Property Details", fields: ["prop_address", "prop_suburb", "prop_state", "prop_postcode", "prop_lotplan", "prop_legal", "prop_title", "prop_parish", "prop_lga", "prop_owner", "prop_occupant"] },
   { id: "sec-statutory", number: "3.", title: "Statutory Information", fields: ["prop_lga", "prop_offered", "prop_offer_details", "prop_contract_price", "prop_contract_date", "prop_seller_owner", "prop_assistance", "prop_assistance_details"] },
   { id: "sec-planning", number: "4.", title: "Town Planning", fields: ["prop_zoning", "prop_zoning_desc", "prop_zoning_comp", "prop_hbu"] },
@@ -297,7 +297,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     children,
     factsTable(
       draft,
-      ["prop_assignment", "insp_purpose", "prop_owner", "prop_rights"],
+      ["prop_assignment", "prop_owner", "prop_rights"],
       [
         { label: "Date of inspection", value: m.inspectionDate },
         { label: "Date of valuation", value: m.valueDate },
@@ -350,7 +350,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     children,
     factsTable(
       draft,
-      ["insp_purpose", "prop_assignment", "prop_rights"],
+      ["prop_assignment", "prop_rights"],
       [
         { label: "Date of inspection", value: m.inspectionDate },
         { label: "Date of valuation", value: m.valueDate },
