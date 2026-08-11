@@ -13,8 +13,13 @@ export type PhotoSlot =
   | "rear"
   | "street"
   | "kitchen"
-  | "baths"
-  | "living";
+  | "baths" // first bath; key kept so existing drafts still match
+  | "bath_2"
+  | "bath_3"
+  | "living"
+  | "view"
+  | "view_2"
+  | "pool";
 
 export interface ReportPhoto {
   id: string;
@@ -72,6 +77,11 @@ export const PHOTO_SLOTS: { slot: PhotoSlot; label: string }[] = [
   { slot: "rear", label: "Rear" },
   { slot: "street", label: "Street" },
   { slot: "kitchen", label: "Kitchen" },
-  { slot: "baths", label: "Baths" },
+  { slot: "baths", label: "Bath" },
+  { slot: "bath_2", label: "Bath" },
+  { slot: "bath_3", label: "Bath" },
   { slot: "living", label: "Living Room" },
+  { slot: "view", label: "View" },
+  { slot: "view_2", label: "View" },
+  { slot: "pool", label: "Pool" },
 ];
