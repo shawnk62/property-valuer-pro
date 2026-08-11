@@ -727,8 +727,10 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               <figure key={photo.id} className="report-photo-figure">
                 <img
                   src={photo.url}
-                  alt={photo.caption}
+                  alt={photo.caption || "Photograph"}
                   className="aspect-4/3 w-full border border-[var(--rule)] object-cover"
+                  loading="eager"
+                  decoding="sync"
                 />
                 <figcaption className="mt-1.5 text-center text-sm">
                   {photo.caption}

@@ -353,33 +353,54 @@
     page-break-inside: avoid !important;
     display: inline-block !important;
     vertical-align: top !important;
-    width: 48% !important;
-    margin: 0 1% 12pt 1% !important;
-    overflow: hidden !important;
+    width: 47% !important;
+    margin: 0 1.5% 14pt 0 !important;
+    overflow: visible !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
+  /*
+   * Fixed image box for print. height:auto + object-fit:cover collapses to an
+   * empty frame for some images in Chromium print; a definite height does not.
+   */
   .report-photo-figure img {
     display: block !important;
     width: 100% !important;
     max-width: 100% !important;
-    height: auto !important;
-    max-height: 85mm !important;
+    height: 72mm !important;
+    max-height: 72mm !important;
+    aspect-ratio: auto !important;
     object-fit: cover !important;
+    object-position: center !important;
+    border: 0.3pt solid #ccc !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   .report-photo-figure figcaption {
+    display: block !important;
+    margin-top: 3pt !important;
     break-before: avoid !important;
     page-break-before: avoid !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
 
+  /* Logo and other non-annexure images still scale naturally */
+  #report-preview-sheet > .report-cover img,
+  #report-cover img {
+    height: auto !important;
+    max-height: 56px !important;
+  }
+
   #report-preview-sheet img {
     max-width: 100% !important;
-    height: auto !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }
