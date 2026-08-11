@@ -58,7 +58,13 @@ export function itemLabel(id: string): string {
 /** True when the value should appear in the report at all. */
 export function hasValue(value: FieldValue | undefined): boolean {
   if (value === null || value === undefined) return false;
-  if (typeof value === "string") return value.trim().length > 0;
+  if (typeof value === "string") {
+    const t = value.trim();
+    if (!t) return false;
+    // Placeholder option used on framing and count selects
+    if (t === "Select" || t === "—") return false;
+    return true;
+  }
   if (Array.isArray(value)) return value.length > 0;
   if (typeof value === "boolean") return value;
   return true;

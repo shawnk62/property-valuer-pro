@@ -4,7 +4,11 @@ import type { InspectionValues } from "./types";
 
 export function isFilled(value: InspectionValues[string]): boolean {
   if (value === undefined || value === null) return false;
-  if (typeof value === "string") return value.trim().length > 0;
+  if (typeof value === "string") {
+    const t = value.trim();
+    if (!t || t === "Select" || t === "—") return false;
+    return true;
+  }
   if (Array.isArray(value)) return value.length > 0;
   return Boolean(value);
 }
