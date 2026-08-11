@@ -85,6 +85,9 @@ export interface InspectionRecord {
   id: string;
   status: InspectionStatus;
   values: InspectionValues;
+  /** Immutable form answers at submit time (statutory inspection notes). */
+  submittedValues?: InspectionValues;
+  submittedSchemaVersion?: string;
   createdAt: string;
   updatedAt: string;
   submittedAt?: string;

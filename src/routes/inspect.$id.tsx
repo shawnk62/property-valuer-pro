@@ -41,6 +41,7 @@ function InspectionWizard() {
   const { record, values, setValue, saveNow, loaded } = useInspection(id);
   const [step, setStep] = useState(Math.min(initialStep ?? 0, sections.length - 1));
   const [showErrors, setShowErrors] = useState(false);
+  const isSubmitted = record?.status === "submitted";
 
   const section = sections[step];
   const missing = useMemo(() => missingForStep(values, step), [values, step]);
@@ -118,6 +119,21 @@ function InspectionWizard() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+        {isSubmitted ? (
+          <div className="mb-5 rounded-lg border border-primary/30 bg-primary/5 p-4">
+            <p className="text-sm font-medium text-foreground">Inspection submitted — notes locked</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Original form answers are frozen as the statutory record. Open the review screen to view or download them.
+            </p>
+            <Button
+              className="mt-3"
+              variant="outline"
+              onClick={() => void navigate({ to: "/inspect/$id/review", params: { id } })}
+            >
+              View statutory record
+            </Button>
+          </div>
+        ) : null}
         {showErrors && missing.length > 0 ? (
           <div className="mb-5 rounded-lg border border-destructive/40 bg-destructive/5 p-4">
             <p className="text-sm font-medium text-destructive">
@@ -144,7 +160,7 @@ function InspectionWizard() {
               field={field}
               values={values}
               showErrors={showErrors}
-              onChange={setValue}
+              onChange={isSubmitted ? () => {} : setValue}
             />
           ))}
         </div>
@@ -156,7 +172,7 @@ function InspectionWizard() {
             <ArrowLeft className="size-4" />
             Back
           </Button>
-          <Button size="lg" onClick={goNext} className="flex-1">
+          <Button size="lg" onClick={goNext} className="flex-1" disabled={isSubmitted}>
             {step === sections.length - 1 ? (
               <>
                 <Check className="size-4" />

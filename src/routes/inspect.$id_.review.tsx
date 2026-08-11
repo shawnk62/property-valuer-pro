@@ -59,8 +59,14 @@ function ReviewScreen() {
   const isSubmitted = submitted || record?.status === "submitted";
   const { state: narrative, updateBlock, resetBlock } = useNarrative(id, values, isSubmitted);
 
+  /** Statutory copy: frozen at submit; falls back to live values for older rows. */
+  const recordValues = useMemo(
+    () => (isSubmitted ? (record?.submittedValues ?? values) : values),
+    [isSubmitted, record?.submittedValues, values],
+  );
+
   const missing = useMemo(() => missingFields(values), [values]);
-  const json = useMemo(() => JSON.stringify(values, null, 2), [values]);
+  const json = useMemo(() => JSON.stringify(recordValues, null, 2), [recordValues]);
 
   if (loaded && !record) {
     return (
@@ -101,7 +107,7 @@ function ReviewScreen() {
     const anchor = document.createElement("a");
     anchor.href = url;
     const address = typeof values["prop_address"] === "string" ? values["prop_address"] : "inspection";
-    anchor.download = `${address.replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "inspection"}.json`;
+    anchor.download = `${address.replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "inspection"}-inspection-notes.json`;
     anchor.click();
     URL.revokeObjectURL(url);
   };
@@ -145,9 +151,9 @@ function ReviewScreen() {
               </div>
             </div>
             <div className="rounded-lg border border-border bg-card p-4">
-              <p className="font-serif text-base font-semibold text-foreground">Structured record</p>
+              <p className="font-serif text-base font-semibold text-foreground">Structured record (JSON)</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Stored as one JSON object keyed by schema field names.
+                Downloadable copy of the frozen inspection answers (schema field keys). Keep with the job file if required.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button variant="outline" onClick={() => void copyJson()}>
@@ -254,14 +260,29 @@ function ReviewScreen() {
           </div>
         ) : null}
 
+        {isSubmitted ? (
+          <div className="rounded-lg border border-border bg-card p-4">
+            <p className="font-serif text-base font-semibold text-foreground">
+              Original inspection notes (statutory record)
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Frozen copy of the inspection form as at submit
+              {record?.submittedAt
+                ? ` (${new Date(record.submittedAt).toLocaleString()})`
+                : ""}
+              . Retained for regulatory record-keeping; not altered by report work.
+            </p>
+          </div>
+        ) : null}
+
         {sections.map((section, index) => {
           const rows = section.fields.flatMap((field) =>
             fieldKeys(field)
-              .filter((key) => isFilled(values[key]))
+              .filter((key) => isFilled(recordValues[key]))
               .map((key) => ({
                 key,
                 label: subLabel(field, key),
-                value: displayValue(field, key, values),
+                value: displayValue(field, key, recordValues),
               }))
               .filter((row) => row.value !== ""),
           );
@@ -272,15 +293,17 @@ function ReviewScreen() {
                 <h2 className="font-serif text-base font-semibold text-foreground">
                   {section.id}. {section.title}
                 </h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    void navigate({ to: "/inspect/$id", params: { id }, search: { step: index } })
-                  }
-                >
-                  Edit
-                </Button>
+                {!isSubmitted ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      void navigate({ to: "/inspect/$id", params: { id }, search: { step: index } })
+                    }
+                  >
+                    Edit
+                  </Button>
+                ) : null}
               </div>
               {rows.length === 0 ? (
                 <p className="px-4 py-4 text-sm text-muted-foreground">Nothing recorded.</p>

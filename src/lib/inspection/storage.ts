@@ -13,6 +13,8 @@ type DbRow = {
   user_id: string;
   status: "draft" | "submitted";
   form_values: InspectionValues;
+  submitted_form_values: InspectionValues | null;
+  submitted_schema_version: string | null;
   schema_version: string;
   created_at: string;
   updated_at: string;
@@ -24,6 +26,8 @@ function rowToRecord(row: DbRow): InspectionRecord {
     id: row.id,
     status: row.status,
     values: row.form_values ?? {},
+    submittedValues: row.submitted_form_values ?? undefined,
+    submittedSchemaVersion: row.submitted_schema_version ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     submittedAt: row.submitted_at ?? undefined,
@@ -91,25 +95,46 @@ export const inspectionStore = {
   },
 
   async save(id: string, values: InspectionValues): Promise<void> {
+    // Do not alter answers after submit — statutory notes stay fixed.
+    const existing = await this.get(id);
+    if (existing?.status === "submitted") {
+      throw new Error("This inspection is submitted. Original notes are locked.");
+    }
     const { error } = await supabase
       .from("inspections")
       .update({
         form_values: values,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("status", "draft");
     if (error) throw error;
     emit();
   },
 
+  /**
+   * Marks the inspection submitted and freezes a one-time copy of form_values
+   * into submitted_form_values (statutory inspection record).
+   */
   async submit(id: string): Promise<void> {
+    const existing = await this.get(id);
+    if (!existing) throw new Error("Inspection not found");
+    if (existing.status === "submitted" && existing.submittedValues) {
+      return;
+    }
+
     const now = new Date().toISOString();
+    const snapshot = existing.values ?? {};
     const { error } = await supabase
       .from("inspections")
       .update({
         status: "submitted",
         submitted_at: now,
         updated_at: now,
+        // Only set snapshot if not already frozen
+        submitted_form_values: existing.submittedValues ?? snapshot,
+        submitted_schema_version:
+          existing.submittedSchemaVersion ?? existing.schemaVersion,
       })
       .eq("id", id);
     if (error) throw error;
