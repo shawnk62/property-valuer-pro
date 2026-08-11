@@ -129,30 +129,87 @@ export const inspectionStore = {
 
   /**
    * Marks the inspection submitted and freezes a one-time copy of form_values
-   * into submitted_form_values (statutory inspection record).
+   * into submitted_form_values when that column exists.
+   * Refreshes the auth session first (iPad Safari often has a stale JWT).
    */
   async submit(id: string): Promise<void> {
+    // Mobile Safari frequently keeps a readable but expired access token.
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      throw new Error(sessionError.message || "Could not read sign-in session");
+    }
+    if (!sessionData.session) {
+      throw new Error("You are signed out. Sign in again, then submit.");
+    }
+    const { error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError) {
+      // Still try the update with the existing token; only hard-fail if clearly expired
+      const msg = refreshError.message || "";
+      if (/jwt|expired|session|refresh/i.test(msg)) {
+        throw new Error("Session expired. Sign in again on this device, then submit.");
+      }
+    }
+
     const existing = await this.get(id);
     if (!existing) throw new Error("Inspection not found");
-    if (existing.status === "submitted" && existing.submittedValues) {
+    if (existing.status === "submitted") {
       return;
     }
 
     const now = new Date().toISOString();
     const snapshot = existing.values ?? {};
-    const { error } = await supabase
+
+    // Ensure latest answers are on the server before locking status
+    const { error: saveError } = await supabase
       .from("inspections")
       .update({
-        status: "submitted",
-        submitted_at: now,
+        form_values: snapshot,
         updated_at: now,
-        // Only set snapshot if not already frozen
-        submitted_form_values: existing.submittedValues ?? snapshot,
-        submitted_schema_version:
-          existing.submittedSchemaVersion ?? existing.schemaVersion,
       })
-      .eq("id", id);
-    if (error) throw error;
+      .eq("id", id)
+      .eq("status", "draft");
+    if (saveError) {
+      throw new Error(saveError.message || "Could not save answers before submit");
+    }
+
+    const withSnapshot = {
+      status: "submitted" as const,
+      submitted_at: now,
+      updated_at: now,
+      submitted_form_values: existing.submittedValues ?? snapshot,
+      submitted_schema_version:
+        existing.submittedSchemaVersion ?? existing.schemaVersion,
+    };
+
+    let { data, error } = await supabase
+      .from("inspections")
+      .update(withSnapshot)
+      .eq("id", id)
+      .select("id")
+      .maybeSingle();
+
+    // Column missing (SQL not run yet) — still allow status-only submit
+    if (error && /submitted_form_values|submitted_schema_version|column/i.test(error.message)) {
+      ({ data, error } = await supabase
+        .from("inspections")
+        .update({
+          status: "submitted",
+          submitted_at: now,
+          updated_at: now,
+        })
+        .eq("id", id)
+        .select("id")
+        .maybeSingle());
+    }
+
+    if (error) {
+      throw new Error(error.message || "Submit failed");
+    }
+    if (!data) {
+      throw new Error(
+        "Submit did not update this inspection. Sign in again, or check you still have access.",
+      );
+    }
     emit();
   },
 
