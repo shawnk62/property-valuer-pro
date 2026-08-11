@@ -337,16 +337,43 @@
     page-break-inside: avoid !important;
   }
 
-  /* Photos still start on a fresh page */
+  /* Photos start on a fresh page; each photo+caption stays whole */
   .report-annexure {
     break-before: page !important;
     page-break-before: always !important;
   }
 
+  /* Drop CSS grid for print — grid + large images often split mid-photo */
+  .report-annexure .grid {
+    display: block !important;
+  }
+
   .report-photo-figure {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
-    margin-bottom: 10pt;
+    display: inline-block !important;
+    vertical-align: top !important;
+    width: 48% !important;
+    margin: 0 1% 12pt 1% !important;
+    overflow: hidden !important;
+  }
+
+  .report-photo-figure img {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 85mm !important;
+    object-fit: cover !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .report-photo-figure figcaption {
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   #report-preview-sheet img {
