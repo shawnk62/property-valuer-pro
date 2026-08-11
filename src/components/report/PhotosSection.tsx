@@ -235,8 +235,8 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
       <div className="rounded-md border border-border bg-card p-4">
         <h3 className="text-sm font-semibold text-foreground">Photo annexure</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Images appear in Preview Annexure 2 immediately. They are stored with this draft
-          (and on Supabase when the report-photos bucket is available).
+          Images appear in Preview Annexure 2 immediately. Uploads go to Supabase Storage
+          so the same photos open on desktop and iPad (requires the report-photos bucket).
         </p>
       </div>
 

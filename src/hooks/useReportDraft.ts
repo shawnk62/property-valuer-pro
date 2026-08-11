@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { inspectionStore } from "@/lib/inspection/storage";
+import { inspectionStore, type ReportExtras } from "@/lib/inspection/storage";
 import { generateNarrative } from "@/lib/report/narrative";
 import type {
   ComparableSale,
@@ -11,10 +11,9 @@ import type {
 } from "@/lib/report/types";
 
 /**
- * Single source of truth for a report draft.
- * Loads subject values from the real Supabase inspection record.
- * Draft extras (narrative / photos / sales / meta) persist in localStorage
- * until a dedicated report_drafts table is added.
+ * Report draft: subject values from Supabase inspection;
+ * extras (narrative / photos / sales / meta) synced to inspections.report_extras
+ * so desktop and iPad share the same draft. localStorage is a cache only.
  */
 const storageKey = (id: string) => `report-draft:${id}`;
 
@@ -23,12 +22,12 @@ function emptyNarrative(): ReportNarrative {
 }
 
 function emptyMeta(values: Record<string, FieldValue>): ReportMeta {
-  const inspDate =
-    typeof values.insp_date === "string" ? values.insp_date : "";
-  const valuer =
-    typeof values.insp_valuer === "string" ? values.insp_valuer : "";
+  const inspDate = typeof values.insp_date === "string" ? values.insp_date : "";
+  const valuer = typeof values.insp_valuer === "string" ? values.insp_valuer : "";
   const firm =
-    typeof values.insp_firm === "string" ? values.insp_firm : "Peterson Property Valuations Pty Ltd";
+    typeof values.insp_firm === "string"
+      ? values.insp_firm
+      : "Peterson Property Valuations Pty Ltd";
   return {
     valueAmount: "",
     valueDate: inspDate,
@@ -38,7 +37,10 @@ function emptyMeta(values: Record<string, FieldValue>): ReportMeta {
   };
 }
 
-function createEmptyDraft(inspectionId: string, values: Record<string, FieldValue> = {}): ReportDraft {
+function createEmptyDraft(
+  inspectionId: string,
+  values: Record<string, FieldValue> = {},
+): ReportDraft {
   return {
     inspectionId,
     values,
@@ -49,13 +51,47 @@ function createEmptyDraft(inspectionId: string, values: Record<string, FieldValu
   };
 }
 
-function isDurablePhotoUrl(url: string | undefined): boolean {
-  if (!url) return false;
-  // Persist https (Supabase) and data:image (local, no Storage required). Drop blob:.
-  return /^https?:\/\//i.test(url) || url.startsWith("data:image/");
+function isHttpUrl(url: string | undefined): boolean {
+  return !!url && /^https?:\/\//i.test(url);
 }
 
-function loadPersistedExtras(inspectionId: string): Partial<ReportDraft> | null {
+function isDurablePhotoUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  return isHttpUrl(url) || url.startsWith("data:image/");
+}
+
+/** Cloud payload: only HTTPS photo URLs (data: is device-local and too large for rows). */
+function toCloudExtras(draft: ReportDraft): ReportExtras {
+  return {
+    narrative: draft.narrative,
+    sales: draft.sales,
+    reportMeta: draft.reportMeta,
+    photos: draft.photos
+      .filter((p) => isHttpUrl(p.url))
+      .map((p) => ({
+        id: p.id,
+        slot: p.slot,
+        caption: p.caption,
+        url: p.url,
+        storagePath: p.storagePath,
+      })),
+  };
+}
+
+function photosFromCloud(extras: ReportExtras | null | undefined): ReportPhoto[] {
+  if (!extras?.photos || !Array.isArray(extras.photos)) return [];
+  return extras.photos
+    .filter((p) => p && isHttpUrl(p.url))
+    .map((p) => ({
+      id: p.id,
+      slot: (p.slot as ReportPhoto["slot"]) ?? null,
+      caption: p.caption ?? "",
+      url: p.url,
+      storagePath: p.storagePath,
+    }));
+}
+
+function loadLocalExtras(inspectionId: string): Partial<ReportDraft> | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(storageKey(inspectionId));
@@ -75,6 +111,33 @@ function loadPersistedExtras(inspectionId: string): Partial<ReportDraft> | null 
   }
 }
 
+function writeLocalCache(draft: ReportDraft) {
+  if (typeof window === "undefined") return;
+  try {
+    const toStore: ReportDraft = {
+      ...draft,
+      photos: draft.photos.filter((p) => isDurablePhotoUrl(p.url)),
+    };
+    window.localStorage.setItem(storageKey(draft.inspectionId), JSON.stringify(toStore));
+  } catch {
+    // quota / private mode
+  }
+}
+
+/** Prefer HTTPS over data: for the same slot/id so cloud wins across devices. */
+function mergePhotos(cloud: ReportPhoto[], local: ReportPhoto[]): ReportPhoto[] {
+  const byKey = new Map<string, ReportPhoto>();
+  const keyOf = (p: ReportPhoto) => (p.slot ? `slot:${p.slot}` : `id:${p.id}`);
+
+  for (const p of local) byKey.set(keyOf(p), p);
+  for (const p of cloud) {
+    const k = keyOf(p);
+    const existing = byKey.get(k);
+    if (!existing || isHttpUrl(p.url)) byKey.set(k, p);
+  }
+  return Array.from(byKey.values());
+}
+
 export function useReportDraft(inspectionId: string) {
   const [draft, setDraft] = useState<ReportDraft>(() => createEmptyDraft(inspectionId));
   const [loaded, setLoaded] = useState(false);
@@ -82,6 +145,9 @@ export function useReportDraft(inspectionId: string) {
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const hydrated = useRef(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
 
   useEffect(() => {
     let cancelled = false;
@@ -89,9 +155,9 @@ export function useReportDraft(inspectionId: string) {
     setLoadError(null);
     hydrated.current = false;
 
-    inspectionStore
-      .get(inspectionId)
-      .then((record) => {
+    (async () => {
+      try {
+        const record = await inspectionStore.get(inspectionId);
         if (cancelled) return;
         if (!record) {
           setLoadError("Inspection not found");
@@ -99,104 +165,185 @@ export function useReportDraft(inspectionId: string) {
           setLoaded(true);
           return;
         }
+
         const values = (record.values ?? {}) as Record<string, FieldValue>;
         const base = createEmptyDraft(inspectionId, values);
-        const extras = loadPersistedExtras(inspectionId);
+        const local = loadLocalExtras(inspectionId);
+
+        let cloud: ReportExtras | null = null;
+        try {
+          cloud = await inspectionStore.getReportExtras(inspectionId);
+        } catch {
+          cloud = null;
+        }
+
+        const cloudPhotos = photosFromCloud(cloud);
+        const localPhotos = local?.photos ?? [];
+        const photos = mergePhotos(cloudPhotos, localPhotos);
+
+        const cloudNarrative = cloud?.narrative as ReportNarrative | undefined;
         const narrativeEmpty =
-          !extras?.narrative ||
-          Object.values(extras.narrative).every((s) => !String(s ?? "").trim());
-        const narrative = narrativeEmpty
-          ? generateNarrative(values)
-          : extras!.narrative;
-        setDraft({
+          !cloudNarrative ||
+          Object.values(cloudNarrative).every((s) => !String(s ?? "").trim());
+        const localNarrativeEmpty =
+          !local?.narrative ||
+          Object.values(local.narrative).every((s) => !String(s ?? "").trim());
+
+        let narrative: ReportNarrative;
+        if (!narrativeEmpty && cloudNarrative) narrative = cloudNarrative;
+        else if (!localNarrativeEmpty && local?.narrative) narrative = local.narrative;
+        else narrative = generateNarrative(values);
+
+        const reportMeta =
+          (cloud?.reportMeta as ReportMeta | undefined) ||
+          local?.reportMeta ||
+          emptyMeta(values);
+
+        const sales =
+          (Array.isArray(cloud?.sales) ? (cloud!.sales as ComparableSale[]) : null) ||
+          local?.sales ||
+          [];
+
+        const next: ReportDraft = {
           ...base,
-          ...(extras ?? {}),
-          values, // always prefer live inspection values
+          values,
           narrative,
-          photos: extras?.photos ?? [],
-        });
+          photos,
+          sales,
+          reportMeta: { ...emptyMeta(values), ...reportMeta },
+        };
+        setDraft(next);
+        writeLocalCache(next);
         setLoaded(true);
         hydrated.current = true;
         setDirty(false);
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (cancelled) return;
         setLoadError(err instanceof Error ? err.message : "Failed to load inspection");
         setLoaded(true);
-      });
+      }
+    })();
 
     return () => {
       cancelled = true;
     };
   }, [inspectionId]);
 
-  const update = useCallback((patch: Partial<ReportDraft>) => {
-    setDraft((prev) => ({ ...prev, ...patch }));
-    setDirty(true);
+  const persistCloud = useCallback(async (d: ReportDraft) => {
+    writeLocalCache(d);
+    try {
+      await inspectionStore.saveReportExtras(d.inspectionId, toCloudExtras(d));
+      setSavedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
+      setDirty(false);
+    } catch (err: unknown) {
+      // Keep local cache; surface soft failure via dirty flag remaining true
+      console.error("report_extras save failed", err);
+      throw err;
+    }
   }, []);
 
-  const setValue = useCallback((name: string, value: FieldValue) => {
-    setDraft((prev) => ({
-      ...prev,
-      values: { ...prev.values, [name]: value },
-    }));
-    setDirty(true);
-  }, []);
+  const scheduleCloudSave = useCallback(
+    (d: ReportDraft) => {
+      writeLocalCache(d);
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+        void persistCloud(d).catch(() => {
+          /* leave dirty */
+        });
+      }, 600);
+    },
+    [persistCloud],
+  );
 
-  const setMeta = useCallback((patch: Partial<ReportMeta>) => {
-    setDraft((prev) => ({ ...prev, reportMeta: { ...prev.reportMeta, ...patch } }));
-    setDirty(true);
-  }, []);
+  const update = useCallback(
+    (patch: Partial<ReportDraft>) => {
+      setDraft((prev) => {
+        const next = { ...prev, ...patch };
+        scheduleCloudSave(next);
+        return next;
+      });
+      setDirty(true);
+    },
+    [scheduleCloudSave],
+  );
 
-  const setNarrative = useCallback((patch: Partial<ReportNarrative>) => {
-    setDraft((prev) => ({ ...prev, narrative: { ...prev.narrative, ...patch } }));
-    setDirty(true);
-  }, []);
+  const setValue = useCallback(
+    (name: string, value: FieldValue) => {
+      setDraft((prev) => {
+        const next = { ...prev, values: { ...prev.values, [name]: value } };
+        scheduleCloudSave(next);
+        return next;
+      });
+      setDirty(true);
+    },
+    [scheduleCloudSave],
+  );
+
+  const setMeta = useCallback(
+    (patch: Partial<ReportMeta>) => {
+      setDraft((prev) => {
+        const next = { ...prev, reportMeta: { ...prev.reportMeta, ...patch } };
+        scheduleCloudSave(next);
+        return next;
+      });
+      setDirty(true);
+    },
+    [scheduleCloudSave],
+  );
+
+  const setNarrative = useCallback(
+    (patch: Partial<ReportNarrative>) => {
+      setDraft((prev) => {
+        const next = { ...prev, narrative: { ...prev.narrative, ...patch } };
+        scheduleCloudSave(next);
+        return next;
+      });
+      setDirty(true);
+    },
+    [scheduleCloudSave],
+  );
 
   const setPhotos = useCallback(
     (next: ReportPhoto[] | ((prev: ReportPhoto[]) => ReportPhoto[])) => {
       setDraft((prev) => {
         const photos = typeof next === "function" ? next(prev.photos) : next;
         const updated = { ...prev, photos };
-        // Persist durable photo URLs immediately so uploads survive reload without a manual save.
-        if (typeof window !== "undefined") {
-          try {
-            const raw = window.localStorage.getItem(storageKey(prev.inspectionId));
-            const base = raw ? (JSON.parse(raw) as ReportDraft) : prev;
-            const toStore: ReportDraft = {
-              ...base,
-              ...updated,
-              values: prev.values,
-              photos: photos.filter((ph) => isDurablePhotoUrl(ph.url)),
-            };
-            window.localStorage.setItem(storageKey(prev.inspectionId), JSON.stringify(toStore));
-          } catch {
-            // ignore persistence errors
-          }
-        }
+        scheduleCloudSave(updated);
         return updated;
       });
       setDirty(true);
     },
-    [],
+    [scheduleCloudSave],
   );
 
-  const setSales = useCallback((next: ComparableSale[]) => {
-    setDraft((prev) => ({ ...prev, sales: next }));
-    setDirty(true);
-  }, []);
+  const setSales = useCallback(
+    (next: ComparableSale[]) => {
+      setDraft((prev) => {
+        const updated = { ...prev, sales: next };
+        scheduleCloudSave(updated);
+        return updated;
+      });
+      setDirty(true);
+    },
+    [scheduleCloudSave],
+  );
 
-  const save = useCallback(() => {
-    if (typeof window === "undefined") return;
-    // Persist editable extras. Keep https + data:image URLs; drop blob: previews.
-    const toStore: ReportDraft = {
-      ...draft,
-      photos: draft.photos.filter((p) => isDurablePhotoUrl(p.url)),
-    };
-    window.localStorage.setItem(storageKey(draft.inspectionId), JSON.stringify(toStore));
-    setSavedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
-    setDirty(false);
-  }, [draft]);
+  const save = useCallback(async () => {
+    const d = draftRef.current;
+    writeLocalCache(d);
+    try {
+      await persistCloud(d);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Save failed";
+      // Column missing is the usual first-run case
+      if (/report_extras|column/i.test(msg)) {
+        throw new Error(
+          "Run supabase-report-extras-setup.sql in Supabase SQL Editor, then save again.",
+        );
+      }
+      throw err;
+    }
+  }, [persistCloud]);
 
   return {
     draft,

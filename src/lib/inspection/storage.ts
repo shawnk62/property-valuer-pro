@@ -19,6 +19,21 @@ type DbRow = {
   created_at: string;
   updated_at: string;
   submitted_at: string | null;
+  report_extras?: ReportExtras | null;
+};
+
+/** Report workspace payload stored on the inspection row for cross-device sync. */
+export type ReportExtras = {
+  narrative?: Record<string, string>;
+  photos?: Array<{
+    id: string;
+    slot: string | null;
+    caption: string;
+    url: string;
+    storagePath?: string;
+  }>;
+  sales?: unknown[];
+  reportMeta?: Record<string, string>;
 };
 
 function rowToRecord(row: DbRow): InspectionRecord {
@@ -143,6 +158,29 @@ export const inspectionStore = {
 
   async remove(id: string): Promise<void> {
     const { error } = await supabase.from("inspections").delete().eq("id", id);
+    if (error) throw error;
+    emit();
+  },
+
+  async getReportExtras(id: string): Promise<ReportExtras | null> {
+    const { data, error } = await supabase
+      .from("inspections")
+      .select("report_extras")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    const extras = (data as { report_extras?: ReportExtras | null } | null)?.report_extras;
+    return extras ?? null;
+  },
+
+  async saveReportExtras(id: string, extras: ReportExtras): Promise<void> {
+    const { error } = await supabase
+      .from("inspections")
+      .update({
+        report_extras: extras,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
     if (error) throw error;
     emit();
   },
