@@ -61,10 +61,9 @@ function InspectionWizard() {
   }
 
   const goNext = () => {
-    if (missing.length > 0) {
+    if (!isSubmitted && missing.length > 0) {
       setShowErrors(true);
       toast.error(`Complete ${missing.length} required field${missing.length === 1 ? "" : "s"} on this step.`);
-      // Make the reason visible: jump to the first outstanding field.
       requestAnimationFrame(() => {
         const first = missing[0];
         const el = first ? document.getElementById(first.name) : null;
@@ -79,7 +78,7 @@ function InspectionWizard() {
     }
 
     setShowErrors(false);
-    saveNow();
+    if (!isSubmitted) saveNow();
     if (step === sections.length - 1) {
       void navigate({ to: "/inspect/$id/review", params: { id } });
       return;
@@ -104,15 +103,18 @@ function InspectionWizard() {
             </Link>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {isSubmitted ? "Submitted form · " : ""}
                 Step {step + 1} of {sections.length} · Section {section?.id}
               </p>
               <h1 className="truncate font-serif text-lg font-semibold text-foreground">
                 {section?.title}
               </h1>
             </div>
-            <Button variant="ghost" size="icon" aria-label="Save draft" onClick={() => { saveNow(); toast.success("Draft saved"); }}>
-              <Save className="size-4" />
-            </Button>
+            {!isSubmitted ? (
+              <Button variant="ghost" size="icon" aria-label="Save draft" onClick={() => { saveNow(); toast.success("Draft saved"); }}>
+                <Save className="size-4" />
+              </Button>
+            ) : null}
           </div>
           <Progress value={((step + 1) / sections.length) * 100} className="mt-3 h-1.5" />
         </div>
@@ -120,17 +122,17 @@ function InspectionWizard() {
 
       <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
         {isSubmitted ? (
-          <div className="mb-5 rounded-lg border border-primary/30 bg-primary/5 p-4">
-            <p className="text-sm font-medium text-foreground">Inspection submitted — notes locked</p>
+          <div className="mb-5 rounded-lg border border-border bg-card p-4">
+            <p className="text-sm font-medium text-foreground">Submitted inspection form</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Original form answers are frozen as the statutory record. Open the review screen to view or download them.
+              This is the same form you filled in on site, with your answers shown. Fields are read-only after submit.
             </p>
             <Button
               className="mt-3"
               variant="outline"
               onClick={() => void navigate({ to: "/inspect/$id/review", params: { id } })}
             >
-              View statutory record
+              Back to review / report
             </Button>
           </div>
         ) : null}
@@ -147,7 +149,7 @@ function InspectionWizard() {
           </div>
         ) : null}
 
-        {step === 0 ? (
+        {step === 0 && !isSubmitted ? (
           <div className="mb-6">
             <ImportPanel values={values} onApply={(patch) => { for (const [k, v] of Object.entries(patch)) setValue(k, v); }} />
           </div>
@@ -172,11 +174,11 @@ function InspectionWizard() {
             <ArrowLeft className="size-4" />
             Back
           </Button>
-          <Button size="lg" onClick={goNext} className="flex-1" disabled={isSubmitted}>
+          <Button size="lg" onClick={goNext} className="flex-1">
             {step === sections.length - 1 ? (
               <>
                 <Check className="size-4" />
-                Review
+                {isSubmitted ? "Back to review" : "Review"}
               </>
             ) : (
               <>

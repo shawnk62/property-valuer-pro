@@ -138,15 +138,22 @@ function ReviewScreen() {
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
               <p className="font-serif text-base font-semibold text-foreground">Ready for report</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Inspection data is saved. Open the Report Workspace to build the valuation report — subject fields and narrative are populated from this record.
+                Inspection data is saved. Open the Report Workspace to build the valuation report, or reopen the original inspection form with your answers filled in.
               </p>
-              <div className="mt-3">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <Button
                   size="lg"
                   onClick={() => void navigate({ to: "/report/$inspectionId", params: { inspectionId: id } })}
                 >
                   <FileText className="size-4" />
                   Build valuation report
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => void navigate({ to: "/inspect/$id", params: { id }, search: { step: 0 } })}
+                >
+                  View inspection form
                 </Button>
               </div>
             </div>
@@ -260,21 +267,6 @@ function ReviewScreen() {
           </div>
         ) : null}
 
-        {isSubmitted ? (
-          <div className="rounded-lg border border-border bg-card p-4">
-            <p className="font-serif text-base font-semibold text-foreground">
-              Original inspection notes (statutory record)
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Frozen copy of the inspection form as at submit
-              {record?.submittedAt
-                ? ` (${new Date(record.submittedAt).toLocaleString()})`
-                : ""}
-              . Retained for regulatory record-keeping; not altered by report work.
-            </p>
-          </div>
-        ) : null}
-
         {sections.map((section, index) => {
           const rows = section.fields.flatMap((field) =>
             fieldKeys(field)
@@ -293,17 +285,15 @@ function ReviewScreen() {
                 <h2 className="font-serif text-base font-semibold text-foreground">
                   {section.id}. {section.title}
                 </h2>
-                {!isSubmitted ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      void navigate({ to: "/inspect/$id", params: { id }, search: { step: index } })
-                    }
-                  >
-                    Edit
-                  </Button>
-                ) : null}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    void navigate({ to: "/inspect/$id", params: { id }, search: { step: index } })
+                  }
+                >
+                  {isSubmitted ? "View form" : "Edit"}
+                </Button>
               </div>
               {rows.length === 0 ? (
                 <p className="px-4 py-4 text-sm text-muted-foreground">Nothing recorded.</p>
