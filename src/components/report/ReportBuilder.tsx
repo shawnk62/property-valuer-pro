@@ -74,7 +74,9 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
     const onAfterPrint = () => {
       window.removeEventListener("afterprint", onAfterPrint);
       setPrinting(false);
-      toast.message("In the print dialog: Save as PDF, A4, and turn off headers/footers if shown.");
+      toast.message(
+        "Print dialog: Save as PDF · A4 · turn OFF Headers and footers (hides website URL) · turn ON Background graphics (keeps green bars and colours).",
+      );
     };
     window.addEventListener("afterprint", onAfterPrint);
     window.print();
