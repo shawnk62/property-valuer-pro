@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": 16,
+  "version": "17",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -2052,50 +2052,6 @@
             {
               "id": "accom_sleepout",
               "label": "Sleepout"
-            },
-            {
-              "id": "accom_front_patio_covered",
-              "label": "Front patio - covered"
-            },
-            {
-              "id": "accom_front_patio_uncovered",
-              "label": "Front patio - uncovered"
-            },
-            {
-              "id": "accom_rear_patio_covered",
-              "label": "Rear patio - covered"
-            },
-            {
-              "id": "accom_rear_patio_uncovered",
-              "label": "Rear patio - uncovered"
-            },
-            {
-              "id": "accom_front_deck_covered",
-              "label": "Front deck - covered"
-            },
-            {
-              "id": "accom_front_deck_uncovered",
-              "label": "Front deck - uncovered"
-            },
-            {
-              "id": "accom_rear_deck_covered",
-              "label": "Rear deck - covered"
-            },
-            {
-              "id": "accom_rear_deck_uncovered",
-              "label": "Rear deck - uncovered"
-            },
-            {
-              "id": "accom_front_verandah",
-              "label": "Front verandah"
-            },
-            {
-              "id": "accom_rear_verandah",
-              "label": "Rear verandah"
-            },
-            {
-              "id": "accom_side_verandah",
-              "label": "Side verandah"
             },
             {
               "id": "accom_downstairs",
