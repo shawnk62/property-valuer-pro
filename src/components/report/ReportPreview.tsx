@@ -1,6 +1,7 @@
 import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { get, hasValue, joinValues, labelFor, pick } from "@/lib/report/schema";
 import { PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
+import { getReportTypeConfig } from "@/lib/report/reportTypes";
 
 /* ---------- primitives ---------- */
 
@@ -314,6 +315,7 @@ function Facts({
 export function ReportPreview({ draft }: { draft: ReportDraft }) {
   const v = draft.values;
   const m = draft.reportMeta;
+  const reportType = getReportTypeConfig(get(v, "prop_assignment"));
 
   const addressLine = [
     get(v, "prop_address"),
@@ -345,7 +347,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         <h1 className="report-h1 mt-6 text-2xl">Valuation Summary</h1>
 
         <p className="mt-1 text-sm uppercase tracking-[0.18em] text-[var(--page-foreground)]/70">
-          Residential Valuation Report
+          {reportType.coverSubtitle}
         </p>
       </header>
 
@@ -367,16 +369,35 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </div>
 
       <div className="mt-6">
-        <Facts
-          values={v}
-          fields={["prop_assignment", "prop_owner", "prop_rights"]}
-          extra={[
-            { label: "Date of inspection", value: m.inspectionDate },
-            { label: "Date of valuation", value: m.valueDate },
-            { label: "Valuer", value: m.valuerName },
-            { label: "Prepared by", value: m.firmName },
-          ]}
-        />
+        {reportType.id === "stamp-duty-phil" ? (
+          <Facts
+            values={v}
+            fields={[
+              "prop_assignment",
+              "prop_owner",
+              "prop_lotplan",
+              "prop_sitearea",
+              "prop_zoning",
+            ]}
+            extra={[
+              { label: "Date of inspection", value: m.inspectionDate },
+              { label: "Date of valuation", value: m.valueDate },
+              { label: "Valuer", value: m.valuerName },
+              { label: "Prepared by", value: m.firmName },
+            ]}
+          />
+        ) : (
+          <Facts
+            values={v}
+            fields={["prop_assignment", "prop_owner", "prop_rights"]}
+            extra={[
+              { label: "Date of inspection", value: m.inspectionDate },
+              { label: "Date of valuation", value: m.valueDate },
+              { label: "Valuer", value: m.valuerName },
+              { label: "Prepared by", value: m.firmName },
+            ]}
+          />
+        )}
       </div>
 
       <Prose text={draft.narrative.brief} />
@@ -401,7 +422,11 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       <TableOfContents draft={draft} />
 
       {/* ---- 1. Instructions & purpose ---- */}
-      <Section id="sec-instructions" number="1." title="Instructions and Purpose of Valuation">
+      <Section
+        id="sec-instructions"
+        number="1."
+        title={reportType.instructionsTitle || "Instructions and Purpose of Valuation"}
+      >
         <Facts
           values={v}
           fields={["prop_assignment", "prop_rights"]}
@@ -410,7 +435,32 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             { label: "Date of valuation", value: m.valueDate },
           ]}
         />
-        <Para>{BOILERPLATE.natureOfInterest}</Para>
+        {reportType.id === "stamp-duty-phil" ? (
+          <>
+            {reportType.defaultPurpose ? (
+              <Sub title="1.2  Purpose of Valuation">
+                <Para>{reportType.defaultPurpose}</Para>
+              </Sub>
+            ) : null}
+            <Sub title="1.3  Nature of Interest to be Valued">
+              <Para>{BOILERPLATE.natureOfInterest}</Para>
+            </Sub>
+            <Sub title="1.6  Basis of Valuation">
+              <Para>{BOILERPLATE.basisOfValuation}</Para>
+            </Sub>
+            <Sub title="1.7  Market Value Definition">
+              <Para>{BOILERPLATE.marketValueDefinition}</Para>
+            </Sub>
+            <Sub title="1.8  Highest and Best Use">
+              <Para>{BOILERPLATE.highestAndBestUse}</Para>
+            </Sub>
+            <Sub title="1.9  Assumptions and Limitations">
+              <Para>{BOILERPLATE.assumptionsAndLimitations}</Para>
+            </Sub>
+          </>
+        ) : (
+          <Para>{BOILERPLATE.natureOfInterest}</Para>
+        )}
       </Section>
 
       {/* ---- 2. Property details ---- */}
