@@ -343,27 +343,11 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         (reportType.id === "stamp-duty-phil" ? " report-type-phil" : "")
       }
     >
+      {/* ---- Cover ---- */}
       {reportType.id === "stamp-duty-phil" ? (
+        /* Sample: page 1 photo, page 2 summary — separate top-level blocks so print breaks work */
         <>
-          {/* Sample green header bar — fixed so it repeats on every printed page */}
-          <div className="phil-running-header no-print-screen" aria-hidden />
-          {/* Sample green footer bar */}
-          <div className="phil-running-footer no-print-screen" aria-hidden>
-            <span className="phil-footer-left">
-              PROPERTY ADDRESS: {addressLine || "—"}
-            </span>
-            <span className="phil-footer-centre">
-              Peterson Property Valuations Pty Ltd &nbsp; Real Estate Valuers
-            </span>
-          </div>
-        </>
-      ) : null}
-      {/* ---- Cover / valuation summary (kept on first printed page) ---- */}
-      <div id="report-cover" className="report-cover">
-      {reportType.id === "stamp-duty-phil" ? (
-        /* Sample structure: page 1 = logo + large photo + title; page 2 = valuation summary */
-        <>
-          <div className="phil-photo-page">
+          <div id="report-cover" className="report-cover phil-photo-page">
             <header className="flex items-start justify-between gap-4 text-left">
               <img
                 src="/ppv-logo.jpeg"
@@ -416,7 +400,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             <div className="phil-gold-rule mt-12" />
           </div>
 
-          <div className="phil-summary-page">
+          <div className="phil-summary-page report-cover">
             <h1 className="report-h1 text-center text-xl text-[var(--phil-green)]">
               Valuation Summary
             </h1>
@@ -492,8 +476,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           </div>
         </>
       ) : (
-        /* Purchase / default cover — unchanged */
-        <>
+        <div id="report-cover" className="report-cover">
           <header className="text-center">
             <img
               src="/ppv-logo.jpeg"
@@ -555,9 +538,8 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             <p className="text-sm">{m.firmName || get(v, "insp_firm")}</p>
             {m.valueDate ? <p className="mt-1 text-sm">{m.valueDate}</p> : null}
           </div>
-        </>
+        </div>
       )}
-      </div>{/* end report-cover */}
 
       <TableOfContents draft={draft} />
 
