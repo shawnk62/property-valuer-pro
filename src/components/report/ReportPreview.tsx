@@ -345,14 +345,13 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           className="mx-auto h-24 w-auto object-contain"
         />
         <h1 className="report-h1 mt-6 text-2xl">Valuation Summary</h1>
-
         <p className="mt-1 text-sm uppercase tracking-[0.18em] text-[var(--page-foreground)]/70">
           {reportType.coverSubtitle}
         </p>
       </header>
 
       {reportType.id === "stamp-duty-phil" ? (
-        /* Sample-aligned Valuation Summary (Stamp Duty – Phil) */
+        /* Exact sample Valuation Summary labels */
         <>
           <div className="mt-8">
             <Facts
@@ -362,11 +361,9 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 { label: "PROPERTY ADDRESS", value: addressLine },
                 {
                   label: "BRIEF DESCRIPTION",
-                  value: (draft.narrative.brief || "").trim() ||
-                    [
-                      get(v, "imp_design") || get(v, "imp_lowset") || "Dwelling",
-                      siteArea ? `on a ${siteArea} lot` : "",
-                    ]
+                  value:
+                    (draft.narrative.brief || "").trim() ||
+                    [get(v, "imp_design") || "Dwelling", siteArea ? `on a ${siteArea} lot` : ""]
                       .filter(Boolean)
                       .join(" "),
                 },
@@ -374,15 +371,11 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 { label: "REAL PROPERTY DESCRIPTION", value: get(v, "prop_lotplan") },
                 { label: "LAND AREA", value: siteArea },
                 { label: "ZONING", value: get(v, "prop_zoning") },
-                { label: "INSTRUCTIONS", value: get(v, "prop_owner") || get(v, "insp_client") || "" },
-                {
-                  label: "PURPOSE OF VALUATION",
-                  value: reportType.defaultPurpose,
-                },
+                { label: "INSTRUCTIONS", value: get(v, "prop_owner") },
+                { label: "PURPOSE OF VALUATION", value: reportType.defaultPurpose },
               ].filter((r) => r.value && String(r.value).trim())}
             />
           </div>
-
           <div className="mt-8 border-y-2 border-[var(--page-foreground)]/80 py-6 text-center">
             <p className="text-sm uppercase tracking-wide text-[var(--page-foreground)]/70">
               VALUATION STATEMENT
@@ -390,47 +383,34 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             <p className="mt-3 font-serif text-2xl font-bold">
               {m.valueAmount ? `$${m.valueAmount}` : "—"}
             </p>
-            {m.valueDate ? (
-              <p className="mt-1 text-sm">as at {m.valueDate}</p>
-            ) : null}
+            {m.valueDate ? <p className="mt-1 text-sm">as at {m.valueDate}</p> : null}
           </div>
-
           <div className="mt-8 border-t border-[var(--rule)] pt-6">
             <p className="text-sm italic text-[var(--page-foreground)]/75">
               {BOILERPLATE.summaryDisclaimer}
             </p>
           </div>
-
           <div className="report-signature mt-10">
             <div className="h-14 w-56 border-b border-[var(--page-foreground)]/70" />
             <p className="mt-2 font-semibold">{m.valuerName || get(v, "insp_valuer")}</p>
-            {get(v, "sign_member") ? (
-              <p className="text-sm">{get(v, "sign_member")}</p>
-            ) : null}
+            {get(v, "sign_member") ? <p className="text-sm">{get(v, "sign_member")}</p> : null}
             <p className="text-sm">{m.firmName || get(v, "insp_firm")}</p>
             {m.valueDate ? <p className="mt-1 text-sm">{m.valueDate}</p> : null}
           </div>
         </>
       ) : (
-        /* Existing Purchase / default cover — do not change */
+        /* Purchase / default — unchanged */
         <>
           <div className="mt-8 border-y-2 border-[var(--page-foreground)]/80 py-6 text-center">
             {addressLine ? (
-              <p className="font-serif text-xl font-bold uppercase tracking-wide">
-                {addressLine}
-              </p>
+              <p className="font-serif text-xl font-bold uppercase tracking-wide">{addressLine}</p>
             ) : null}
-            {get(v, "prop_lotplan") ? (
-              <p className="mt-1 text-sm">{get(v, "prop_lotplan")}</p>
-            ) : null}
+            {get(v, "prop_lotplan") ? <p className="mt-1 text-sm">{get(v, "prop_lotplan")}</p> : null}
             <p className="mt-5 font-serif text-2xl font-bold">
               Market Value: {m.valueAmount ? `$${m.valueAmount}` : "—"}
             </p>
-            {m.valueDate ? (
-              <p className="mt-1 text-sm">As at {m.valueDate}</p>
-            ) : null}
+            {m.valueDate ? <p className="mt-1 text-sm">As at {m.valueDate}</p> : null}
           </div>
-
           <div className="mt-6">
             <Facts
               values={v}
@@ -443,21 +423,16 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               ]}
             />
           </div>
-
           <Prose text={draft.narrative.brief} />
-
           <div className="mt-8 border-t border-[var(--rule)] pt-6">
             <p className="text-sm italic text-[var(--page-foreground)]/75">
               {BOILERPLATE.summaryDisclaimer}
             </p>
           </div>
-
           <div className="report-signature mt-10">
             <div className="h-14 w-56 border-b border-[var(--page-foreground)]/70" />
             <p className="mt-2 font-semibold">{m.valuerName || get(v, "insp_valuer")}</p>
-            {get(v, "sign_member") ? (
-              <p className="text-sm">{get(v, "sign_member")}</p>
-            ) : null}
+            {get(v, "sign_member") ? <p className="text-sm">{get(v, "sign_member")}</p> : null}
             <p className="text-sm">{m.firmName || get(v, "insp_firm")}</p>
             {m.valueDate ? <p className="mt-1 text-sm">{m.valueDate}</p> : null}
           </div>
@@ -570,13 +545,9 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         title={reportType.id === "stamp-duty-phil" ? "Location" : "Location and Neighbourhood"}
       >
         {reportType.id === "stamp-duty-phil" ? (
-          /* Samples are brief: neighbourhood type + location + transport */
           <>
             <Prose text={get(v, "nbhd_description")} />
-            <Facts
-              values={v}
-              fields={["nbhd_location", "offsite_road_type", "offsite_road_surface"]}
-            />
+            <Facts values={v} fields={["nbhd_location", "offsite_road_type", "offsite_road_surface"]} />
           </>
         ) : (
           <>
