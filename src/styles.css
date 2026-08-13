@@ -103,7 +103,12 @@
   --rule: oklch(0.82 0.01 150);
   --gold: oklch(0.75 0.12 87);
   --gold-foreground: oklch(0.25 0.03 87);
+  /* Stamp Duty – Phil sample colours (Peterson green + gold accent) */
+  --phil-green: #0a6b3c;
+  --phil-green-bar: #0a6b3c;
+  --phil-gold: #d4a017;
 }
+
 
 
 .dark {
@@ -189,6 +194,32 @@
  *   content exceeds page height).
  * - Do NOT force every section onto a new page (left large blank areas).
  */
+
+/* ---------- Stamp Duty – Phil sample chrome ---------- */
+.report-type-phil .phil-gold-rule {
+  height: 3px;
+  background: var(--phil-gold);
+  width: 100%;
+}
+
+.report-type-phil .phil-photo-page {
+  /* forces photo+title onto its own printed page (sample page 1) */
+}
+
+.report-type-phil .report-h2 {
+  color: var(--phil-green);
+}
+
+/* Sample-style green header bar on body pages (screen) */
+.report-type-phil .report-section > .report-h2 {
+  border-bottom-color: var(--phil-green);
+}
+
+/* Sample footer bar (screen preview) */
+.report-type-phil::after {
+  content: none;
+}
+
 @media print {
   @page {
     size: A4 portrait;
@@ -242,6 +273,43 @@
     break-after: page !important;
     page-break-after: always !important;
   }
+
+  /* Stamp Duty – Phil: photo page then summary page (matches samples) */
+  .report-type-phil .phil-photo-page {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  .report-type-phil .phil-photo-page img {
+    max-height: 280px !important;
+  }
+
+  .report-type-phil .phil-gold-rule {
+    height: 2.5pt !important;
+    background: #d4a017 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Green top bar on each printed page for phil reports */
+  .report-type-phil {
+    /* running header simulation via border on sections is limited in pure CSS print;
+       use a fixed top rule on the sheet */
+  }
+
+  .report-type-phil .report-section > .report-h2,
+  .report-type-phil .report-h1 {
+    color: #0a6b3c !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Green footer bar approximation for phil */
+  .report-type-phil .report-section {
+    border-bottom: none;
+  }
+
+
 
   #report-cover header img {
     height: 56px !important;
