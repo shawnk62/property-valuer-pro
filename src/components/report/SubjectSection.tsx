@@ -1,8 +1,19 @@
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import { pick } from "@/lib/report/schema";
 
+/** Options kept in sync with inspection-schema.json prop_assignment */
+const REPORT_TYPE_OPTIONS = [
+  "Purchase",
+  "Refinance",
+  "ATO / CGT",
+  "Resumption",
+  "Dispute",
+  "Other",
+  "Stamp Duty - Phil",
+] as const;
+
 const IDENTITY_FIELDS = [
-  "prop_assignment",
+  // prop_assignment is rendered as an editable control above the fact tables
   "insp_purpose",
   "prop_address",
   "prop_suburb",
@@ -57,7 +68,10 @@ function FactTable({
       </h3>
       <dl className="divide-y divide-border">
         {rows.map((row) => (
-          <div key={row.name} className="grid grid-cols-1 gap-1 px-4 py-2.5 sm:grid-cols-[minmax(0,15rem)_1fr] sm:gap-4">
+          <div
+            key={row.name}
+            className="grid grid-cols-1 gap-1 px-4 py-2.5 sm:grid-cols-[minmax(0,15rem)_1fr] sm:gap-4"
+          >
             <dt className="text-sm text-muted-foreground">
               {row.label}
               <span className="ml-2 font-mono text-[11px] text-muted-foreground/70">
@@ -104,11 +118,43 @@ function MetaInput({
 }
 
 export function SubjectSection({ controller }: { controller: ReportDraftController }) {
-  const { draft, setMeta } = controller;
+  const { draft, setMeta, setValue } = controller;
   const { values, reportMeta } = draft;
+
+  const currentReportType =
+    typeof values.prop_assignment === "string" ? values.prop_assignment : "";
 
   return (
     <div className="space-y-6">
+      {/* Report type — editable on the report draft so one inspection can produce multiple report products */}
+      <section className="rounded-md border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold text-foreground">Report type for this report</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          The original inspection answers stay frozen. Change the type here to generate a
+          different report product (Purchase, Stamp Duty – Phil, ATO / CGT, etc.) from the
+          same inspection.
+        </p>
+        <div className="mt-4 max-w-sm">
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium text-foreground">
+              Report Type
+            </span>
+            <select
+              value={currentReportType}
+              onChange={(e) => setValue("prop_assignment", e.target.value)}
+              className="w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">Select…</option>
+              {REPORT_TYPE_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </section>
+
       <section className="rounded-md border border-border bg-card p-4">
         <h3 className="text-sm font-semibold text-foreground">Valuation figures</h3>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -151,8 +197,9 @@ export function SubjectSection({ controller }: { controller: ReportDraftControll
       <FactTable title="Site and planning" rows={pick(values, SITE_FIELDS)} />
       <FactTable title="Transaction" rows={pick(values, TRANSACTION_FIELDS)} />
       <p className="text-sm text-muted-foreground">
-        Subject facts are read-only here — they come from the inspection record. Fields
-        left unset in the inspection are omitted entirely, in the report as well as above.
+        Subject facts (other than Report Type) are read-only here — they come from the
+        inspection record. The original submitted answers remain preserved. Fields left
+        unset in the inspection are omitted entirely, in the report as well as above.
       </p>
     </div>
   );
