@@ -260,6 +260,9 @@
     color: black !important;
     font-size: 9.5pt !important;
     line-height: 1.35 !important;
+    overflow: visible !important;
+    height: auto !important;
+    /* CRITICAL: never flex/grid — page breaks are ignored inside them */
   }
 
   #report-preview-sheet a {
@@ -267,16 +270,28 @@
     color: inherit !important;
   }
 
-  /* Page 1: cover only */
+  /*
+   * PAGE BREAKS — must be on top-level blocks (not nested children).
+   * Use both modern (break-*) and legacy (page-break-*) properties.
+   */
   #report-cover {
+    display: block !important;
     break-after: page !important;
     page-break-after: always !important;
   }
 
-  /* ---- Stamp Duty – Phil: page breaks (match samples) ---- */
+  /* Stamp Duty – Phil: photo page is #report-cover; summary is next sibling */
   .report-type-phil .phil-photo-page {
+    display: block !important;
     break-after: page !important;
     page-break-after: always !important;
+  }
+
+  .report-type-phil .phil-summary-page {
+    display: block !important;
+    break-after: page !important;
+    page-break-after: always !important;
+    break-before: auto !important;
   }
 
   /* Large front photo like samples */
@@ -396,8 +411,10 @@
 
   /* TOC after cover; then body flows */
   .report-toc {
+    display: block !important;
     break-after: page !important;
     page-break-after: always !important;
+    break-before: auto !important;
   }
 
   /*
@@ -503,11 +520,18 @@
     page-break-inside: avoid !important;
   }
 
-  /* Logo and other non-annexure images still scale naturally */
-  #report-preview-sheet > .report-cover img,
-  #report-cover img {
+  /* Logo only — do NOT shrink the front elevation photo */
+  #report-cover > header img,
+  .phil-photo-page > header img {
     height: auto !important;
     max-height: 56px !important;
+  }
+
+  .report-type-phil .phil-front-photo-img {
+    max-height: none !important;
+    height: auto !important;
+    width: 100% !important;
+    max-width: 420px !important;
   }
 
   #report-preview-sheet img {
