@@ -185,72 +185,127 @@
 
 /* ---- Report PDF / print ----
  * Page rules:
- * - Cover (value + signature) = page 1
- * - TOC on its own page after cover
- * - Small sections may share a page if the whole section fits
- * - A section must not start mid-page only to be split; prefer keeping
- *   short sections intact (break-inside: avoid). Long sections taller
- *   than one page are allowed to flow (browser ignores avoid when
- *   content exceeds page height).
- * - Do NOT force every section onto a new page (left large blank areas).
+ * - Cover = page 1 (break-after)
+ * - Stamp Duty Phil: photo page, then summary page, then TOC
+ * - TOC on its own page
+ * - Sections: break-inside avoid when they fit
+ *
+ * IMPORTANT (browser print dialog):
+ * - Turn OFF "Headers and footers" (those show the website URL — not our report)
+ * - Turn ON "Background graphics" so green/gold colours print
  */
 
-/* ---------- Stamp Duty – Phil sample chrome ---------- */
+/* Screen: sample green bars visible in Preview for Stamp Duty – Phil */
 .report-type-phil .phil-gold-rule {
   height: 3px;
-  background: var(--phil-gold);
+  background: var(--phil-gold, #d4a017);
   width: 100%;
 }
 
 .report-type-phil .report-h2,
 .report-type-phil .report-h1 {
-  color: var(--phil-green);
+  color: var(--phil-green, #0a6b3c);
 }
 
 .report-type-phil .report-section > .report-h2 {
-  border-bottom-color: var(--phil-green);
+  border-bottom: 1px solid var(--phil-green, #0a6b3c);
 }
 
-/* Screen preview: show sample bars */
+/* Screen preview: show green top/bottom bars so Preview matches print intent */
 .report-type-phil .phil-running-header {
-  display: none; /* print only */
+  display: block;
+  height: 6px;
+  background: var(--phil-green, #0a6b3c);
+  margin: 0 0 12px 0;
 }
 .report-type-phil .phil-running-footer {
-  display: none; /* print only */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 6px 12px;
+  background: var(--phil-green, #0a6b3c);
+  color: #fff;
+  font-size: 10px;
+  font-family: system-ui, sans-serif;
+}
+
+/* Screen preview: visible page-break markers (print hides the label) */
+.print-page-break {
+  display: block;
+  margin: 24px 0;
+  border: none;
+  border-top: 2px dashed #999;
+  height: 0;
+  position: relative;
+}
+.print-page-break::after {
+  content: "page break";
+  position: absolute;
+  top: -0.7em;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--page, #fff);
+  color: #888;
+  font-size: 10px;
+  font-family: system-ui, sans-serif;
+  padding: 0 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 @media print {
   @page {
     size: A4 portrait;
-    margin: 14mm 12mm 18mm 12mm; /* top/bottom room for phil green bars */
+    margin: 16mm 12mm 20mm 12mm;
   }
 
   html,
   body {
     background: white !important;
     color: black !important;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
     height: auto !important;
+    min-height: 0 !important;
     overflow: visible !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
   }
 
-  /* Only app chrome — never the report cover <header> with the logo */
+  /* Hide app chrome only */
   .no-print,
   button,
-  [data-sonner-toaster] {
+  [data-sonner-toaster],
+  nav {
     display: none !important;
   }
 
-  main {
+  /*
+   * Flatten layout ancestors so page breaks are not trapped.
+   * min-h-screen / flex / overflow on parents suppress fragmentation.
+   */
+  body > *,
+  #root,
+  #app,
+  main,
+  main > div,
+  .min-h-screen {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+    transform: none !important;
     padding: 0 !important;
     margin: 0 !important;
     background: white !important;
+    box-shadow: none !important;
   }
 
   #report-preview-sheet {
-    position: static !important;
     display: block !important;
+    position: static !important;
     width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
@@ -260,9 +315,10 @@
     color: black !important;
     font-size: 9.5pt !important;
     line-height: 1.35 !important;
-    overflow: visible !important;
     height: auto !important;
-    /* CRITICAL: never flex/grid — page breaks are ignored inside them */
+    overflow: visible !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
   }
 
   #report-preview-sheet a {
@@ -270,160 +326,34 @@
     color: inherit !important;
   }
 
-  /*
-   * PAGE BREAKS — must be on top-level blocks (not nested children).
-   * Use both modern (break-*) and legacy (page-break-*) properties.
-   */
-  #report-cover {
-    display: block !important;
-    break-after: page !important;
-    page-break-after: always !important;
-  }
-
-  /* Stamp Duty – Phil: photo page is #report-cover; summary is next sibling */
-  .report-type-phil .phil-photo-page {
-    display: block !important;
-    break-after: page !important;
-    page-break-after: always !important;
-  }
-
-  .report-type-phil .phil-summary-page {
+  /* ---- Forced page breaks (explicit markers + cover/TOC) ---- */
+  .print-page-break {
     display: block !important;
     break-after: page !important;
     page-break-after: always !important;
     break-before: auto !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+  .print-page-break::after {
+    display: none !important;
+    content: none !important;
   }
 
-  /* Large front photo like samples */
-  .report-type-phil .phil-front-photo-img {
-    max-height: none !important;
-    height: auto !important;
-    width: 100% !important;
-    max-width: 420px !important;
-  }
-
-  .report-type-phil .phil-photo-page header img {
-    height: 56px !important;
-    max-height: 56px !important;
-  }
-
-  .report-type-phil .phil-gold-rule {
-    height: 2.5pt !important;
-    background: #d4a017 !important;
-    print-color-adjust: exact !important;
-    -webkit-print-color-adjust: exact !important;
-  }
-
-  .report-type-phil .report-section > .report-h2,
-  .report-type-phil .report-h1 {
-    color: #0a6b3c !important;
-    print-color-adjust: exact !important;
-    -webkit-print-color-adjust: exact !important;
-  }
-
-  /*
-   * Sample green header + footer bars on every printed page.
-   * position:fixed repeats on each page in Chromium print.
-   */
-  .report-type-phil .phil-running-header {
-    display: block !important;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 5pt;
-    background: #0a6b3c !important;
-    print-color-adjust: exact !important;
-    -webkit-print-color-adjust: exact !important;
-    z-index: 9999;
-  }
-
-  .report-type-phil .phil-running-footer {
-    display: flex !important;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 22pt;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8pt;
-    padding: 0 10mm;
-    background: #0a6b3c !important;
-    color: #ffffff !important;
-    font-size: 7.5pt;
-    font-family: system-ui, sans-serif;
-    print-color-adjust: exact !important;
-    -webkit-print-color-adjust: exact !important;
-    z-index: 9999;
-  }
-
-  .report-type-phil .phil-running-footer .phil-footer-left,
-  .report-type-phil .phil-running-footer .phil-footer-centre {
-    color: #ffffff !important;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* Room for fixed header/footer bars */
-  .report-type-phil {
-    padding-top: 0;
-  }
-
-
-  #report-cover header img {
-    height: 56px !important;
-    max-height: 56px !important;
-    width: auto !important;
-  }
-
-  #report-cover header .report-h1 {
-    margin-top: 8pt !important;
-    font-size: 14pt !important;
-  }
-
-  #report-cover .mt-8 { margin-top: 8pt !important; }
-  #report-cover .mt-6 { margin-top: 6pt !important; }
-  #report-cover .mt-5 { margin-top: 4pt !important; }
-  #report-cover .mt-10 { margin-top: 10pt !important; }
-  #report-cover .py-6 {
-    padding-top: 6pt !important;
-    padding-bottom: 6pt !important;
-  }
-  #report-cover .pt-6 { padding-top: 6pt !important; }
-  #report-cover table { font-size: 9pt !important; }
-  #report-cover th,
-  #report-cover td {
-    padding-top: 2pt !important;
-    padding-bottom: 2pt !important;
-  }
-
-  .report-signature {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-    margin-top: 10pt !important;
-  }
-
-  .report-signature .h-14 {
-    height: 28px !important;
-  }
-
-  /* TOC after cover; then body flows */
+  #report-cover,
+  .phil-photo-page,
+  .phil-summary-page,
   .report-toc {
     display: block !important;
     break-after: page !important;
     page-break-after: always !important;
-    break-before: auto !important;
   }
 
-  /*
-   * Sections: keep intact when they fit on the remainder of a page.
-   * If the section is taller than one page, the browser will split it
-   * (break-inside:avoid is soft when content overflows a page).
-   * No forced break-before — multiple short sections can share a page.
-   */
+  /* Sections: keep short ones intact; do not force every section to new page */
   .report-section {
+    display: block !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
     break-before: auto !important;
@@ -433,112 +363,124 @@
   #report-preview-sheet h1,
   #report-preview-sheet h2,
   #report-preview-sheet h3,
-  #report-preview-sheet .report-h1,
-  #report-preview-sheet .report-h2 {
+  #report-preview-sheet h4 {
     break-after: avoid !important;
     page-break-after: avoid !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
 
-  #report-preview-sheet table {
-    break-inside: auto !important;
-    page-break-inside: auto !important;
-    font-size: 9pt !important;
-  }
-
-  #report-preview-sheet tr {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  #report-preview-sheet th,
-  #report-preview-sheet td {
-    padding-top: 2pt !important;
-    padding-bottom: 2pt !important;
-  }
-
-  #report-preview-sheet p {
-    orphans: 3;
-    widows: 3;
-  }
-
-  #report-preview-sheet li {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  /* Photos start on a fresh page; each photo+caption stays whole */
-  .report-annexure {
+  /* Photo annexure starts a new page */
+  .report-annexure,
+  #report-annexure-photos {
     break-before: page !important;
     page-break-before: always !important;
   }
 
-  /* Drop CSS grid for print — grid + large images often split mid-photo */
-  .report-annexure .grid {
-    display: block !important;
-  }
-
-  .report-photo-figure {
+  .report-signature {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
-    display: inline-block !important;
-    vertical-align: top !important;
-    width: 47% !important;
-    margin: 0 1.5% 14pt 0 !important;
-    overflow: visible !important;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
+  }
+
+  /* ---- Stamp Duty – Phil colours (print) ---- */
+  .report-type-phil .report-h1,
+  .report-type-phil .report-h2,
+  .report-type-phil .report-section > .report-h2 {
+    color: #0a6b3c !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  .report-type-phil .phil-gold-rule {
+    height: 2.5pt !important;
+    background: #d4a017 !important;
+    border: none !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
   }
 
   /*
-   * Fixed image box for print. height:auto + object-fit:cover collapses to an
-   * empty frame for some images in Chromium print; a definite height does not.
+   * Green header/footer bars — fixed so they repeat each printed page.
+   * Background + border so colour still appears when "Background graphics"
+   * is off in some browsers (border colour is more reliable).
    */
-  .report-photo-figure img {
+  .report-type-phil .phil-running-header {
     display: block !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: 72mm !important;
-    max-height: 72mm !important;
-    aspect-ratio: auto !important;
-    object-fit: cover !important;
-    object-position: center !important;
-    border: 0.3pt solid #ccc !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 5pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #0a6b3c !important;
+    border-top: 5pt solid #0a6b3c !important;
+    color: #0a6b3c !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    z-index: 9999 !important;
   }
 
-  .report-photo-figure figcaption {
-    display: block !important;
-    margin-top: 3pt !important;
-    break-before: avoid !important;
-    page-break-before: avoid !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
+  .report-type-phil .phil-running-footer {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 20pt !important;
+    margin: 0 !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8pt !important;
+    padding: 0 10mm !important;
+    background: #0a6b3c !important;
+    border-bottom: 20pt solid #0a6b3c !important;
+    color: #ffffff !important;
+    font-size: 7.5pt !important;
+    font-family: system-ui, sans-serif !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    z-index: 9999 !important;
   }
 
-  /* Logo only — do NOT shrink the front elevation photo */
-  #report-cover > header img,
-  .phil-photo-page > header img {
-    height: auto !important;
-    max-height: 56px !important;
+  .report-type-phil .phil-running-footer span {
+    color: #ffffff !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
   }
 
+  /* Front photo — large; logo only stays small */
   .report-type-phil .phil-front-photo-img {
     max-height: none !important;
     height: auto !important;
     width: 100% !important;
     max-width: 420px !important;
   }
+  .phil-photo-page > header img,
+  #report-cover > header img {
+    max-height: 56px !important;
+    height: auto !important;
+  }
+
+  /* Photo annexure grid */
+  .report-photo-figure {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  .report-photo-figure img {
+    display: block !important;
+    width: 100% !important;
+    height: 72mm !important;
+    max-height: 72mm !important;
+    object-fit: cover !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
 
   #report-preview-sheet img {
     max-width: 100% !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
   }
 }
+
