@@ -202,28 +202,27 @@
   width: 100%;
 }
 
-.report-type-phil .phil-photo-page {
-  /* forces photo+title onto its own printed page (sample page 1) */
-}
-
-.report-type-phil .report-h2 {
+.report-type-phil .report-h2,
+.report-type-phil .report-h1 {
   color: var(--phil-green);
 }
 
-/* Sample-style green header bar on body pages (screen) */
 .report-type-phil .report-section > .report-h2 {
   border-bottom-color: var(--phil-green);
 }
 
-/* Sample footer bar (screen preview) */
-.report-type-phil::after {
-  content: none;
+/* Screen preview: show sample bars */
+.report-type-phil .phil-running-header {
+  display: none; /* print only */
+}
+.report-type-phil .phil-running-footer {
+  display: none; /* print only */
 }
 
 @media print {
   @page {
     size: A4 portrait;
-    margin: 12mm 12mm 14mm 12mm;
+    margin: 14mm 12mm 18mm 12mm; /* top/bottom room for phil green bars */
   }
 
   html,
@@ -274,13 +273,13 @@
     page-break-after: always !important;
   }
 
-  /* Stamp Duty – Phil: photo page then summary page (matches samples) */
+  /* ---- Stamp Duty – Phil: page breaks (match samples) ---- */
   .report-type-phil .phil-photo-page {
     break-after: page !important;
     page-break-after: always !important;
   }
 
-  /* Large front photo like samples — do not shrink */
+  /* Large front photo like samples */
   .report-type-phil .phil-front-photo-img {
     max-height: none !important;
     height: auto !important;
@@ -296,28 +295,66 @@
   .report-type-phil .phil-gold-rule {
     height: 2.5pt !important;
     background: #d4a017 !important;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
-
-  /* Green top bar on each printed page for phil reports */
-  .report-type-phil {
-    /* running header simulation via border on sections is limited in pure CSS print;
-       use a fixed top rule on the sheet */
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
   }
 
   .report-type-phil .report-section > .report-h2,
   .report-type-phil .report-h1 {
     color: #0a6b3c !important;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
   }
 
-  /* Green footer bar approximation for phil */
-  .report-type-phil .report-section {
-    border-bottom: none;
+  /*
+   * Sample green header + footer bars on every printed page.
+   * position:fixed repeats on each page in Chromium print.
+   */
+  .report-type-phil .phil-running-header {
+    display: block !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5pt;
+    background: #0a6b3c !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    z-index: 9999;
   }
 
+  .report-type-phil .phil-running-footer {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 22pt;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8pt;
+    padding: 0 10mm;
+    background: #0a6b3c !important;
+    color: #ffffff !important;
+    font-size: 7.5pt;
+    font-family: system-ui, sans-serif;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    z-index: 9999;
+  }
+
+  .report-type-phil .phil-running-footer .phil-footer-left,
+  .report-type-phil .phil-running-footer .phil-footer-centre {
+    color: #ffffff !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Room for fixed header/footer bars */
+  .report-type-phil {
+    padding-top: 0;
+  }
 
 
   #report-cover header img {
