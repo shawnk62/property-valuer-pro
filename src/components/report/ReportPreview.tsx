@@ -343,6 +343,21 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         (reportType.id === "stamp-duty-phil" ? " report-type-phil" : "")
       }
     >
+      {reportType.id === "stamp-duty-phil" ? (
+        <>
+          {/* Sample green header bar — fixed so it repeats on every printed page */}
+          <div className="phil-running-header no-print-screen" aria-hidden />
+          {/* Sample green footer bar */}
+          <div className="phil-running-footer no-print-screen" aria-hidden>
+            <span className="phil-footer-left">
+              PROPERTY ADDRESS: {addressLine || "—"}
+            </span>
+            <span className="phil-footer-centre">
+              Peterson Property Valuations Pty Ltd &nbsp; Real Estate Valuers
+            </span>
+          </div>
+        </>
+      ) : null}
       {/* ---- Cover / valuation summary (kept on first printed page) ---- */}
       <div id="report-cover" className="report-cover">
       {reportType.id === "stamp-duty-phil" ? (
