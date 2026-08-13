@@ -333,9 +333,16 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
   });
   const extraPhotos = draft.photos.filter((p) => p.slot === null);
   const annexurePhotos = [...slotPhotos, ...extraPhotos].filter((p) => p.url);
+  const frontPhoto = draft.photos.find((p) => p.slot === "front" && p.url);
 
   return (
-    <article id="report-preview-sheet" className="report-sheet mx-auto max-w-[52rem] px-8 py-10 shadow-sm sm:px-12 sm:py-14">
+    <article
+      id="report-preview-sheet"
+      className={
+        "report-sheet mx-auto max-w-[52rem] px-8 py-10 shadow-sm sm:px-12 sm:py-14" +
+        (reportType.id === "stamp-duty-phil" ? " report-type-phil" : "")
+      }
+    >
       {/* ---- Cover / valuation summary (kept on first printed page) ---- */}
       <div id="report-cover" className="report-cover">
       <header className="text-center">
@@ -351,51 +358,132 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </header>
 
       {reportType.id === "stamp-duty-phil" ? (
-        /* Exact sample Valuation Summary labels */
+        /* Sample page 1 (photo + title) then page 2 (valuation summary) */
         <>
-          <div className="mt-8">
-            <Facts
-              values={v}
-              fields={[]}
-              extra={[
-                { label: "PROPERTY ADDRESS", value: addressLine },
-                {
-                  label: "BRIEF DESCRIPTION",
-                  value:
-                    (draft.narrative.brief || "").trim() ||
-                    [get(v, "imp_design") || "Dwelling", siteArea ? `on a ${siteArea} lot` : ""]
-                      .filter(Boolean)
-                      .join(" "),
-                },
-                { label: "REGISTERED OWNER", value: get(v, "prop_owner") },
-                { label: "REAL PROPERTY DESCRIPTION", value: get(v, "prop_lotplan") },
-                { label: "LAND AREA", value: siteArea },
-                { label: "ZONING", value: get(v, "prop_zoning") },
-                { label: "INSTRUCTIONS", value: get(v, "prop_owner") },
-                { label: "PURPOSE OF VALUATION", value: reportType.defaultPurpose },
-              ].filter((r) => r.value && String(r.value).trim())}
-            />
+          {/* ---- Sample-style photo cover page ---- */}
+          <div className="phil-photo-page">
+            <header className="flex items-start justify-between gap-4 text-left">
+              <img
+                src="/ppv-logo.jpeg"
+                alt="Peterson Property Valuations"
+                className="h-16 w-auto object-contain"
+              />
+              <div className="text-right text-[10px] leading-snug text-[var(--phil-green)]">
+                <p className="font-semibold">Real Estate Valuers</p>
+                <p>Phillip R Peterson, AVI, Certified Practicing Valuer</p>
+                <p>Registered Valuer No. 1083</p>
+              </div>
+            </header>
+
+            {frontPhoto ? (
+              <div className="mt-6 flex justify-center">
+                <img
+                  src={frontPhoto.url}
+                  alt="Subject property"
+                  className="max-h-[320px] w-auto max-w-full rounded-sm object-contain shadow-sm"
+                />
+              </div>
+            ) : null}
+
+            <div className="mt-8 text-center">
+              <p className="font-serif text-xl font-bold uppercase leading-tight tracking-wide">
+                Report and Valuation
+              </p>
+              {m.valueDate ? (
+                <p className="mt-1 font-serif text-lg font-bold uppercase">
+                  Dated {m.valueDate}
+                </p>
+              ) : null}
+              <p className="mt-2 font-serif text-base font-bold uppercase">
+                Residential Dwelling
+              </p>
+              <p className="mt-1 font-serif text-base font-bold uppercase">
+                Situated at
+              </p>
+              {addressLine ? (
+                <p className="mt-1 font-serif text-lg font-bold uppercase">
+                  {addressLine}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="phil-gold-rule mt-10" />
           </div>
-          <div className="mt-8 border-y-2 border-[var(--page-foreground)]/80 py-6 text-center">
-            <p className="text-sm uppercase tracking-wide text-[var(--page-foreground)]/70">
-              VALUATION STATEMENT
-            </p>
-            <p className="mt-3 font-serif text-2xl font-bold">
-              {m.valueAmount ? `$${m.valueAmount}` : "—"}
-            </p>
-            {m.valueDate ? <p className="mt-1 text-sm">as at {m.valueDate}</p> : null}
-          </div>
-          <div className="mt-8 border-t border-[var(--rule)] pt-6">
-            <p className="text-sm italic text-[var(--page-foreground)]/75">
-              {BOILERPLATE.summaryDisclaimer}
-            </p>
-          </div>
-          <div className="report-signature mt-10">
-            <div className="h-14 w-56 border-b border-[var(--page-foreground)]/70" />
-            <p className="mt-2 font-semibold">{m.valuerName || get(v, "insp_valuer")}</p>
-            {get(v, "sign_member") ? <p className="text-sm">{get(v, "sign_member")}</p> : null}
-            <p className="text-sm">{m.firmName || get(v, "insp_firm")}</p>
-            {m.valueDate ? <p className="mt-1 text-sm">{m.valueDate}</p> : null}
+
+          {/* ---- Sample-style Valuation Summary page ---- */}
+          <div className="phil-summary-page mt-2">
+            <h1 className="report-h1 text-center text-xl text-[var(--phil-green)]">
+              Valuation Summary
+            </h1>
+
+            <div className="mt-6">
+              <Facts
+                values={v}
+                fields={[]}
+                extra={[
+                  { label: "PROPERTY ADDRESS", value: addressLine },
+                  {
+                    label: "BRIEF DESCRIPTION",
+                    value:
+                      (draft.narrative.brief || "").trim() ||
+                      [
+                        get(v, "imp_design") || "Dwelling",
+                        siteArea ? `on a ${siteArea} lot` : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" "),
+                  },
+                  { label: "REGISTERED OWNER", value: get(v, "prop_owner") },
+                  {
+                    label: "REAL PROPERTY DESCRIPTION",
+                    value: get(v, "prop_lotplan"),
+                  },
+                  { label: "LAND AREA", value: siteArea },
+                  { label: "ZONING", value: get(v, "prop_zoning") },
+                  { label: "INSTRUCTIONS", value: get(v, "prop_owner") },
+                  {
+                    label: "PURPOSE OF VALUATION",
+                    value: reportType.defaultPurpose,
+                  },
+                ].filter((r) => r.value && String(r.value).trim())}
+              />
+            </div>
+
+            <div className="mt-8 border-y-2 border-[var(--page-foreground)]/80 py-6 text-center">
+              <p className="text-sm uppercase tracking-wide text-[var(--page-foreground)]/70">
+                VALUATION STATEMENT
+              </p>
+              <p className="mt-3 font-serif text-2xl font-bold">
+                {m.valueAmount ? `$${m.valueAmount}` : "—"}
+              </p>
+              {m.valueDate ? (
+                <p className="mt-1 text-sm">as at {m.valueDate}</p>
+              ) : null}
+            </div>
+
+            <div className="mt-6 text-center">
+              <p className="font-semibold text-[var(--phil-green)]">
+                {m.firmName || get(v, "insp_firm") || "Peterson Property Valuations Pty Ltd"}
+              </p>
+              <p className="text-sm text-[var(--phil-green)]">Real Estate Valuers</p>
+            </div>
+
+            <div className="report-signature mt-8">
+              <div className="h-14 w-56 border-b border-[var(--page-foreground)]/70" />
+              <p className="mt-2 font-semibold">
+                {m.valuerName || get(v, "insp_valuer")}
+              </p>
+              {get(v, "sign_member") ? (
+                <p className="text-sm">{get(v, "sign_member")}</p>
+              ) : null}
+              {m.valueDate ? <p className="mt-1 text-sm">{m.valueDate}</p> : null}
+            </div>
+
+            <div className="mt-8 border-t border-[var(--rule)] pt-4">
+              <p className="text-sm italic text-[var(--page-foreground)]/75">
+                {BOILERPLATE.summaryDisclaimer}
+              </p>
+            </div>
           </div>
         </>
       ) : (
@@ -489,39 +577,68 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
       {/* ---- 2. Property details ---- */}
       <Section id="sec-property" number="2." title="Property Details">
-        <Facts
-          values={v}
-          fields={[
-            "prop_address",
-            "prop_suburb",
-            "prop_state",
-            "prop_postcode",
-            "prop_lotplan",
-            "prop_legal",
-            "prop_title",
-            "prop_parish",
-            "prop_lga",
-            "prop_owner",
-            "prop_occupant",
-          ]}
-        />
+        {reportType.id === "stamp-duty-phil" ? (
+          <>
+            <Sub title="2.1  Real Property Description">
+              <Para>{[get(v, "prop_lotplan"), get(v, "prop_lga")].filter(Boolean).join("  ") || "—"}</Para>
+            </Sub>
+            <Sub title="2.2  Land Area">
+              <Para>{siteArea || "—"}</Para>
+            </Sub>
+            <Sub title="2.3  Registered Owner">
+              <Para>{get(v, "prop_owner") || "—"}</Para>
+            </Sub>
+          </>
+        ) : (
+          <Facts
+            values={v}
+            fields={[
+              "prop_address",
+              "prop_suburb",
+              "prop_state",
+              "prop_postcode",
+              "prop_lotplan",
+              "prop_legal",
+              "prop_title",
+              "prop_parish",
+              "prop_lga",
+              "prop_owner",
+              "prop_occupant",
+            ]}
+          />
+        )}
       </Section>
 
       {/* ---- 3. Statutory ---- */}
       <Section id="sec-statutory" number="3." title="Statutory Information">
-        <Facts
-          values={v}
-          fields={[
-            "prop_lga",
-            "prop_offered",
-            "prop_offer_details",
-            "prop_contract_price",
-            "prop_contract_date",
-            "prop_seller_owner",
-            "prop_assistance",
-            "prop_assistance_details",
-          ]}
-        />
+        {reportType.id === "stamp-duty-phil" ? (
+          <>
+            <Sub title="3.1  Local Authority">
+              <Para>{get(v, "prop_lga") || "Sunshine Coast Council"}</Para>
+            </Sub>
+            <Sub title="3.2  Statutory Valuation">
+              <Para>
+                {[get(v, "prop_site_value"), get(v, "prop_sv_date")]
+                  .filter(Boolean)
+                  .join(" — ") || "Site value as assessed by the local authority."}
+              </Para>
+            </Sub>
+          </>
+        ) : (
+          <Facts
+            values={v}
+            fields={[
+              "prop_lga",
+              "prop_offered",
+              "prop_offer_details",
+              "prop_contract_price",
+              "prop_contract_date",
+              "prop_seller_owner",
+              "prop_assistance",
+              "prop_assistance_details",
+            ]}
+          />
+        )}
       </Section>
 
       {/* ---- 4. Town planning ---- */}
@@ -623,6 +740,28 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
       {/* ---- 7. Improvements ---- */}
       <Section id="sec-improvements" number="7." title="Improvements">
+        {reportType.id === "stamp-duty-phil" ? (
+          <>
+            <Sub title="7.1  General Description">
+              <Para>
+                {(draft.narrative.improvements || "").trim().split("\n")[0] ||
+                  get(v, "imp_design") ||
+                  "A residential dwelling."}
+              </Para>
+            </Sub>
+            <Sub title="7.2  Floor Areas (approx)">
+              <Facts values={v} fields={["imp_gla"]} />
+            </Sub>
+            <Sub title="7.3  General Construction">
+              <Facts
+                values={v}
+                fields={["foundations", "floor_structure", "ext", "il", "ceil", "rc"]}
+              />
+            </Sub>
+          </>
+        ) : (
+          <>
+
         <Sub title="7.1  General description">
           <Prose text={draft.narrative.improvements} />
         </Sub>
@@ -666,6 +805,8 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           <Facts values={v} fields={["overall_cond", "overall_site_cond"]} />
           <Para>{BOILERPLATE.conditionOfImprovements}</Para>
         </Sub>
+          </>
+        )}
       </Section>
 
       {/* ---- 8. Accommodation ---- */}
