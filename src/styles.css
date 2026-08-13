@@ -280,8 +280,17 @@
     page-break-after: always !important;
   }
 
-  .report-type-phil .phil-photo-page img {
-    max-height: 280px !important;
+  /* Large front photo like samples — do not shrink */
+  .report-type-phil .phil-front-photo-img {
+    max-height: none !important;
+    height: auto !important;
+    width: 100% !important;
+    max-width: 420px !important;
+  }
+
+  .report-type-phil .phil-photo-page header img {
+    height: 56px !important;
+    max-height: 56px !important;
   }
 
   .report-type-phil .phil-gold-rule {
