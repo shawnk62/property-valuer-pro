@@ -399,6 +399,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
             <div className="phil-gold-rule mt-12" />
           </div>
+          <div className="print-page-break" aria-hidden />
 
           <div className="phil-summary-page report-cover">
             <h1 className="report-h1 text-center text-xl text-[var(--phil-green)]">
@@ -541,6 +542,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         </div>
       )}
 
+      <div className="print-page-break" aria-hidden />
       <TableOfContents draft={draft} />
 
       {/* ---- 1. Instructions & purpose ---- */}
@@ -1051,6 +1053,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </Section>
 
       {/* ---- Photo annexure ---- */}
+      <div className="print-page-break" aria-hidden />
       <section id="report-annexure-photos" className="report-annexure mt-12">
         <h2 className="report-h1 text-center">Annexure 2 — Photographs</h2>
         {annexurePhotos.length === 0 ? (
