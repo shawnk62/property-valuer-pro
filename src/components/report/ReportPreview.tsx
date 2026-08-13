@@ -343,6 +343,16 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         (reportType.id === "stamp-duty-phil" ? " report-type-phil" : "")
       }
     >
+      {reportType.id === "stamp-duty-phil" ? (
+        <>
+          {/* Sample green bars — fixed in print so they appear on every page */}
+          <div className="phil-running-header" aria-hidden />
+          <div className="phil-running-footer" aria-hidden>
+            <span>PROPERTY ADDRESS: {addressLine || "—"}</span>
+            <span>Peterson Property Valuations Pty Ltd · Real Estate Valuers</span>
+          </div>
+        </>
+      ) : null}
       {/* ---- Cover ---- */}
       {reportType.id === "stamp-duty-phil" ? (
         /* Sample: page 1 photo, page 2 summary — separate top-level blocks so print breaks work */
@@ -362,42 +372,42 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             </header>
 
             {frontPhoto ? (
-              <div className="phil-front-photo mt-8 flex justify-center">
+              <div className="phil-front-photo mt-4 flex justify-center">
                 <img
                   src={frontPhoto.url}
                   alt="Subject property"
-                  className="phil-front-photo-img w-full max-w-[28rem] object-contain"
+                  className="phil-front-photo-img w-full max-w-[26rem] object-contain"
                 />
               </div>
             ) : (
-              <div className="phil-front-photo mt-8 flex h-48 items-center justify-center border border-dashed border-[var(--rule)] text-sm text-[var(--page-foreground)]/50">
+              <div className="phil-front-photo mt-4 flex h-40 items-center justify-center border border-dashed border-[var(--rule)] text-sm text-[var(--page-foreground)]/50">
                 Front photo not set
               </div>
             )}
 
-            <div className="mt-10 text-center">
+            <div className="mt-6 text-center">
               <p className="font-serif text-xl font-bold uppercase leading-tight tracking-wide">
                 Report and Valuation
               </p>
               {m.valueDate ? (
-                <p className="mt-2 font-serif text-lg font-bold uppercase">
+                <p className="mt-1 font-serif text-lg font-bold uppercase">
                   Dated {m.valueDate}
                 </p>
               ) : null}
-              <p className="mt-3 font-serif text-base font-bold uppercase">
+              <p className="mt-2 font-serif text-base font-bold uppercase">
                 Residential Dwelling
               </p>
               <p className="mt-1 font-serif text-base font-bold uppercase">
                 Situated at
               </p>
               {addressLine ? (
-                <p className="mt-2 font-serif text-lg font-bold uppercase">
+                <p className="mt-1 font-serif text-lg font-bold uppercase">
                   {addressLine}
                 </p>
               ) : null}
             </div>
 
-            <div className="phil-gold-rule mt-12" />
+            <div className="phil-gold-rule mt-6" />
           </div>
 
           <div className="phil-summary-page report-cover">
