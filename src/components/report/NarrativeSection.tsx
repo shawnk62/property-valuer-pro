@@ -26,18 +26,41 @@ const BLOCKS: { key: keyof ReportNarrative; label: string; hint: string }[] = [
   { key: "remarks", label: "Remarks", hint: "Section 13." },
 ];
 
+/** Make inspection values safe for the server function (JSON-serializable, no proxies). */
+function serializableValues(
+  values: ReportDraftController["draft"]["values"],
+): Record<string, string | boolean | string[] | number | null | undefined> {
+  const raw = JSON.parse(JSON.stringify(values ?? {})) as Record<string, unknown>;
+  const out: Record<string, string | boolean | string[] | number | null | undefined> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (v === null || v === undefined) {
+      out[k] = v as null | undefined;
+    } else if (typeof v === "string" || typeof v === "boolean" || typeof v === "number") {
+      out[k] = v;
+    } else if (Array.isArray(v)) {
+      out[k] = v.map((x) => String(x));
+    } else {
+      out[k] = String(v);
+    }
+  }
+  return out;
+}
+
 export function NarrativeSection({ controller }: { controller: ReportDraftController }) {
   const { draft, setNarrative } = controller;
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [source, setSource] = useState<"template" | "ai" | null>(null);
   const [busy, setBusy] = useState<"template" | "ai" | keyof ReportNarrative | null>(null);
+  const [lastStatus, setLastStatus] = useState<string | null>(null);
 
   function generateFromTemplate() {
     setBusy("template");
+    setLastStatus(null);
     try {
       setNarrative(generateNarrative(draft.values));
       setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
       setSource("template");
+      setLastStatus("Template applied.");
       toast.success("Narrative filled from inspection data");
     } finally {
       setBusy(null);
@@ -47,44 +70,71 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   async function generateWithAi(keys: (keyof ReportNarrative)[] = BLOCKS.map((b) => b.key)) {
     const settings = loadAiSettings();
     if (!isAiConfigured(settings)) {
-      toast.error("AI is not configured", {
-        description: "Open Settings, choose xAI (Grok), add your API key, Save, then Test connection.",
-      });
+      const msg =
+        "AI is not configured. Open Settings, choose xAI (Grok), add your API key, Save, then Test connection.";
+      setLastStatus(msg);
+      toast.error("AI is not configured", { description: msg });
       return;
     }
 
     setBusy(keys.length === 1 ? keys[0]! : "ai");
+    setLastStatus(`Calling ${settings.provider} / ${settings.model}…`);
     const next: Partial<ReportNarrative> = {};
     const errors: string[] = [];
+    const values = serializableValues(draft.values);
 
     try {
-      await Promise.all(
-        keys.map(async (key) => {
-          try {
-            const { text } = await generateNarrativeBlock({
-              data: {
-                settings: {
-                  provider: settings.provider,
-                  model: settings.model,
-                  apiKey: settings.apiKey,
-                  ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
-                },
-                blockKey: key,
-                values: draft.values,
+      for (const key of keys) {
+        try {
+          setLastStatus(`Generating “${key}”…`);
+          const result = await generateNarrativeBlock({
+            data: {
+              settings: {
+                provider: settings.provider,
+                model: settings.model,
+                apiKey: settings.apiKey,
+                ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
               },
-            });
-            if (text?.trim()) next[key] = text.trim();
-          } catch (err) {
-            const message = err instanceof Error ? err.message : "Generation failed";
-            errors.push(`${key}: ${message}`);
+              blockKey: key,
+              values,
+            },
+          });
+
+          // Support both { text } and unexpected shapes from the RPC layer
+          const text =
+            typeof result === "string"
+              ? result
+              : result && typeof result === "object" && "text" in result
+                ? String((result as { text: unknown }).text ?? "")
+                : "";
+
+          if (text.trim()) {
+            next[key] = text.trim();
+          } else {
+            errors.push(`${key}: empty response`);
           }
-        }),
-      );
+        } catch (err) {
+          console.error("[narrative AI]", key, err);
+          const message =
+            err instanceof Error
+              ? err.message
+              : typeof err === "string"
+                ? err
+                : JSON.stringify(err);
+          errors.push(`${key}: ${message}`);
+        }
+      }
 
       if (Object.keys(next).length > 0) {
         setNarrative(next);
         setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
         setSource("ai");
+        const preview = Object.entries(next)
+          .map(([k, v]) => `${k}: ${v.slice(0, 60)}…`)
+          .join(" | ");
+        setLastStatus(`AI updated: ${Object.keys(next).join(", ")}. ${preview}`);
+      } else {
+        setLastStatus(`No text returned. ${errors.join(" · ")}`);
       }
 
       if (errors.length && Object.keys(next).length) {
@@ -96,12 +146,17 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
           keys.length === 1 ? `Generated “${keys[0]}” with AI` : "Narrative generated with AI",
         );
       }
+    } catch (err) {
+      console.error("[narrative AI]", err);
+      const message = err instanceof Error ? err.message : String(err);
+      setLastStatus(`Failed: ${message}`);
+      toast.error("AI generation failed", { description: message });
     } finally {
       setBusy(null);
     }
   }
 
-  const aiBusy = busy === "ai";
+  const aiBusy = busy === "ai" || (busy !== null && busy !== "template");
   const templateBusy = busy === "template";
 
   return (
@@ -127,6 +182,11 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             </Link>
             . Template does not need an API key.
           </p>
+          {lastStatus ? (
+            <p className="mt-2 rounded-md bg-muted px-2 py-1.5 text-xs text-foreground whitespace-pre-wrap break-words">
+              {lastStatus}
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -143,7 +203,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             onClick={() => void generateWithAi()}
             className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
           >
-            {aiBusy ? "Generating with AI…" : "Generate with AI"}
+            {busy === "ai" ? "Generating with AI…" : "Generate with AI"}
           </button>
         </div>
       </div>
