@@ -36,7 +36,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         <div>
           <h3 className="text-sm font-semibold text-foreground">Sales evidence</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Connect Cotality later — the import button below loads sample SE QLD sales.
+            Enter sale prices and the valuation amount (Subject / meta). Comments auto-add
+            “Overall inferior/superior to the subject” from price vs valuation. Cotality import later —
+            sample SE QLD sales button below is for testing only.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
