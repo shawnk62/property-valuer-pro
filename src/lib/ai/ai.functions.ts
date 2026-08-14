@@ -116,23 +116,38 @@ export const extractPropertyData = createServerFn({ method: "POST" })
 Return a JSON object with a single key "candidates" whose value is an object mapping field names to extracted string values.
 Use null when a field is not present. Do not guess — only extract what is explicitly stated.`;
 
+    // Must match inspection-schema.json field names exactly
     const fieldList = [
       "prop_address",
       "prop_suburb",
       "prop_state",
       "prop_postcode",
-      "prop_lot_plan",
-      "prop_title_ref",
-      "prop_legal_desc",
+      "prop_lotplan",
+      "prop_title",
+      "prop_legal",
       "prop_lga",
-      "prop_land_area",
+      "prop_sitearea",
+      "prop_areaunit",
+      "prop_dimensions",
       "prop_zoning",
-      "prop_use",
-      "prop_town_planning",
+      "prop_zoning_desc",
+      "prop_adverse_site",
     ];
 
-    const extractionPrompt = `Extract the following fields from the property summary below and return them as JSON:
+    const extractionPrompt = `Extract the following fields from the property summary below.
+Return ONLY valid JSON of the form {"candidates": { "<field>": "<value or null>", ... }}.
+Use these exact field names (do not invent alternatives):
 ${fieldList.join(", ")}
+
+Mapping hints:
+- prop_lotplan = lot and plan (e.g. Lot 44 RP884458)
+- prop_lga = council / local government
+- prop_zoning = zone code and short name (e.g. LDR - Low Density Residential)
+- prop_zoning_desc = longer zoning purpose text if present
+- prop_adverse_site = overlays, flood, noise, airport surfaces, or other constraints listed
+- prop_sitearea = land size only if an actual figure is stated (not "Premium report only")
+- prop_state = QLD / NSW etc.
+Do not guess. Use null when not explicitly stated.
 
 Property summary:
 ${data.source === "text" ? (data.text ?? "") : "[file attached]"}`;
@@ -164,12 +179,7 @@ ${data.source === "text" ? (data.text ?? "") : "[file attached]"}`;
           system,
           prompt: extractionPrompt,
         });
-        try {
-          const parsed = JSON.parse(text);
-          return ExtractionSchema.parse(parsed);
-        } catch {
-          return { candidates: {} };
-        }
+        return parseExtractionResponse(text);
       }
     }
 
@@ -179,10 +189,38 @@ ${data.source === "text" ? (data.text ?? "") : "[file attached]"}`;
       prompt: extractionPrompt,
     });
 
-    try {
-      const parsed = JSON.parse(text);
-      return ExtractionSchema.parse(parsed);
-    } catch {
-      return { candidates: {} };
-    }
+    return parseExtractionResponse(text);
   });
+
+function parseExtractionResponse(text: string): { candidates: Record<string, string | null> } {
+  const cleaned = text
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```\s*$/i, "")
+    .trim();
+  try {
+    const parsed = JSON.parse(cleaned);
+    if (parsed && typeof parsed === "object" && parsed.candidates) {
+      return ExtractionSchema.parse(parsed);
+    }
+    // Model sometimes returns flat field map
+    if (parsed && typeof parsed === "object") {
+      return ExtractionSchema.parse({ candidates: parsed });
+    }
+  } catch {
+    // try to find first {...} block
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      try {
+        const parsed = JSON.parse(cleaned.slice(start, end + 1));
+        if (parsed?.candidates) return ExtractionSchema.parse(parsed);
+        if (parsed && typeof parsed === "object") {
+          return ExtractionSchema.parse({ candidates: parsed });
+        }
+      } catch {
+        /* fall through */
+      }
+    }
+  }
+  return { candidates: {} };
+}
