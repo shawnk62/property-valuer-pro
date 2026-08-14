@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { inspectionStore, type ReportExtras } from "@/lib/inspection/storage";
 import { generateNarrative } from "@/lib/report/narrative";
+import { applyRelativityToSales } from "@/lib/report/salesRelativity";
 import type {
   ComparableSale,
   FieldValue,
@@ -282,7 +283,13 @@ export function useReportDraft(inspectionId: string) {
   const setMeta = useCallback(
     (patch: Partial<ReportMeta>) => {
       setDraft((prev) => {
-        const next = { ...prev, reportMeta: { ...prev.reportMeta, ...patch } };
+        const reportMeta = { ...prev.reportMeta, ...patch };
+        // When valuation amount changes, refresh inferior/superior on all comps
+        const sales =
+          patch.valueAmount !== undefined
+            ? applyRelativityToSales(prev.sales, reportMeta.valueAmount)
+            : prev.sales;
+        const next = { ...prev, reportMeta, sales };
         scheduleCloudSave(next);
         return next;
       });
@@ -319,7 +326,8 @@ export function useReportDraft(inspectionId: string) {
   const setSales = useCallback(
     (next: ComparableSale[]) => {
       setDraft((prev) => {
-        const updated = { ...prev, sales: next };
+        const sales = applyRelativityToSales(next, prev.reportMeta.valueAmount);
+        const updated = { ...prev, sales };
         scheduleCloudSave(updated);
         return updated;
       });
