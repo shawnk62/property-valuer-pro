@@ -55,6 +55,14 @@ const FIELD_ALIASES: Record<string, (typeof TARGET_FIELDS)[number]> = {
   prop_use: "prop_zoning_desc",
   prop_town_planning: "prop_zoning_desc",
   zoning: "prop_zoning",
+  zones: "prop_zoning",
+  zone: "prop_zoning",
+  zone_code: "prop_zoning",
+  prop_zones: "prop_zoning",
+  zoning_classification: "prop_zoning",
+  zoning_description: "prop_zoning_desc",
+  zone_description: "prop_zoning_desc",
+  zone_name: "prop_zoning_desc",
   lga: "prop_lga",
   council: "prop_lga",
   overlays: "prop_adverse_site",
@@ -92,7 +100,65 @@ function normalizeCandidates(
     out.prop_areaunit = "m2";
   }
 
+  // Split Landchecker-style "LDR - Low Density Residential" into classification + description
+  splitZoningFields(out);
+
   return out;
+}
+
+/**
+ * Landchecker often prints ZONES as "LDR - Low Density Residential".
+ * Classification ← code (LDR); Description ← name (Low Density Residential).
+ * If only a long purpose paragraph is present, keep it on prop_zoning_desc.
+ */
+function splitZoningFields(out: Record<string, string>) {
+  const rawZoning = out.prop_zoning?.trim();
+  const rawDesc = out.prop_zoning_desc?.trim();
+
+  const trySplit = (text: string): { code: string; name: string } | null => {
+    // "LDR - Low Density Residential" or "LDR – Low Density Residential"
+    const m = text.match(
+      /^([A-Z]{1,6}(?:\s*\/[A-Z]{1,6})?)\s*[-–—:]\s+(.+)$/i,
+    );
+    if (m) {
+      return { code: m[1]!.trim().toUpperCase(), name: m[2]!.trim() };
+    }
+    // Code only
+    if (/^[A-Z]{1,6}$/i.test(text)) {
+      return { code: text.toUpperCase(), name: "" };
+    }
+    return null;
+  };
+
+  if (rawZoning) {
+    const split = trySplit(rawZoning);
+    if (split) {
+      out.prop_zoning = split.code;
+      if (split.name && !rawDesc) {
+        out.prop_zoning_desc = split.name;
+      } else if (split.name && rawDesc && rawDesc === rawZoning) {
+        out.prop_zoning_desc = split.name;
+      }
+    }
+  }
+
+  // Description accidentally holds the combined "LDR - …" string
+  if (rawDesc && !out.prop_zoning) {
+    const split = trySplit(rawDesc);
+    if (split?.code) {
+      out.prop_zoning = split.code;
+      if (split.name) out.prop_zoning_desc = split.name;
+    }
+  }
+
+  // If zoning still empty but description starts with a code
+  if (!out.prop_zoning && out.prop_zoning_desc) {
+    const split = trySplit(out.prop_zoning_desc);
+    if (split?.code) {
+      out.prop_zoning = split.code;
+      if (split.name) out.prop_zoning_desc = split.name;
+    }
+  }
 }
 
 function fileToBase64(file: File): Promise<string> {
