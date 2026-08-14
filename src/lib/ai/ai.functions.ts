@@ -142,8 +142,8 @@ ${fieldList.join(", ")}
 Mapping hints:
 - prop_lotplan = lot and plan (e.g. Lot 44 RP884458)
 - prop_lga = council / local government
-- prop_zoning = zone code and short name (e.g. LDR - Low Density Residential)
-- prop_zoning_desc = longer zoning purpose text if present
+- prop_zoning = zone CODE only from the ZONES field (e.g. LDR, CR, MDR). Do not put the full name here.
+- prop_zoning_desc = zone NAME / description (e.g. Low Density Residential). If the source says "LDR - Low Density Residential", put "LDR" in prop_zoning and "Low Density Residential" in prop_zoning_desc. If a longer purpose paragraph exists (e.g. "The purpose of the low density residential zone…"), put that full paragraph in prop_zoning_desc instead of or after the short name.
 - prop_adverse_site = overlays, flood, noise, airport surfaces, or other constraints listed
 - prop_sitearea = land size only if an actual figure is stated (not "Premium report only")
 - prop_state = QLD / NSW etc.
