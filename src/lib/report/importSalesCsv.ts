@@ -3,6 +3,7 @@
  * Shared across all report types — the sales list/grid is report-type agnostic;
  * only report output formatting differs by type.
  */
+import { defaultAdjustments } from "./adjustmentGrid";
 import type { ComparableSale } from "./types";
 
 export type SalesCsvField = keyof Omit<ComparableSale, "id">;
@@ -220,6 +221,7 @@ export function importSalesFromCsv(text: string): SalesCsvImportResult {
       salePrice,
       landArea,
       comments,
+      adjustments: defaultAdjustments(),
     });
   }
 
