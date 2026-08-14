@@ -199,7 +199,8 @@ function sectionHasContent(
         s.saleDate.trim() ||
         s.salePrice.trim() ||
         s.landArea.trim() ||
-        s.comments.trim(),
+        s.comments.trim() ||
+        Boolean(s.narrative?.trim()),
     );
   }
   if (entry.narrativeKey) {
@@ -985,7 +986,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                   <td className="border border-[var(--rule)] px-2 py-1.5 whitespace-nowrap">
                     {s.landArea}
                   </td>
-                  <td className="border border-[var(--rule)] px-2 py-1.5">{s.comments}</td>
+                  <td className="border border-[var(--rule)] px-2 py-1.5">{s.narrative?.trim() || s.comments}</td>
                 </tr>
               ))}
             </tbody>
