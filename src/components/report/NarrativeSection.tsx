@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
@@ -52,6 +52,34 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   const [source, setSource] = useState<"template" | "ai" | null>(null);
   const [busy, setBusy] = useState<"template" | "ai" | keyof ReportNarrative | null>(null);
   const [lastStatus, setLastStatus] = useState<string | null>(null);
+  const autoStarted = useRef(false);
+
+  function narrativeIsEmpty(): boolean {
+    return BLOCKS.every((b) => !String(draft.narrative[b.key] ?? "").trim());
+  }
+
+  // Auto-generate with AI once when Narrative opens and all blocks are empty
+  useEffect(() => {
+    if (autoStarted.current) return;
+    if (!narrativeIsEmpty()) return;
+    if (!isAiConfigured()) return;
+    const flagKey = `pvp-ai-narrative-auto:${draft.inspectionId}`;
+    try {
+      if (sessionStorage.getItem(flagKey)) return;
+    } catch {
+      // ignore
+    }
+    autoStarted.current = true;
+    void (async () => {
+      await generateWithAi();
+      try {
+        sessionStorage.setItem(flagKey, "1");
+      } catch {
+        // ignore
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once when Narrative first opens empty
+  }, [draft.inspectionId]);
 
   function generateFromTemplate() {
     setBusy("template");
