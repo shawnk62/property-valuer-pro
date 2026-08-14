@@ -1,6 +1,8 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
+import { generateSaleNarrative } from "@/lib/ai/ai.functions";
+import { isAiConfigured, loadAiSettings } from "@/lib/ai/settings";
 import {
   ADJUSTMENT_FEATURES,
   RELATIVITY_OPTIONS,
@@ -13,6 +15,12 @@ import {
 } from "@/lib/report/adjustmentGrid";
 import { importSalesFromCsv } from "@/lib/report/importSalesCsv";
 import { MOCK_COTALITY_SALES } from "@/lib/report/mock-sales";
+import {
+  buildSaleNarrativePrompt,
+  loadAutoSaleNarratives,
+  saleNarrativeFingerprint,
+  saveAutoSaleNarratives,
+} from "@/lib/report/saleNarrative";
 import type { ComparableSale, FeatureAdjustment } from "@/lib/report/types";
 
 function emptySale(): ComparableSale {
@@ -38,6 +46,17 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const sales = draft.sales.map(ensureSaleAdjustments);
   const fileRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
+  const [autoNarratives, setAutoNarratives] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+  const fingerprintsRef = useRef<Record<string, string>>({});
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const salesRef = useRef(sales);
+  salesRef.current = sales;
+
+  useEffect(() => {
+    setAutoNarratives(loadAutoSaleNarratives());
+  }, []);
 
   function replaceSales(next: ComparableSale[]) {
     setSales(next.map(ensureSaleAdjustments));
@@ -70,6 +89,112 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     );
   }
 
+  const runNarratives = useCallback(
+    async (force = false) => {
+      const settings = loadAiSettings();
+      if (!isAiConfigured(settings)) {
+        setStatus("AI not configured — open Settings to enable sale narratives.");
+        return;
+      }
+
+      const current = salesRef.current;
+      const todo = current.filter((s) => {
+        if (!s.address.trim() && !s.salePrice.trim()) return false;
+        const fp = saleNarrativeFingerprint(s);
+        if (!force && fingerprintsRef.current[s.id] === fp && s.narrative?.trim()) {
+          return false;
+        }
+        return true;
+      });
+
+      if (todo.length === 0) {
+        setStatus("Sale narratives up to date.");
+        return;
+      }
+
+      setGenerating(true);
+      setStatus(`Generating narratives for ${todo.length} sale(s)…`);
+      const updates: Record<string, string> = {};
+      const errors: string[] = [];
+
+      for (const sale of todo) {
+        try {
+          const { system, prompt } = buildSaleNarrativePrompt(
+            sale,
+            draft.values,
+            draft.reportMeta,
+          );
+          const result = await generateSaleNarrative({
+            data: {
+              settings: {
+                provider: settings.provider,
+                model: settings.model,
+                apiKey: settings.apiKey,
+                ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
+              },
+              system,
+              prompt,
+            },
+          });
+          const text =
+            typeof result === "string"
+              ? result
+              : result && typeof result === "object" && "text" in result
+                ? String((result as { text: unknown }).text ?? "")
+                : "";
+          if (text.trim()) {
+            updates[sale.id] = text.trim();
+            fingerprintsRef.current[sale.id] = saleNarrativeFingerprint(sale);
+          } else {
+            errors.push(sale.address || sale.id);
+          }
+        } catch (err) {
+          console.error("[sale narrative]", err);
+          errors.push(sale.address || sale.id);
+        }
+      }
+
+      if (Object.keys(updates).length) {
+        replaceSales(
+          salesRef.current.map((s) =>
+            updates[s.id] ? { ...s, narrative: updates[s.id] } : s,
+          ),
+        );
+      }
+
+      if (errors.length && Object.keys(updates).length) {
+        setStatus(`Updated ${Object.keys(updates).length}; failed: ${errors.join(", ")}`);
+        toast.message("Some sale narratives failed", { description: errors.join(", ") });
+      } else if (errors.length) {
+        setStatus(`Failed: ${errors.join(", ")}`);
+        toast.error("Sale narrative generation failed");
+      } else {
+        setStatus(`Generated ${Object.keys(updates).length} sale narrative(s).`);
+        toast.success("Sale narratives updated");
+      }
+      setGenerating(false);
+    },
+    [draft.values, draft.reportMeta],
+  );
+
+  // Auto-generate when sales / adjustments change (debounced). Default on.
+  useEffect(() => {
+    if (!autoNarratives) return;
+    if (!isAiConfigured()) return;
+    if (sales.length === 0) return;
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      void runNarratives(false);
+    }, 1600);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+    // fingerprint via sales content
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoNarratives, sales, runNarratives]);
+
   async function onCsvSelected(file: File | null) {
     if (!file) return;
     setImporting(true);
@@ -82,9 +207,12 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         });
         return;
       }
+      fingerprintsRef.current = {};
       replaceSales(result.sales.map(ensureSaleAdjustments));
       toast.success(`Imported ${result.sales.length} sale(s) into adjustment grid`, {
-        description: "Relativity defaults to Similar; enter $ adjustments as needed.",
+        description: autoNarratives
+          ? "Relativity defaults to Similar; narratives will generate automatically if AI is configured."
+          : "Relativity defaults to Similar. Auto narratives are off.",
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not read CSV";
@@ -99,14 +227,31 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-4">
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-foreground">
-            Sales comparison grid
-          </h3>
+          <h3 className="text-sm font-semibold text-foreground">Sales comparison grid</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Shared across all report types. Import RP Data CSV, set relativity (default Similar) and
-            dollar adjustments per feature. Net / gross % and adjusted sale price calculate
-            automatically. Report output format still depends on report type.
+            Shared across all report types. Import CSV, set relativity and $ adjustments. Narratives
+            for the report are built from those marks (editable below each sale).
           </p>
+          <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-foreground">
+            <input
+              type="checkbox"
+              checked={autoNarratives}
+              onChange={(e) => {
+                const on = e.target.checked;
+                setAutoNarratives(on);
+                saveAutoSaleNarratives(on);
+                if (on) void runNarratives(false);
+              }}
+              className="size-4 rounded border-input"
+            />
+            <span>
+              Automatically generate sale narratives from grid marks
+              <span className="text-muted-foreground"> (default on — uncheck to turn off)</span>
+            </span>
+          </label>
+          {status ? (
+            <p className="mt-2 text-xs text-muted-foreground">{status}</p>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <input
@@ -123,6 +268,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
             className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
           >
             {importing ? "Importing…" : "Import CSV"}
+          </button>
+          <button
+            type="button"
+            disabled={generating || sales.length === 0}
+            onClick={() => void runNarratives(true)}
+            className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+          >
+            {generating ? "Generating…" : "Regenerate narratives"}
           </button>
           <button
             type="button"
@@ -156,16 +309,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/60">
-                <th className="sticky left-0 z-10 bg-muted/95 px-3 py-2.5 font-semibold text-foreground min-w-[11rem]">
+                <th className="sticky left-0 z-10 min-w-[11rem] bg-muted/95 px-3 py-2.5 font-semibold text-foreground">
                   Feature
                 </th>
-                <th className="px-3 py-2.5 font-semibold text-foreground min-w-[12rem]">
-                  Subject
-                </th>
+                <th className="min-w-[12rem] px-3 py-2.5 font-semibold text-foreground">Subject</th>
                 {sales.map((sale, idx) => (
                   <th
                     key={sale.id}
-                    className="px-3 py-2.5 font-semibold text-foreground min-w-[14rem] align-top"
+                    className="min-w-[14rem] px-3 py-2.5 align-top font-semibold text-foreground"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <span>Comparable #{idx + 1}</span>
@@ -183,7 +334,6 @@ export function SalesSection({ controller }: { controller: ReportDraftController
               </tr>
             </thead>
             <tbody>
-              {/* Identity rows */}
               {(
                 [
                   ["address", "Address"],
@@ -228,7 +378,6 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                 </tr>
               ))}
 
-              {/* Adjustment feature rows */}
               {ADJUSTMENT_FEATURES.map((feature) => (
                 <tr key={feature.id} className="border-b border-border">
                   <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium text-foreground">
@@ -279,72 +428,79 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                 </tr>
               ))}
 
-              {/* Totals */}
               <tr className="border-b border-border bg-muted/40">
                 <td className="sticky left-0 z-10 bg-muted/95 px-3 py-2 font-semibold">
                   Net adjustment
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">—</td>
-                {sales.map((sale) => {
-                  const t = computeSaleAdjustmentTotals(sale);
-                  return (
-                    <td key={sale.id} className="px-3 py-2 font-medium">
-                      {formatMoney(t.netAdjustment)}
-                    </td>
-                  );
-                })}
+                {sales.map((sale) => (
+                  <td key={sale.id} className="px-3 py-2 font-medium">
+                    {formatMoney(computeSaleAdjustmentTotals(sale).netAdjustment)}
+                  </td>
+                ))}
               </tr>
               <tr className="border-b border-border bg-muted/40">
                 <td className="sticky left-0 z-10 bg-muted/95 px-3 py-2 font-semibold">
                   Net adj. %
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">—</td>
-                {sales.map((sale) => {
-                  const t = computeSaleAdjustmentTotals(sale);
-                  return (
-                    <td key={sale.id} className="px-3 py-2">
-                      {formatPct(t.netPct)}
-                    </td>
-                  );
-                })}
+                {sales.map((sale) => (
+                  <td key={sale.id} className="px-3 py-2">
+                    {formatPct(computeSaleAdjustmentTotals(sale).netPct)}
+                  </td>
+                ))}
               </tr>
               <tr className="border-b border-border bg-muted/40">
                 <td className="sticky left-0 z-10 bg-muted/95 px-3 py-2 font-semibold">
                   Gross adj. %
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">—</td>
-                {sales.map((sale) => {
-                  const t = computeSaleAdjustmentTotals(sale);
-                  return (
-                    <td key={sale.id} className="px-3 py-2">
-                      {formatPct(t.grossPct)}
-                    </td>
-                  );
-                })}
+                {sales.map((sale) => (
+                  <td key={sale.id} className="px-3 py-2">
+                    {formatPct(computeSaleAdjustmentTotals(sale).grossPct)}
+                  </td>
+                ))}
               </tr>
               <tr className="border-b border-border bg-muted/50">
                 <td className="sticky left-0 z-10 bg-muted/95 px-3 py-2 font-semibold">
                   Adjusted sale price
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">—</td>
-                {sales.map((sale) => {
-                  const t = computeSaleAdjustmentTotals(sale);
-                  return (
-                    <td key={sale.id} className="px-3 py-2 font-semibold">
-                      {formatMoney(t.adjustedSalePrice)}
-                    </td>
-                  );
-                })}
+                {sales.map((sale) => (
+                  <td key={sale.id} className="px-3 py-2 font-semibold">
+                    {formatMoney(computeSaleAdjustmentTotals(sale).adjustedSalePrice)}
+                  </td>
+                ))}
               </tr>
 
-              {/* Comments */}
               <tr className="border-b border-border">
-                <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium">Comments</td>
-                <td className="px-3 py-2 text-muted-foreground">—</td>
+                <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium">
+                  Report narrative
+                </td>
+                <td className="px-3 py-2 text-muted-foreground">
+                  From grid marks (AI)
+                </td>
                 {sales.map((sale) => (
                   <td key={sale.id} className="px-1 py-1 align-top">
                     <textarea
-                      rows={3}
+                      rows={5}
+                      value={sale.narrative ?? ""}
+                      onChange={(e) => patchSale(sale.id, { narrative: e.target.value })}
+                      placeholder="Auto-generated from relativity marks…"
+                      className="w-full resize-y rounded border border-transparent bg-transparent px-2 py-1.5 text-xs outline-none focus:border-input focus:bg-accent/40"
+                    />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-border">
+                <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium">
+                  Source notes
+                </td>
+                <td className="px-3 py-2 text-muted-foreground">CSV / manual</td>
+                {sales.map((sale) => (
+                  <td key={sale.id} className="px-1 py-1 align-top">
+                    <textarea
+                      rows={2}
                       value={sale.comments}
                       onChange={(e) => patchSale(sale.id, { comments: e.target.value })}
                       className="w-full resize-y rounded border border-transparent bg-transparent px-2 py-1.5 text-xs outline-none focus:border-input focus:bg-accent/40"
