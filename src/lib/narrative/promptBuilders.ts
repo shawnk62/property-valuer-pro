@@ -11,6 +11,18 @@ function assignmentType(values: InspectionValues): string {
   return typeof v === "string" ? v : "valuation report";
 }
 
+/** Stamp Duty reports use shorter prose (match Peterson sample style). */
+function brevityHint(type: string): string {
+  const t = type.toLowerCase();
+  if (t.includes("stamp duty")) {
+    return (
+      "\nThis is a Stamp Duty valuation: prefer concise wording. " +
+      "Avoid long marketing-style descriptions. One tight paragraph is usually enough."
+    );
+  }
+  return "";
+}
+
 function sectionAnswers(values: InspectionValues, sectionIds: string[]): string {
   const relevant = sections.filter((s) => sectionIds.includes(s.id));
   const lines: string[] = [];
@@ -112,6 +124,52 @@ Inspection data:
 ${sectionAnswers(values, ["6"])}
 
 Summarise the overall condition and any final remarks or qualifications recorded.`,
+      };
+
+    /* ---- Report workspace narrative blocks (Narrative tab) ---- */
+    case "brief":
+      return {
+        system: BASE_RULES + brevityHint(type),
+        prompt: `Write a BRIEF DESCRIPTION for the valuation summary page of a ${type} report.
+
+Inspection data:
+${sectionAnswers(values, ["1", "2", "3", "6"])}
+
+Requirements:
+- One or two short sentences only.
+- Include dwelling type/style, key construction if recorded, bedroom/bathroom counts if recorded, and site area if recorded.
+- Do not write a full improvements essay.
+- Suitable to appear under "BRIEF DESCRIPTION" on a valuation summary.`,
+      };
+    case "improvements":
+      return {
+        system: BASE_RULES + brevityHint(type),
+        prompt: `Write the "Improvements — General Description" paragraph (report section 7.1) for a ${type} valuation report.
+
+Inspection data:
+${sectionAnswers(values, ["3", "special_design", "6"])}
+
+Describe construction, materials, roof, foundations, approximate era if recorded, and overall condition. Stay factual. Do not invent floor areas or features not in the data.`,
+      };
+    case "accommodation":
+      return {
+        system: BASE_RULES + brevityHint(type),
+        prompt: `Write the "Accommodation — Fixtures and Fittings" narrative (report section 8) for a ${type} valuation report.
+
+Inspection data:
+${sectionAnswers(values, ["3", "3A", "5"])}
+
+Cover rooms/layout as recorded, floor coverings, climate control, kitchen/bathroom notes if present, car accommodation, and ancillary items. Do not treat verandahs or outdoor areas as primary rooms. Omit empty topics.`,
+      };
+    case "remarks":
+      return {
+        system: BASE_RULES + brevityHint(type),
+        prompt: `Write the Remarks paragraph (report section 13) for a ${type} valuation report.
+
+Inspection data:
+${sectionAnswers(values, ["6"])}
+
+Include only recorded notes, defects, or qualifications. If little is recorded, write one short professional sentence that the valuation assumes information disclosed by the client and that a full schedule of limitations applies. Do not invent defects.`,
       };
     default:
       return {
