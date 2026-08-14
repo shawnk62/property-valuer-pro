@@ -31,6 +31,20 @@ export interface ReportPhoto {
   storagePath?: string;
 }
 
+/** Relativity mark on a comparison feature (URAR-style description). */
+export type SaleRelativity =
+  | "inferior"
+  | "slightly inferior"
+  | "similar"
+  | "slightly superior"
+  | "superior";
+
+export interface FeatureAdjustment {
+  relativity: SaleRelativity;
+  /** Signed dollar adjustment to the comparable sale price. */
+  amount: number;
+}
+
 export interface ComparableSale {
   id: string;
   address: string;
@@ -38,6 +52,10 @@ export interface ComparableSale {
   salePrice: string;
   landArea: string;
   comments: string;
+  /** Optional living area from CSV / entry. */
+  gla?: string;
+  /** URAR-style feature adjustments (shared across report types). */
+  adjustments?: Record<string, FeatureAdjustment>;
 }
 
 export interface ReportNarrative {
