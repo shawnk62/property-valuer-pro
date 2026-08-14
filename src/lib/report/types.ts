@@ -56,6 +56,11 @@ export interface ComparableSale {
   gla?: string;
   /** URAR-style feature adjustments (shared across report types). */
   adjustments?: Record<string, FeatureAdjustment>;
+  /**
+   * AI (or manual) narrative for the report sales evidence column.
+   * Built from relativity marks on the adjustment grid.
+   */
+  narrative?: string;
 }
 
 export interface ReportNarrative {
