@@ -24,10 +24,20 @@ function asAiSettings(data: z.infer<typeof SettingsInput>): AiSettings {
   return settings;
 }
 
+const ValueCell = z.union([
+  z.string(),
+  z.boolean(),
+  z.array(z.string()),
+  z.number(),
+  z.null(),
+  z.undefined(),
+]);
+
 const GenerateBlockInput = z.object({
   settings: SettingsInput,
   blockKey: z.string().min(1),
-  values: z.record(z.union([z.string(), z.boolean(), z.array(z.string()), z.undefined()])),
+  // Allow extra shapes from stored inspection JSON; prompt builder reads safely.
+  values: z.record(ValueCell),
 });
 
 const ExtractPropertyInput = z.object({
