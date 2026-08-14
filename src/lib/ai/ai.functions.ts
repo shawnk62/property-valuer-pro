@@ -82,6 +82,26 @@ export const generateNarrativeBlock = createServerFn({ method: "POST" })
     return { text: text.trim() };
   });
 
+const SaleNarrativeInput = z.object({
+  settings: SettingsInput,
+  system: z.string().min(1),
+  prompt: z.string().min(1),
+});
+
+export const generateSaleNarrative = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => SaleNarrativeInput.parse(input))
+  .handler(async ({ data }) => {
+    const settings = asAiSettings(data.settings);
+    const model = createModel(settings);
+    const { text } = await generateText({
+      model,
+      system: data.system,
+      prompt: data.prompt,
+    });
+    return { text: text.trim() };
+  });
+
+
 const ExtractionSchema = z.object({
   candidates: z.record(z.string().nullable()),
 });
