@@ -49,7 +49,7 @@ export const ADJUSTMENT_FEATURES: AdjustmentFeature[] = [
   { id: "view", label: "View" },
   { id: "design", label: "Design (Style)", subjectKeys: ["imp_design", "ext"] },
   { id: "quality", label: "Quality of Construction", subjectKeys: ["imp_quality"] },
-  { id: "actualAge", label: "Actual Age", subjectKeys: ["imp_yearbuilt", "imp_effective_age"] },
+  { id: "actualAge", label: "Age", subjectKeys: ["imp_yearbuilt", "imp_effective_age"] },
   { id: "condition", label: "Condition", subjectKeys: ["overall_cond"] },
   {
     id: "aboveGradeRoomCount",
@@ -128,6 +128,24 @@ export function subjectFeatureDisplay(
   feature: AdjustmentFeature,
   values: InspectionValues,
 ): string {
+  // URAR Age line: "A {actual years} / E {effective}" from year built
+  if (feature.id === "actualAge") {
+    const yearRaw = values["imp_yearbuilt"];
+    const year =
+      typeof yearRaw === "number"
+        ? yearRaw
+        : parseInt(String(yearRaw ?? "").replace(/[^0-9]/g, ""), 10);
+    if (!Number.isFinite(year) || year < 1800 || year > 2100) return "—";
+    const actual = new Date().getFullYear() - year;
+    if (actual < 0 || actual > 300) return "—";
+    const effRaw = values["imp_effective_age"];
+    const eff =
+      effRaw !== undefined && effRaw !== null && String(effRaw).trim() !== ""
+        ? String(effRaw).trim()
+        : "";
+    return `A ${actual} / E ${eff}`;
+  }
+
   if (!feature.subjectKeys?.length) return "—";
 
   if (feature.id === "aboveGradeRoomCount") {
