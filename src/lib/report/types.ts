@@ -52,9 +52,15 @@ export interface ComparableSale {
   salePrice: string;
   landArea: string;
   comments: string;
-  /** Optional living area from CSV / entry. */
+  /** Gross living area (for Sale Price/GLA and GLA adjustment line). */
   gla?: string;
-  /** URAR-style feature adjustments (shared across report types). */
+  /** URAR: Proximity to Subject. */
+  proximity?: string;
+  /** URAR: Data Source(s). */
+  dataSource?: string;
+  /** URAR: Verification Source(s). */
+  verificationSource?: string;
+  /** URAR VALUE ADJUSTMENTS by feature id. */
   adjustments?: Record<string, FeatureAdjustment>;
   /**
    * AI (or manual) narrative for the report sales evidence column.
