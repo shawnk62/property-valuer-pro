@@ -106,6 +106,141 @@ const ExtractionSchema = z.object({
   candidates: z.record(z.string().nullable()),
 });
 
+
+const CmaSaleSchema = z.object({
+  address: z.string().nullable().optional(),
+  saleDate: z.string().nullable().optional(),
+  salePrice: z.string().nullable().optional(),
+  landArea: z.string().nullable().optional(),
+  gla: z.string().nullable().optional(),
+  beds: z.string().nullable().optional(),
+  baths: z.string().nullable().optional(),
+  cars: z.string().nullable().optional(),
+  yearBuilt: z.string().nullable().optional(),
+  distance: z.string().nullable().optional(),
+  comments: z.string().nullable().optional(),
+  comparisonNotes: z.string().nullable().optional(),
+});
+
+const CmaSalesExtractionSchema = z.object({
+  sales: z.array(CmaSaleSchema),
+});
+
+const ExtractCmaSalesInput = z.object({
+  settings: SettingsInput,
+  source: z.enum(["text", "file"]),
+  text: z.string().optional(),
+  file: z
+    .object({
+      mimeType: z.string(),
+      base64: z.string().min(1),
+    })
+    .optional(),
+});
+
+export const extractComparableSales = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => ExtractCmaSalesInput.parse(input))
+  .handler(async ({ data }) => {
+    const settings = asAiSettings(data.settings);
+    const model = createModel(settings);
+
+    const system = `You extract comparable sales from an Australian Cotality / RP Data CMA (Comparative Market Analysis) PDF or pasted text.
+Return JSON: { "sales": [ { ...fields } ] }.
+For each comparable sale include:
+- address (full street address including suburb/state/postcode when shown)
+- saleDate (as printed, e.g. 16-Jun-26)
+- salePrice (include $ and commas as printed)
+- landArea (e.g. 390m²)
+- gla (floor / living area e.g. 177m²)
+- beds, baths, cars as strings when shown
+- yearBuilt, distance when shown
+- comments: short property description paragraph if present
+- comparisonNotes: the COMPARABLE / SUPERIOR / INFERIOR lines exactly when present (preserve those labels)
+Skip floor-plan-only pages, disclaimer pages, and the subject property itself.
+Do not invent sales. If none found, return { "sales": [] }.`;
+
+    const userText =
+      data.source === "text"
+        ? (data.text ?? "")
+        : "Extract all comparable sales from the attached CMA PDF.";
+
+    if (data.source === "file" && data.file) {
+      try {
+        const { output } = await generateText({
+          model,
+          output: Output.object({ schema: CmaSalesExtractionSchema }),
+          messages: [
+            { role: "system", content: system },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: userText },
+                {
+                  type: "file",
+                  data: { type: "data", data: data.file.base64 },
+                  mediaType: data.file.mimeType || "application/pdf",
+                },
+              ],
+            },
+          ],
+        });
+        return output ?? { sales: [] };
+      } catch {
+        const { text } = await generateText({
+          model,
+          system,
+          prompt: userText,
+        });
+        return parseCmaSalesResponse(text);
+      }
+    }
+
+    try {
+      const { output } = await generateText({
+        model,
+        output: Output.object({ schema: CmaSalesExtractionSchema }),
+        system,
+        prompt: `CMA text:\n\n${userText}`,
+      });
+      return output ?? { sales: [] };
+    } catch {
+      const { text } = await generateText({
+        model,
+        system,
+        prompt: `CMA text:\n\n${userText}`,
+      });
+      return parseCmaSalesResponse(text);
+    }
+  });
+
+function parseCmaSalesResponse(text: string): { sales: z.infer<typeof CmaSaleSchema>[] } {
+  const cleaned = text
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```\s*$/i, "")
+    .trim();
+  try {
+    const parsed = JSON.parse(cleaned);
+    return CmaSalesExtractionSchema.parse(
+      parsed?.sales ? parsed : { sales: Array.isArray(parsed) ? parsed : [] },
+    );
+  } catch {
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      try {
+        const parsed = JSON.parse(cleaned.slice(start, end + 1));
+        return CmaSalesExtractionSchema.parse(
+          parsed?.sales ? parsed : { sales: Array.isArray(parsed) ? parsed : [] },
+        );
+      } catch {
+        /* fall through */
+      }
+    }
+  }
+  return { sales: [] };
+}
+
+
 export const extractPropertyData = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => ExtractPropertyInput.parse(input))
   .handler(async ({ data }) => {
