@@ -15,8 +15,8 @@ import {
   subjectFeatureDisplay,
   type Relativity,
 } from "@/lib/report/adjustmentGrid";
-import { extractCmaMediaFromPdf } from "@/lib/report/extractCmaMedia";
 import { extractTextFromPdf } from "@/lib/report/extractPdfText";
+import { fileToDataUrl } from "@/lib/report/photo-data";
 import {
   cmaExtractsToSales,
   mergeCmaExtracts,
@@ -158,6 +158,49 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   function patchSale(id: string, patch: Partial<ComparableSale>) {
     replaceSales(sales.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   }
+
+  async function onSalesMapFile(file: File | null) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Choose an image file for the sales map");
+      return;
+    }
+    try {
+      const url = await fileToDataUrl(file);
+      setMeta({ salesMapUrl: url });
+      toast.success("Sales map attached");
+    } catch (err) {
+      toast.error("Could not read map image", {
+        description: err instanceof Error ? err.message : "Try another file",
+      });
+    }
+  }
+
+  function clearSalesMap() {
+    setMeta({ salesMapUrl: "" });
+  }
+
+  async function onSalePhotoFile(saleId: string, file: File | null) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Choose an image file for the front photo");
+      return;
+    }
+    try {
+      const url = await fileToDataUrl(file);
+      patchSale(saleId, { photoUrl: url });
+      toast.success("Front photo attached");
+    } catch (err) {
+      toast.error("Could not read photo", {
+        description: err instanceof Error ? err.message : "Try another file",
+      });
+    }
+  }
+
+  function clearSalePhoto(saleId: string) {
+    patchSale(saleId, { photoUrl: "" });
+  }
+
 
   function patchAdjustment(
     saleId: string,
@@ -437,8 +480,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       }
 
       if (isPdf) {
-        // Sequential: one pdf.js document at a time — parallel getDocument
-        // on the same worker previously raced and dropped image XObjects.
+        // Text only from CMA PDF. Map + front photos are attached manually
+        // (Cotality embeds do not crop cleanly in-browser).
         setStatus("Reading PDF text…");
         const text = await extractTextFromPdf(file);
         if (!text.trim()) {
@@ -448,20 +491,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           setStatus("PDF text extraction returned empty.");
           return;
         }
-
-        setStatus("Extracting sales map and front photos…");
-        let media = { salesMapUrl: null as string | null, frontPhotoUrls: [] as string[] };
-        try {
-          media = await extractCmaMediaFromPdf(file);
-        } catch (err) {
-          console.warn("[CMA media extract]", err);
-        }
-        setStatus(
-          media.frontPhotoUrls.length || media.salesMapUrl
-            ? `Parsing sales data (${media.frontPhotoUrls.length} photo(s)${media.salesMapUrl ? ", map" : ""})…`
-            : "Parsing sales data (no map/photos found in PDF)…",
-        );
-        await importFromCmaText(text, "CMA PDF", media);
+        setStatus("Parsing sales data…");
+        await importFromCmaText(text, "CMA PDF");
         return;
       }
 
@@ -487,7 +518,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-foreground">Sales comparison grid (URAR)</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Shared across all report types. Import Cotality CMA PDF (text extracted in-browser, supports 9+ sales) or paste text. Relativity
+            Shared across all report types. Import Cotality CMA PDF for sale data (text). Attach sales map and front photos below. Relativity
             marks and $ adjustments feed report narratives (editable per sale).
           </p>
           <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-foreground">
@@ -584,6 +615,123 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         </button>
       </div>
 
+      {/* Manual sales map + front photos — reliable path for report placement */}
+      <div className="rounded-md border border-border bg-card p-4 space-y-4">
+        <div>
+          <h4 className="text-sm font-semibold text-foreground">Sales map &amp; front photos</h4>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Attach the Cotality sales map and each comparable&apos;s front elevation manually.
+            These appear in the grid and in §12 Sales Evidence (Preview and Word).
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-start gap-4">
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-foreground">Sales map</p>
+            {draft.reportMeta.salesMapUrl ? (
+              <div className="relative inline-block">
+                <img
+                  src={draft.reportMeta.salesMapUrl}
+                  alt="Sales map"
+                  className="max-h-40 max-w-xs rounded border border-border object-contain"
+                />
+                <button
+                  type="button"
+                  onClick={clearSalesMap}
+                  className="absolute right-1 top-1 rounded bg-background/90 px-1.5 py-0.5 text-xs text-destructive shadow"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <label className="flex h-28 w-44 cursor-pointer flex-col items-center justify-center rounded border border-dashed border-border bg-muted/30 text-center text-xs text-muted-foreground hover:bg-muted/50">
+                <span>Upload map</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => void onSalesMapFile(e.target.files?.[0] ?? null)}
+                />
+              </label>
+            )}
+            {draft.reportMeta.salesMapUrl ? (
+              <label className="block text-xs text-primary cursor-pointer hover:underline">
+                Replace map
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => void onSalesMapFile(e.target.files?.[0] ?? null)}
+                />
+              </label>
+            ) : null}
+          </div>
+        </div>
+
+        {sales.length > 0 ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {sales.map((sale, idx) => (
+              <div
+                key={sale.id}
+                className="rounded border border-border bg-background p-2 space-y-1.5"
+              >
+                <p className="text-xs font-semibold text-foreground truncate">
+                  Comp #{idx + 1}
+                  {sale.address ? (
+                    <span className="font-normal text-muted-foreground"> — {sale.address}</span>
+                  ) : null}
+                </p>
+                {sale.photoUrl ? (
+                  <div className="relative">
+                    <img
+                      src={sale.photoUrl}
+                      alt={sale.address || `Comparable ${idx + 1}`}
+                      className="max-h-28 w-full rounded object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => clearSalePhoto(sale.id)}
+                      className="absolute right-1 top-1 rounded bg-background/90 px-1.5 py-0.5 text-[0.65rem] text-destructive shadow"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex h-20 cursor-pointer items-center justify-center rounded border border-dashed border-border text-xs text-muted-foreground hover:bg-muted/40">
+                    Upload front photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) =>
+                        void onSalePhotoFile(sale.id, e.target.files?.[0] ?? null)
+                      }
+                    />
+                  </label>
+                )}
+                {sale.photoUrl ? (
+                  <label className="text-[0.65rem] text-primary cursor-pointer hover:underline">
+                    Replace photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) =>
+                        void onSalePhotoFile(sale.id, e.target.files?.[0] ?? null)
+                      }
+                    />
+                  </label>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Import sales first, then attach a front photo to each comparable.
+          </p>
+        )}
+      </div>
+
       {sales.length === 0 ? (
         <div className="rounded-md border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
           No comparable sales yet. Import a Cotality CMA PDF or add a sale.
@@ -646,12 +794,40 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                       </span>
                                     ) : null}
                                     {sale.photoUrl ? (
-                                      <img
-                                        src={sale.photoUrl}
-                                        alt=""
-                                        className="mt-1 max-h-14 w-auto max-w-full rounded border border-border object-cover"
-                                      />
-                                    ) : null}
+                                      <label className="mt-1 block cursor-pointer" title="Replace front photo">
+                                        <img
+                                          src={sale.photoUrl}
+                                          alt=""
+                                          className="max-h-14 w-auto max-w-full rounded border border-border object-cover"
+                                        />
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          className="hidden"
+                                          onChange={(e) =>
+                                            void onSalePhotoFile(
+                                              sale.id,
+                                              e.target.files?.[0] ?? null,
+                                            )
+                                          }
+                                        />
+                                      </label>
+                                    ) : (
+                                      <label className="mt-1 flex cursor-pointer items-center justify-center rounded border border-dashed border-border px-1 py-2 text-[0.6rem] font-normal text-muted-foreground hover:bg-muted/40">
+                                        + Photo
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          className="hidden"
+                                          onChange={(e) =>
+                                            void onSalePhotoFile(
+                                              sale.id,
+                                              e.target.files?.[0] ?? null,
+                                            )
+                                          }
+                                        />
+                                      </label>
+                                    )}
                                   </span>
                                   <button
                                     type="button"
