@@ -1,25 +1,19 @@
 /**
- * Extract Cotality CMA sales map + comparable front photos from a PDF (browser).
+ * Extract Cotality CMA sales map + comparable front photos (browser).
  *
- * Cotality structure (verified on real CMAs):
- * - "Map: Sales" page → large map image (~1566×2048 RGB)
- * - "Comparable Sales" pages → ~768×512 listing photos; first in paint order
- *   is the street/front elevation; a wider strip is the inset location map
+ * Console showed image XObjects not decoding in the Vite/browser pdf.js build
+ * ("classified but no image XObjects decoded"). Primary path is therefore
+ * page.render → canvas crop, which always works when the page paints.
  *
- * Returns JPEG data URLs for Preview / Word without a separate upload step.
+ * Cotality layout (verified):
+ * - Map: Sales page → full-page map
+ * - Comparable Sales page → front elevation is the upper-left listing photo
  */
 
 export type CmaMediaExtract = {
   salesMapUrl: string | null;
   /** Front elevations in Comparable Sales page order (matches sale list). */
   frontPhotoUrls: string[];
-};
-
-type PdfImageObj = {
-  width: number;
-  height: number;
-  kind?: number;
-  data?: Uint8ClampedArray | Uint8Array;
 };
 
 function pageText(items: { str?: string }[]): string {
@@ -30,159 +24,190 @@ function pageText(items: { str?: string }[]): string {
     .trim();
 }
 
-/**
- * Load a decoded image XObject from the page.
- * Must use the callback form — sync get throws while the worker is still decoding.
- * Large map bitmaps can take several seconds; do not time out aggressively.
- */
-function loadImageObj(
+/** Render a PDF page to a canvas at the given scale. */
+async function renderPageToCanvas(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   page: any,
-  name: string,
-): Promise<PdfImageObj | null> {
-  return new Promise((resolve) => {
-    let settled = false;
-    const finish = (obj: PdfImageObj | null) => {
-      if (settled) return;
-      settled = true;
-      resolve(obj);
-    };
+  scale: number,
+): Promise<HTMLCanvasElement | null> {
+  if (typeof document === "undefined") return null;
+  const viewport = page.getViewport({ scale });
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.ceil(viewport.width);
+  canvas.height = Math.ceil(viewport.height);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
 
-    // Long ceiling only — never treat "still decoding" as failure at 1.5s
-    const timer = setTimeout(() => finish(null), 20_000);
-
-    try {
-      page.objs.get(name, (obj: PdfImageObj | null) => {
-        clearTimeout(timer);
-        if (obj && obj.width > 0 && obj.height > 0 && obj.data && obj.data.length > 0) {
-          finish(obj);
-        } else {
-          finish(null);
-        }
-      });
-    } catch {
-      clearTimeout(timer);
-      finish(null);
-    }
+  // pdf.js v4 render API
+  const renderTask = page.render({
+    canvasContext: ctx,
+    viewport,
+    // v4 optional canvas factory not required when canvasContext is provided
   });
+  await renderTask.promise;
+  return canvas;
 }
 
-/**
- * Convert pdf.js image object → JPEG data URL, optionally downscaled.
- * Downscaling keeps localStorage / draft size workable for the sales map.
- */
-function imageObjToDataUrl(
-  img: PdfImageObj,
+/** Crop a region (fractions 0–1 of source) into a JPEG data URL. */
+function cropToDataUrl(
+  source: HTMLCanvasElement,
+  region: { x0: number; y0: number; x1: number; y1: number },
   opts?: { quality?: number; maxEdge?: number },
 ): string | null {
-  if (typeof document === "undefined") return null;
-  if (!img.width || !img.height || !img.data) return null;
+  const quality = opts?.quality ?? 0.82;
+  const maxEdge = opts?.maxEdge ?? 1200;
 
-  const quality = opts?.quality ?? 0.8;
-  const maxEdge = opts?.maxEdge ?? 1600;
+  const sx = Math.max(0, Math.floor(region.x0 * source.width));
+  const sy = Math.max(0, Math.floor(region.y0 * source.height));
+  const sw = Math.max(1, Math.floor((region.x1 - region.x0) * source.width));
+  const sh = Math.max(1, Math.floor((region.y1 - region.y0) * source.height));
 
-  const srcW = img.width;
-  const srcH = img.height;
-  const scale = Math.min(1, maxEdge / Math.max(srcW, srcH));
-  const outW = Math.max(1, Math.round(srcW * scale));
-  const outH = Math.max(1, Math.round(srcH * scale));
-
-  // Decode full-res into an intermediate canvas, then scale if needed
-  const full = document.createElement("canvas");
-  full.width = srcW;
-  full.height = srcH;
-  const fullCtx = full.getContext("2d");
-  if (!fullCtx) return null;
-
-  const imageData = fullCtx.createImageData(srcW, srcH);
-  const src = img.data;
-  const dst = imageData.data;
-  const pixels = srcW * srcH;
-  const kind = img.kind ?? 0;
-
-  if (kind === 2 || src.length === pixels * 3) {
-    let si = 0;
-    let di = 0;
-    for (let p = 0; p < pixels; p++) {
-      dst[di++] = src[si++]!;
-      dst[di++] = src[si++]!;
-      dst[di++] = src[si++]!;
-      dst[di++] = 255;
-    }
-  } else if (kind === 3 || src.length === pixels * 4) {
-    for (let i = 0; i < pixels * 4; i++) dst[i] = src[i]!;
-  } else if (kind === 1 || src.length === pixels) {
-    let di = 0;
-    for (let p = 0; p < pixels; p++) {
-      const v = src[p]!;
-      dst[di++] = v;
-      dst[di++] = v;
-      dst[di++] = v;
-      dst[di++] = 255;
-    }
-  } else {
-    return null;
-  }
-
-  fullCtx.putImageData(imageData, 0, 0);
-
-  if (scale >= 0.999) {
-    return full.toDataURL("image/jpeg", quality);
+  let outW = sw;
+  let outH = sh;
+  const scale = Math.min(1, maxEdge / Math.max(sw, sh));
+  if (scale < 0.999) {
+    outW = Math.max(1, Math.round(sw * scale));
+    outH = Math.max(1, Math.round(sh * scale));
   }
 
   const out = document.createElement("canvas");
   out.width = outW;
   out.height = outH;
-  const outCtx = out.getContext("2d");
-  if (!outCtx) return full.toDataURL("image/jpeg", quality);
-  outCtx.drawImage(full, 0, 0, outW, outH);
+  const ctx = out.getContext("2d");
+  if (!ctx) return null;
+  ctx.drawImage(source, sx, sy, sw, sh, 0, 0, outW, outH);
   return out.toDataURL("image/jpeg", quality);
 }
 
-async function imagesOnPage(
+/**
+ * Secondary path: pull decoded image XObjects (works in some environments).
+ * Kept as enrichment when render crop is coarse.
+ */
+async function tryXObjectImages(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   page: any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  OPS: any,
-): Promise<{ name: string; img: PdfImageObj }[]> {
-  const ops = await page.getOperatorList();
-  const ordered: string[] = [];
-  const seen = new Set<string>();
-  for (let k = 0; k < ops.fnArray.length; k++) {
-    if (ops.fnArray[k] !== OPS.paintImageXObject) continue;
-    const n = ops.argsArray[k]?.[0];
-    if (!n) continue;
-    const name = String(n);
-    if (seen.has(name)) continue;
-    seen.add(name);
-    ordered.push(name);
-  }
+  pdfjs: any,
+): Promise<{ width: number; height: number; dataUrl: string }[]> {
+  if (typeof document === "undefined") return [];
+  try {
+    const ops = await page.getOperatorList();
+    const OPS = pdfjs.OPS;
+    const paintOp =
+      OPS?.paintImageXObject ??
+      OPS?.paintImageXObjectRepeat ??
+      null;
+    // Collect names even if OPS enum is missing — scan numeric fn ids later if needed
+    const names: string[] = [];
+    const seen = new Set<string>();
+    for (let k = 0; k < ops.fnArray.length; k++) {
+      const fn = ops.fnArray[k];
+      const isPaint =
+        (paintOp != null && fn === paintOp) ||
+        (OPS && fn === OPS.paintImageXObject);
+      if (!isPaint) continue;
+      const n = ops.argsArray[k]?.[0];
+      if (!n) continue;
+      const name = String(n);
+      if (seen.has(name)) continue;
+      seen.add(name);
+      names.push(name);
+    }
 
-  const out: { name: string; img: PdfImageObj }[] = [];
-  for (const name of ordered) {
-    const img = await loadImageObj(page, name);
-    if (img) out.push({ name, img });
+    const out: { width: number; height: number; dataUrl: string }[] = [];
+    for (const name of names) {
+      const img: {
+        width?: number;
+        height?: number;
+        kind?: number;
+        data?: Uint8Array | Uint8ClampedArray;
+      } | null = await new Promise((resolve) => {
+        let done = false;
+        const finish = (v: typeof img) => {
+          if (done) return;
+          done = true;
+          resolve(v);
+        };
+        const t = setTimeout(() => finish(null), 12_000);
+        try {
+          page.objs.get(name, (obj: typeof img) => {
+            clearTimeout(t);
+            finish(obj && obj.width && obj.data ? obj : null);
+          });
+        } catch {
+          clearTimeout(t);
+          finish(null);
+        }
+      });
+      if (!img?.width || !img.height || !img.data) continue;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) continue;
+      const imageData = ctx.createImageData(img.width, img.height);
+      const src = img.data;
+      const dst = imageData.data;
+      const pixels = img.width * img.height;
+      const kind = img.kind ?? 0;
+      if (kind === 2 || src.length === pixels * 3) {
+        let si = 0;
+        let di = 0;
+        for (let p = 0; p < pixels; p++) {
+          dst[di++] = src[si++]!;
+          dst[di++] = src[si++]!;
+          dst[di++] = src[si++]!;
+          dst[di++] = 255;
+        }
+      } else if (kind === 3 || src.length === pixels * 4) {
+        for (let i = 0; i < pixels * 4; i++) dst[i] = src[i]!;
+      } else {
+        continue;
+      }
+      ctx.putImageData(imageData, 0, 0);
+
+      // Downscale large bitmaps
+      const maxEdge = 1400;
+      const sc = Math.min(1, maxEdge / Math.max(img.width, img.height));
+      if (sc < 0.999) {
+        const small = document.createElement("canvas");
+        small.width = Math.round(img.width * sc);
+        small.height = Math.round(img.height * sc);
+        const sctx = small.getContext("2d");
+        if (sctx) {
+          sctx.drawImage(canvas, 0, 0, small.width, small.height);
+          out.push({
+            width: img.width,
+            height: img.height,
+            dataUrl: small.toDataURL("image/jpeg", 0.8),
+          });
+          continue;
+        }
+      }
+      out.push({
+        width: img.width,
+        height: img.height,
+        dataUrl: canvas.toDataURL("image/jpeg", 0.8),
+      });
+    }
+    return out;
+  } catch (err) {
+    console.warn("[CMA media] XObject path failed", err);
+    return [];
   }
-  return out;
 }
 
-function isLikelyFrontPhoto(img: PdfImageObj): boolean {
-  const w = img.width;
-  const h = img.height;
+function isFrontPhotoSize(w: number, h: number): boolean {
   if (w < 400 || h < 280) return false;
   const aspect = w / h;
-  // Listing photos ~1.3–1.7; exclude logos and wide inset maps (~2.3+)
   if (aspect < 1.15 || aspect > 1.9) return false;
   const area = w * h;
-  if (area < 150_000 || area > 1_200_000) return false;
-  return true;
+  return area >= 150_000 && area <= 1_200_000;
 }
 
-function isLikelyMapImage(img: PdfImageObj): boolean {
-  const w = img.width;
-  const h = img.height;
-  if (w < 500 || h < 500) return false;
-  return w * h >= 600_000;
+function isMapSize(w: number, h: number): boolean {
+  return w >= 500 && h >= 500 && w * h >= 600_000;
 }
 
 /**
@@ -206,70 +231,61 @@ export async function extractCmaMediaFromPdf(file: File): Promise<CmaMediaExtrac
 
     const isMapPage =
       /map\s*:\s*sales/i.test(text) ||
-      (/\bmap\b/i.test(text) && /\bsales\b/i.test(text) && !/comparable\s+sales/i.test(text));
+      (/\bmap\b/i.test(text) &&
+        /\bsales\b/i.test(text) &&
+        !/comparable\s+sales/i.test(text));
     const isCompPage = /comparable\s+sales/i.test(text);
-
     if (!isMapPage && !isCompPage) continue;
 
-    const images = await imagesOnPage(page, pdfjs.OPS);
-    if (images.length === 0) {
-      console.warn(`[CMA media] page ${i}: classified but no image XObjects decoded`);
-      continue;
-    }
+    // ---- Try XObject images first (when the browser build decodes them) ----
+    const xobjs = await tryXObjectImages(page, pdfjs);
 
     if (isMapPage && !salesMapUrl) {
-      let best: PdfImageObj | null = null;
-      let bestArea = 0;
-      for (const { img } of images) {
-        if (!isLikelyMapImage(img)) continue;
-        const area = img.width * img.height;
-        if (area > bestArea) {
-          bestArea = area;
-          best = img;
+      const mapCandidate = xobjs
+        .filter((x) => isMapSize(x.width, x.height))
+        .sort((a, b) => b.width * b.height - a.width * a.height)[0];
+      if (mapCandidate) {
+        salesMapUrl = mapCandidate.dataUrl;
+      } else {
+        // Render full page and take the content area (drop thin header/footer)
+        const canvas = await renderPageToCanvas(page, 1.25);
+        if (canvas) {
+          salesMapUrl = cropToDataUrl(
+            canvas,
+            { x0: 0.03, y0: 0.06, x1: 0.97, y1: 0.92 },
+            { quality: 0.75, maxEdge: 1400 },
+          );
         }
       }
-      if (!best) {
-        for (const { img } of images) {
-          const area = img.width * img.height;
-          if (area > bestArea) {
-            bestArea = area;
-            best = img;
-          }
-        }
-      }
-      if (best) {
-        salesMapUrl = imageObjToDataUrl(best, { quality: 0.75, maxEdge: 1400 });
-        if (!salesMapUrl) {
-          console.warn("[CMA media] map image decoded but canvas conversion failed");
-        }
+      if (!salesMapUrl) {
+        console.warn(`[CMA media] page ${i}: map page but no map image produced`);
       }
     }
 
     if (isCompPage) {
-      const front = images.find(({ img }) => isLikelyFrontPhoto(img));
-      if (front) {
-        const url = imageObjToDataUrl(front.img, { quality: 0.82, maxEdge: 1000 });
-        if (url) frontPhotoUrls.push(url);
-        else console.warn(`[CMA media] page ${i}: front photo conversion failed`);
+      const frontX = xobjs.find((x) => isFrontPhotoSize(x.width, x.height));
+      if (frontX) {
+        frontPhotoUrls.push(frontX.dataUrl);
       } else {
-        // Fallback: largest landscape image that is not the inset map strip
-        let fallback: PdfImageObj | null = null;
-        let bestArea = 0;
-        for (const { img } of images) {
-          const area = img.width * img.height;
-          const aspect = img.width / img.height;
-          if (aspect < 1.1 || aspect > 2.0) continue;
-          if (area < 80_000) continue;
-          if (area > bestArea && area < 1_500_000) {
-            bestArea = area;
-            fallback = img;
+        // Cotality detail card: front elevation is upper-left photo block
+        // under the address/price header. Crop that region from the rendered page.
+        const canvas = await renderPageToCanvas(page, 1.5);
+        if (canvas) {
+          const url = cropToDataUrl(
+            canvas,
+            // Tuned from Cotality CMA page screenshots:
+            // header ~0–0.14, photo grid starts ~0.15, left photo ~left half,
+            // height covers the exterior shot without the lower interior/map.
+            { x0: 0.04, y0: 0.14, x1: 0.50, y1: 0.48 },
+            { quality: 0.82, maxEdge: 1000 },
+          );
+          if (url) {
+            frontPhotoUrls.push(url);
+          } else {
+            console.warn(`[CMA media] page ${i}: front photo crop failed`);
           }
-        }
-        if (fallback) {
-          const url = imageObjToDataUrl(fallback, { quality: 0.82, maxEdge: 1000 });
-          if (url) frontPhotoUrls.push(url);
         } else {
-          console.warn(`[CMA media] page ${i}: no front-photo candidate among ${images.length} images`);
+          console.warn(`[CMA media] page ${i}: page render failed`);
         }
       }
     }
