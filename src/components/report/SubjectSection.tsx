@@ -197,8 +197,8 @@ export function SubjectSection({ controller }: { controller: ReportDraftControll
       <FactTable title="Site and planning" rows={pick(values, SITE_FIELDS)} />
       <FactTable title="Transaction" rows={pick(values, TRANSACTION_FIELDS)} />
       <p className="text-sm text-muted-foreground">
-        Subject facts (other than Report Type) are read-only here — they come from the
-        inspection record. The original submitted answers remain preserved. Fields left
+        Subject facts (other than Report Type) are shown from the inspection record.
+        To change them, open the inspection form (Edit inspection form on Review). Fields left
         unset in the inspection are omitted entirely, in the report as well as above.
       </p>
     </div>

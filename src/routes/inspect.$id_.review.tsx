@@ -60,11 +60,8 @@ function ReviewScreen() {
   const isSubmitted = submitted || record?.status === "submitted";
   const { state: narrative, updateBlock, resetBlock } = useNarrative(id, values, isSubmitted);
 
-  /** Statutory copy: frozen at submit; falls back to live values for older rows. */
-  const recordValues = useMemo(
-    () => (isSubmitted ? (record?.submittedValues ?? values) : values),
-    [isSubmitted, record?.submittedValues, values],
-  );
+  /** Live answers (editable after submit). First-submit snapshot remains on the record if needed. */
+  const recordValues = useMemo(() => values, [values]);
 
   const missing = useMemo(() => missingFields(values), [values]);
   const json = useMemo(() => JSON.stringify(recordValues, null, 2), [recordValues]);
@@ -147,7 +144,7 @@ function ReviewScreen() {
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
               <p className="font-serif text-base font-semibold text-foreground">Ready for report</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Inspection data is saved. Open the Report Workspace to build the valuation report, or reopen the original inspection form with your answers filled in.
+                Inspection data is saved. Open the Report Workspace to build the valuation report, or reopen the inspection form to view or change answers.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button
@@ -162,14 +159,14 @@ function ReviewScreen() {
                   variant="outline"
                   onClick={() => void navigate({ to: "/inspect/$id", params: { id }, search: { step: 0 } })}
                 >
-                  View inspection form
+                  Edit inspection form
                 </Button>
               </div>
             </div>
             <div className="rounded-lg border border-border bg-card p-4">
               <p className="font-serif text-base font-semibold text-foreground">Structured record (JSON)</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Downloadable copy of the frozen inspection answers (schema field keys). Keep with the job file if required.
+                Downloadable copy of the current inspection answers (schema field keys). Keep with the job file if required.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button variant="outline" onClick={() => void copyJson()}>
@@ -301,7 +298,7 @@ function ReviewScreen() {
                     void navigate({ to: "/inspect/$id", params: { id }, search: { step: index } })
                   }
                 >
-                  {isSubmitted ? "View form" : "Edit"}
+                  {isSubmitted ? "Edit form" : "Edit"}
                 </Button>
               </div>
               {rows.length === 0 ? (

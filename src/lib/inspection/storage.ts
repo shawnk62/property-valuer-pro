@@ -110,19 +110,17 @@ export const inspectionStore = {
   },
 
   async save(id: string, values: InspectionValues): Promise<void> {
-    // Do not alter answers after submit — statutory notes stay fixed.
+    // Live form_values stay editable after submit so answers can be corrected.
+    // submitted_form_values (first-submit snapshot) is left unchanged.
     const existing = await this.get(id);
-    if (existing?.status === "submitted") {
-      throw new Error("This inspection is submitted. Original notes are locked.");
-    }
+    if (!existing) throw new Error("Inspection not found");
     const { error } = await supabase
       .from("inspections")
       .update({
         form_values: values,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", id)
-      .eq("status", "draft");
+      .eq("id", id);
     if (error) throw error;
     emit();
   },

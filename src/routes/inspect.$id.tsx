@@ -78,7 +78,7 @@ function InspectionWizard() {
     }
 
     setShowErrors(false);
-    if (!isSubmitted) saveNow();
+    saveNow();
     if (step === sections.length - 1) {
       void navigate({ to: "/inspect/$id/review", params: { id } });
       return;
@@ -103,18 +103,24 @@ function InspectionWizard() {
             </Link>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {isSubmitted ? "Submitted form · " : ""}
+                {isSubmitted ? "Submitted · editable · " : ""}
                 Step {step + 1} of {sections.length} · Section {section?.id}
               </p>
               <h1 className="truncate font-serif text-lg font-semibold text-foreground">
                 {section?.title}
               </h1>
             </div>
-            {!isSubmitted ? (
-              <Button variant="ghost" size="icon" aria-label="Save draft" onClick={() => { saveNow(); toast.success("Draft saved"); }}>
-                <Save className="size-4" />
-              </Button>
-            ) : null}
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={isSubmitted ? "Save changes" : "Save draft"}
+              onClick={() => {
+                saveNow();
+                toast.success(isSubmitted ? "Changes saved" : "Draft saved");
+              }}
+            >
+              <Save className="size-4" />
+            </Button>
           </div>
           <Progress value={((step + 1) / sections.length) * 100} className="mt-3 h-1.5" />
         </div>
@@ -123,9 +129,10 @@ function InspectionWizard() {
       <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
         {isSubmitted ? (
           <div className="mb-5 rounded-lg border border-border bg-card p-4">
-            <p className="text-sm font-medium text-foreground">Submitted inspection form</p>
+            <p className="text-sm font-medium text-foreground">Submitted inspection — editable</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              This is the same form you filled in on site, with your answers shown. Fields are read-only after submit.
+              Same form as on site. You can change any answer; saves update the live record used by the report.
+              A snapshot from the first submit is kept separately for reference.
             </p>
             <Button
               className="mt-3"
@@ -149,7 +156,7 @@ function InspectionWizard() {
           </div>
         ) : null}
 
-        {step === 0 && !isSubmitted ? (
+        {step === 0 ? (
           <div className="mb-6">
             <ImportPanel values={values} onApply={(patch) => { for (const [k, v] of Object.entries(patch)) setValue(k, v); }} />
           </div>
@@ -162,7 +169,7 @@ function InspectionWizard() {
               field={field}
               values={values}
               showErrors={showErrors}
-              onChange={isSubmitted ? () => {} : setValue}
+              onChange={setValue}
             />
           ))}
         </div>
