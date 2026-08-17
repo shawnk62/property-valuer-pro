@@ -437,14 +437,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       }
 
       if (isPdf) {
-        setStatus("Reading PDF text and images in browser…");
-        const [text, media] = await Promise.all([
-          extractTextFromPdf(file),
-          extractCmaMediaFromPdf(file).catch((err) => {
-            console.warn("[CMA media extract]", err);
-            return { salesMapUrl: null as string | null, frontPhotoUrls: [] as string[] };
-          }),
-        ]);
+        // Sequential: one pdf.js document at a time — parallel getDocument
+        // on the same worker previously raced and dropped image XObjects.
+        setStatus("Reading PDF text…");
+        const text = await extractTextFromPdf(file);
         if (!text.trim()) {
           toast.error("Could not read text from PDF", {
             description: "Try pasting Comparable Sales text into the box below.",
@@ -452,10 +448,18 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           setStatus("PDF text extraction returned empty.");
           return;
         }
+
+        setStatus("Extracting sales map and front photos…");
+        let media = { salesMapUrl: null as string | null, frontPhotoUrls: [] as string[] };
+        try {
+          media = await extractCmaMediaFromPdf(file);
+        } catch (err) {
+          console.warn("[CMA media extract]", err);
+        }
         setStatus(
           media.frontPhotoUrls.length || media.salesMapUrl
             ? `Parsing sales data (${media.frontPhotoUrls.length} photo(s)${media.salesMapUrl ? ", map" : ""})…`
-            : "Parsing sales data…",
+            : "Parsing sales data (no map/photos found in PDF)…",
         );
         await importFromCmaText(text, "CMA PDF", media);
         return;

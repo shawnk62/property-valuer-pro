@@ -1,21 +1,17 @@
 /**
  * Extract Cotality CMA sales map + comparable front photos from a PDF (browser).
  *
- * Observed Cotality structure (verified against real CMA PDFs):
- * - "Map: Sales" page → one large map image (often ~1566×2048)
- * - "Comparable Sales" pages → three ~768×512 listing photos; the first in
- *   paint order is the street/front elevation; a wider strip is the inset map
+ * Cotality structure (verified on real CMAs):
+ * - "Map: Sales" page → large map image (~1566×2048 RGB)
+ * - "Comparable Sales" pages → ~768×512 listing photos; first in paint order
+ *   is the street/front elevation; a wider strip is the inset location map
  *
- * Returns JPEG data URLs so Preview and Word export work without extra uploads.
+ * Returns JPEG data URLs for Preview / Word without a separate upload step.
  */
 
 export type CmaMediaExtract = {
-  /** Sales map image (data URL), or null if not found. */
   salesMapUrl: string | null;
-  /**
-   * Front elevation photos in document order (same order as Comparable Sales
-   * pages, which matches the sale list in the CMA).
-   */
+  /** Front elevations in Comparable Sales page order (matches sale list). */
   frontPhotoUrls: string[];
 };
 
@@ -34,6 +30,11 @@ function pageText(items: { str?: string }[]): string {
     .trim();
 }
 
+/**
+ * Load a decoded image XObject from the page.
+ * Must use the callback form — sync get throws while the worker is still decoding.
+ * Large map bitmaps can take several seconds; do not time out aggressively.
+ */
 function loadImageObj(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   page: any,
@@ -41,43 +42,65 @@ function loadImageObj(
 ): Promise<PdfImageObj | null> {
   return new Promise((resolve) => {
     let settled = false;
-    const done = (obj: PdfImageObj | null) => {
+    const finish = (obj: PdfImageObj | null) => {
       if (settled) return;
       settled = true;
       resolve(obj);
     };
+
+    // Long ceiling only — never treat "still decoding" as failure at 1.5s
+    const timer = setTimeout(() => finish(null), 20_000);
+
     try {
-      page.objs.get(name, (obj: PdfImageObj) => {
-        if (obj && obj.width && obj.data) done(obj);
-        else done(null);
+      page.objs.get(name, (obj: PdfImageObj | null) => {
+        clearTimeout(timer);
+        if (obj && obj.width > 0 && obj.height > 0 && obj.data && obj.data.length > 0) {
+          finish(obj);
+        } else {
+          finish(null);
+        }
       });
     } catch {
-      done(null);
-      return;
+      clearTimeout(timer);
+      finish(null);
     }
-    setTimeout(() => done(null), 1500);
   });
 }
 
-/** Convert a pdf.js decoded image object to a JPEG data URL. */
-function imageObjToDataUrl(img: PdfImageObj, quality = 0.82): string | null {
+/**
+ * Convert pdf.js image object → JPEG data URL, optionally downscaled.
+ * Downscaling keeps localStorage / draft size workable for the sales map.
+ */
+function imageObjToDataUrl(
+  img: PdfImageObj,
+  opts?: { quality?: number; maxEdge?: number },
+): string | null {
   if (typeof document === "undefined") return null;
   if (!img.width || !img.height || !img.data) return null;
 
-  const canvas = document.createElement("canvas");
-  canvas.width = img.width;
-  canvas.height = img.height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
+  const quality = opts?.quality ?? 0.8;
+  const maxEdge = opts?.maxEdge ?? 1600;
 
-  const imageData = ctx.createImageData(img.width, img.height);
+  const srcW = img.width;
+  const srcH = img.height;
+  const scale = Math.min(1, maxEdge / Math.max(srcW, srcH));
+  const outW = Math.max(1, Math.round(srcW * scale));
+  const outH = Math.max(1, Math.round(srcH * scale));
+
+  // Decode full-res into an intermediate canvas, then scale if needed
+  const full = document.createElement("canvas");
+  full.width = srcW;
+  full.height = srcH;
+  const fullCtx = full.getContext("2d");
+  if (!fullCtx) return null;
+
+  const imageData = fullCtx.createImageData(srcW, srcH);
   const src = img.data;
   const dst = imageData.data;
-  const pixels = img.width * img.height;
+  const pixels = srcW * srcH;
   const kind = img.kind ?? 0;
 
   if (kind === 2 || src.length === pixels * 3) {
-    // RGB_24BPP
     let si = 0;
     let di = 0;
     for (let p = 0; p < pixels; p++) {
@@ -87,10 +110,8 @@ function imageObjToDataUrl(img: PdfImageObj, quality = 0.82): string | null {
       dst[di++] = 255;
     }
   } else if (kind === 3 || src.length === pixels * 4) {
-    // RGBA_32BPP
     for (let i = 0; i < pixels * 4; i++) dst[i] = src[i]!;
   } else if (kind === 1 || src.length === pixels) {
-    // grayscale
     let di = 0;
     for (let p = 0; p < pixels; p++) {
       const v = src[p]!;
@@ -103,8 +124,19 @@ function imageObjToDataUrl(img: PdfImageObj, quality = 0.82): string | null {
     return null;
   }
 
-  ctx.putImageData(imageData, 0, 0);
-  return canvas.toDataURL("image/jpeg", quality);
+  fullCtx.putImageData(imageData, 0, 0);
+
+  if (scale >= 0.999) {
+    return full.toDataURL("image/jpeg", quality);
+  }
+
+  const out = document.createElement("canvas");
+  out.width = outW;
+  out.height = outH;
+  const outCtx = out.getContext("2d");
+  if (!outCtx) return full.toDataURL("image/jpeg", quality);
+  outCtx.drawImage(full, 0, 0, outW, outH);
+  return out.toDataURL("image/jpeg", quality);
 }
 
 async function imagesOnPage(
@@ -114,26 +146,22 @@ async function imagesOnPage(
   OPS: any,
 ): Promise<{ name: string; img: PdfImageObj }[]> {
   const ops = await page.getOperatorList();
-  const names: string[] = [];
-  for (let k = 0; k < ops.fnArray.length; k++) {
-    if (ops.fnArray[k] === OPS.paintImageXObject) {
-      const n = ops.argsArray[k]?.[0];
-      if (n) names.push(String(n));
-    }
-  }
-  // Preserve first-seen order; skip duplicate paints of the same XObject
-  const seen = new Set<string>();
   const ordered: string[] = [];
-  for (const n of names) {
-    if (seen.has(n)) continue;
-    seen.add(n);
-    ordered.push(n);
+  const seen = new Set<string>();
+  for (let k = 0; k < ops.fnArray.length; k++) {
+    if (ops.fnArray[k] !== OPS.paintImageXObject) continue;
+    const n = ops.argsArray[k]?.[0];
+    if (!n) continue;
+    const name = String(n);
+    if (seen.has(name)) continue;
+    seen.add(name);
+    ordered.push(name);
   }
 
   const out: { name: string; img: PdfImageObj }[] = [];
   for (const name of ordered) {
     const img = await loadImageObj(page, name);
-    if (img?.width && img?.height && img.data) out.push({ name, img });
+    if (img) out.push({ name, img });
   }
   return out;
 }
@@ -143,7 +171,7 @@ function isLikelyFrontPhoto(img: PdfImageObj): boolean {
   const h = img.height;
   if (w < 400 || h < 280) return false;
   const aspect = w / h;
-  // Property listing photos are landscape ~1.3–1.7; exclude logos and wide inset maps
+  // Listing photos ~1.3–1.7; exclude logos and wide inset maps (~2.3+)
   if (aspect < 1.15 || aspect > 1.9) return false;
   const area = w * h;
   if (area < 150_000 || area > 1_200_000) return false;
@@ -153,10 +181,8 @@ function isLikelyFrontPhoto(img: PdfImageObj): boolean {
 function isLikelyMapImage(img: PdfImageObj): boolean {
   const w = img.width;
   const h = img.height;
-  if (w < 600 || h < 600) return false;
-  const area = w * h;
-  // Full-page map is the dominant image on the Map: Sales page
-  return area >= 800_000;
+  if (w < 500 || h < 500) return false;
+  return w * h >= 600_000;
 }
 
 /**
@@ -177,14 +203,19 @@ export async function extractCmaMediaFromPdf(file: File): Promise<CmaMediaExtrac
     const page = await doc.getPage(i);
     const content = await page.getTextContent();
     const text = pageText(content.items as { str?: string }[]);
-    const lower = text.toLowerCase();
 
-    const isMapPage = /map\s*:\s*sales/i.test(text) || (/map/i.test(text) && /sales/i.test(text) && !/comparable\s+sales/i.test(text));
+    const isMapPage =
+      /map\s*:\s*sales/i.test(text) ||
+      (/\bmap\b/i.test(text) && /\bsales\b/i.test(text) && !/comparable\s+sales/i.test(text));
     const isCompPage = /comparable\s+sales/i.test(text);
 
     if (!isMapPage && !isCompPage) continue;
 
     const images = await imagesOnPage(page, pdfjs.OPS);
+    if (images.length === 0) {
+      console.warn(`[CMA media] page ${i}: classified but no image XObjects decoded`);
+      continue;
+    }
 
     if (isMapPage && !salesMapUrl) {
       let best: PdfImageObj | null = null;
@@ -197,7 +228,6 @@ export async function extractCmaMediaFromPdf(file: File): Promise<CmaMediaExtrac
           best = img;
         }
       }
-      // Fallback: absolute largest image on the map page
       if (!best) {
         for (const { img } of images) {
           const area = img.width * img.height;
@@ -208,19 +238,45 @@ export async function extractCmaMediaFromPdf(file: File): Promise<CmaMediaExtrac
         }
       }
       if (best) {
-        salesMapUrl = imageObjToDataUrl(best, 0.78);
+        salesMapUrl = imageObjToDataUrl(best, { quality: 0.75, maxEdge: 1400 });
+        if (!salesMapUrl) {
+          console.warn("[CMA media] map image decoded but canvas conversion failed");
+        }
       }
     }
 
     if (isCompPage) {
-      // First listing-style photo in paint order = front elevation
       const front = images.find(({ img }) => isLikelyFrontPhoto(img));
       if (front) {
-        const url = imageObjToDataUrl(front.img, 0.82);
+        const url = imageObjToDataUrl(front.img, { quality: 0.82, maxEdge: 1000 });
         if (url) frontPhotoUrls.push(url);
+        else console.warn(`[CMA media] page ${i}: front photo conversion failed`);
+      } else {
+        // Fallback: largest landscape image that is not the inset map strip
+        let fallback: PdfImageObj | null = null;
+        let bestArea = 0;
+        for (const { img } of images) {
+          const area = img.width * img.height;
+          const aspect = img.width / img.height;
+          if (aspect < 1.1 || aspect > 2.0) continue;
+          if (area < 80_000) continue;
+          if (area > bestArea && area < 1_500_000) {
+            bestArea = area;
+            fallback = img;
+          }
+        }
+        if (fallback) {
+          const url = imageObjToDataUrl(fallback, { quality: 0.82, maxEdge: 1000 });
+          if (url) frontPhotoUrls.push(url);
+        } else {
+          console.warn(`[CMA media] page ${i}: no front-photo candidate among ${images.length} images`);
+        }
       }
     }
   }
 
+  console.info(
+    `[CMA media] map=${salesMapUrl ? "yes" : "no"} fronts=${frontPhotoUrls.length}`,
+  );
   return { salesMapUrl, frontPhotoUrls };
 }
