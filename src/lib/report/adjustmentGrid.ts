@@ -254,3 +254,92 @@ export function formatPct(n: number | null | undefined): string {
   const sign = n > 0 ? "+" : "";
   return `${sign}${n.toFixed(1)}%`;
 }
+
+/** Parse a numeric area from "126", "126m²", "474 m2", etc. */
+export function parseAreaNumber(raw: string | number | null | undefined): number | null {
+  if (raw === undefined || raw === null || raw === "") return null;
+  if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
+  const m = String(raw).replace(/,/g, "").match(/(\d+(?:\.\d+)?)/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Parse a rate entered as "2500" or "$2,500". */
+export function parseRateInput(raw: string | number | null | undefined): number | null {
+  if (raw === undefined || raw === null || raw === "") return null;
+  if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
+  const cleaned = String(raw).replace(/[^0-9.-]/g, "");
+  if (!cleaned || cleaned === "-" || cleaned === ".") return null;
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Round to nearest thousand dollars (URAR-style land/GLA lump-sum adjustments). */
+export function roundToNearestThousand(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.round(n / 1000) * 1000;
+}
+
+/**
+ * Area adjustment: rate × (subject − comparable), rounded to nearest $1,000.
+ * Comp larger than subject → negative; comp smaller → positive.
+ */
+export function computeAreaAdjustment(
+  ratePerM2: number,
+  subjectArea: number,
+  comparableArea: number,
+): number {
+  return roundToNearestThousand(ratePerM2 * (subjectArea - comparableArea));
+}
+
+/**
+ * Apply GLA and Site $/m² rates from report meta to every sale's adjustment amounts.
+ * Leaves other features untouched. No-ops when rate or either area is missing.
+ */
+export function applyAreaRateAdjustments(
+  sales: ComparableSale[],
+  values: InspectionValues,
+  glaRateRaw: string | null | undefined,
+  siteRateRaw: string | null | undefined,
+): ComparableSale[] {
+  const glaRate = parseRateInput(glaRateRaw);
+  const siteRate = parseRateInput(siteRateRaw);
+  if (glaRate == null && siteRate == null) return sales;
+
+  const subjectGla = parseAreaNumber(values["imp_gla"]);
+  const subjectSite = parseAreaNumber(values["prop_sitearea"]);
+
+  return sales.map((sale) => {
+    const ensured = ensureSaleAdjustments(sale);
+    const adjustments = { ...ensured.adjustments };
+
+    if (glaRate != null && subjectGla != null) {
+      const detail = adjustments.grossLivingArea?.detail?.trim() || sale.gla || "";
+      const compGla = parseAreaNumber(detail);
+      if (compGla != null) {
+        const cur = adjustments.grossLivingArea ?? defaultFeatureAdjustment();
+        adjustments.grossLivingArea = {
+          ...cur,
+          detail: cur.detail?.trim() ? cur.detail : detail,
+          amount: computeAreaAdjustment(glaRate, subjectGla, compGla),
+        };
+      }
+    }
+
+    if (siteRate != null && subjectSite != null) {
+      const detail = adjustments.site?.detail?.trim() || sale.landArea || "";
+      const compSite = parseAreaNumber(detail);
+      if (compSite != null) {
+        const cur = adjustments.site ?? defaultFeatureAdjustment();
+        adjustments.site = {
+          ...cur,
+          detail: cur.detail?.trim() ? cur.detail : detail,
+          amount: computeAreaAdjustment(siteRate, subjectSite, compSite),
+        };
+      }
+    }
+
+    return { ...ensured, adjustments };
+  });
+}

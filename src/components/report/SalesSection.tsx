@@ -6,6 +6,7 @@ import { isAiConfigured, loadAiSettings } from "@/lib/ai/settings";
 import {
   ADJUSTMENT_FEATURES,
   RELATIVITY_OPTIONS,
+  applyAreaRateAdjustments,
   computeSaleAdjustmentTotals,
   ensureSaleAdjustments,
   formatMoney,
@@ -50,7 +51,7 @@ function parseAmountInput(raw: string): number {
 }
 
 export function SalesSection({ controller }: { controller: ReportDraftController }) {
-  const { draft, setSales } = controller;
+  const { draft, setSales, setMeta } = controller;
   const sales = draft.sales.map(ensureSaleAdjustments);
   const fileRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
@@ -68,7 +69,49 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   }, []);
 
   function replaceSales(next: ComparableSale[]) {
-    setSales(next.map(ensureSaleAdjustments));
+    const ensured = next.map(ensureSaleAdjustments);
+    const withRates = applyAreaRateAdjustments(
+      ensured,
+      draft.values,
+      draft.reportMeta.glaRatePerM2,
+      draft.reportMeta.siteRatePerM2,
+    );
+    setSales(withRates);
+  }
+
+  function setAreaRate(kind: "gla" | "site", raw: string) {
+    const patch =
+      kind === "gla" ? { glaRatePerM2: raw } : { siteRatePerM2: raw };
+    setMeta(patch);
+    const meta = { ...draft.reportMeta, ...patch };
+    const ensured = sales.map(ensureSaleAdjustments);
+    setSales(
+      applyAreaRateAdjustments(
+        ensured,
+        draft.values,
+        meta.glaRatePerM2,
+        meta.siteRatePerM2,
+      ),
+    );
+  }
+
+  /** Split street / suburb for compact two-line address headers. */
+  function addressLines(addr: string): { line1: string; line2?: string } {
+    const a = addr.replace(/\s+/g, " ").trim();
+    if (!a) return { line1: "" };
+    const m = a.match(
+      /^(.+?)\s+((?:[A-Z][A-Za-z'-]+\s+)*(?:QLD|QUEENSLAND)\s*\d{4})$/i,
+    );
+    if (m) return { line1: m[1]!.trim(), line2: m[2]!.trim() };
+    const comma = a.indexOf(",");
+    if (comma > 0 && comma < a.length - 1) {
+      return { line1: a.slice(0, comma).trim(), line2: a.slice(comma + 1).trim() };
+    }
+    if (a.length > 22) {
+      const mid = a.lastIndexOf(" ", 20);
+      if (mid > 8) return { line1: a.slice(0, mid), line2: a.slice(mid + 1) };
+    }
+    return { line1: a };
   }
 
   function patchSale(id: string, patch: Partial<ComparableSale>) {
@@ -80,22 +123,27 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     featureId: string,
     patch: Partial<FeatureAdjustment>,
   ) {
-    replaceSales(
-      sales.map((s) => {
-        if (s.id !== saleId) return s;
-        const current = s.adjustments?.[featureId] ?? {
-          relativity: "similar" as Relativity,
-          amount: 0,
-        };
-        return {
-          ...s,
-          adjustments: {
-            ...s.adjustments,
-            [featureId]: { ...current, ...patch },
-          },
-        };
-      }),
-    );
+    const next = sales.map((s) => {
+      if (s.id !== saleId) return s;
+      const current = s.adjustments?.[featureId] ?? {
+        relativity: "similar" as Relativity,
+        amount: 0,
+        detail: "",
+      };
+      return {
+        ...s,
+        adjustments: {
+          ...s.adjustments,
+          [featureId]: { ...current, ...patch },
+        },
+      };
+    });
+    // When Site/GLA description changes, recompute $ from rate × (subject − comp)
+    if (featureId === "site" || featureId === "grossLivingArea") {
+      replaceSales(next);
+    } else {
+      replaceSales(next);
+    }
   }
 
   const runNarratives = useCallback(
@@ -477,43 +525,62 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                     key={`grid-${chunkIdx}`}
                     className="overflow-x-auto rounded-md border border-border"
                   >
-                    <table className="w-full min-w-[42rem] border-collapse text-left text-sm">
+                    <table className="w-full min-w-[36rem] border-collapse text-left text-sm table-fixed">
+                      <colgroup>
+                        <col className="w-[8.5rem]" />
+                        <col className="w-[6.5rem]" />
+                        {chunk.map((sale) => (
+                          <Fragment key={sale.id}>
+                            <col className="w-[7.25rem]" />
+                            <col className="w-[3.5rem]" />
+                          </Fragment>
+                        ))}
+                      </colgroup>
                       <thead>
                         <tr className="border-b border-border bg-muted/60">
-                          <th className="sticky left-0 z-10 min-w-[9rem] bg-muted/95 px-2 py-2 font-semibold text-foreground">
+                          <th className="sticky left-0 z-10 bg-muted/95 px-1.5 py-1.5 text-xs font-semibold text-foreground">
                             Feature
                           </th>
-                          <th className="min-w-[7rem] px-2 py-2 font-semibold text-foreground">
+                          <th className="px-1.5 py-1.5 text-xs font-semibold text-foreground">
                             Subject
                           </th>
-                          {chunk.map((sale, idx) => (
-                            <th
-                              key={sale.id}
-                              colSpan={2}
-                              className="min-w-[9.5rem] border-l border-border px-1.5 py-2 align-top font-semibold text-foreground"
-                            >
-                              <div className="flex items-start justify-between gap-1">
-                                <span>
-                                  Comparable #{startNum + idx + 1}
-                                  {sale.address ? (
-                                    <span className="mt-0.5 block text-[0.7rem] font-normal leading-tight text-muted-foreground">
-                                      {sale.address}
-                                    </span>
-                                  ) : null}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    replaceSales(sales.filter((s) => s.id !== sale.id))
-                                  }
-                                  className="shrink-0 text-muted-foreground hover:text-destructive"
-                                  aria-label="Remove sale"
-                                >
-                                  &times;
-                                </button>
-                              </div>
-                            </th>
-                          ))}
+                          {chunk.map((sale, idx) => {
+                            const lines = addressLines(sale.address || "");
+                            return (
+                              <th
+                                key={sale.id}
+                                colSpan={2}
+                                className="border-l border-border px-1 py-1.5 align-top text-xs font-semibold text-foreground"
+                              >
+                                <div className="flex items-start justify-between gap-0.5">
+                                  <span className="min-w-0 leading-tight">
+                                    Comparable #{startNum + idx + 1}
+                                    {lines.line1 ? (
+                                      <span className="mt-0.5 block text-[0.65rem] font-normal text-muted-foreground">
+                                        {lines.line1}
+                                        {lines.line2 ? (
+                                          <>
+                                            <br />
+                                            {lines.line2}
+                                          </>
+                                        ) : null}
+                                      </span>
+                                    ) : null}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      replaceSales(sales.filter((s) => s.id !== sale.id))
+                                    }
+                                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                                    aria-label="Remove sale"
+                                  >
+                                    &times;
+                                  </button>
+                                </div>
+                              </th>
+                            );
+                          })}
                         </tr>
                         <tr className="border-b border-border bg-muted/40 text-xs text-muted-foreground">
                           <th className="sticky left-0 z-10 bg-muted/90 px-2 py-1" />
@@ -619,13 +686,49 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                         </tr>
 
                         {/* ---- URAR VALUE ADJUSTMENTS: Description | $ side by side ---- */}
-                        {ADJUSTMENT_FEATURES.map((feature) => (
+                        {ADJUSTMENT_FEATURES.map((feature) => {
+                          const isSite = feature.id === "site";
+                          const isGla = feature.id === "grossLivingArea";
+                          const isAreaRateRow = isSite || isGla;
+                          const subjectDisplay = subjectFeatureDisplay(
+                            feature,
+                            draft.values,
+                          );
+                          const rateValue = isGla
+                            ? (draft.reportMeta.glaRatePerM2 ?? "")
+                            : isSite
+                              ? (draft.reportMeta.siteRatePerM2 ?? "")
+                              : "";
+
+                          return (
                           <tr key={feature.id} className="border-b border-border">
-                            <td className="sticky left-0 z-10 bg-card px-2 py-1.5 font-medium text-foreground">
+                            <td className="sticky left-0 z-10 bg-card px-1.5 py-1 text-xs font-medium text-foreground">
                               {feature.label}
                             </td>
-                            <td className="px-2 py-1.5 text-xs text-muted-foreground">
-                              {subjectFeatureDisplay(feature, draft.values)}
+                            <td className="px-1 py-1 text-[0.7rem] text-muted-foreground align-top">
+                              <div>{subjectDisplay}</div>
+                              {isAreaRateRow ? (
+                                <label className="mt-1 flex flex-col gap-0.5">
+                                  <span className="text-[0.6rem] font-medium uppercase tracking-wide text-muted-foreground">
+                                    $/m² rate
+                                  </span>
+                                  <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    placeholder="e.g. 2500"
+                                    value={rateValue}
+                                    onChange={(e) =>
+                                      setAreaRate(isGla ? "gla" : "site", e.target.value)
+                                    }
+                                    title={
+                                      isGla
+                                        ? "GLA adjustment = rate × (subject GLA − comp GLA), nearest $1,000"
+                                        : "Site adjustment = rate × (subject site − comp site), nearest $1,000"
+                                    }
+                                    className="w-full rounded border border-input bg-card px-1 py-0.5 text-[0.7rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
+                                  />
+                                </label>
+                              ) : null}
                             </td>
                             {chunk.map((sale) => {
                               const adj = sale.adjustments?.[feature.id] ?? {
@@ -651,10 +754,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                   detail = `${sale.cars} car`;
                                 }
                               }
+                              const rateActive =
+                                isAreaRateRow &&
+                                rateValue.trim() !== "" &&
+                                detail.trim() !== "";
                               return (
                                 <Fragment key={sale.id}>
-                                  <td className="border-l border-border px-1 py-1 align-middle">
-                                    <div className="flex min-w-0 items-center gap-0.5">
+                                  <td className="border-l border-border px-0.5 py-1 align-middle">
+                                    <div className="flex min-w-0 flex-col gap-0.5">
                                       <input
                                         value={detail}
                                         onChange={(e) =>
@@ -663,7 +770,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                           })
                                         }
                                         placeholder="—"
-                                        className="min-w-0 flex-1 rounded border border-input bg-card px-1 py-0.5 text-[0.7rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
+                                        className="min-w-0 w-full rounded border border-input bg-card px-1 py-0.5 text-[0.65rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
                                       />
                                       <select
                                         value={adj.relativity}
@@ -672,7 +779,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                             relativity: e.target.value as Relativity,
                                           })
                                         }
-                                        className="w-[5.75rem] shrink-0 rounded border border-input bg-card px-0.5 py-0.5 text-[0.65rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
+                                        className="w-full rounded border border-input bg-card px-0.5 py-0.5 text-[0.6rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
                                         title="Relativity vs subject"
                                       >
                                         {RELATIVITY_OPTIONS.map((opt) => (
@@ -694,14 +801,25 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                           amount: parseAmountInput(e.target.value),
                                         })
                                       }
-                                      className="w-[3.75rem] rounded border border-input bg-card px-1 py-0.5 text-[0.7rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
+                                      readOnly={rateActive}
+                                      title={
+                                        rateActive
+                                          ? "Auto from $/m² rate × (subject − comp), nearest $1,000"
+                                          : "Dollar adjustment"
+                                      }
+                                      className={`w-full rounded border border-input px-1 py-0.5 text-[0.65rem] text-foreground outline-none focus:ring-1 focus:ring-ring ${
+                                        rateActive
+                                          ? "bg-muted/50 cursor-default"
+                                          : "bg-card"
+                                      }`}
                                     />
                                   </td>
                                 </Fragment>
                               );
                             })}
                           </tr>
-                        ))}
+                          );
+                        })}
 
                         {/* ---- Totals ---- */}
                         {(

@@ -473,9 +473,28 @@ function extractFactsFromBlock(address: string, block: string): CmaSaleExtract {
     /(?:Sold\s*Date|Sale\s*Date)\s*[:\s]*([0-9]{1,2}[-/][A-Za-z]{3}[-/][0-9]{2,4}|[0-9]{1,2}[-/][0-9]{1,2}[-/][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3}\s+[0-9]{2,4})/i,
   );
 
+  // Prefer labelled areas (Land Area / Floor / GLA); fall back to ordered m² tokens
+  const landLabel =
+    block.match(
+      /(?:Land\s*Area|Site\s*Area|Land)\s*[:\s]*([\d,]{2,5}(?:\.\d+)?)\s*m\s*[²2]?/i,
+    ) ||
+    block.match(/([\d,]{2,5}(?:\.\d+)?)\s*m\s*[²2]\s*(?:land|site)/i);
+  const glaLabel =
+    block.match(
+      /(?:Floor\s*Area|Living\s*Area|Gross\s*Living\s*Area|GLA|Building\s*Area)\s*[:\s]*([\d,]{2,5}(?:\.\d+)?)\s*m\s*[²2]?/i,
+    ) ||
+    block.match(/([\d,]{2,5}(?:\.\d+)?)\s*m\s*[²2]\s*(?:floor|living|gla|bldg)/i);
   const areaMatches = [...block.matchAll(/(\d{2,5}(?:\.\d+)?)\s*m\s*[²2]/gi)];
-  const landArea = areaMatches[0] ? `${areaMatches[0][1]}m²` : "";
-  const gla = areaMatches[1] ? `${areaMatches[1][1]}m²` : "";
+  const landArea = landLabel
+    ? `${landLabel[1]!.replace(/,/g, "")}m²`
+    : areaMatches[0]
+      ? `${areaMatches[0][1]}m²`
+      : "";
+  const gla = glaLabel
+    ? `${glaLabel[1]!.replace(/,/g, "")}m²`
+    : areaMatches[landLabel ? 0 : 1]
+      ? `${areaMatches[landLabel ? 0 : 1]![1]}m²`
+      : "";
 
   let beds = "";
   let baths = "";

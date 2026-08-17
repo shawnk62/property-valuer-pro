@@ -90,6 +90,16 @@ export interface ReportMeta {
   inspectionDate: string;
   valuerName: string;
   firmName: string;
+  /**
+   * $/m² rate for Gross Living Area adjustments.
+   * Adjustment = round_to_1000(rate × (subject GLA − comparable GLA)).
+   */
+  glaRatePerM2?: string;
+  /**
+   * $/m² rate for Site (land) adjustments.
+   * Adjustment = round_to_1000(rate × (subject site − comparable site)).
+   */
+  siteRatePerM2?: string;
 }
 
 export interface ReportDraft {

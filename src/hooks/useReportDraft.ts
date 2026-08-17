@@ -35,6 +35,8 @@ function emptyMeta(values: Record<string, FieldValue>): ReportMeta {
     inspectionDate: inspDate,
     valuerName: valuer,
     firmName: firm,
+    glaRatePerM2: "",
+    siteRatePerM2: "",
   };
 }
 
