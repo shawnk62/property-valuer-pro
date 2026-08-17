@@ -3,6 +3,7 @@
  * from the URAR-style adjustment grid.
  */
 import { ADJUSTMENT_FEATURES, computeSaleAdjustmentTotals, formatMoney, formatPct } from "./adjustmentGrid";
+import { relativityPhrase } from "./salesRelativity";
 import type { ComparableSale, InspectionValues, ReportMeta } from "./types";
 
 const AUTO_KEY = "pvp-auto-sale-narratives-v1";
@@ -72,12 +73,17 @@ export function buildSaleNarrativePrompt(
     return `- ${f.label}: ${rel}${amt ? ` (${amt > 0 ? "+" : ""}${amt})` : ""}`;
   }).filter(Boolean);
 
+  const overallPhrase = relativityPhrase(sale.salePrice, meta.valueAmount || "");
+  const overallHint = overallPhrase
+    ? `Must align with the office rule: "${overallPhrase}" (sale price vs valuation amount). Do not state a conflicting overall conclusion.`
+    : "Valuation amount is not set; do not state overall superior/inferior.";
+
   const system = `You are writing sales evidence notes for an Australian residential valuation report (QLD).
 Write ONE short professional paragraph (2–5 sentences) comparing this comparable sale to the subject property.
 Rules:
 - Use ONLY the facts and relativity marks provided. Do not invent features, prices, or adjustments.
 - Reflect the valuer's marks (inferior / slightly inferior / similar / slightly superior / superior).
-- End with a clear overall statement: overall inferior, slightly inferior, similar, slightly superior, or superior to the subject, consistent with the marks.
+- Do NOT invent your own overall superior/inferior conclusion. The overall conclusion is fixed by the valuation office rule below and will be appended outside the model.
 - Do not use bullet points. No headings. No dollar adjustment schedules in the narrative unless a net figure is provided and useful in one clause.
 - Tone: formal valuation report English used in Australian practice.`;
 
@@ -101,7 +107,10 @@ Net %: ${formatPct(totals.netPct)}
 Gross %: ${formatPct(totals.grossPct)}
 Adjusted sale price: ${formatMoney(totals.adjustedSalePrice)}
 
-Write the comparable sale narrative paragraph now.`;
+OVERALL CONCLUSION (office rule, not AI)
+${overallHint}
+
+Write the comparable sale narrative paragraph now. Do not end with an overall superior/inferior sentence — that is applied separately.`;
 
   return { system, prompt };
 }

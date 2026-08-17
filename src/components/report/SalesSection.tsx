@@ -31,6 +31,7 @@ import {
   saleNarrativeFingerprint,
   saveAutoSaleNarratives,
 } from "@/lib/report/saleNarrative";
+import { withRelativityNarrative } from "@/lib/report/salesRelativity";
 import type { ComparableSale, FeatureAdjustment } from "@/lib/report/types";
 
 function emptySale(): ComparableSale {
@@ -240,7 +241,12 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                 ? String((result as { text: unknown }).text ?? "")
                 : "";
           if (text.trim()) {
-            updates[sale.id] = text.trim();
+            // Deterministic overall superior/inferior from sale price vs valuation
+            updates[sale.id] = withRelativityNarrative(
+              text.trim(),
+              sale.salePrice,
+              draft.reportMeta.valueAmount || "",
+            );
             fingerprintsRef.current[sale.id] = saleNarrativeFingerprint(sale);
           } else {
             errors.push(sale.address || sale.id);
