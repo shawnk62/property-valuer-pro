@@ -134,6 +134,25 @@ function addressKey(addr: string): string {
     .replace(/[^A-Z0-9]/g, "");
 }
 
+/**
+ * Canonical key from house number + street name + type only.
+ * Prevents "9 ROBINSON CRESCENT" and "9 ROBINSON CRESCENT RUNCORN QLD 4113"
+ * from becoming two separate comps (which produced grids 1–3 and 4–6).
+ */
+function streetKey(addr: string): string {
+  const a = normaliseAddress(addr).toUpperCase();
+  if (!a) return "";
+  const streetTypes =
+    "STREET|ST|ROAD|RD|CRESCENT|CRES|CR|COURT|CT|AVENUE|AVE|DRIVE|DR|PLACE|PL|WAY|CLOSE|CL|TERRACE|TCE|PARADE|PDE|BOULEVARD|BLVD|LANE|LN|CIRCUIT|CCT|HIGHWAY|HWY|ESPLANADE|ESP|GROVE|GR|RISE|MEWS|WALK|ROW|QUAY|POINT|PT|CIRCLE|CIR|TRAIL|TRL|LINK|VISTA|HEIGHTS|HTS|PARK|GARDENS|GDNS|SQUARE|SQ|PROMENADE|PROM|ALLEY|MALL|BYPASS|LOOP";
+  const m = a.match(
+    new RegExp(
+      String.raw`(?:UNIT\s+\d+[A-Z]?\s*[\/,]?\s*)?(?:LOT\s+\d+\s+)?(?:\d+[A-Z]?\s*\/\s*)?(\d+[A-Z]?)\s+([A-Z][A-Z0-9'./ -]*?)\s+\b(${streetTypes})\b`,
+    ),
+  );
+  if (!m) return addressKey(a);
+  return `${m[1]}${m[2].replace(/[^A-Z0-9]/g, "")}${m[3]}`.replace(/\s+/g, "");
+}
+
 export function cmaExtractsToSales(rows: CmaSaleExtract[]): ComparableSale[] {
   const out: ComparableSale[] = [];
   const seen = new Set<string>();
@@ -144,7 +163,7 @@ export function cmaExtractsToSales(rows: CmaSaleExtract[]): ComparableSale[] {
     if (!address && !salePrice) continue;
 
     const key = address
-      ? addressKey(address)
+      ? streetKey(address) || addressKey(address)
       : `price:${salePrice}:${r.saleDate ?? ""}`;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -263,20 +282,26 @@ export function parseCmaTextHeuristic(text: string): CmaSaleExtract[] {
   const merge = (next: CmaSaleExtract) => {
     const address = normaliseAddress(String(next.address ?? ""));
     if (!address) return;
-    const key = addressKey(address);
+    // Prefer street-level key so partial vs full addresses collapse to one sale
+    const key = streetKey(address) || addressKey(address);
     if (!key) return;
     const prev = byKey.get(key);
     if (!prev) {
       byKey.set(key, { ...next, address });
       return;
     }
+    // Prefer the longer / more complete address string when merging
+    const preferAddr =
+      address.length >= normaliseAddress(String(prev.address ?? "")).length
+        ? address
+        : normaliseAddress(String(prev.address ?? "")) || address;
     if (extractScore(next) >= extractScore(prev)) {
       byKey.set(key, {
         ...prev,
         ...Object.fromEntries(
           Object.entries(next).filter(([, v]) => v != null && String(v).trim() !== ""),
         ),
-        address,
+        address: preferAddr,
       });
     } else {
       byKey.set(key, {
@@ -284,7 +309,7 @@ export function parseCmaTextHeuristic(text: string): CmaSaleExtract[] {
         ...Object.fromEntries(
           Object.entries(prev).filter(([, v]) => v != null && String(v).trim() !== ""),
         ),
-        address: prev.address || address,
+        address: preferAddr,
       });
     }
   };
@@ -473,28 +498,40 @@ function extractFactsFromBlock(address: string, block: string): CmaSaleExtract {
     /(?:Sold\s*Date|Sale\s*Date)\s*[:\s]*([0-9]{1,2}[-/][A-Za-z]{3}[-/][0-9]{2,4}|[0-9]{1,2}[-/][0-9]{1,2}[-/][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3}\s+[0-9]{2,4})/i,
   );
 
-  // Prefer labelled areas (Land Area / Floor / GLA); fall back to ordered m² tokens
+  // Prefer labelled areas; Cotality uses many label variants and sometimes omits m²
   const landLabel =
     block.match(
-      /(?:Land\s*Area|Site\s*Area|Land)\s*[:\s]*([\d,]{2,5}(?:\.\d+)?)\s*m\s*[²2]?/i,
+      /(?:Land\s*(?:Area|Size)|Site\s*(?:Area|Size)|Land)\s*[:\s]*([\d,]{2,5}(?:\.\d+)?)\s*(?:m\s*[²2]|sqm)?/i,
     ) ||
-    block.match(/([\d,]{2,5}(?:\.\d+)?)\s*m\s*[²2]\s*(?:land|site)/i);
+    block.match(/([\d,]{2,5}(?:\.\d+)?)\s*(?:m\s*[²2]|sqm)\s*(?:land|site)/i);
   const glaLabel =
     block.match(
-      /(?:Floor\s*Area|Living\s*Area|Gross\s*Living\s*Area|GLA|Building\s*Area)\s*[:\s]*([\d,]{2,5}(?:\.\d+)?)\s*m\s*[²2]?/i,
+      /(?:Floor\s*(?:Area|Size)|Living\s*(?:Area|Size)|Gross\s*Living\s*Area|GLA|Building\s*(?:Area|Size)|Internal\s*Area)\s*[:\s]*([\d,]{2,5}(?:\.\d+)?)\s*(?:m\s*[²2]|sqm)?/i,
     ) ||
-    block.match(/([\d,]{2,5}(?:\.\d+)?)\s*m\s*[²2]\s*(?:floor|living|gla|bldg)/i);
-  const areaMatches = [...block.matchAll(/(\d{2,5}(?:\.\d+)?)\s*m\s*[²2]/gi)];
-  const landArea = landLabel
+    block.match(
+      /([\d,]{2,5}(?:\.\d+)?)\s*(?:m\s*[²2]|sqm)\s*(?:floor|living|gla|bldg|internal)/i,
+    );
+  const areaMatches = [
+    ...block.matchAll(/(\d{2,5}(?:\.\d+)?)\s*(?:m\s*[²2]|sqm)\b/gi),
+  ];
+  // Icon / card row: beds baths cars landGla landGla  e.g. "4 2 2 450 180"
+  const fivePack = block.match(
+    /\b([1-6])\s+([1-6])\s+([0-4])\s+(\d{2,4})\s+(\d{2,4})\b/,
+  );
+  let landArea = landLabel
     ? `${landLabel[1]!.replace(/,/g, "")}m²`
     : areaMatches[0]
       ? `${areaMatches[0][1]}m²`
       : "";
-  const gla = glaLabel
+  let gla = glaLabel
     ? `${glaLabel[1]!.replace(/,/g, "")}m²`
     : areaMatches[landLabel ? 0 : 1]
       ? `${areaMatches[landLabel ? 0 : 1]![1]}m²`
       : "";
+  if ((!landArea || !gla) && fivePack) {
+    if (!landArea) landArea = `${fivePack[4]}m²`;
+    if (!gla) gla = `${fivePack[5]}m²`;
+  }
 
   let beds = "";
   let baths = "";
@@ -571,7 +608,7 @@ export function mergeCmaExtracts(
     const address = normaliseAddress(String(r.address ?? ""));
     if (!address && !r.salePrice) return;
     const key = address
-      ? addressKey(address)
+      ? streetKey(address) || addressKey(address)
       : `price:${String(r.salePrice)}:${r.saleDate ?? ""}`;
     const prev = byKey.get(key);
     if (!prev || extractScore(r) >= extractScore(prev)) {

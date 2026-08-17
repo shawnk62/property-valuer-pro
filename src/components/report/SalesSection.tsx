@@ -69,7 +69,28 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   }, []);
 
   function replaceSales(next: ComparableSale[]) {
-    const ensured = next.map(ensureSaleAdjustments);
+    // Collapse near-duplicate addresses (street number + name + type)
+    const streetTypes =
+      "STREET|ST|ROAD|RD|CRESCENT|CRES|CR|COURT|CT|AVENUE|AVE|DRIVE|DR|PLACE|PL|WAY|CLOSE|CL|TERRACE|TCE|PARADE|PDE|BOULEVARD|BLVD|LANE|LN|CIRCUIT|CCT";
+    const sk = (addr: string) => {
+      const a = addr.replace(/\s+/g, " ").trim().toUpperCase();
+      const m = a.match(
+        new RegExp(
+          String.raw`(?:UNIT\s+\d+[A-Z]?\s*)?(?:\d+[A-Z]?\s*\/\s*)?(\d+[A-Z]?)\s+([A-Z][A-Z0-9'./ -]*?)\s+\b(${streetTypes})\b`,
+        ),
+      );
+      if (!m) return a.replace(/[^A-Z0-9]/g, "");
+      return `${m[1]}${m[2].replace(/[^A-Z0-9]/g, "")}${m[3]}`;
+    };
+    const deduped: ComparableSale[] = [];
+    const seen = new Set<string>();
+    for (const s of next) {
+      const key = sk(s.address || "") || s.id;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      deduped.push(s);
+    }
+    const ensured = deduped.map(ensureSaleAdjustments);
     const withRates = applyAreaRateAdjustments(
       ensured,
       draft.values,
@@ -95,22 +116,35 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     );
   }
 
-  /** Split street / suburb for compact two-line address headers. */
+  /**
+   * Line 1: house number + street name + street type
+   * Line 2: suburb / city + state + postcode (zip)
+   */
   function addressLines(addr: string): { line1: string; line2?: string } {
     const a = addr.replace(/\s+/g, " ").trim();
     if (!a) return { line1: "" };
-    const m = a.match(
-      /^(.+?)\s+((?:[A-Z][A-Za-z'-]+\s+)*(?:QLD|QUEENSLAND)\s*\d{4})$/i,
-    );
-    if (m) return { line1: m[1]!.trim(), line2: m[2]!.trim() };
+    const streetTypes =
+      "STREET|ST|ROAD|RD|CRESCENT|CRES|CR|COURT|CT|AVENUE|AVE|DRIVE|DR|PLACE|PL|WAY|CLOSE|CL|TERRACE|TCE|PARADE|PDE|BOULEVARD|BLVD|LANE|LN|CIRCUIT|CCT|HIGHWAY|HWY|ESPLANADE|ESP|GROVE|GR|RISE|MEWS|WALK|ROW|QUAY|POINT|PT|CIRCLE|CIR|TRAIL|LINK|VISTA|PARK|GARDENS|SQUARE|SQ";
+    const typeRe = new RegExp(`^(?:${streetTypes})$`, "i");
+    const parts = a.split(" ");
+    let typeIdx = -1;
+    for (let i = 0; i < parts.length; i++) {
+      if (typeRe.test(parts[i]!.replace(/,$/, ""))) typeIdx = i;
+    }
+    if (typeIdx >= 0 && typeIdx < parts.length - 1) {
+      return {
+        line1: parts.slice(0, typeIdx + 1).join(" "),
+        line2: parts.slice(typeIdx + 1).join(" "),
+      };
+    }
+    // "12 Example St, Suburb QLD 4000"
     const comma = a.indexOf(",");
     if (comma > 0 && comma < a.length - 1) {
       return { line1: a.slice(0, comma).trim(), line2: a.slice(comma + 1).trim() };
     }
-    if (a.length > 22) {
-      const mid = a.lastIndexOf(" ", 20);
-      if (mid > 8) return { line1: a.slice(0, mid), line2: a.slice(mid + 1) };
-    }
+    // Trailing QLD + postcode without a recognised street type
+    const qld = a.match(/^(.+?)\s+((?:[A-Za-z'-]+\s+)*(?:QLD|QUEENSLAND)\s*\d{4})$/i);
+    if (qld) return { line1: qld[1]!.trim(), line2: qld[2]!.trim() };
     return { line1: a };
   }
 
