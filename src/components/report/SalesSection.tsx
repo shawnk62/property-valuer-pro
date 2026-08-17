@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import { extractComparableSales, generateSaleNarrative } from "@/lib/ai/ai.functions";
@@ -446,20 +446,28 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         </div>
       ) : (
         <div className="overflow-x-auto rounded-md border border-border">
-          <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
+          <table className="w-full min-w-[64rem] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/60">
-                <th className="sticky left-0 z-10 min-w-[11rem] bg-muted/95 px-3 py-2.5 font-semibold text-foreground">
+                <th className="sticky left-0 z-10 min-w-[11rem] bg-muted/95 px-2 py-2 font-semibold text-foreground">
                   Feature
                 </th>
-                <th className="min-w-[12rem] px-3 py-2.5 font-semibold text-foreground">Subject</th>
+                <th className="min-w-[9rem] px-2 py-2 font-semibold text-foreground">Subject</th>
                 {sales.map((sale, idx) => (
                   <th
                     key={sale.id}
-                    className="min-w-[14rem] px-3 py-2.5 align-top font-semibold text-foreground"
+                    colSpan={2}
+                    className="min-w-[14rem] border-l border-border px-2 py-2 align-top font-semibold text-foreground"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span>Comparable #{idx + 1}</span>
+                      <span>
+                        Comparable #{idx + 1}
+                        {sale.address ? (
+                          <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                            {sale.address}
+                          </span>
+                        ) : null}
+                      </span>
                       <button
                         type="button"
                         onClick={() => replaceSales(sales.filter((s) => s.id !== sale.id))}
@@ -472,230 +480,247 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                   </th>
                 ))}
               </tr>
+              <tr className="border-b border-border bg-muted/40 text-xs text-muted-foreground">
+                <th className="sticky left-0 z-10 bg-muted/90 px-2 py-1" />
+                <th className="px-2 py-1" />
+                {sales.map((sale) => (
+                  <Fragment key={sale.id}>
+                    <th className="border-l border-border px-2 py-1 font-medium">Description</th>
+                    <th className="px-2 py-1 font-medium">+/− $</th>
+                  </Fragment>
+                ))}
+              </tr>
             </thead>
             <tbody>
-              {/* URAR identity rows */}
-              <tr className="border-b border-border">
-                <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium text-foreground">
-                  Address
-                </td>
-                <td className="px-3 py-2 text-muted-foreground">
-                  {[draft.values["prop_address"], draft.values["prop_suburb"]]
-                    .filter(Boolean)
-                    .join(", ") || "—"}
-                </td>
-                {sales.map((sale) => (
-                  <td key={sale.id} className="px-1 py-1 align-top">
-                    <input
-                      value={sale.address}
-                      onChange={(e) => patchSale(sale.id, { address: e.target.value })}
-                      className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-input focus:bg-accent/40"
-                    />
+              {/* ---- URAR identity rows ---- */}
+              {(
+                [
+                  {
+                    key: "address",
+                    label: "Address",
+                    subject: () =>
+                      [draft.values["prop_address"], draft.values["prop_suburb"]]
+                        .filter(Boolean)
+                        .join(", ") || "—",
+                    read: (s: (typeof sales)[0]) => s.address,
+                    write: (id: string, v: string) => patchSale(id, { address: v }),
+                  },
+                  {
+                    key: "proximity",
+                    label: "Proximity to Subject",
+                    subject: () => "—",
+                    read: (s: (typeof sales)[0]) => s.proximity ?? "",
+                    write: (id: string, v: string) => patchSale(id, { proximity: v }),
+                  },
+                  {
+                    key: "salePrice",
+                    label: "Sale Price",
+                    subject: () =>
+                      draft.reportMeta.valueAmount
+                        ? `Subject value ${draft.reportMeta.valueAmount}`
+                        : "—",
+                    read: (s: (typeof sales)[0]) => s.salePrice,
+                    write: (id: string, v: string) => patchSale(id, { salePrice: v }),
+                  },
+                  {
+                    key: "priceGla",
+                    label: "Sale Price/Gross Liv. Area",
+                    subject: () => "—",
+                    read: (s: (typeof sales)[0]) => salePricePerGla(s),
+                    write: null as null | ((id: string, v: string) => void),
+                  },
+                  {
+                    key: "dataSource",
+                    label: "Data Source(s)",
+                    subject: () => "—",
+                    read: (s: (typeof sales)[0]) => s.dataSource ?? "",
+                    write: (id: string, v: string) => patchSale(id, { dataSource: v }),
+                  },
+                  {
+                    key: "verificationSource",
+                    label: "Verification Source(s)",
+                    subject: () => "—",
+                    read: (s: (typeof sales)[0]) => s.verificationSource ?? "",
+                    write: (id: string, v: string) =>
+                      patchSale(id, { verificationSource: v }),
+                  },
+                ] as const
+              ).map((row) => (
+                <tr key={row.key} className="border-b border-border">
+                  <td className="sticky left-0 z-10 bg-card px-2 py-1.5 font-medium text-foreground">
+                    {row.label}
                   </td>
-                ))}
-              </tr>
-              <tr className="border-b border-border">
-                <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium text-foreground">
-                  Proximity to Subject
-                </td>
-                <td className="px-3 py-2 text-muted-foreground">—</td>
-                {sales.map((sale) => (
-                  <td key={sale.id} className="px-1 py-1 align-top">
-                    <input
-                      value={sale.proximity ?? ""}
-                      onChange={(e) => patchSale(sale.id, { proximity: e.target.value })}
-                      placeholder="e.g. 1.39 km"
-                      className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-input focus:bg-accent/40"
-                    />
-                  </td>
-                ))}
-              </tr>
-              <tr className="border-b border-border">
-                <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium text-foreground">
-                  Sale Price
-                </td>
-                <td className="px-3 py-2 text-muted-foreground">
-                  {draft.reportMeta.valueAmount
-                    ? `Subject value ${draft.reportMeta.valueAmount}`
-                    : "—"}
-                </td>
-                {sales.map((sale) => (
-                  <td key={sale.id} className="px-1 py-1 align-top">
-                    <input
-                      value={sale.salePrice}
-                      onChange={(e) => patchSale(sale.id, { salePrice: e.target.value })}
-                      className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-input focus:bg-accent/40"
-                    />
-                  </td>
-                ))}
-              </tr>
-              <tr className="border-b border-border">
-                <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium text-foreground">
-                  Sale Price/Gross Liv. Area
-                </td>
-                <td className="px-3 py-2 text-muted-foreground">
-                  {(() => {
-                    const gla = draft.values["imp_gla"];
-                    const val = draft.reportMeta.valueAmount;
-                    if (!gla || !val) return "—";
-                    // display only; comps use salePricePerGla()
-                    return "—";
-                  })()}
-                </td>
-                {sales.map((sale) => (
-                  <td key={sale.id} className="px-3 py-2 text-sm text-muted-foreground">
-                    {salePricePerGla(sale)}
-                  </td>
-                ))}
-              </tr>
-              <tr className="border-b border-border">
-                <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium text-foreground">
-                  Data Source(s)
-                </td>
-                <td className="px-3 py-2 text-muted-foreground">—</td>
-                {sales.map((sale) => (
-                  <td key={sale.id} className="px-1 py-1 align-top">
-                    <input
-                      value={sale.dataSource ?? ""}
-                      onChange={(e) => patchSale(sale.id, { dataSource: e.target.value })}
-                      placeholder="e.g. Cotality / RP Data"
-                      className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-input focus:bg-accent/40"
-                    />
-                  </td>
-                ))}
-              </tr>
-              <tr className="border-b border-border">
-                <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium text-foreground">
-                  Verification Source(s)
-                </td>
-                <td className="px-3 py-2 text-muted-foreground">—</td>
-                {sales.map((sale) => (
-                  <td key={sale.id} className="px-1 py-1 align-top">
-                    <input
-                      value={sale.verificationSource ?? ""}
-                      onChange={(e) =>
-                        patchSale(sale.id, { verificationSource: e.target.value })
-                      }
-                      className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-input focus:bg-accent/40"
-                    />
-                  </td>
-                ))}
-              </tr>
+                  <td className="px-2 py-1.5 text-muted-foreground">{row.subject()}</td>
+                  {sales.map((sale) => (
+                    <Fragment key={sale.id}>
+                      <td className="border-l border-border px-1 py-1 align-middle">
+                        {row.write ? (
+                          <input
+                            value={row.read(sale)}
+                            onChange={(e) => row.write!(sale.id, e.target.value)}
+                            className="w-full rounded border border-transparent bg-transparent px-1.5 py-1 text-sm outline-none focus:border-input focus:bg-accent/40"
+                          />
+                        ) : (
+                          <span className="px-1.5 text-sm text-muted-foreground">
+                            {row.read(sale)}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-1 py-1 text-center text-muted-foreground">—</td>
+                    </Fragment>
+                  ))}
+                </tr>
+              ))}
+
               <tr className="border-b border-border bg-muted/30">
                 <td
-                  colSpan={2 + sales.length}
-                  className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  colSpan={2 + sales.length * 2}
+                  className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                 >
-                  Value adjustments — description (relativity) and +/− $ adjustment
+                  Value adjustments
                 </td>
               </tr>
 
+              {/* ---- URAR VALUE ADJUSTMENTS: Description | $ side by side ---- */}
               {ADJUSTMENT_FEATURES.map((feature) => (
                 <tr key={feature.id} className="border-b border-border">
-                  <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium text-foreground">
+                  <td className="sticky left-0 z-10 bg-card px-2 py-1.5 font-medium text-foreground">
                     {feature.label}
                   </td>
-                  <td className="px-3 py-2 text-muted-foreground">
+                  <td className="px-2 py-1.5 text-muted-foreground">
                     {subjectFeatureDisplay(feature, draft.values)}
                   </td>
                   {sales.map((sale) => {
                     const adj = sale.adjustments?.[feature.id] ?? {
                       relativity: "similar" as Relativity,
                       amount: 0,
+                      detail: "",
                     };
+                    // Prefer stored detail; fall back to known sale facts for key lines
+                    let detail = adj.detail ?? "";
+                    if (!detail.trim()) {
+                      if (feature.id === "site") detail = sale.landArea || "";
+                      if (feature.id === "grossLivingArea") detail = sale.gla || "";
+                      if (feature.id === "dateOfSale") detail = sale.saleDate || "";
+                      if (feature.id === "aboveGradeRoomCount") {
+                        detail = [
+                          sale.beds ? `${sale.beds} bd` : null,
+                          sale.baths ? `${sale.baths} ba` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" / ");
+                      }
+                      if (feature.id === "garageCarport" && sale.cars) {
+                        detail = `${sale.cars} car`;
+                      }
+                    }
                     return (
-                      <td key={sale.id} className="px-1 py-1 align-top">
-                        <div className="flex flex-col gap-1 px-1">
-                          <select
-                            value={adj.relativity}
-                            onChange={(e) =>
-                              patchAdjustment(sale.id, feature.id, {
-                                relativity: e.target.value as Relativity,
-                              })
-                            }
-                            className="w-full rounded border border-input bg-card px-2 py-1.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
-                          >
-                            {RELATIVITY_OPTIONS.map((opt) => (
-                              <option key={opt} value={opt}>
-                                {opt.charAt(0).toUpperCase() + opt.slice(1)}
-                              </option>
-                            ))}
-                          </select>
+                      <Fragment key={sale.id}>
+                        <td className="border-l border-border px-1 py-1 align-middle">
+                          <div className="flex min-w-[11rem] items-center gap-1">
+                            <input
+                              value={detail}
+                              onChange={(e) =>
+                                patchAdjustment(sale.id, feature.id, {
+                                  detail: e.target.value,
+                                })
+                              }
+                              placeholder="—"
+                              className="min-w-0 flex-1 rounded border border-input bg-card px-1.5 py-1 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
+                            />
+                            <select
+                              value={adj.relativity}
+                              onChange={(e) =>
+                                patchAdjustment(sale.id, feature.id, {
+                                  relativity: e.target.value as Relativity,
+                                })
+                              }
+                              className="w-[7.5rem] shrink-0 rounded border border-input bg-card px-1 py-1 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
+                              title="Relativity vs subject"
+                            >
+                              {RELATIVITY_OPTIONS.map((opt) => (
+                                <option key={opt} value={opt}>
+                                  {opt}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </td>
+                        <td className="px-1 py-1 align-middle">
                           <input
                             type="text"
                             inputMode="decimal"
-                            placeholder="$ adj."
+                            placeholder="0"
                             value={adj.amount === 0 ? "" : String(adj.amount)}
                             onChange={(e) =>
                               patchAdjustment(sale.id, feature.id, {
                                 amount: parseAmountInput(e.target.value),
                               })
                             }
-                            className="w-full rounded border border-input bg-card px-2 py-1.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
+                            className="w-[4.5rem] rounded border border-input bg-card px-1.5 py-1 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
                           />
-                        </div>
-                      </td>
+                        </td>
+                      </Fragment>
                     );
                   })}
                 </tr>
               ))}
 
-              <tr className="border-b border-border bg-muted/40">
-                <td className="sticky left-0 z-10 bg-muted/95 px-3 py-2 font-semibold">
-                  Net Adjustment (Total)
-                </td>
-                <td className="px-3 py-2 text-muted-foreground">—</td>
-                {sales.map((sale) => (
-                  <td key={sale.id} className="px-3 py-2 font-medium">
-                    {formatMoney(computeSaleAdjustmentTotals(sale).netAdjustment)}
+              {/* ---- Totals ---- */}
+              {(
+                [
+                  {
+                    label: "Net Adjustment (Total)",
+                    cell: (sale: (typeof sales)[0]) =>
+                      formatMoney(computeSaleAdjustmentTotals(sale).netAdjustment),
+                  },
+                  {
+                    label: "Net Adj. %",
+                    cell: (sale: (typeof sales)[0]) =>
+                      formatPct(computeSaleAdjustmentTotals(sale).netPct),
+                  },
+                  {
+                    label: "Gross Adj. %",
+                    cell: (sale: (typeof sales)[0]) =>
+                      formatPct(computeSaleAdjustmentTotals(sale).grossPct),
+                  },
+                  {
+                    label: "Adjusted Sale Price",
+                    cell: (sale: (typeof sales)[0]) =>
+                      formatMoney(computeSaleAdjustmentTotals(sale).adjustedSalePrice),
+                    strong: true,
+                  },
+                ] as const
+              ).map((row) => (
+                <tr key={row.label} className="border-b border-border bg-muted/40">
+                  <td className="sticky left-0 z-10 bg-muted/95 px-2 py-1.5 font-semibold">
+                    {row.label}
                   </td>
-                ))}
-              </tr>
-              <tr className="border-b border-border bg-muted/40">
-                <td className="sticky left-0 z-10 bg-muted/95 px-3 py-2 font-semibold">
-                  Net Adj. %
-                </td>
-                <td className="px-3 py-2 text-muted-foreground">—</td>
-                {sales.map((sale) => (
-                  <td key={sale.id} className="px-3 py-2">
-                    {formatPct(computeSaleAdjustmentTotals(sale).netPct)}
-                  </td>
-                ))}
-              </tr>
-              <tr className="border-b border-border bg-muted/40">
-                <td className="sticky left-0 z-10 bg-muted/95 px-3 py-2 font-semibold">
-                  Gross Adj. %
-                </td>
-                <td className="px-3 py-2 text-muted-foreground">—</td>
-                {sales.map((sale) => (
-                  <td key={sale.id} className="px-3 py-2">
-                    {formatPct(computeSaleAdjustmentTotals(sale).grossPct)}
-                  </td>
-                ))}
-              </tr>
-              <tr className="border-b border-border bg-muted/50">
-                <td className="sticky left-0 z-10 bg-muted/95 px-3 py-2 font-semibold">
-                  Adjusted Sale Price
-                </td>
-                <td className="px-3 py-2 text-muted-foreground">—</td>
-                {sales.map((sale) => (
-                  <td key={sale.id} className="px-3 py-2 font-semibold">
-                    {formatMoney(computeSaleAdjustmentTotals(sale).adjustedSalePrice)}
-                  </td>
-                ))}
-              </tr>
+                  <td className="px-2 py-1.5 text-muted-foreground">—</td>
+                  {sales.map((sale) => (
+                    <Fragment key={sale.id}>
+                      <td
+                        colSpan={2}
+                        className={`border-l border-border px-2 py-1.5 ${
+                          "strong" in row && row.strong ? "font-semibold" : "font-medium"
+                        }`}
+                      >
+                        {row.cell(sale)}
+                      </td>
+                    </Fragment>
+                  ))}
+                </tr>
+              ))}
 
               <tr className="border-b border-border">
-                <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium">
+                <td className="sticky left-0 z-10 bg-card px-2 py-1.5 font-medium">
                   Report narrative
                 </td>
-                <td className="px-3 py-2 text-muted-foreground">
-                  From grid marks (AI)
-                </td>
+                <td className="px-2 py-1.5 text-muted-foreground">From grid marks (AI)</td>
                 {sales.map((sale) => (
-                  <td key={sale.id} className="px-1 py-1 align-top">
+                  <td key={sale.id} colSpan={2} className="border-l border-border px-1 py-1">
                     <textarea
-                      rows={5}
+                      rows={4}
                       value={sale.narrative ?? ""}
                       onChange={(e) => patchSale(sale.id, { narrative: e.target.value })}
                       placeholder="Auto-generated from relativity marks…"
@@ -705,12 +730,12 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                 ))}
               </tr>
               <tr className="border-b border-border">
-                <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium">
+                <td className="sticky left-0 z-10 bg-card px-2 py-1.5 font-medium">
                   Source notes
                 </td>
-                <td className="px-3 py-2 text-muted-foreground">CSV / manual</td>
+                <td className="px-2 py-1.5 text-muted-foreground">CSV / CMA</td>
                 {sales.map((sale) => (
-                  <td key={sale.id} className="px-1 py-1 align-top">
+                  <td key={sale.id} colSpan={2} className="border-l border-border px-1 py-1">
                     <textarea
                       rows={2}
                       value={sale.comments}
