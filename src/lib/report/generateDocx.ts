@@ -403,7 +403,12 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
 
   // ---- 5 ----
   children.push(sectionHeading("5.", "Location and Neighbourhood"));
-  if (get(v, "nbhd_description")) children.push(...prose(get(v, "nbhd_description")));
+  {
+    const locationText =
+      (draft.narrative.location && draft.narrative.location.trim()) ||
+      get(v, "nbhd_description");
+    if (locationText) children.push(...prose(locationText));
+  }
   if (get(v, "nbhd_market_conditions")) children.push(...prose(get(v, "nbhd_market_conditions")));
   push(
     children,

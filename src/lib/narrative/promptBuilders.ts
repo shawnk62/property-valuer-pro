@@ -127,6 +127,22 @@ Summarise the overall condition and any final remarks or qualifications recorded
       };
 
     /* ---- Report workspace narrative blocks (Narrative tab) ---- */
+    case "location":
+      return {
+        system: BASE_RULES + brevityHint(type),
+        prompt: `Write section 5.1 "Description of Neighbourhood" for a ${type} valuation report (QLD / Peterson style).
+
+Inspection data (neighbourhood / location):
+${sectionAnswers(values, ["1A", "1"])}
+
+Requirements:
+- One short professional paragraph (Stamp Duty: 1–2 sentences; other types: up to 4 short sentences).
+- Describe the locality, surrounding development, and neighbourhood character from the recorded answers only.
+- If a free-text Neighbourhood Description is present, refine it into report prose without inventing facts.
+- Do not invent amenities, distances, or land uses that are not in the data.
+- Do not include the street address sentence (that belongs in 5.2 Property Location).
+- Plain valuation English; no marketing language.`,
+      };
     case "brief":
       return {
         system: BASE_RULES + brevityHint(type),

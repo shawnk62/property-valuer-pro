@@ -697,7 +697,11 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         {isPhilReportType(reportType.id) ? (
           <>
             <Sub title="5.1  Description of Neighbourhood">
-              <Para>{get(v, "nbhd_description") || "—"}</Para>
+              <Para>
+                {draft.narrative.location?.trim() ||
+                  get(v, "nbhd_description") ||
+                  "—"}
+              </Para>
             </Sub>
             <Sub title="5.2  Property Location">
               <Para>
@@ -716,7 +720,11 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           </>
         ) : (
           <>
-            <Prose text={get(v, "nbhd_description")} />
+            <Prose
+              text={
+                draft.narrative.location?.trim() || get(v, "nbhd_description") || ""
+              }
+            />
             <Prose text={get(v, "nbhd_market_conditions")} />
             <Facts
               values={v}

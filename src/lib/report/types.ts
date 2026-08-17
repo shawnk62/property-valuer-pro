@@ -84,6 +84,8 @@ export interface ComparableSale {
 
 export interface ReportNarrative {
   brief: string;
+  /** §5.1 Description of Neighbourhood (AI or template). */
+  location: string;
   improvements: string;
   accommodation: string;
   remarks: string;

@@ -14,6 +14,11 @@ const BLOCKS: { key: keyof ReportNarrative; label: string; hint: string }[] = [
     hint: "Appears on the summary page and sets the tone of the report.",
   },
   {
+    key: "location",
+    label: "Description of neighbourhood (5.1)",
+    hint: "Locality and neighbourhood character for section 5.1. Generated from neighbourhood inspection fields.",
+  },
+  {
     key: "improvements",
     label: "Improvements — general description",
     hint: "Section 7.1 of the report.",

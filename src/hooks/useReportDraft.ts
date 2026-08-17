@@ -19,7 +19,19 @@ import type {
 const storageKey = (id: string) => `report-draft:${id}`;
 
 function emptyNarrative(): ReportNarrative {
-  return { brief: "", improvements: "", accommodation: "", remarks: "" };
+  return { brief: "", location: "", improvements: "", accommodation: "", remarks: "" };
+}
+
+function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): ReportNarrative {
+  const base = emptyNarrative();
+  if (!raw || typeof raw !== "object") return base;
+  return {
+    brief: typeof raw.brief === "string" ? raw.brief : "",
+    location: typeof raw.location === "string" ? raw.location : "",
+    improvements: typeof raw.improvements === "string" ? raw.improvements : "",
+    accommodation: typeof raw.accommodation === "string" ? raw.accommodation : "",
+    remarks: typeof raw.remarks === "string" ? raw.remarks : "",
+  };
 }
 
 function emptyMeta(values: Record<string, FieldValue>): ReportMeta {
@@ -193,8 +205,8 @@ export function useReportDraft(inspectionId: string) {
           Object.values(local.narrative).every((s) => !String(s ?? "").trim());
 
         let narrative: ReportNarrative;
-        if (!narrativeEmpty && cloudNarrative) narrative = cloudNarrative;
-        else if (!localNarrativeEmpty && local?.narrative) narrative = local.narrative;
+        if (!narrativeEmpty && cloudNarrative) narrative = normalizeNarrative(cloudNarrative);
+        else if (!localNarrativeEmpty && local?.narrative) narrative = normalizeNarrative(local.narrative);
         else narrative = generateNarrative(values);
 
         const reportMeta =

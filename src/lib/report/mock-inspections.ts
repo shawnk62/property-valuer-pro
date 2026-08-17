@@ -224,7 +224,7 @@ export function createDraft(inspectionId: string): ReportDraft {
   return {
     inspectionId,
     values,
-    narrative: { brief: "", improvements: "", accommodation: "", remarks: "" },
+    narrative: { brief: "", location: "", improvements: "", accommodation: "", remarks: "" },
     photos: [],
     sales: [],
     reportMeta: {

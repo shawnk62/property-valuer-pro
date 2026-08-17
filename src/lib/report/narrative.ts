@@ -144,10 +144,56 @@ function buildRemarks(values: InspectionValues): string {
     .join(" ");
 }
 
+
+function buildLocation(values: InspectionValues): string {
+  // Prefer free-text neighbourhood description when the valuer typed one on site
+  if (hasValue(values["nbhd_description"])) {
+    return v(values, "nbhd_description");
+  }
+
+  const parts: string[] = [];
+  const location = v(values, "nbhd_location");
+  const builtup = v(values, "nbhd_builtup");
+  const character = v(values, "nbhd_character");
+  const boundaries = v(values, "nbhd_boundaries");
+  const growth = v(values, "nbhd_growth");
+  const demand = v(values, "nbhd_demand");
+  const market = v(values, "nbhd_market_conditions");
+
+  if (location || builtup) {
+    parts.push(
+      sentence([
+        "The subject is situated in a",
+        builtup && builtup.toLowerCase(),
+        location && location.toLowerCase(),
+        "locality",
+        character && `characterised by ${character.toLowerCase()}`,
+      ]),
+    );
+  }
+  if (boundaries) {
+    parts.push(sentence(["Neighbourhood boundaries are described as", boundaries]));
+  }
+  if (growth || demand) {
+    parts.push(
+      sentence([
+        growth && `Growth is ${growth.toLowerCase()}`,
+        demand && `with demand/supply assessed as ${demand.toLowerCase()}`,
+      ]),
+    );
+  }
+  if (market) {
+    parts.push(sentence([market]));
+  }
+
+  return parts.filter(Boolean).join(" ");
+}
+
 export function generateNarrative(values: InspectionValues): ReportNarrative {
   return {
     brief: buildBrief(values) ||
       sentence(["The subject property is located at", fullAddress(values)]),
+    location: buildLocation(values),
     improvements: buildImprovements(values),
     accommodation: buildAccommodation(values),
     remarks: buildRemarks(values),
