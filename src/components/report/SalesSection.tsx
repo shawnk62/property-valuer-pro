@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
-import { generateSaleNarrative } from "@/lib/ai/ai.functions";
+import { extractComparableSales, generateSaleNarrative } from "@/lib/ai/ai.functions";
 import { isAiConfigured, loadAiSettings } from "@/lib/ai/settings";
 import {
   ADJUSTMENT_FEATURES,
@@ -13,6 +13,7 @@ import {
   subjectFeatureDisplay,
   type Relativity,
 } from "@/lib/report/adjustmentGrid";
+import { cmaExtractsToSales } from "@/lib/report/importSalesCma";
 import { importSalesFromCsv } from "@/lib/report/importSalesCsv";
 import { MOCK_COTALITY_SALES } from "@/lib/report/mock-sales";
 import {
@@ -195,28 +196,99 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoNarratives, sales, runNarratives]);
 
-  async function onCsvSelected(file: File | null) {
+  async function fileToBase64(file: File): Promise<string> {
+    const buf = await file.arrayBuffer();
+    let binary = "";
+    const bytes = new Uint8Array(buf);
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]!);
+    return btoa(binary);
+  }
+
+  async function onCmaFileSelected(file: File | null) {
     if (!file) return;
+    const settings = loadAiSettings();
+    if (!isAiConfigured(settings)) {
+      toast.error("Configure AI in Settings first", {
+        description: "CMA PDF extract uses your configured provider (e.g. xAI / Grok).",
+      });
+      return;
+    }
+
     setImporting(true);
+    setStatus("Extracting comparable sales from CMA…");
     try {
-      const text = await file.text();
-      const result = importSalesFromCsv(text);
-      if (result.sales.length === 0) {
-        toast.error("No sales imported", {
-          description: result.warnings.join(" ") || "Check the CSV headers and try again.",
-        });
+      const isPdf =
+        file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+      const isCsv =
+        file.type === "text/csv" ||
+        file.name.toLowerCase().endsWith(".csv") ||
+        file.type === "application/vnd.ms-excel";
+
+      if (isCsv) {
+        const text = await file.text();
+        const result = importSalesFromCsv(text);
+        if (result.sales.length === 0) {
+          toast.error("No sales in CSV", {
+            description: result.warnings.join(" ") || "Check headers.",
+          });
+          return;
+        }
+        fingerprintsRef.current = {};
+        replaceSales(result.sales.map(ensureSaleAdjustments));
+        toast.success(`Imported ${result.sales.length} sale(s) from CSV`);
+        setStatus(`Imported ${result.sales.length} from CSV.`);
         return;
       }
-      fingerprintsRef.current = {};
-      replaceSales(result.sales.map(ensureSaleAdjustments));
-      toast.success(`Imported ${result.sales.length} sale(s) into adjustment grid`, {
-        description: autoNarratives
-          ? "Relativity defaults to Similar; narratives will generate automatically if AI is configured."
-          : "Relativity defaults to Similar. Auto narratives are off.",
+
+      const result = await extractComparableSales({
+        data: {
+          settings: {
+            provider: settings.provider,
+            model: settings.model,
+            apiKey: settings.apiKey,
+            ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
+          },
+          source: isPdf ? "file" : "text",
+          ...(isPdf
+            ? {
+                file: {
+                  mimeType: file.type || "application/pdf",
+                  base64: await fileToBase64(file),
+                },
+              }
+            : { text: await file.text() }),
+        },
       });
+
+      const rawSales =
+        result && typeof result === "object" && "sales" in result
+          ? (result as { sales: unknown[] }).sales
+          : [];
+      const mapped = cmaExtractsToSales(
+        Array.isArray(rawSales) ? (rawSales as Parameters<typeof cmaExtractsToSales>[0]) : [],
+      );
+
+      if (mapped.length === 0) {
+        toast.error("No comparable sales found in the CMA", {
+          description: "Try a full CMA PDF with Comparable Sales pages, or paste text.",
+        });
+        setStatus("No sales extracted.");
+        return;
+      }
+
+      fingerprintsRef.current = {};
+      replaceSales(mapped.map(ensureSaleAdjustments));
+      toast.success(`Extracted ${mapped.length} comparable sale(s) from CMA`, {
+        description: autoNarratives
+          ? "Grid marks pre-filled from COMPARABLE/SUPERIOR/INFERIOR where found. Narratives will follow if auto is on."
+          : "Grid marks pre-filled from CMA comparison lines where found.",
+      });
+      setStatus(`Extracted ${mapped.length} sale(s) from CMA.`);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not read CSV";
-      toast.error("CSV import failed", { description: message });
+      console.error("[CMA import]", err);
+      const message = err instanceof Error ? err.message : "CMA import failed";
+      toast.error("CMA import failed", { description: message });
+      setStatus(`Failed: ${message}`);
     } finally {
       setImporting(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -229,8 +301,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-foreground">Sales comparison grid</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Shared across all report types. Import CSV, set relativity and $ adjustments. Narratives
-            for the report are built from those marks (editable below each sale).
+            Shared across all report types. Import a Cotality CMA PDF (primary) or CSV. Relativity
+            marks and $ adjustments feed report narratives (editable per sale).
           </p>
           <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-foreground">
             <input
@@ -257,9 +329,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           <input
             ref={fileRef}
             type="file"
-            accept=".csv,text/csv"
+            accept=".pdf,.csv,text/csv,application/pdf"
             className="hidden"
-            onChange={(e) => void onCsvSelected(e.target.files?.[0] ?? null)}
+            onChange={(e) => void onCmaFileSelected(e.target.files?.[0] ?? null)}
           />
           <button
             type="button"
@@ -267,7 +339,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
             onClick={() => fileRef.current?.click()}
             className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
           >
-            {importing ? "Importing…" : "Import CSV"}
+            {importing ? "Importing…" : "Import CMA PDF"}
           </button>
           <button
             type="button"
@@ -302,7 +374,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
       {sales.length === 0 ? (
         <div className="rounded-md border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
-          No comparable sales yet. Import a CSV from RP Data or add a sale.
+          No comparable sales yet. Import a Cotality CMA PDF or add a sale.
         </div>
       ) : (
         <div className="overflow-x-auto rounded-md border border-border">
