@@ -17,8 +17,9 @@ import {
 import { extractTextFromPdf } from "@/lib/report/extractPdfText";
 import {
   cmaExtractsToSales,
+  mergeCmaExtracts,
   parseCmaTextHeuristic,
-  salesFromCmaText,
+  type CmaSaleExtract,
 } from "@/lib/report/importSalesCma";
 import { importSalesFromCsv } from "@/lib/report/importSalesCsv";
 import { MOCK_COTALITY_SALES } from "@/lib/report/mock-sales";
@@ -205,7 +206,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
   /**
    * Import sales from CMA text (paste or PDF-extracted).
-   * Heuristic first (supports 9+ sales); optional AI text fallback if zero hits.
+   * Heuristic first (supports 9+ sales). When AI is configured and the heuristic
+   * finds zero or fewer than three sales, run AI and merge by address so a
+   * missing third (or more) is recovered instead of stopping at a partial parse.
    */
   async function importFromCmaText(text: string, sourceLabel = "CMA text") {
     const trimmed = text.trim();
@@ -217,10 +220,19 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     setImporting(true);
     setStatus(`Parsing ${sourceLabel}…`);
     try {
-      let mapped = salesFromCmaText(trimmed);
+      const heuristicExtracts = parseCmaTextHeuristic(trimmed);
+      let extracts: CmaSaleExtract[] = heuristicExtracts;
 
-      if (mapped.length === 0 && isAiConfigured()) {
-        setStatus("Heuristic found no sales — trying AI on text…");
+      const needsAiEnrichment =
+        isAiConfigured() &&
+        (heuristicExtracts.length === 0 || heuristicExtracts.length < 3);
+
+      if (needsAiEnrichment) {
+        setStatus(
+          heuristicExtracts.length === 0
+            ? "Heuristic found no sales — trying AI on text…"
+            : `Heuristic found ${heuristicExtracts.length} — enriching with AI for missing comps…`,
+        );
         const settings = loadAiSettings();
         const result = await extractComparableSales({
           data: {
@@ -242,15 +254,20 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           result && typeof result === "object" && "sales" in result
             ? (result as { sales: unknown[] }).sales
             : [];
-        mapped = cmaExtractsToSales(
-          Array.isArray(rawSales) ? (rawSales as Parameters<typeof cmaExtractsToSales>[0]) : [],
-        );
-        if (mapped.length === 0 && error) {
+        const aiExtracts = Array.isArray(rawSales)
+          ? (rawSales as CmaSaleExtract[])
+          : [];
+
+        if (aiExtracts.length > 0) {
+          extracts = mergeCmaExtracts(heuristicExtracts, aiExtracts);
+        } else if (heuristicExtracts.length === 0 && error) {
           toast.error("CMA extract failed", { description: error });
           setStatus(`Failed: ${error}`);
           return;
         }
       }
+
+      const mapped = cmaExtractsToSales(extracts);
 
       if (mapped.length === 0) {
         toast.error("No comparable sales found", {
