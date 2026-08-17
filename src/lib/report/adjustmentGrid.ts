@@ -1,6 +1,8 @@
 /**
- * URAR-style sales comparison adjustment grid.
- * Shared across all report types — only report *output* differs by type.
+ * Sales comparison adjustment grid aligned to Fannie Mae Form 1004 / Freddie Mac Form 70
+ * Uniform Residential Appraisal Report (URAR) — Sales Comparison Approach page.
+ *
+ * Shared across all report types; only report *output* differs by type.
  */
 import { parseMoney } from "./salesRelativity";
 import type { ComparableSale, InspectionValues } from "./types";
@@ -18,36 +20,63 @@ export type Relativity = (typeof RELATIVITY_OPTIONS)[number];
 export const DEFAULT_RELATIVITY: Relativity = "similar";
 
 export interface FeatureAdjustment {
+  /** Qualitative description (URAR DESCRIPTION column). */
   relativity: Relativity;
-  /** Signed $ adjustment applied to the comparable (URAR convention). */
+  /** Signed $ adjustment to the comparable (URAR + (-) $ Adjustment). */
   amount: number;
 }
 
 export interface AdjustmentFeature {
   id: string;
+  /** Exact URAR row label where applicable. */
   label: string;
-  /** Optional inspection field keys used to show subject value. */
   subjectKeys?: string[];
 }
 
-/** Core residential comparison lines (AU-oriented subset of URAR). */
+/**
+ * VALUE ADJUSTMENTS rows — order and labels match URAR page 2.
+ * Ids are stable keys; do not rename (stored on drafts).
+ */
 export const ADJUSTMENT_FEATURES: AdjustmentFeature[] = [
-  { id: "financing", label: "Sale or financing" },
+  { id: "saleOrFinancing", label: "Sale or Financing" },
   { id: "concessions", label: "Concessions" },
-  { id: "dateOfSale", label: "Date of sale / time", subjectKeys: [] },
+  { id: "dateOfSale", label: "Date of Sale/Time" },
   { id: "location", label: "Location" },
-  { id: "site", label: "Site / land", subjectKeys: ["prop_sitearea", "prop_areaunit"] },
+  { id: "leasehold", label: "Leasehold/Fee Simple" },
+  { id: "site", label: "Site", subjectKeys: ["prop_sitearea", "prop_areaunit", "prop_shape"] },
   { id: "view", label: "View" },
-  { id: "design", label: "Design / style", subjectKeys: ["imp_design", "ext"] },
-  { id: "quality", label: "Quality of construction", subjectKeys: ["imp_quality"] },
-  { id: "actualAge", label: "Actual age", subjectKeys: ["imp_yearbuilt"] },
+  { id: "design", label: "Design (Style)", subjectKeys: ["imp_design", "ext"] },
+  { id: "quality", label: "Quality of Construction", subjectKeys: ["imp_quality"] },
+  { id: "actualAge", label: "Actual Age", subjectKeys: ["imp_yearbuilt", "imp_effective_age"] },
   { id: "condition", label: "Condition", subjectKeys: ["overall_cond"] },
-  { id: "gla", label: "Gross living area", subjectKeys: ["imp_gla"] },
-  { id: "accommodation", label: "Accommodation", subjectKeys: ["imp_beds", "imp_baths", "accom"] },
-  { id: "car", label: "Car accommodation", subjectKeys: ["park"] },
-  { id: "outdoor", label: "Outdoor / ancillary", subjectKeys: ["anc"] },
-  { id: "other", label: "Other" },
+  {
+    id: "aboveGradeRoomCount",
+    label: "Above Grade Room Count",
+    subjectKeys: ["imp_rooms", "imp_beds", "imp_baths"],
+  },
+  { id: "grossLivingArea", label: "Gross Living Area", subjectKeys: ["imp_gla"] },
+  {
+    id: "basement",
+    label: "Basement & Finished Rooms Below Grade",
+  },
+  { id: "functionalUtility", label: "Functional Utility" },
+  { id: "heatingCooling", label: "Heating/Cooling", subjectKeys: ["vent"] },
+  { id: "energyEfficient", label: "Energy Efficient Items" },
+  { id: "garageCarport", label: "Garage/Carport", subjectKeys: ["park", "area_garage", "area_carport"] },
+  { id: "porchPatioDeck", label: "Porch/Patio/Deck", subjectKeys: ["anc", "area_verandahs"] },
+  { id: "other1", label: "Other" },
+  { id: "other2", label: "Other" },
 ];
+
+/** Legacy ids from earlier AU-oriented grid → current URAR ids (draft migration). */
+const LEGACY_FEATURE_MAP: Record<string, string> = {
+  financing: "saleOrFinancing",
+  gla: "grossLivingArea",
+  accommodation: "aboveGradeRoomCount",
+  car: "garageCarport",
+  outdoor: "porchPatioDeck",
+  other: "other1",
+};
 
 export function defaultFeatureAdjustment(): FeatureAdjustment {
   return { relativity: DEFAULT_RELATIVITY, amount: 0 };
@@ -62,15 +91,30 @@ export function defaultAdjustments(): Record<string, FeatureAdjustment> {
 }
 
 export function ensureSaleAdjustments(sale: ComparableSale): ComparableSale {
-  const base = sale.adjustments ?? {};
+  const raw = sale.adjustments ?? {};
+  const migrated: Record<string, FeatureAdjustment> = { ...raw };
+
+  for (const [legacy, next] of Object.entries(LEGACY_FEATURE_MAP)) {
+    if (raw[legacy] && !raw[next]) {
+      migrated[next] = {
+        relativity: raw[legacy]!.relativity ?? DEFAULT_RELATIVITY,
+        amount:
+          typeof raw[legacy]!.amount === "number" && Number.isFinite(raw[legacy]!.amount)
+            ? raw[legacy]!.amount
+            : 0,
+      };
+    }
+  }
+
   const adjustments: Record<string, FeatureAdjustment> = {};
   for (const f of ADJUSTMENT_FEATURES) {
-    const existing = base[f.id];
+    const existing = migrated[f.id];
     adjustments[f.id] = {
       relativity: existing?.relativity ?? DEFAULT_RELATIVITY,
-      amount: typeof existing?.amount === "number" && Number.isFinite(existing.amount)
-        ? existing.amount
-        : 0,
+      amount:
+        typeof existing?.amount === "number" && Number.isFinite(existing.amount)
+          ? existing.amount
+          : 0,
     };
   }
   return { ...sale, adjustments };
@@ -81,6 +125,38 @@ export function subjectFeatureDisplay(
   values: InspectionValues,
 ): string {
   if (!feature.subjectKeys?.length) return "—";
+
+  if (feature.id === "aboveGradeRoomCount") {
+    const rooms = values["imp_rooms"];
+    const beds = values["imp_beds"];
+    const baths = values["imp_baths"];
+    const bits: string[] = [];
+    if (rooms !== undefined && rooms !== null && String(rooms).trim()) {
+      bits.push(`${rooms} rms`);
+    }
+    if (beds !== undefined && beds !== null && String(beds).trim()) {
+      bits.push(`${beds} bd`);
+    }
+    if (baths !== undefined && baths !== null && String(baths).trim()) {
+      bits.push(`${baths} ba`);
+    }
+    return bits.length ? bits.join(" / ") : "—";
+  }
+
+  if (feature.id === "site") {
+    const area = values["prop_sitearea"];
+    const unit = values["prop_areaunit"];
+    const shape = values["prop_shape"];
+    const unitLabel = unit === "m2" || unit === "m²" ? "m²" : unit ? String(unit) : "";
+    const parts = [
+      area !== undefined && area !== null && String(area).trim()
+        ? `${area}${unitLabel ? ` ${unitLabel}` : ""}`
+        : null,
+      shape ? String(shape) : null,
+    ].filter(Boolean);
+    return parts.length ? parts.join(" · ") : "—";
+  }
+
   const parts: string[] = [];
   for (const key of feature.subjectKeys) {
     const v = values[key];
@@ -94,6 +170,17 @@ export function subjectFeatureDisplay(
     }
   }
   return parts.length ? parts.join(" · ") : "—";
+}
+
+/** Sale price ÷ GLA when both parse (URAR Sale Price/Gross Liv. Area). */
+export function salePricePerGla(sale: ComparableSale): string {
+  const price = parseMoney(sale.salePrice);
+  const glaRaw = sale.gla ?? "";
+  const glaMatch = String(glaRaw).replace(/,/g, "").match(/(\d+(?:\.\d+)?)/);
+  const gla = glaMatch ? Number(glaMatch[1]) : null;
+  if (price == null || gla == null || gla === 0) return "—";
+  const per = price / gla;
+  return `$${Math.round(per).toLocaleString("en-AU")}/m²`;
 }
 
 export interface SaleAdjustmentTotals {
