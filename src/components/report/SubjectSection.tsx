@@ -10,6 +10,7 @@ const REPORT_TYPE_OPTIONS = [
   "Dispute",
   "Other",
   "Stamp Duty - Phil",
+  "CGT - Phil",
 ] as const;
 
 const IDENTITY_FIELDS = [

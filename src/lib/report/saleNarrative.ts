@@ -79,13 +79,14 @@ export function buildSaleNarrativePrompt(
     ? `Must align with the office rule: "${overallPhrase}" (sale price vs valuation amount). Do not state a conflicting overall conclusion.`
     : "Valuation amount is not set; do not state overall superior/inferior.";
 
-  // Stamp Duty - Phil only: terse Peterson-style notes. Other report types: fuller paragraph.
   const reportType = getReportTypeConfig(
     values["prop_assignment"] != null ? String(values["prop_assignment"]) : "",
   );
-  const isPhil = reportType.id === "stamp-duty-phil";
+  const compact = reportType.saleNarrativeStyle === "compact";
 
-  const system = isPhil
+  // CGT - Phil / detailed: fuller comparison matching Peterson CGT sample comments.
+  // Stamp Duty - Phil only uses the ultra-compact note style.
+  const system = compact
     ? `You are writing sales evidence notes for an Australian residential valuation report (QLD), matching Peterson / Phil sample style (Stamp Duty - Phil only).
 Write ONE compact note — ideally 1–2 short sentences, maximum about 45 words.
 Style examples (match this brevity):
@@ -98,18 +99,20 @@ Rules:
 - Do NOT invent overall superior/inferior — that phrase is appended outside the model.
 - No bullet points, headings, or dollar adjustment schedules.
 - Tone: plain professional valuation English. Prefer short clauses over long sentences.`
-    : `You are writing sales evidence notes for an Australian residential valuation report (QLD).
-Write ONE short professional paragraph (2–5 sentences) comparing this comparable sale to the subject property.
-Rules:
-- Use ONLY the facts and relativity marks provided. Do not invent features, prices, or adjustments.
-- Reflect the valuer's marks (inferior / slightly inferior / similar / slightly superior / superior).
-- Do NOT invent your own overall superior/inferior conclusion. The overall conclusion is fixed by the valuation office rule below and will be appended outside the model.
-- Do not use bullet points. No headings. No dollar adjustment schedules in the narrative unless a net figure is provided and useful in one clause.
-- Tone: formal valuation report English used in Australian practice.`;
+    : `You are writing sales evidence comments for an Australian Capital Gains Tax / full valuation report (QLD), matching Peterson CGT sample style.
+Write ONE professional paragraph of 3–6 sentences comparing this comparable sale to the subject.
+Style (match this tone and density):
+- Open with the comparable's key physical facts (dwelling type, beds/baths, land, living area, condition/age if known).
+- State material differences vs the subject using the valuer's relativity marks (location, site, GLA, condition, etc.).
+- Keep language plain and direct — short sentences preferred over long compound ones (as in the Remarks sections of the CGT samples).
+- Do not invent features, prices, or adjustments. Use only facts and marks provided.
+- Do NOT invent overall superior/inferior — that phrase is appended outside the model.
+- No bullet points, headings, or dollar adjustment schedules unless a net figure is clearly useful in one short clause.
+- Tone: formal Australian valuation English.`;
 
-  const writeInstruction = isPhil
+  const writeInstruction = compact
     ? "Write the compact sales-evidence note now (1–2 short sentences, ~45 words max). Do not end with overall superior/inferior — that is applied separately."
-    : "Write the comparable sale narrative paragraph now (2–5 sentences). Do not end with an overall superior/inferior sentence — that is applied separately.";
+    : "Write the CGT-style sales-evidence paragraph now (3–6 sentences). Do not end with overall superior/inferior — that is applied separately.";
 
   const prompt = `SUBJECT PROPERTY
 ${subjectSummary(values, meta)}
@@ -134,7 +137,7 @@ Adjusted sale price: ${formatMoney(totals.adjustedSalePrice)}
 OVERALL CONCLUSION (office rule, not AI)
 ${overallHint}
 
-REPORT TYPE: ${reportType.id}${isPhil ? " (Stamp Duty - Phil — short notes)" : " (fuller paragraph)"}
+REPORT TYPE: ${reportType.id} (${compact ? "compact Stamp Duty notes" : "detailed CGT / full comparison"})
 
 ${writeInstruction}`;
 

@@ -1,7 +1,7 @@
 import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { get, hasValue, joinValues, labelFor, pick } from "@/lib/report/schema";
 import { PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
-import { getReportTypeConfig } from "@/lib/report/reportTypes";
+import { getReportTypeConfig, isPhilReportType } from "@/lib/report/reportTypes";
 
 /* ---------- primitives ---------- */
 
@@ -341,11 +341,11 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       id="report-preview-sheet"
       className={
         "report-sheet mx-auto max-w-[52rem] px-8 py-10 shadow-sm sm:px-12 sm:py-14" +
-        (reportType.id === "stamp-duty-phil" ? " report-type-phil" : "")
+        (isPhilReportType(reportType.id) ? " report-type-phil" : "")
       }
     >
       {/* ---- Cover ---- */}
-      {reportType.id === "stamp-duty-phil" ? (
+      {isPhilReportType(reportType.id) ? (
         /* Sample: page 1 photo, page 2 summary — separate top-level blocks so print breaks work */
         <>
           <div id="report-cover" className="report-cover phil-photo-page">
@@ -544,7 +544,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       <TableOfContents draft={draft} />
 
       {/* ---- 1. Instructions & purpose ---- */}
-      {reportType.id === "stamp-duty-phil" ? (
+      {isPhilReportType(reportType.id) ? (
         <Section id="sec-instructions" number="1." title="Instructions and Purpose">
           <Sub title="1.1  Instructions">
             <Para>{get(v, "prop_owner") || "As instructed."}</Para>
@@ -590,7 +590,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
       {/* ---- 2. Property details ---- */}
       <Section id="sec-property" number="2." title="Property Details">
-        {reportType.id === "stamp-duty-phil" ? (
+        {isPhilReportType(reportType.id) ? (
           <>
             <Sub title="2.1  Real Property Description">
               <Para>{[get(v, "prop_lotplan"), get(v, "prop_lga")].filter(Boolean).join("  ") || "—"}</Para>
@@ -624,7 +624,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
       {/* ---- 3. Statutory ---- */}
       <Section id="sec-statutory" number="3." title="Statutory Information">
-        {reportType.id === "stamp-duty-phil" ? (
+        {isPhilReportType(reportType.id) ? (
           <>
             <Sub title="3.1  Local Authority">
               <Para>{get(v, "prop_lga") || "Sunshine Coast Council"}</Para>
@@ -656,7 +656,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
       {/* ---- 4. Town planning ---- */}
       <Section id="sec-planning" number="4." title="Town Planning">
-        {reportType.id === "stamp-duty-phil" ? (
+        {isPhilReportType(reportType.id) ? (
           <>
             <Sub title="4.1  Current Zone">
               <Para>{get(v, "prop_zoning") || "—"}</Para>
@@ -686,9 +686,9 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       <Section
         id="sec-location"
         number="5."
-        title={reportType.id === "stamp-duty-phil" ? "Location" : "Location and Neighbourhood"}
+        title={isPhilReportType(reportType.id) ? "Location" : "Location and Neighbourhood"}
       >
-        {reportType.id === "stamp-duty-phil" ? (
+        {isPhilReportType(reportType.id) ? (
           <>
             <Sub title="5.1  Description of Neighbourhood">
               <Para>{get(v, "nbhd_description") || "—"}</Para>
@@ -746,7 +746,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
       {/* ---- 6. Site ---- */}
       <Section id="sec-site" number="6." title="Site Details">
-        {reportType.id === "stamp-duty-phil" ? (
+        {isPhilReportType(reportType.id) ? (
           <>
             <Sub title="6.1  Physical Description">
               <Para>
@@ -801,7 +801,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
       {/* ---- 7. Improvements ---- */}
       <Section id="sec-improvements" number="7." title="Improvements">
-        {reportType.id === "stamp-duty-phil" ? (
+        {isPhilReportType(reportType.id) ? (
           <>
             <Sub title="7.1  General Description">
               <Para>
@@ -872,7 +872,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
       {/* ---- 8. Accommodation ---- */}
       <Section id="sec-accommodation" number="8." title="Accommodation – Fixtures and Fittings">
-        {reportType.id === "stamp-duty-phil" ? (
+        {isPhilReportType(reportType.id) ? (
           /* Samples: short prose only — rooms/beds/baths as brief facts, no outdoor areas */
           <>
             <Prose text={draft.narrative.accommodation} />
@@ -894,7 +894,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
       {/* ---- 9. Other issues ---- */}
       <Section id="sec-other" number="9." title="Improvements – Other Valuation Issues">
-        {reportType.id === "stamp-duty-phil" ? (
+        {isPhilReportType(reportType.id) ? (
           <>
             <Sub title="9.1  Encroachments">
               <Para>{BOILERPLATE.encroachments}</Para>

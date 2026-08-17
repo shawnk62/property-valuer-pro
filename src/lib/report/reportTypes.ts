@@ -1,10 +1,10 @@
 /**
  * Report-type configuration for multi-product support.
- * Default config preserves the existing Purchase behaviour exactly.
- * Stamp Duty - Phil follows the attached Peterson samples as definitive.
+ * Stamp Duty - Phil and CGT - Phil share the Peterson cover / section layout.
+ * Stamp Duty uses compact sale notes; CGT uses fuller comparison narratives.
  */
 
-export type ReportTypeId = "default" | "stamp-duty-phil";
+export type ReportTypeId = "default" | "stamp-duty-phil" | "cgt-phil";
 
 export interface ReportTypeConfig {
   id: ReportTypeId;
@@ -16,6 +16,12 @@ export interface ReportTypeConfig {
   defaultPurpose: string;
   /** Optional override for the Instructions & Purpose section title */
   instructionsTitle?: string;
+  /**
+   * Sale evidence narrative style.
+   * - compact: ~45-word Phil stamp-duty notes
+   * - detailed: 2–5 sentence comparison (CGT and general)
+   */
+  saleNarrativeStyle: "compact" | "detailed";
 }
 
 export const REPORT_TYPE_CONFIGS: ReportTypeConfig[] = [
@@ -26,6 +32,16 @@ export const REPORT_TYPE_CONFIGS: ReportTypeConfig[] = [
     defaultPurpose:
       "Determine the market value of the property for Stamp Duty purposes.",
     instructionsTitle: "Instructions and Purpose of Valuation",
+    saleNarrativeStyle: "compact",
+  },
+  {
+    id: "cgt-phil",
+    match: ["CGT - Phil", "CGT Phil"],
+    coverSubtitle: "Capital Gains Tax Valuation Report",
+    defaultPurpose:
+      "Determine the market value of the property for Capital Gains Tax purposes.",
+    instructionsTitle: "Instructions and Purpose of Valuation",
+    saleNarrativeStyle: "detailed",
   },
 ];
 
@@ -36,6 +52,7 @@ export const DEFAULT_REPORT_TYPE_CONFIG: ReportTypeConfig = {
   coverSubtitle: "Residential Valuation Report",
   defaultPurpose: "",
   instructionsTitle: "Instructions and Purpose of Valuation",
+  saleNarrativeStyle: "detailed",
 };
 
 export function getReportTypeConfig(
@@ -49,4 +66,9 @@ export function getReportTypeConfig(
     }
   }
   return DEFAULT_REPORT_TYPE_CONFIG;
+}
+
+/** Phil-family layout: cover photo page + numbered sections like the samples. */
+export function isPhilReportType(id: ReportTypeId | string): boolean {
+  return id === "stamp-duty-phil" || id === "cgt-phil";
 }
