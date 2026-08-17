@@ -157,17 +157,53 @@ export function cmaExtractsToSales(rows: CmaSaleExtract[]): ComparableSale[] {
 
     const comments = [detailBits.join(". "), comparisonNotes].filter(Boolean).join("\n");
 
+    const landArea = String(r.landArea ?? "").trim();
+    const gla = String(r.gla ?? "").trim();
+    const beds = String(r.beds ?? "").trim();
+    const baths = String(r.baths ?? "").trim();
+    const cars = String(r.cars ?? "").trim();
+    const saleDate = String(r.saleDate ?? "").trim();
+    const proximity = r.distance ? String(r.distance).trim() : "";
+
+    const adjustments = adjustmentsFromComparisonNotes(comparisonNotes || comments);
+
+    // Seed URAR DESCRIPTION facts so they appear on the grid (not only in comments)
+    const seed = (
+      id: string,
+      detail: string,
+    ) => {
+      if (!detail) return;
+      const cur = adjustments[id] ?? { relativity: "similar" as const, amount: 0, detail: "" };
+      adjustments[id] = {
+        ...cur,
+        detail: cur.detail?.trim() ? cur.detail : detail,
+      };
+    };
+    seed("dateOfSale", saleDate);
+    seed("site", landArea);
+    seed("grossLivingArea", gla);
+    if (beds || baths) {
+      seed(
+        "aboveGradeRoomCount",
+        [beds ? `${beds} bd` : null, baths ? `${baths} ba` : null].filter(Boolean).join(" / "),
+      );
+    }
+    if (cars) seed("garageCarport", `${cars} car`);
+
     out.push({
       id: newId(),
       address,
-      saleDate: String(r.saleDate ?? "").trim(),
+      saleDate,
       salePrice,
-      landArea: String(r.landArea ?? "").trim(),
-      gla: String(r.gla ?? "").trim() || undefined,
-      proximity: r.distance ? String(r.distance).trim() : undefined,
+      landArea,
+      gla: gla || undefined,
+      beds: beds || undefined,
+      baths: baths || undefined,
+      cars: cars || undefined,
+      proximity: proximity || undefined,
       dataSource: "Cotality / RP Data",
       comments,
-      adjustments: adjustmentsFromComparisonNotes(comparisonNotes || comments),
+      adjustments,
     });
   }
 
@@ -213,22 +249,29 @@ export function parseCmaTextHeuristic(text: string): CmaSaleExtract[] {
       /(?:Sold\s*Date|Sale\s*Date)\s*[:\s]*([0-9]{1,2}[-/][A-Za-z]{3}[-/][0-9]{2,4}|[0-9]{1,2}[-/][0-9]{1,2}[-/][0-9]{2,4})/i,
     );
 
-    const areaMatches = [...block.matchAll(/(\d{2,4}(?:\.\d+)?)\s*m\s*²/gi)];
+    // Areas: Cotality prints land m² then floor m² (sometimes as "390m2")
+    const areaMatches = [
+      ...block.matchAll(/(\d{2,4}(?:\.\d+)?)\s*m\s*[²2]/gi),
+    ];
     const landArea = areaMatches[0] ? `${areaMatches[0][1]}m²` : "";
     const gla = areaMatches[1] ? `${areaMatches[1][1]}m²` : "";
 
-    // beds / baths / cars: explicit words, or icon triplet near the address line
+    // beds / baths / cars: words, or Cotality icon triplet (e.g. 4  2  1)
     let beds = "";
     let baths = "";
     let cars = "";
     const bedWord = block.match(/\b(\d{1,2})\s*(?:bed|beds|br|bedroom)s?\b/i);
     const bathWord = block.match(/\b(\d{1,2})\s*(?:bath|baths|ba|bathroom)s?\b/i);
-    const carWord = block.match(/\b(\d{1,2})\s*(?:car|cars|garage|carport)\b/i);
+    const carWord = block.match(/\b(\d{1,2})\s*(?:car|cars|garage|carport|lu)\b/i);
     if (bedWord) beds = bedWord[1]!;
     if (bathWord) baths = bathWord[1]!;
     if (carWord) cars = carWord[1]!;
     if (!beds || !baths) {
-      const triplet = block.match(/\b([1-6])\s+([1-6])\s+([0-4])\b/);
+      // Prefer triplet immediately after address / before price
+      const head = block.slice(0, Math.min(block.length, 280));
+      const triplet =
+        head.match(/\b([1-6])\s+([1-6])\s+([0-4])\b/) ||
+        block.match(/\b([1-6])\s+([1-6])\s+([0-4])\b/);
       if (triplet) {
         if (!beds) beds = triplet[1]!;
         if (!baths) baths = triplet[2]!;
