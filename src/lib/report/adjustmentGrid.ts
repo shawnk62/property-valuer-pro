@@ -20,9 +20,11 @@ export type Relativity = (typeof RELATIVITY_OPTIONS)[number];
 export const DEFAULT_RELATIVITY: Relativity = "similar";
 
 export interface FeatureAdjustment {
-  /** Qualitative description (URAR DESCRIPTION column). */
+  /** Qualitative mark in URAR DESCRIPTION (similar / superior / …). */
   relativity: Relativity;
-  /** Signed $ adjustment to the comparable (URAR + (-) $ Adjustment). */
+  /** Factual detail in DESCRIPTION (lot size, GLA, room count, cars, etc.). */
+  detail?: string;
+  /** URAR + (-) $ Adjustment — sits beside description, not below. */
   amount: number;
 }
 
@@ -79,7 +81,7 @@ const LEGACY_FEATURE_MAP: Record<string, string> = {
 };
 
 export function defaultFeatureAdjustment(): FeatureAdjustment {
-  return { relativity: DEFAULT_RELATIVITY, amount: 0 };
+  return { relativity: DEFAULT_RELATIVITY, amount: 0, detail: "" };
 }
 
 export function defaultAdjustments(): Record<string, FeatureAdjustment> {
@@ -98,6 +100,7 @@ export function ensureSaleAdjustments(sale: ComparableSale): ComparableSale {
     if (raw[legacy] && !raw[next]) {
       migrated[next] = {
         relativity: raw[legacy]!.relativity ?? DEFAULT_RELATIVITY,
+        detail: raw[legacy]!.detail ?? "",
         amount:
           typeof raw[legacy]!.amount === "number" && Number.isFinite(raw[legacy]!.amount)
             ? raw[legacy]!.amount
@@ -111,6 +114,7 @@ export function ensureSaleAdjustments(sale: ComparableSale): ComparableSale {
     const existing = migrated[f.id];
     adjustments[f.id] = {
       relativity: existing?.relativity ?? DEFAULT_RELATIVITY,
+      detail: existing?.detail ?? "",
       amount:
         typeof existing?.amount === "number" && Number.isFinite(existing.amount)
           ? existing.amount
