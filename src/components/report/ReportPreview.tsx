@@ -988,9 +988,18 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 </tr>
               </thead>
               <tbody>
-                {draft.sales.map((s) => (
+                {draft.sales.map((s, idx) => (
                   <tr key={s.id} className="align-top">
-                    <td className="border border-[var(--rule)] px-2 py-1.5">{s.address}</td>
+                    <td className="border border-[var(--rule)] px-2 py-1.5">
+                      <div>{s.address}</div>
+                      {s.photoUrl ? (
+                        <img
+                          src={s.photoUrl}
+                          alt={`Comparable ${idx + 1}`}
+                          className="mt-1.5 h-12 w-auto max-w-[5.5rem] border border-[var(--rule)] object-cover"
+                        />
+                      ) : null}
+                    </td>
                     <td className="border border-[var(--rule)] px-2 py-1.5 whitespace-nowrap">
                       {s.saleDate}
                     </td>
@@ -1007,27 +1016,6 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 ))}
               </tbody>
             </table>
-
-            {/* Front elevations under the summary table — one block per comparable */}
-            {draft.sales.some((s) => s.photoUrl) ? (
-              <div className="space-y-5">
-                {draft.sales.map((s, idx) =>
-                  s.photoUrl ? (
-                    <div key={s.id} className="sales-comp-photo break-inside-avoid">
-                      <p className="mb-1 text-[0.8125rem] font-semibold">
-                        Comparable {idx + 1}
-                        {s.address ? ` — ${s.address}` : ""}
-                      </p>
-                      <img
-                        src={s.photoUrl}
-                        alt={s.address ? `Front elevation, ${s.address}` : "Comparable front elevation"}
-                        className="max-h-56 w-auto max-w-full border border-[var(--rule)] object-contain"
-                      />
-                    </div>
-                  ) : null,
-                )}
-              </div>
-            ) : null}
           </div>
         )}
       </Section>
@@ -1091,26 +1079,62 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       {/* ---- Photo annexure ---- */}
       <section id="report-annexure-photos" className="report-annexure mt-12">
         <h2 className="report-h1 text-center">Annexure 2 — Photographs</h2>
-        {annexurePhotos.length === 0 ? (
+        {annexurePhotos.length === 0 &&
+        !draft.sales.some((s) => s.photoUrl) ? (
           <p className="mt-4 text-center text-sm italic text-[var(--page-foreground)]/70">
             No photographs have been attached.
           </p>
         ) : (
-          <div className="mt-6 grid gap-6 sm:grid-cols-2">
-            {annexurePhotos.map((photo) => (
-              <figure key={photo.id} className="report-photo-figure">
-                <img
-                  src={photo.url}
-                  alt={photo.caption || "Photograph"}
-                  className="aspect-4/3 w-full border border-[var(--rule)] object-cover"
-                  loading="eager"
-                  decoding="sync"
-                />
-                <figcaption className="mt-1.5 text-center text-sm">
-                  {photo.caption}
-                </figcaption>
-              </figure>
-            ))}
+          <div className="mt-6 space-y-8">
+            {annexurePhotos.length > 0 ? (
+              <div className="grid gap-6 sm:grid-cols-2">
+                {annexurePhotos.map((photo) => (
+                  <figure key={photo.id} className="report-photo-figure">
+                    <img
+                      src={photo.url}
+                      alt={photo.caption || "Photograph"}
+                      className="aspect-4/3 w-full border border-[var(--rule)] object-cover"
+                      loading="eager"
+                      decoding="sync"
+                    />
+                    <figcaption className="mt-1.5 text-center text-sm">
+                      {photo.caption}
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+            ) : null}
+
+            {draft.sales.some((s) => s.photoUrl) ? (
+              <div className="space-y-6">
+                <h3 className="text-center text-sm font-semibold uppercase tracking-wide">
+                  Comparable sales — front elevations
+                </h3>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  {draft.sales.map((s, idx) =>
+                    s.photoUrl ? (
+                      <figure key={s.id} className="report-photo-figure break-inside-avoid">
+                        <img
+                          src={s.photoUrl}
+                          alt={
+                            s.address
+                              ? `Comparable ${idx + 1} — ${s.address}`
+                              : `Comparable ${idx + 1}`
+                          }
+                          className="w-full border border-[var(--rule)] object-contain"
+                          loading="eager"
+                          decoding="sync"
+                        />
+                        <figcaption className="mt-1.5 text-center text-sm font-medium">
+                          Comparable {idx + 1}
+                          {s.address ? ` — ${s.address}` : ""}
+                        </figcaption>
+                      </figure>
+                    ) : null,
+                  )}
+                </div>
+              </div>
+            ) : null}
           </div>
         )}
       </section>

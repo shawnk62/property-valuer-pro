@@ -714,7 +714,8 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   const extraPhotos = draft.photos.filter((ph) => ph.slot === null);
   const annexurePhotos = [...slotPhotos, ...extraPhotos].filter((ph) => ph.url);
 
-  if (annexurePhotos.length === 0) {
+  const salesWithPhotos = draft.sales.filter((s) => s.photoUrl);
+  if (annexurePhotos.length === 0 && salesWithPhotos.length === 0) {
     children.push(p("No photographs have been attached.", { center: true, italics: true }));
   } else {
     for (const photo of annexurePhotos) {
@@ -744,6 +745,45 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
         PHOTO_SLOTS.find((s) => s.slot === photo.slot)?.label ||
         "Photograph";
       children.push(p(caption, { center: true, size: 18, after: 200 }));
+    }
+
+    // Full-size comparable front elevations (manually attached)
+    if (salesWithPhotos.length > 0) {
+      children.push(
+        p("Comparable sales — front elevations", {
+          center: true,
+          bold: true,
+          size: 20,
+          before: 280,
+          after: 160,
+        }),
+      );
+      for (let i = 0; i < draft.sales.length; i++) {
+        const s = draft.sales[i]!;
+        if (!s.photoUrl) continue;
+        const img = await imageFromUrl(s.photoUrl);
+        if (!img) continue;
+        const label = `Comparable ${i + 1}${s.address ? ` — ${s.address}` : ""}`;
+        children.push(
+          new Paragraph({
+            children: [
+              new ImageRun({
+                data: img.data,
+                type: img.type,
+                transformation: { width: 480, height: 320 },
+                altText: {
+                  title: label,
+                  description: "Comparable sale front elevation",
+                  name: s.id,
+                },
+              }),
+            ],
+            alignment: AlignmentType.CENTER,
+            spacing: { before: 160, after: 60 },
+          }),
+        );
+        children.push(p(label, { center: true, size: 18, after: 200 }));
+      }
     }
   }
 
