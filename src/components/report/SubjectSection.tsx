@@ -11,6 +11,8 @@ const REPORT_TYPE_OPTIONS = [
   "Other",
   "Stamp Duty - Phil",
   "CGT - Phil",
+  "CGT - Phil Retrospective",
+  "CGT - Phil Apportionment",
 ] as const;
 
 const IDENTITY_FIELDS = [

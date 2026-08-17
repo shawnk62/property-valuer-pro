@@ -303,7 +303,7 @@ function Facts({
 
               {row.label}
             </th>
-            <td className="border-b border-[var(--rule)]/60 py-1.5">{row.value}</td>
+            <td className="border-b border-[var(--rule)]/60 py-1.5 whitespace-pre-line">{row.value}</td>
           </tr>
         ))}
       </tbody>
@@ -441,9 +441,15 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               <p className="text-sm uppercase tracking-wide text-[var(--page-foreground)]/70">
                 VALUATION STATEMENT
               </p>
-              <p className="mt-3 font-serif text-2xl font-bold">
-                {m.valueAmount ? `$${m.valueAmount}` : "—"}
-              </p>
+              {reportType.valuationDisplay === "see-remarks" ? (
+                <p className="mt-3 font-serif text-xl font-bold uppercase tracking-wide">
+                  See remarks in this report
+                </p>
+              ) : (
+                <p className="mt-3 font-serif text-2xl font-bold">
+                  {m.valueAmount ? `$${m.valueAmount}` : "—"}
+                </p>
+              )}
               {m.valueDate ? (
                 <p className="mt-1 text-sm">as at {m.valueDate}</p>
               ) : null}
@@ -550,7 +556,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             <Para>{get(v, "prop_owner") || "As instructed."}</Para>
           </Sub>
           <Sub title="1.2  Purpose of Valuation">
-            <Para>{reportType.defaultPurpose}</Para>
+            <Prose text={reportType.defaultPurpose} />
           </Sub>
           <Sub title="1.3  Nature of Interest to be Valued">
             <Para>{BOILERPLATE.natureOfInterest}</Para>
@@ -1048,17 +1054,34 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
       {/* ---- 16. Valuation statement ---- */}
       <Section id="sec-valuation" number="16." title="Valuation Statement">
-        <Para>
-          Having regard to the foregoing, I am of the opinion that the market value of the
-          unencumbered fee simple interest in the subject property
-          {addressLine ? `, ${addressLine},` : ""} as at{" "}
-          {m.valueDate || "the date of valuation"} is:
-        </Para>
-        {m.valueAmount ? (
-          <p className="py-3 text-center font-serif text-xl font-bold">
-            ${m.valueAmount}
-          </p>
-        ) : null}
+        {reportType.valuationDisplay === "see-remarks" ? (
+          <>
+            <Para>
+              Having regard to the foregoing, the assessed values and apportionments for the
+              subject property
+              {addressLine ? `, ${addressLine},` : ""} as at{" "}
+              {m.valueDate || "the date of valuation"} are set out in the Remarks section of
+              this report.
+            </Para>
+            <p className="py-3 text-center font-serif text-lg font-bold uppercase tracking-wide">
+              See remarks in this report
+            </p>
+          </>
+        ) : (
+          <>
+            <Para>
+              Having regard to the foregoing, I am of the opinion that the market value of the
+              unencumbered fee simple interest in the subject property
+              {addressLine ? `, ${addressLine},` : ""} as at{" "}
+              {m.valueDate || "the date of valuation"} is:
+            </Para>
+            {m.valueAmount ? (
+              <p className="py-3 text-center font-serif text-xl font-bold">
+                ${m.valueAmount}
+              </p>
+            ) : null}
+          </>
+        )}
         <div className="mt-8">
           <div className="h-14 w-56 border-b border-[var(--page-foreground)]/70" />
           <p className="mt-2 font-semibold">{m.valuerName || get(v, "insp_valuer")}</p>
