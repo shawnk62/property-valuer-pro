@@ -40,8 +40,14 @@ export type SaleRelativity =
   | "superior";
 
 export interface FeatureAdjustment {
+  /**
+   * URAR DESCRIPTION — qualitative mark (similar / superior / …).
+   * Shown beside the dollar adjustment, not above it.
+   */
   relativity: SaleRelativity;
-  /** Signed dollar adjustment to the comparable sale price. */
+  /** Optional factual detail in DESCRIPTION (e.g. 390m², 4/2, 1 car). */
+  detail?: string;
+  /** URAR + (-) $ Adjustment — signed dollars applied to the comparable. */
   amount: number;
 }
 
@@ -52,8 +58,11 @@ export interface ComparableSale {
   salePrice: string;
   landArea: string;
   comments: string;
-  /** Gross living area (for Sale Price/GLA and GLA adjustment line). */
+  /** Gross living area (Sale Price/GLA row + GLA adjustment line). */
   gla?: string;
+  beds?: string;
+  baths?: string;
+  cars?: string;
   /** URAR: Proximity to Subject. */
   proximity?: string;
   /** URAR: Data Source(s). */
@@ -64,7 +73,6 @@ export interface ComparableSale {
   adjustments?: Record<string, FeatureAdjustment>;
   /**
    * AI (or manual) narrative for the report sales evidence column.
-   * Built from relativity marks on the adjustment grid.
    */
   narrative?: string;
 }
