@@ -159,57 +159,92 @@ For each comparable sale include:
 Skip floor-plan-only pages, disclaimer pages, and the subject property itself.
 Do not invent sales. If none found, return { "sales": [] }.`;
 
-    const userText =
-      data.source === "text"
-        ? (data.text ?? "")
-        : "Extract all comparable sales from the attached CMA PDF.";
+    try {
+      if (data.source === "file" && data.file?.base64) {
+        const filePart = {
+          type: "file" as const,
+          data: data.file.base64,
+          mediaType: data.file.mimeType || "application/pdf",
+        };
 
-    if (data.source === "file" && data.file) {
+        try {
+          const { output } = await generateText({
+            model,
+            output: Output.object({ schema: CmaSalesExtractionSchema }),
+            messages: [
+              { role: "system", content: system },
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: "Extract all comparable sales from the attached CMA PDF." },
+                  filePart,
+                ],
+              },
+            ],
+          });
+          return { sales: output?.sales ?? [], error: null as string | null };
+        } catch (err1) {
+          // Retry with plain text generation, still attaching the file
+          try {
+            const { text } = await generateText({
+              model,
+              messages: [
+                { role: "system", content: system },
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "text",
+                      text: "Extract all comparable sales from the attached CMA PDF. Return only JSON.",
+                    },
+                    filePart,
+                  ],
+                },
+              ],
+            });
+            const parsed = parseCmaSalesResponse(text);
+            return { sales: parsed.sales, error: null as string | null };
+          } catch (err2) {
+            const message =
+              err2 instanceof Error
+                ? err2.message
+                : err1 instanceof Error
+                  ? err1.message
+                  : "PDF extract failed";
+            return { sales: [], error: message };
+          }
+        }
+      }
+
+      const userText = data.text ?? "";
+      if (!userText.trim()) {
+        return { sales: [], error: "No CMA text provided." };
+      }
+
       try {
         const { output } = await generateText({
           model,
           output: Output.object({ schema: CmaSalesExtractionSchema }),
-          messages: [
-            { role: "system", content: system },
-            {
-              role: "user",
-              content: [
-                { type: "text", text: userText },
-                {
-                  type: "file",
-                  data: { type: "data", data: data.file.base64 },
-                  mediaType: data.file.mimeType || "application/pdf",
-                },
-              ],
-            },
-          ],
+          system,
+          prompt: `CMA text:
+
+${userText}`,
         });
-        return output ?? { sales: [] };
+        return { sales: output?.sales ?? [], error: null as string | null };
       } catch {
         const { text } = await generateText({
           model,
           system,
-          prompt: userText,
-        });
-        return parseCmaSalesResponse(text);
-      }
-    }
+          prompt: `CMA text:
 
-    try {
-      const { output } = await generateText({
-        model,
-        output: Output.object({ schema: CmaSalesExtractionSchema }),
-        system,
-        prompt: `CMA text:\n\n${userText}`,
-      });
-      return output ?? { sales: [] };
-    } catch {
-      const { text } = await generateText({
-        model,
-        system,
-        prompt: `CMA text:\n\n${userText}`,
-      });
-      return parseCmaSalesResponse(text);
+${userText}`,
+        });
+        const parsed = parseCmaSalesResponse(text);
+        return { sales: parsed.sales, error: null as string | null };
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "CMA extract failed";
+      return { sales: [], error: message };
     }
   });
 
