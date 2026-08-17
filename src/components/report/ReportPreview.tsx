@@ -958,39 +958,77 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         {draft.sales.length === 0 ? (
           <Para>No sales evidence has been recorded.</Para>
         ) : (
-          <table className="w-full border-collapse text-[0.8125rem]">
-            <thead>
-              <tr>
-                {["Address", "Sale date", "Sale price", "Land area", "Comments"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      className="border border-[var(--rule)] bg-[var(--page-foreground)]/5 px-2 py-1.5 text-left font-semibold"
-                    >
-                      {h}
-                    </th>
-                  ),
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {draft.sales.map((s) => (
-                <tr key={s.id} className="align-top">
-                  <td className="border border-[var(--rule)] px-2 py-1.5">{s.address}</td>
-                  <td className="border border-[var(--rule)] px-2 py-1.5 whitespace-nowrap">
-                    {s.saleDate}
-                  </td>
-                  <td className="border border-[var(--rule)] px-2 py-1.5 whitespace-nowrap">
-                    {s.salePrice}
-                  </td>
-                  <td className="border border-[var(--rule)] px-2 py-1.5 whitespace-nowrap">
-                    {s.landArea}
-                  </td>
-                  <td className="border border-[var(--rule)] px-2 py-1.5">{s.narrative?.trim() || s.comments}</td>
+          <div className="space-y-6">
+            {draft.reportMeta.salesMapUrl ? (
+              <div className="sales-map">
+                <p className="mb-1.5 text-[0.75rem] font-semibold uppercase tracking-wide text-[var(--page-foreground)]/70">
+                  Sales map
+                </p>
+                <img
+                  src={draft.reportMeta.salesMapUrl}
+                  alt="Comparable sales map"
+                  className="mx-auto max-h-[28rem] w-auto max-w-full border border-[var(--rule)] object-contain"
+                />
+              </div>
+            ) : null}
+
+            <table className="w-full border-collapse text-[0.8125rem]">
+              <thead>
+                <tr>
+                  {["Address", "Sale date", "Sale price", "Land area", "Comments"].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        className="border border-[var(--rule)] bg-[var(--page-foreground)]/5 px-2 py-1.5 text-left font-semibold"
+                      >
+                        {h}
+                      </th>
+                    ),
+                  )}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {draft.sales.map((s) => (
+                  <tr key={s.id} className="align-top">
+                    <td className="border border-[var(--rule)] px-2 py-1.5">{s.address}</td>
+                    <td className="border border-[var(--rule)] px-2 py-1.5 whitespace-nowrap">
+                      {s.saleDate}
+                    </td>
+                    <td className="border border-[var(--rule)] px-2 py-1.5 whitespace-nowrap">
+                      {s.salePrice}
+                    </td>
+                    <td className="border border-[var(--rule)] px-2 py-1.5 whitespace-nowrap">
+                      {s.landArea}
+                    </td>
+                    <td className="border border-[var(--rule)] px-2 py-1.5">
+                      {s.narrative?.trim() || s.comments}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Front elevations under the summary table — one block per comparable */}
+            {draft.sales.some((s) => s.photoUrl) ? (
+              <div className="space-y-5">
+                {draft.sales.map((s, idx) =>
+                  s.photoUrl ? (
+                    <div key={s.id} className="sales-comp-photo break-inside-avoid">
+                      <p className="mb-1 text-[0.8125rem] font-semibold">
+                        Comparable {idx + 1}
+                        {s.address ? ` — ${s.address}` : ""}
+                      </p>
+                      <img
+                        src={s.photoUrl}
+                        alt={s.address ? `Front elevation, ${s.address}` : "Comparable front elevation"}
+                        className="max-h-56 w-auto max-w-full border border-[var(--rule)] object-contain"
+                      />
+                    </div>
+                  ) : null,
+                )}
+              </div>
+            ) : null}
+          </div>
         )}
       </Section>
 

@@ -15,6 +15,7 @@ import {
   subjectFeatureDisplay,
   type Relativity,
 } from "@/lib/report/adjustmentGrid";
+import { extractCmaMediaFromPdf } from "@/lib/report/extractCmaMedia";
 import { extractTextFromPdf } from "@/lib/report/extractPdfText";
 import {
   cmaExtractsToSales,
@@ -297,7 +298,11 @@ export function SalesSection({ controller }: { controller: ReportDraftController
    * finds zero or fewer than three sales, run AI and merge by address so a
    * missing third (or more) is recovered instead of stopping at a partial parse.
    */
-  async function importFromCmaText(text: string, sourceLabel = "CMA text") {
+  async function importFromCmaText(
+    text: string,
+    sourceLabel = "CMA text",
+    media?: { salesMapUrl: string | null; frontPhotoUrls: string[] },
+  ) {
     const trimmed = text.trim();
     if (!trimmed) {
       toast.error("No CMA text to import");
@@ -354,7 +359,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         }
       }
 
-      const mapped = cmaExtractsToSales(extracts);
+      let mapped = cmaExtractsToSales(extracts);
 
       if (mapped.length === 0) {
         toast.error("No comparable sales found", {
@@ -365,12 +370,27 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         return;
       }
 
+      // Attach front photos in CMA page order (same order as extracts)
+      if (media?.frontPhotoUrls?.length) {
+        mapped = mapped.map((sale, i) => ({
+          ...sale,
+          photoUrl: media.frontPhotoUrls[i] || sale.photoUrl,
+        }));
+      }
+      if (media?.salesMapUrl) {
+        setMeta({ salesMapUrl: media.salesMapUrl });
+      }
+
       fingerprintsRef.current = {};
       replaceSales(mapped.map(ensureSaleAdjustments));
+      const photoNote = media?.frontPhotoUrls?.length
+        ? ` · ${media.frontPhotoUrls.length} front photo(s)`
+        : "";
+      const mapNote = media?.salesMapUrl ? " · sales map" : "";
       toast.success(`Imported ${mapped.length} comparable sale(s)`, {
-        description: `${sourceLabel}. Relativity marks applied from COMPARABLE/SUPERIOR/INFERIOR where present.`,
+        description: `${sourceLabel}${mapNote}${photoNote}. Relativity marks applied where present.`,
       });
-      setStatus(`Imported ${mapped.length} sale(s) from ${sourceLabel}.`);
+      setStatus(`Imported ${mapped.length} sale(s) from ${sourceLabel}${mapNote}${photoNote}.`);
     } catch (err) {
       console.error("[CMA text import]", err);
       const message = err instanceof Error ? err.message : "Import failed";
@@ -411,8 +431,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       }
 
       if (isPdf) {
-        setStatus("Reading PDF text in browser…");
-        const text = await extractTextFromPdf(file);
+        setStatus("Reading PDF text and images in browser…");
+        const [text, media] = await Promise.all([
+          extractTextFromPdf(file),
+          extractCmaMediaFromPdf(file).catch((err) => {
+            console.warn("[CMA media extract]", err);
+            return { salesMapUrl: null as string | null, frontPhotoUrls: [] as string[] };
+          }),
+        ]);
         if (!text.trim()) {
           toast.error("Could not read text from PDF", {
             description: "Try pasting Comparable Sales text into the box below.",
@@ -420,8 +446,12 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           setStatus("PDF text extraction returned empty.");
           return;
         }
-        // Hand off to shared text path (heuristic supports 9+ sales)
-        await importFromCmaText(text, "CMA PDF");
+        setStatus(
+          media.frontPhotoUrls.length || media.salesMapUrl
+            ? `Parsing sales data (${media.frontPhotoUrls.length} photo(s)${media.salesMapUrl ? ", map" : ""})…`
+            : "Parsing sales data…",
+        );
+        await importFromCmaText(text, "CMA PDF", media);
         return;
       }
 
@@ -604,6 +634,13 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                           </>
                                         ) : null}
                                       </span>
+                                    ) : null}
+                                    {sale.photoUrl ? (
+                                      <img
+                                        src={sale.photoUrl}
+                                        alt=""
+                                        className="mt-1 max-h-14 w-auto max-w-full rounded border border-border object-cover"
+                                      />
                                     ) : null}
                                   </span>
                                   <button

@@ -75,6 +75,11 @@ export interface ComparableSale {
    * AI (or manual) narrative for the report sales evidence column.
    */
   narrative?: string;
+  /**
+   * Front elevation photo from the Cotality CMA (data URL or storage URL).
+   * Extracted on CMA PDF import; shown in Sales Evidence.
+   */
+  photoUrl?: string;
 }
 
 export interface ReportNarrative {
@@ -100,6 +105,10 @@ export interface ReportMeta {
    * Adjustment = round_to_1000(rate × (subject site − comparable site)).
    */
   siteRatePerM2?: string;
+  /**
+   * Cotality "Map: Sales" image (data URL or storage URL), extracted on CMA import.
+   */
+  salesMapUrl?: string;
 }
 
 export interface ReportDraft {

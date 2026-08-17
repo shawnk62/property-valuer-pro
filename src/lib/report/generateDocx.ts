@@ -546,6 +546,34 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   if (sales.length === 0) {
     children.push(p("No comparable sales have been recorded for this report."));
   } else {
+    // Sales map (from CMA "Map: Sales" page)
+    if (draft.reportMeta.salesMapUrl) {
+      const mapImg = await imageFromUrl(draft.reportMeta.salesMapUrl);
+      if (mapImg) {
+        children.push(p("Sales map", { bold: true, after: 80 }));
+        // Portrait map — fit width, reasonable height
+        children.push(
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [
+              new ImageRun({
+                data: mapImg.data,
+                type: mapImg.type,
+                // Pixel display size in the document (portrait map)
+                transformation: { width: 400, height: 500 },
+                altText: {
+                  title: "Sales map",
+                  description: "Comparable sales map",
+                  name: "sales-map",
+                },
+              }),
+            ],
+            spacing: { after: 200 },
+          }),
+        );
+      }
+    }
+
     // Table matching Preview columns
     const colW = [
       Math.floor(CONTENT_WIDTH * 0.28),
@@ -598,6 +626,8 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
           ),
         }),
     );
+    // Sales map above the table content order: map → table → front photos
+    // (map is pushed before the table when present)
     children.push(
       new Table({
         width: { size: CONTENT_WIDTH, type: WidthType.DXA },
@@ -605,6 +635,38 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
         rows: [headerRow, ...bodyRows],
       }),
     );
+
+    // Front elevation photos (one per comparable with photoUrl)
+    for (let i = 0; i < sales.length; i++) {
+      const s = sales[i]!;
+      if (!s.photoUrl) continue;
+      const img = await imageFromUrl(s.photoUrl);
+      if (!img) continue;
+      children.push(
+        p(`Comparable ${i + 1}${s.address ? ` — ${s.address}` : ""}`, {
+          bold: true,
+          after: 80,
+          before: 200,
+        }),
+      );
+      children.push(
+        new Paragraph({
+          children: [
+            new ImageRun({
+              data: img.data,
+              type: img.type,
+              transformation: { width: 420, height: 280 },
+              altText: {
+                title: s.address || "Comparable front elevation",
+                description: "Comparable sale front elevation",
+                name: s.id,
+              },
+            }),
+          ],
+          spacing: { after: 160 },
+        }),
+      );
+    }
   }
 
   // ---- 13 ----
