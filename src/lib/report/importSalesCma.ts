@@ -269,12 +269,33 @@ function extractScore(r: CmaSaleExtract): number {
  *  4) Map-legend one-liners
  * No maximum sale count.
  */
+
+/**
+ * Parse Cotality CMA text into sale extracts.
+ *
+ * Tuned to real pdf.js output from Cotality detail pages:
+ *
+ *   Comparable Sales
+ *   1 Sold Price $1,050,000
+ *   9 ROBINSON CRESCENT RUNCORN QLD 4113
+ *   4 2 1
+ *   390m2 177m2
+ *   Sold Date 16-Jun-26 Distance 1.39km
+ *   Year Built 1996
+ *
+ * Areas may appear as 390m2 (after extractPdfText repair) or 390m.
+ * Dedupes by street number + name + type so partial/full addresses never double.
+ */
 export function parseCmaTextHeuristic(text: string): CmaSaleExtract[] {
   if (!text?.trim()) return [];
 
+  // Normalise m² tokens the same way extractPdfText does (for paste path)
   const cleaned = text
     .replace(/\u00ad/g, "")
     .replace(/\r/g, "\n")
+    .replace(/(\d+)\s*m\s*[²2]\b/gi, "$1m2")
+    .replace(/(\d+m)\s+[²2]\b/gi, "$1m2")
+    .replace(/(\d+)\s*m²/gi, "$1m2")
     .replace(/[ \t]+/g, " ");
 
   const byKey = new Map<string, CmaSaleExtract>();
@@ -282,7 +303,6 @@ export function parseCmaTextHeuristic(text: string): CmaSaleExtract[] {
   const merge = (next: CmaSaleExtract) => {
     const address = normaliseAddress(String(next.address ?? ""));
     if (!address) return;
-    // Prefer street-level key so partial vs full addresses collapse to one sale
     const key = streetKey(address) || addressKey(address);
     if (!key) return;
     const prev = byKey.get(key);
@@ -290,181 +310,54 @@ export function parseCmaTextHeuristic(text: string): CmaSaleExtract[] {
       byKey.set(key, { ...next, address });
       return;
     }
-    // Prefer the longer / more complete address string when merging
     const preferAddr =
       address.length >= normaliseAddress(String(prev.address ?? "")).length
         ? address
         : normaliseAddress(String(prev.address ?? "")) || address;
-    if (extractScore(next) >= extractScore(prev)) {
-      byKey.set(key, {
-        ...prev,
-        ...Object.fromEntries(
-          Object.entries(next).filter(([, v]) => v != null && String(v).trim() !== ""),
-        ),
-        address: preferAddr,
-      });
-    } else {
-      byKey.set(key, {
-        ...next,
-        ...Object.fromEntries(
-          Object.entries(prev).filter(([, v]) => v != null && String(v).trim() !== ""),
-        ),
-        address: preferAddr,
-      });
-    }
+    const winner =
+      extractScore(next) >= extractScore(prev)
+        ? {
+            ...prev,
+            ...Object.fromEntries(
+              Object.entries(next).filter(([, v]) => v != null && String(v).trim() !== ""),
+            ),
+            address: preferAddr,
+          }
+        : {
+            ...next,
+            ...Object.fromEntries(
+              Object.entries(prev).filter(([, v]) => v != null && String(v).trim() !== ""),
+            ),
+            address: preferAddr,
+          };
+    byKey.set(key, winner);
   };
 
-  // Street / suburb name tokens must start with a letter so house numbers cannot
-  // be swallowed into a previous street name on multi-column pages.
   const NAME = String.raw`[A-Z][A-Za-z0-9'./-]*(?:\s+[A-Z][A-Za-z0-9'./-]*){0,5}?`;
   const SUBURB = String.raw`[A-Z][A-Za-z0-9'-]*(?:\s+[A-Z][A-Za-z0-9'-]*){0,3}?`;
   const UNIT =
     String.raw`(?:UNIT\s+\d+[A-Z]?\s*[\/,]?\s*)?(?:LOT\s+\d+\s+)?(?:\d+[A-Z]?\s*\/\s*)?`;
 
+  // Full Cotality address: "9 ROBINSON CRESCENT RUNCORN QLD 4113"
   const fullAddressRe = new RegExp(
-    String.raw`((?:${UNIT})\d+[A-Z]?\s+${NAME}\s+\b(?:${STREET})\b(?:\s+${SUBURB})?\s+(?:QLD|QUEENSLAND)\s*\d{4})`,
+    String.raw`((?:${UNIT})\d+[A-Z]?\s+${NAME}\s+\b(?:${STREET})\b\s+${SUBURB}\s+(?:QLD|QUEENSLAND)\s*\d{4})`,
     "gi",
   );
-  const streetOnlyRe = new RegExp(
-    String.raw`((?:${UNIT})\d+[A-Z]?\s+${NAME}\s+\b(?:${STREET})\b)`,
-    "gi",
-  );
-  const suburbPostRe = new RegExp(
-    String.raw`\b(${SUBURB})\s+(?:QLD|QUEENSLAND)\s*(\d{4})\b`,
-    "gi",
-  );
-  const priceRe = /(?:Sold\s*Price\s*[:\s]*)?(\$\s*[\d,]{4,}(?:\.\d{2})?)/gi;
-  const dateRe =
-    /(?:Sold\s*Date|Sale\s*Date)\s*[:\s]*([0-9]{1,2}[-/][A-Za-z]{3}[-/][0-9]{2,4}|[0-9]{1,2}[-/][0-9]{1,2}[-/][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3}\s+[0-9]{2,4})/gi;
 
-  // --- Pass 1: contiguous full addresses ---
-  const fullMatches = [...cleaned.matchAll(fullAddressRe)];
-  for (let i = 0; i < fullMatches.length; i++) {
-    const m = fullMatches[i]!;
+  const matches = [...cleaned.matchAll(fullAddressRe)];
+
+  for (let i = 0; i < matches.length; i++) {
+    const m = matches[i]!;
     const address = normaliseAddress(m[1]!);
     const start = m.index ?? 0;
     const end =
-      i + 1 < fullMatches.length
-        ? (fullMatches[i + 1]!.index ?? cleaned.length)
-        : cleaned.length;
-    const block = cleaned.slice(start, Math.min(end, start + 1800));
+      i + 1 < matches.length ? (matches[i + 1]!.index ?? cleaned.length) : cleaned.length;
+    // Detail cards are short; cap so we don't bleed into the next sale
+    const block = cleaned.slice(Math.max(0, start - 80), Math.min(end, start + 1200));
     merge(extractFactsFromBlock(address, block));
   }
 
-  // --- Pass 2: street + nearby suburb (split lines) ---
-  for (const sm of cleaned.matchAll(streetOnlyRe)) {
-    const streetPart = normaliseAddress(sm[1]!);
-    const idx = sm.index ?? 0;
-    const already = [...byKey.values()].some((r) =>
-      normaliseAddress(String(r.address ?? ""))
-        .toUpperCase()
-        .startsWith(streetPart.toUpperCase()),
-    );
-    if (already) continue;
-
-    // Look ahead only; suburb must not start with a street-type word
-    const window = cleaned.slice(idx + streetPart.length, idx + streetPart.length + 200);
-    suburbPostRe.lastIndex = 0;
-    const sub = suburbPostRe.exec(window);
-    if (!sub) continue;
-    const subName = sub[1]!.trim();
-    if (new RegExp(`^(?:${STREET})$`, "i").test(subName.split(/\s+/).pop() || "")) continue;
-
-    const address = normaliseAddress(`${streetPart} ${subName} QLD ${sub[2]}`);
-    const block = cleaned.slice(idx, Math.min(cleaned.length, idx + 1800));
-    merge(extractFactsFromBlock(address, block));
-  }
-
-  // --- Pass 3: ordered multi-column pairing (Cotality map / card rows) ---
-  // Collect streets, suburbs, prices, dates by position, then assign in order.
-  type Pos = { index: number; value: string };
-  const streets: Pos[] = [...cleaned.matchAll(streetOnlyRe)].map((m) => ({
-    index: m.index ?? 0,
-    value: normaliseAddress(m[1]!),
-  }));
-  const streetTypeTail = new RegExp(`(?:${STREET})$`, "i");
-  const suburbs: Pos[] = [...cleaned.matchAll(suburbPostRe)]
-    .map((m) => {
-      const rawName = (m[1] || "").trim();
-      // Drop leading street-type tokens left over from multi-column glue
-      const parts = rawName.split(/\s+/);
-      while (parts.length > 1 && streetTypeTail.test(parts[0]!)) parts.shift();
-      // Reject if the "suburb" is only a street type
-      if (parts.length === 0 || streetTypeTail.test(parts.join(" "))) return null;
-      return {
-        index: m.index ?? 0,
-        value: normaliseAddress(`${parts.join(" ")} QLD ${m[2]}`),
-      };
-    })
-    .filter((x): x is Pos => x != null);
-  const prices: Pos[] = [...cleaned.matchAll(priceRe)].map((m) => ({
-    index: m.index ?? 0,
-    value: m[1]!.replace(/\s+/g, ""),
-  }));
-  const dates: Pos[] = [...cleaned.matchAll(dateRe)].map((m) => ({
-    index: m.index ?? 0,
-    value: m[1]!.trim(),
-  }));
-
-  if (streets.length >= 2 && prices.length >= 2) {
-    const usedPrice = new Set<number>();
-    const usedSuburb = new Set<number>();
-    const usedDate = new Set<number>();
-
-    for (let si = 0; si < streets.length; si++) {
-      const st = streets[si]!;
-      const nextStreetIdx =
-        si + 1 < streets.length ? streets[si + 1]!.index : cleaned.length;
-
-      // Nearest unused suburb at or after this street (before next street preferred)
-      let bestSub: Pos | null = null;
-      for (const sub of suburbs) {
-        if (usedSuburb.has(sub.index)) continue;
-        if (sub.index < st.index - 20) continue;
-        if (sub.index > nextStreetIdx + 80 && bestSub) break;
-        if (!bestSub || Math.abs(sub.index - st.index) < Math.abs(bestSub.index - st.index)) {
-          bestSub = sub;
-        }
-      }
-
-      // Nearest unused price at or after this street
-      let bestPrice: Pos | null = null;
-      for (const pr of prices) {
-        if (usedPrice.has(pr.index)) continue;
-        if (pr.index < st.index - 40) continue;
-        if (!bestPrice || Math.abs(pr.index - st.index) < Math.abs(bestPrice.index - st.index)) {
-          bestPrice = pr;
-        }
-      }
-
-      let bestDate: Pos | null = null;
-      for (const d of dates) {
-        if (usedDate.has(d.index)) continue;
-        if (d.index < st.index - 40) continue;
-        if (!bestDate || Math.abs(d.index - st.index) < Math.abs(bestDate.index - st.index)) {
-          bestDate = d;
-        }
-      }
-
-      if (!bestPrice) continue;
-      usedPrice.add(bestPrice.index);
-      if (bestSub) usedSuburb.add(bestSub.index);
-      if (bestDate) usedDate.add(bestDate.index);
-
-      const address = bestSub
-        ? normaliseAddress(`${st.value} ${bestSub.value}`)
-        : st.value;
-
-      // Prefer a local block for other facts, but always seed price/date from pairing
-      const block = cleaned.slice(st.index, Math.min(cleaned.length, nextStreetIdx + 200));
-      const facts = extractFactsFromBlock(address, block);
-      facts.salePrice = facts.salePrice || bestPrice.value;
-      if (bestDate && !facts.saleDate) facts.saleDate = bestDate.value;
-      merge(facts);
-    }
-  }
-
-  // --- Pass 4: map-legend one-liners ---
+  // Map-legend style (when text survived): ADDRESS  beds baths cars  $price
   const legendRe = new RegExp(
     String.raw`(${fullAddressRe.source})\s+(?:([1-6])\s+([1-6])\s+([0-4])\s+)?(\$\s*[\d,]+)`,
     "gi",
@@ -479,7 +372,6 @@ export function parseCmaTextHeuristic(text: string): CmaSaleExtract[] {
     });
   }
 
-  // Drop entries with neither price nor date
   return [...byKey.values()].filter((r) => {
     const hasPrice = Boolean(r.salePrice && String(r.salePrice).trim());
     const hasDate = Boolean(r.saleDate && String(r.saleDate).trim());
@@ -498,40 +390,34 @@ function extractFactsFromBlock(address: string, block: string): CmaSaleExtract {
     /(?:Sold\s*Date|Sale\s*Date)\s*[:\s]*([0-9]{1,2}[-/][A-Za-z]{3}[-/][0-9]{2,4}|[0-9]{1,2}[-/][0-9]{1,2}[-/][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3}\s+[0-9]{2,4})/i,
   );
 
-  // Prefer labelled areas; Cotality uses many label variants and sometimes omits m²
-  const landLabel =
-    block.match(
-      /(?:Land\s*(?:Area|Size)|Site\s*(?:Area|Size)|Land)\s*[:\s]*([\d,]{2,5}(?:\.\d+)?)\s*(?:m\s*[²2]|sqm)?/i,
-    ) ||
-    block.match(/([\d,]{2,5}(?:\.\d+)?)\s*(?:m\s*[²2]|sqm)\s*(?:land|site)/i);
-  const glaLabel =
-    block.match(
-      /(?:Floor\s*(?:Area|Size)|Living\s*(?:Area|Size)|Gross\s*Living\s*Area|GLA|Building\s*(?:Area|Size)|Internal\s*Area)\s*[:\s]*([\d,]{2,5}(?:\.\d+)?)\s*(?:m\s*[²2]|sqm)?/i,
-    ) ||
-    block.match(
-      /([\d,]{2,5}(?:\.\d+)?)\s*(?:m\s*[²2]|sqm)\s*(?:floor|living|gla|bldg|internal)/i,
-    );
+  // Areas: 390m2 / 390m² / 390 m2 / bare 390m (pdf.js split residue)
   const areaMatches = [
-    ...block.matchAll(/(\d{2,5}(?:\.\d+)?)\s*(?:m\s*[²2]|sqm)\b/gi),
+    ...block.matchAll(/(\d{2,5}(?:\.\d+)?)\s*m\s*(?:2|²)?\b/gi),
   ];
-  // Icon / card row: beds baths cars landGla landGla  e.g. "4 2 2 450 180"
-  const fivePack = block.match(
-    /\b([1-6])\s+([1-6])\s+([0-4])\s+(\d{2,4})\s+(\d{2,4})\b/,
-  );
-  let landArea = landLabel
-    ? `${landLabel[1]!.replace(/,/g, "")}m²`
-    : areaMatches[0]
-      ? `${areaMatches[0][1]}m²`
-      : "";
-  let gla = glaLabel
-    ? `${glaLabel[1]!.replace(/,/g, "")}m²`
-    : areaMatches[landLabel ? 0 : 1]
-      ? `${areaMatches[landLabel ? 0 : 1]![1]}m²`
-      : "";
-  if ((!landArea || !gla) && fivePack) {
-    if (!landArea) landArea = `${fivePack[4]}m²`;
-    if (!gla) gla = `${fivePack[5]}m²`;
+  // Prefer values in the typical residential range when multiple hits
+  const areas = areaMatches
+    .map((x) => Number(String(x[1]).replace(/,/g, "")))
+    .filter((n) => Number.isFinite(n) && n >= 40 && n <= 5000);
+
+  let landArea = "";
+  let gla = "";
+  if (areas.length >= 2) {
+    // Cotality detail row: land then floor
+    landArea = `${areas[0]}m²`;
+    gla = `${areas[1]}m²`;
+  } else if (areas.length === 1) {
+    landArea = `${areas[0]}m²`;
   }
+
+  // Labelled overrides
+  const landLabel = block.match(
+    /(?:Land\s*(?:Area|Size)|Site\s*(?:Area|Size))\s*[:\s]*([\d,]{2,5}(?:\.\d+)?)\s*m/i,
+  );
+  const glaLabel = block.match(
+    /(?:Floor\s*(?:Area|Size)|Living\s*(?:Area|Size)|Gross\s*Living\s*Area|GLA|Building\s*(?:Area|Size))\s*[:\s]*([\d,]{2,5}(?:\.\d+)?)\s*m/i,
+  );
+  if (landLabel) landArea = `${landLabel[1]!.replace(/,/g, "")}m²`;
+  if (glaLabel) gla = `${glaLabel[1]!.replace(/,/g, "")}m²`;
 
   let beds = "";
   let baths = "";
@@ -542,11 +428,14 @@ function extractFactsFromBlock(address: string, block: string): CmaSaleExtract {
   if (bedWord) beds = bedWord[1]!;
   if (bathWord) baths = bathWord[1]!;
   if (carWord) cars = carWord[1]!;
+
+  // Cotality icon row: "4 2 1" immediately before land/floor areas
   if (!beds || !baths) {
-    const head = block.slice(0, Math.min(block.length, 360));
-    const triplet =
-      head.match(/\b([1-6])\s+([1-6])\s+([0-4])\b/) ||
-      block.match(/\b([1-6])\s+([1-6])\s+([0-4])\b/);
+    const beforeAreas = block.match(
+      /\b([1-6])\s+([1-6])\s+([0-4])\b(?=[\s\S]{0,40}?\d{2,4}\s*m)/i,
+    );
+    const plain = block.match(/\b([1-6])\s+([1-6])\s+([0-4])\b/);
+    const triplet = beforeAreas || plain;
     if (triplet) {
       if (!beds) beds = triplet[1]!;
       if (!baths) baths = triplet[2]!;
@@ -558,7 +447,9 @@ function extractFactsFromBlock(address: string, block: string): CmaSaleExtract {
   const distMatch = block.match(/Distance\s*[:\s]*([\d.]+\s*[kK][mM])/i);
 
   const compLines = [
-    ...block.matchAll(/((?:COMPARABLE|SUPERIOR|INFERIOR|SLIGHTLY\s+SUPERIOR|SLIGHTLY\s+INFERIOR)\s*:\s*[^\n]+)/gi),
+    ...block.matchAll(
+      /((?:COMPARABLE|SUPERIOR|INFERIOR|SLIGHTLY\s+SUPERIOR|SLIGHTLY\s+INFERIOR)\s*:\s*[^\n]+)/gi,
+    ),
   ].map((x) => x[1]!.trim());
 
   let comments = "";
@@ -568,7 +459,7 @@ function extractFactsFromBlock(address: string, block: string): CmaSaleExtract {
   if (descMatch) {
     comments = descMatch[1]!
       .replace(/\$\s*[\d,]+/g, " ")
-      .replace(/\b\d+\s*m\s*[²2]/gi, " ")
+      .replace(/\b\d+\s*m\s*[²2]?\b/gi, " ")
       .replace(/\s+/g, " ")
       .trim();
     if (comments.length > 400) comments = comments.slice(0, 400).trim();

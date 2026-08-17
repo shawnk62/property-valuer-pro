@@ -305,9 +305,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       const heuristicExtracts = parseCmaTextHeuristic(trimmed);
       let extracts: CmaSaleExtract[] = heuristicExtracts;
 
-      const needsAiEnrichment =
-        isAiConfigured() &&
-        (heuristicExtracts.length === 0 || heuristicExtracts.length < 3);
+      // Only call AI when heuristic found nothing. Partial results are preferred
+      // over AI merges that previously created duplicate / mangled addresses.
+      const needsAiEnrichment = isAiConfigured() && heuristicExtracts.length === 0;
 
       if (needsAiEnrichment) {
         setStatus(

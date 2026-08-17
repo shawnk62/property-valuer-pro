@@ -3,12 +3,11 @@
  * Keeps large Cotality CMA PDFs in the browser — never POST the whole file to the server.
  *
  * Reconstructs reading order by grouping text items into lines (shared Y) then
- * sorting left-to-right. Plain space-join of all tokens scrambles multi-column
- * Cotality pages and breaks address + Sold Price pairing.
+ * sorting left-to-right. Cotality often emits "390m2" as separate tokens
+ * ("390m" + "2"); we rejoin those so area parsing works.
  */
 export async function extractTextFromPdf(file: File): Promise<string> {
   const pdfjs = await import("pdfjs-dist");
-  // Vite resolves the worker asset URL
   const worker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
   pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
 
@@ -26,7 +25,6 @@ export async function extractTextFromPdf(file: File): Promise<string> {
       if (!raw || typeof raw !== "object" || !("str" in raw)) continue;
       const str = String((raw as { str: string }).str ?? "").trim();
       if (!str) continue;
-      // pdf.js transform: [scaleX, skewY, skewX, scaleY, translateX, translateY]
       const tr =
         "transform" in raw && Array.isArray((raw as { transform?: number[] }).transform)
           ? ((raw as { transform: number[] }).transform as number[])
@@ -41,7 +39,6 @@ export async function extractTextFromPdf(file: File): Promise<string> {
       continue;
     }
 
-    // Cluster into lines by Y (pdf Y grows upward; tolerance ~2–3 pt)
     const Y_TOL = 2.5;
     items.sort((a, b) => b.y - a.y || a.x - b.x);
     const lines: Item[][] = [];
@@ -56,28 +53,39 @@ export async function extractTextFromPdf(file: File): Promise<string> {
 
     const lineTexts = lines.map((line) => {
       line.sort((a, b) => a.x - b.x);
-      // Join tokens; insert space when gap is large enough to be a word break
-      let out = line[0]!.str;
-      for (let j = 1; j < line.length; j++) {
-        const prev = line[j - 1]!;
+      const parts: string[] = [];
+      for (let j = 0; j < line.length; j++) {
         const cur = line[j]!;
-        const gap = cur.x - (prev.x + prev.str.length * 4); // rough width estimate
-        if (gap > 1.5 || !/[A-Za-z0-9]$/.test(out) || !/^[A-Za-z0-9]/.test(cur.str)) {
-          out += " " + cur.str;
+        if (j === 0) {
+          parts.push(cur.str);
+          continue;
+        }
+        const prev = line[j - 1]!;
+        const gap = cur.x - prev.x;
+        // Tight glyphs or unit superscript "2" after m — no space
+        if (gap < 8 || /^[²2]$/.test(cur.str)) {
+          parts[parts.length - 1] = parts[parts.length - 1]! + cur.str;
         } else {
-          // tight run (same word split across glyphs)
-          out += cur.str;
+          parts.push(cur.str);
         }
       }
-      return out.replace(/[ \t]{2,}/g, " ").trim();
+      return parts.join(" ").replace(/[ \t]{2,}/g, " ").trim();
     });
 
     pages.push(lineTexts.filter(Boolean).join("\n"));
   }
 
-  return pages
+  let text = pages
     .join("\n\n")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+
+  // Cotality: pdf.js often yields "390m 2" or "390 m 2" for 390m²
+  text = text
+    .replace(/(\d+)\s*m\s*[²2]\b/gi, "$1m2")
+    .replace(/(\d+m)\s+[²2]\b/gi, "$1m2")
+    .replace(/(\d+)\s*m²/gi, "$1m2");
+
+  return text;
 }
