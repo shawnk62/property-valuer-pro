@@ -180,6 +180,13 @@ export function cmaExtractsToSales(rows: CmaSaleExtract[]): ComparableSale[] {
       };
     };
     seed("dateOfSale", saleDate);
+    if (r.yearBuilt) {
+      const y = parseInt(String(r.yearBuilt).replace(/[^0-9]/g, ""), 10);
+      if (Number.isFinite(y) && y > 1800) {
+        const age = new Date().getFullYear() - y;
+        seed("actualAge", `A ${age} / E `);
+      }
+    }
     seed("site", landArea);
     seed("grossLivingArea", gla);
     if (beds || baths) {
@@ -217,7 +224,6 @@ export function cmaExtractsToSales(rows: CmaSaleExtract[]): ComparableSale[] {
 export function parseCmaTextHeuristic(text: string): CmaSaleExtract[] {
   if (!text?.trim()) return [];
 
-  // Flatten soft hyphens / odd spaces from PDF extraction
   const cleaned = text
     .replace(/\u00ad/g, "")
     .replace(/\r/g, "\n")
@@ -229,9 +235,32 @@ export function parseCmaTextHeuristic(text: string): CmaSaleExtract[] {
   );
 
   const matches = [...cleaned.matchAll(addressRe)];
-  if (matches.length === 0) return [];
+  const byKey = new Map<string, CmaSaleExtract>();
 
-  const extracts: CmaSaleExtract[] = [];
+  const merge = (next: CmaSaleExtract) => {
+    const address = normaliseAddress(String(next.address ?? ""));
+    if (!address) return;
+    const key = addressKey(address);
+    const prev = byKey.get(key);
+    if (!prev) {
+      byKey.set(key, { ...next, address });
+      return;
+    }
+    // Prefer the block that has more facts (detail page over map legend)
+    const score = (r: CmaSaleExtract) =>
+      [r.salePrice, r.saleDate, r.landArea, r.gla, r.beds, r.comments, r.comparisonNotes].filter(
+        (x) => x && String(x).trim(),
+      ).length;
+    if (score(next) >= score(prev)) {
+      byKey.set(key, {
+        ...prev,
+        ...Object.fromEntries(
+          Object.entries(next).filter(([, v]) => v != null && String(v).trim() !== ""),
+        ),
+        address,
+      });
+    }
+  };
 
   for (let i = 0; i < matches.length; i++) {
     const m = matches[i]!;
@@ -240,23 +269,20 @@ export function parseCmaTextHeuristic(text: string): CmaSaleExtract[] {
     const end = i + 1 < matches.length ? (matches[i + 1]!.index ?? cleaned.length) : cleaned.length;
     const block = cleaned.slice(start, end);
 
-    // Require a sold price so floor-plan / subject-only pages drop out
-    const priceMatch = block.match(/\$\s*[\d,]+(?:\.\d{2})?/);
+    const priceMatch =
+      block.match(/Sold\s*Price\s*[:\s]*(\$\s*[\d,]+(?:\.\d{2})?)/i) ||
+      block.match(/(\$\s*[\d,]{4,}(?:\.\d{2})?)/);
     if (!priceMatch) continue;
-    const salePrice = priceMatch[0]!.replace(/\s+/g, "");
+    const salePrice = priceMatch[1]!.replace(/\s+/g, "");
 
     const dateMatch = block.match(
       /(?:Sold\s*Date|Sale\s*Date)\s*[:\s]*([0-9]{1,2}[-/][A-Za-z]{3}[-/][0-9]{2,4}|[0-9]{1,2}[-/][0-9]{1,2}[-/][0-9]{2,4})/i,
     );
 
-    // Areas: Cotality prints land m² then floor m² (sometimes as "390m2")
-    const areaMatches = [
-      ...block.matchAll(/(\d{2,4}(?:\.\d+)?)\s*m\s*[²2]/gi),
-    ];
+    const areaMatches = [...block.matchAll(/(\d{2,4}(?:\.\d+)?)\s*m\s*[²2]/gi)];
     const landArea = areaMatches[0] ? `${areaMatches[0][1]}m²` : "";
     const gla = areaMatches[1] ? `${areaMatches[1][1]}m²` : "";
 
-    // beds / baths / cars: words, or Cotality icon triplet (e.g. 4  2  1)
     let beds = "";
     let baths = "";
     let cars = "";
@@ -267,8 +293,7 @@ export function parseCmaTextHeuristic(text: string): CmaSaleExtract[] {
     if (bathWord) baths = bathWord[1]!;
     if (carWord) cars = carWord[1]!;
     if (!beds || !baths) {
-      // Prefer triplet immediately after address / before price
-      const head = block.slice(0, Math.min(block.length, 280));
+      const head = block.slice(0, Math.min(block.length, 320));
       const triplet =
         head.match(/\b([1-6])\s+([1-6])\s+([0-4])\b/) ||
         block.match(/\b([1-6])\s+([1-6])\s+([0-4])\b/);
@@ -286,7 +311,6 @@ export function parseCmaTextHeuristic(text: string): CmaSaleExtract[] {
       ...block.matchAll(/((?:COMPARABLE|SUPERIOR|INFERIOR)\s*:\s*[^\n]+)/gi),
     ].map((x) => x[1]!.trim());
 
-    // Description paragraph before COMPARABLE: or Property Insights
     let comments = "";
     const descMatch = block.match(
       /(?:Comments?\s*&?\s*Comparison|Comments?)\s*([\s\S]*?)(?=COMPARABLE\s*:|SUPERIOR\s*:|INFERIOR\s*:|Property\s*Insights|$)/i,
@@ -294,13 +318,13 @@ export function parseCmaTextHeuristic(text: string): CmaSaleExtract[] {
     if (descMatch) {
       comments = descMatch[1]!
         .replace(/\$\s*[\d,]+/g, " ")
-        .replace(/\b\d+\s*m\s*²/gi, " ")
+        .replace(/\b\d+\s*m\s*[²2]/gi, " ")
         .replace(/\s+/g, " ")
         .trim();
       if (comments.length > 400) comments = comments.slice(0, 400).trim();
     }
 
-    extracts.push({
+    merge({
       address,
       saleDate: dateMatch?.[1]?.trim() ?? "",
       salePrice,
@@ -316,12 +340,25 @@ export function parseCmaTextHeuristic(text: string): CmaSaleExtract[] {
     });
   }
 
-  return extracts;
+  // Pass 2: map-legend style "ADDRESS … $price" on one line (catches sales missed in page splits)
+  const legendRe = new RegExp(
+    String.raw`(${addressRe.source})\s+(?:([1-6])\s+([1-6])\s+([0-4])\s+)?(\$\s*[\d,]+)`,
+    "gi",
+  );
+  for (const lm of cleaned.matchAll(legendRe)) {
+    merge({
+      address: normaliseAddress(lm[1]!),
+      beds: lm[2] || null,
+      baths: lm[3] || null,
+      cars: lm[4] || null,
+      salePrice: lm[5]!.replace(/\s+/g, ""),
+    });
+  }
+
+  return [...byKey.values()];
 }
 
-/**
- * End-to-end: text → ComparableSale[] (heuristic only).
- */
+/** End-to-end: text → ComparableSale[] (heuristic only). */
 export function salesFromCmaText(text: string): ComparableSale[] {
   return cmaExtractsToSales(parseCmaTextHeuristic(text));
 }
