@@ -156,6 +156,7 @@ For each comparable sale include:
 - yearBuilt, distance when shown
 - comments: short property description paragraph if present
 - comparisonNotes: the COMPARABLE / SUPERIOR / INFERIOR lines exactly when present (preserve those labels)
+Extract EVERY comparable sale listed (often 3–12+). Do not stop after three.
 Skip floor-plan-only pages, disclaimer pages, and the subject property itself.
 Do not invent sales. If none found, return { "sales": [] }.`;
 
