@@ -89,7 +89,7 @@ export function SelectInput({
       <SelectTrigger id={id} className={cn("h-12 text-base", invalid && "border-destructive")}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      <SelectContent className="max-h-72">
+      <SelectContent className="max-h-96">
         {options.map((option) => (
           <SelectItem key={option} value={option} className="text-base">
             {option}

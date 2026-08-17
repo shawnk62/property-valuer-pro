@@ -11,6 +11,7 @@ import { REQUIRED_SET } from "@/lib/inspection/required";
 import { isFilled } from "@/lib/inspection/validation";
 import type { InspectionField, InspectionValues } from "@/lib/inspection/types";
 import { cn } from "@/lib/utils";
+import { PROP_ASSIGNMENT_OPTIONS } from "@/lib/inspection/schema";
 
 interface Props {
   field: InspectionField;
@@ -51,6 +52,10 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
   if (field.type === "select") {
     const isDesign = field.name === "imp_design";
     const isLocation = field.name === "nbhd_location";
+    const isAssignment = field.name === "prop_assignment";
+    const selectOptions = isAssignment
+      ? ([...PROP_ASSIGNMENT_OPTIONS] as string[])
+      : field.options;
     return (
       <div className="space-y-2">
         <FieldLabel htmlFor={field.name} required={required}>
@@ -59,7 +64,7 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
         <SelectInput
           id={field.name}
           value={asString(values[field.name])}
-          options={field.options}
+          options={selectOptions}
           invalid={invalid}
           onChange={(v) => onChange(field.name, v)}
         />
