@@ -10,6 +10,7 @@ import {
   ensureSaleAdjustments,
   formatMoney,
   formatPct,
+  salePricePerGla,
   subjectFeatureDisplay,
   type Relativity,
 } from "@/lib/report/adjustmentGrid";
@@ -340,7 +341,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-4">
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-foreground">Sales comparison grid</h3>
+          <h3 className="text-sm font-semibold text-foreground">Sales comparison grid (URAR)</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             Shared across all report types. Import Cotality CMA PDF (text extracted in-browser, supports 9+ sales) or paste text. Relativity
             marks and $ adjustments feed report narratives (editable per sale).
@@ -473,49 +474,121 @@ export function SalesSection({ controller }: { controller: ReportDraftController
               </tr>
             </thead>
             <tbody>
-              {(
-                [
-                  ["address", "Address"],
-                  ["saleDate", "Sale date"],
-                  ["salePrice", "Sale price"],
-                  ["landArea", "Land area"],
-                ] as const
-              ).map(([key, label]) => (
-                <tr key={key} className="border-b border-border">
-                  <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium text-foreground">
-                    {label}
+              {/* URAR identity rows */}
+              <tr className="border-b border-border">
+                <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium text-foreground">
+                  Address
+                </td>
+                <td className="px-3 py-2 text-muted-foreground">
+                  {[draft.values["prop_address"], draft.values["prop_suburb"]]
+                    .filter(Boolean)
+                    .join(", ") || "—"}
+                </td>
+                {sales.map((sale) => (
+                  <td key={sale.id} className="px-1 py-1 align-top">
+                    <input
+                      value={sale.address}
+                      onChange={(e) => patchSale(sale.id, { address: e.target.value })}
+                      className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-input focus:bg-accent/40"
+                    />
                   </td>
-                  <td className="px-3 py-2 text-muted-foreground">
-                    {key === "address"
-                      ? [draft.values["prop_address"], draft.values["prop_suburb"]]
-                          .filter(Boolean)
-                          .join(", ") || "—"
-                      : key === "salePrice"
-                        ? draft.reportMeta.valueAmount
-                          ? `Valuation ${draft.reportMeta.valueAmount}`
-                          : "—"
-                        : key === "landArea"
-                          ? [
-                              draft.values["prop_sitearea"],
-                              draft.values["prop_areaunit"] === "m2"
-                                ? "m²"
-                                : draft.values["prop_areaunit"],
-                            ]
-                              .filter(Boolean)
-                              .join(" ") || "—"
-                          : draft.reportMeta.valueDate || "—"}
+                ))}
+              </tr>
+              <tr className="border-b border-border">
+                <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium text-foreground">
+                  Proximity to Subject
+                </td>
+                <td className="px-3 py-2 text-muted-foreground">—</td>
+                {sales.map((sale) => (
+                  <td key={sale.id} className="px-1 py-1 align-top">
+                    <input
+                      value={sale.proximity ?? ""}
+                      onChange={(e) => patchSale(sale.id, { proximity: e.target.value })}
+                      placeholder="e.g. 1.39 km"
+                      className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-input focus:bg-accent/40"
+                    />
                   </td>
-                  {sales.map((sale) => (
-                    <td key={sale.id} className="px-1 py-1 align-top">
-                      <input
-                        value={sale[key]}
-                        onChange={(e) => patchSale(sale.id, { [key]: e.target.value })}
-                        className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-input focus:bg-accent/40"
-                      />
-                    </td>
-                  ))}
-                </tr>
-              ))}
+                ))}
+              </tr>
+              <tr className="border-b border-border">
+                <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium text-foreground">
+                  Sale Price
+                </td>
+                <td className="px-3 py-2 text-muted-foreground">
+                  {draft.reportMeta.valueAmount
+                    ? `Subject value ${draft.reportMeta.valueAmount}`
+                    : "—"}
+                </td>
+                {sales.map((sale) => (
+                  <td key={sale.id} className="px-1 py-1 align-top">
+                    <input
+                      value={sale.salePrice}
+                      onChange={(e) => patchSale(sale.id, { salePrice: e.target.value })}
+                      className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-input focus:bg-accent/40"
+                    />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-border">
+                <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium text-foreground">
+                  Sale Price/Gross Liv. Area
+                </td>
+                <td className="px-3 py-2 text-muted-foreground">
+                  {(() => {
+                    const gla = draft.values["imp_gla"];
+                    const val = draft.reportMeta.valueAmount;
+                    if (!gla || !val) return "—";
+                    // display only; comps use salePricePerGla()
+                    return "—";
+                  })()}
+                </td>
+                {sales.map((sale) => (
+                  <td key={sale.id} className="px-3 py-2 text-sm text-muted-foreground">
+                    {salePricePerGla(sale)}
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-border">
+                <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium text-foreground">
+                  Data Source(s)
+                </td>
+                <td className="px-3 py-2 text-muted-foreground">—</td>
+                {sales.map((sale) => (
+                  <td key={sale.id} className="px-1 py-1 align-top">
+                    <input
+                      value={sale.dataSource ?? ""}
+                      onChange={(e) => patchSale(sale.id, { dataSource: e.target.value })}
+                      placeholder="e.g. Cotality / RP Data"
+                      className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-input focus:bg-accent/40"
+                    />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-border">
+                <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium text-foreground">
+                  Verification Source(s)
+                </td>
+                <td className="px-3 py-2 text-muted-foreground">—</td>
+                {sales.map((sale) => (
+                  <td key={sale.id} className="px-1 py-1 align-top">
+                    <input
+                      value={sale.verificationSource ?? ""}
+                      onChange={(e) =>
+                        patchSale(sale.id, { verificationSource: e.target.value })
+                      }
+                      className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-input focus:bg-accent/40"
+                    />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-border bg-muted/30">
+                <td
+                  colSpan={2 + sales.length}
+                  className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  Value adjustments — description (relativity) and +/− $ adjustment
+                </td>
+              </tr>
 
               {ADJUSTMENT_FEATURES.map((feature) => (
                 <tr key={feature.id} className="border-b border-border">
@@ -569,7 +642,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
               <tr className="border-b border-border bg-muted/40">
                 <td className="sticky left-0 z-10 bg-muted/95 px-3 py-2 font-semibold">
-                  Net adjustment
+                  Net Adjustment (Total)
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">—</td>
                 {sales.map((sale) => (
@@ -580,7 +653,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
               </tr>
               <tr className="border-b border-border bg-muted/40">
                 <td className="sticky left-0 z-10 bg-muted/95 px-3 py-2 font-semibold">
-                  Net adj. %
+                  Net Adj. %
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">—</td>
                 {sales.map((sale) => (
@@ -591,7 +664,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
               </tr>
               <tr className="border-b border-border bg-muted/40">
                 <td className="sticky left-0 z-10 bg-muted/95 px-3 py-2 font-semibold">
-                  Gross adj. %
+                  Gross Adj. %
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">—</td>
                 {sales.map((sale) => (
@@ -602,7 +675,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
               </tr>
               <tr className="border-b border-border bg-muted/50">
                 <td className="sticky left-0 z-10 bg-muted/95 px-3 py-2 font-semibold">
-                  Adjusted sale price
+                  Adjusted Sale Price
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">—</td>
                 {sales.map((sale) => (
