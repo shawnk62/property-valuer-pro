@@ -49,7 +49,7 @@ export const ADJUSTMENT_FEATURES: AdjustmentFeature[] = [
   { id: "view", label: "View" },
   { id: "design", label: "Design (Style)", subjectKeys: ["imp_design", "ext"] },
   { id: "quality", label: "Quality of Construction", subjectKeys: ["imp_quality"] },
-  { id: "actualAge", label: "Age", subjectKeys: ["imp_yearbuilt", "imp_effective_age"] },
+  { id: "actualAge", label: "Age", subjectKeys: ["imp_yearbuilt", "imp_effage"] },
   { id: "condition", label: "Condition", subjectKeys: ["overall_cond"] },
   {
     id: "aboveGradeRoomCount",
@@ -128,25 +128,65 @@ export function subjectFeatureDisplay(
   feature: AdjustmentFeature,
   values: InspectionValues,
 ): string {
-  // URAR Age line: "A {actual years} / E {effective}" from year built
+  // URAR Age line: "A {actual years} / E {effective}"
+  // A = calendar age from Year Built; E = Effective Age from inspection (imp_effage).
   if (feature.id === "actualAge") {
     const yearRaw = values["imp_yearbuilt"];
     const year =
       typeof yearRaw === "number"
         ? yearRaw
         : parseInt(String(yearRaw ?? "").replace(/[^0-9]/g, ""), 10);
-    if (!Number.isFinite(year) || year < 1800 || year > 2100) return "—";
-    const actual = new Date().getFullYear() - year;
-    if (actual < 0 || actual > 300) return "—";
-    const effRaw = values["imp_effective_age"];
+    let actualLabel = "";
+    if (Number.isFinite(year) && year >= 1800 && year <= 2100) {
+      const actual = new Date().getFullYear() - year;
+      if (actual >= 0 && actual <= 300) actualLabel = String(actual);
+    }
+
+    // Inspection schema key is imp_effage (dropdown: New, 1–40).
+    // Accept legacy imp_effective_age if present.
+    const effRaw = values["imp_effage"] ?? values["imp_effective_age"];
     const eff =
       effRaw !== undefined && effRaw !== null && String(effRaw).trim() !== ""
         ? String(effRaw).trim()
         : "";
-    return `A ${actual} / E ${eff}`;
+
+    if (actualLabel && eff) return `A ${actualLabel} / E ${eff}`;
+    if (actualLabel) return `A ${actualLabel}`;
+    if (eff) return `E ${eff}`;
+    return "—";
   }
 
   if (!feature.subjectKeys?.length) return "—";
+
+
+  // Condition: overall + kitchen/bath remodel status from inspection
+  if (feature.id === "condition") {
+    const overall = values["overall_cond"];
+    const bits: string[] = [];
+    if (overall !== undefined && overall !== null && String(overall).trim()) {
+      bits.push(String(overall).trim());
+    }
+    const kit = values["kit_remodeled"];
+    const bath = values["bath_remodeled"];
+    const baths = values["baths_remodeled"];
+    const remodelBits: string[] = [];
+    if (kit && String(kit).trim() && String(kit) !== "Not remodeled") {
+      remodelBits.push(`Kit: ${String(kit).trim()}`);
+    }
+    if (bath && String(bath).trim() && String(bath) !== "Not remodeled") {
+      remodelBits.push(`Bath: ${String(bath).trim()}`);
+    }
+    if (
+      baths &&
+      String(baths).trim() &&
+      String(baths) !== "Not remodeled" &&
+      String(baths) !== "Not applicable"
+    ) {
+      remodelBits.push(`Baths: ${String(baths).trim()}`);
+    }
+    if (remodelBits.length) bits.push(remodelBits.join("; "));
+    return bits.length ? bits.join(" · ") : "—";
+  }
 
   if (feature.id === "aboveGradeRoomCount") {
     const rooms = values["imp_rooms"];

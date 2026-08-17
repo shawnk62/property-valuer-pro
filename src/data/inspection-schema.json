@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "17",
+  "version": "18",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -412,25 +412,25 @@
         },
         {
           "name": "nbhd_use_one",
-          "label": "Present Land Use % – One-Unit",
+          "label": "Present Land Use % \u2013 One-Unit",
           "type": "text",
           "multiline": false
         },
         {
           "name": "nbhd_use_24",
-          "label": "Present Land Use % – 2-4 Unit",
+          "label": "Present Land Use % \u2013 2-4 Unit",
           "type": "text",
           "multiline": false
         },
         {
           "name": "nbhd_use_mf",
-          "label": "Present Land Use % – Multi-Family",
+          "label": "Present Land Use % \u2013 Multi-Family",
           "type": "text",
           "multiline": false
         },
         {
           "name": "nbhd_use_comm",
-          "label": "Present Land Use % – Commercial",
+          "label": "Present Land Use % \u2013 Commercial",
           "type": "text",
           "multiline": false
         },
@@ -1554,9 +1554,51 @@
         },
         {
           "name": "imp_effage",
-          "label": "Effective Age (yrs)",
-          "type": "text",
-          "multiline": false
+          "label": "Effective Age",
+          "type": "select",
+          "options": [
+            "New",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "18",
+            "19",
+            "20",
+            "21",
+            "22",
+            "23",
+            "24",
+            "25",
+            "26",
+            "27",
+            "28",
+            "29",
+            "30",
+            "31",
+            "32",
+            "33",
+            "34",
+            "35",
+            "36",
+            "37",
+            "38",
+            "39",
+            "40"
+          ]
         },
         {
           "name": "imp_quality",
@@ -1925,55 +1967,55 @@
         },
         {
           "name": "imp_gla",
-          "label": "GLA m²",
+          "label": "GLA m\u00b2",
           "type": "text",
           "multiline": false
         },
         {
           "name": "area_living_upstairs",
-          "label": "Living Area Upstairs (m²)",
+          "label": "Living Area Upstairs (m\u00b2)",
           "type": "text",
           "multiline": false
         },
         {
           "name": "area_living_downstairs",
-          "label": "Living Area Downstairs (m²)",
+          "label": "Living Area Downstairs (m\u00b2)",
           "type": "text",
           "multiline": false
         },
         {
           "name": "area_verandahs",
-          "label": "Verandahs (m²)",
+          "label": "Verandahs (m\u00b2)",
           "type": "text",
           "multiline": false
         },
         {
           "name": "area_covered_front_patio",
-          "label": "Covered Front Patio / Deck (m²)",
+          "label": "Covered Front Patio / Deck (m\u00b2)",
           "type": "text",
           "multiline": false
         },
         {
           "name": "area_covered_rear_patio",
-          "label": "Covered Rear Patio / Deck (m²)",
+          "label": "Covered Rear Patio / Deck (m\u00b2)",
           "type": "text",
           "multiline": false
         },
         {
           "name": "area_garage",
-          "label": "Garage (m²)",
+          "label": "Garage (m\u00b2)",
           "type": "text",
           "multiline": false
         },
         {
           "name": "area_carport",
-          "label": "Carport (m²)",
+          "label": "Carport (m\u00b2)",
           "type": "text",
           "multiline": false
         },
         {
           "name": "area_shed",
-          "label": "Shed/s (m²)",
+          "label": "Shed/s (m\u00b2)",
           "type": "text",
           "multiline": false
         },
@@ -2329,7 +2371,7 @@
         },
         {
           "name": "am_bir_count",
-          "label": "Built-in wardrobes — number",
+          "label": "Built-in wardrobes \u2014 number",
           "type": "select",
           "options": [
             "Select",
@@ -2341,7 +2383,7 @@
         },
         {
           "name": "am_wir_count",
-          "label": "Walk-in wardrobes — number",
+          "label": "Walk-in wardrobes \u2014 number",
           "type": "select",
           "options": [
             "Select",
@@ -2748,7 +2790,7 @@
         },
         {
           "name": "design_features_notes",
-          "label": "Design metrics and clearances (column spacing, clear spans, internal height, roof frame clearances, door clearances H × W)",
+          "label": "Design metrics and clearances (column spacing, clear spans, internal height, roof frame clearances, door clearances H \u00d7 W)",
           "type": "text",
           "multiline": true
         }
@@ -2758,6 +2800,17 @@
       "id": "3A",
       "title": "Kitchen & Bathrooms (Detailed)",
       "fields": [
+        {
+          "name": "kit_remodeled",
+          "label": "Remodeled kitchen",
+          "type": "select",
+          "options": [
+            "Not remodeled",
+            "Partially updated",
+            "Remodeled",
+            "Fully remodeled"
+          ]
+        },
         {
           "name": "kit_feat",
           "label": "Kitchen Key Features",
@@ -3044,6 +3097,29 @@
           "label": "Kitchen overall notes",
           "type": "text",
           "multiline": true
+        },
+        {
+          "name": "bath_remodeled",
+          "label": "Remodeled bath (main)",
+          "type": "select",
+          "options": [
+            "Not remodeled",
+            "Partially updated",
+            "Remodeled",
+            "Fully remodeled"
+          ]
+        },
+        {
+          "name": "baths_remodeled",
+          "label": "Remodeled baths (other)",
+          "type": "select",
+          "options": [
+            "Not remodeled",
+            "Partially updated",
+            "Remodeled",
+            "Fully remodeled",
+            "Not applicable"
+          ]
         },
         {
           "name": "bath_feat",
