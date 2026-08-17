@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { inspectionStore, type ReportExtras } from "@/lib/inspection/storage";
-import { generateNarrative } from "@/lib/report/narrative";
 import { applyRelativityToSales } from "@/lib/report/salesRelativity";
 import type {
   ComparableSale,
@@ -207,7 +206,7 @@ export function useReportDraft(inspectionId: string) {
         let narrative: ReportNarrative;
         if (!narrativeEmpty && cloudNarrative) narrative = normalizeNarrative(cloudNarrative);
         else if (!localNarrativeEmpty && local?.narrative) narrative = normalizeNarrative(local.narrative);
-        else narrative = generateNarrative(values);
+        else narrative = emptyNarrative(); // AI is the default fill path on Narrative tab
 
         const reportMeta =
           (cloud?.reportMeta as ReportMeta | undefined) ||

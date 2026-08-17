@@ -59,31 +59,21 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   const [lastStatus, setLastStatus] = useState<string | null>(null);
   const autoStarted = useRef(false);
 
-  function narrativeIsEmpty(): boolean {
-    return BLOCKS.every((b) => !String(draft.narrative[b.key] ?? "").trim());
+  function emptyNarrativeKeys(): (keyof ReportNarrative)[] {
+    return BLOCKS.map((b) => b.key).filter(
+      (key) => !String(draft.narrative[key] ?? "").trim(),
+    );
   }
 
-  // Auto-generate with AI once when Narrative opens and all blocks are empty
+  // Default: auto-generate any empty narrative blocks with AI when this tab opens
   useEffect(() => {
     if (autoStarted.current) return;
-    if (!narrativeIsEmpty()) return;
     if (!isAiConfigured()) return;
-    const flagKey = `pvp-ai-narrative-auto:${draft.inspectionId}`;
-    try {
-      if (sessionStorage.getItem(flagKey)) return;
-    } catch {
-      // ignore
-    }
+    const keys = emptyNarrativeKeys();
+    if (keys.length === 0) return;
     autoStarted.current = true;
-    void (async () => {
-      await generateWithAi();
-      try {
-        sessionStorage.setItem(flagKey, "1");
-      } catch {
-        // ignore
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- once when Narrative first opens empty
+    void generateWithAi(keys);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per mount when empty blocks exist
   }, [draft.inspectionId]);
 
   function generateFromTemplate() {
@@ -198,7 +188,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-foreground">Narrative</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Fill from inspection data (template) or generate with your configured AI (Settings).
+            AI generates empty sections automatically when this tab opens (requires Settings). You can regenerate any block or fill from the inspection template instead.
             Edit any block before exporting the report.
             {generatedAt ? (
               <>
