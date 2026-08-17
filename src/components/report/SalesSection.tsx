@@ -43,11 +43,14 @@ function emptySale(): ComparableSale {
   });
 }
 
-function parseAmountInput(raw: string): number {
+/** Parse adjustment $ input. Returns null while the user is mid-typing (e.g. "-" or "-."). */
+function parseAmountInput(raw: string): number | null {
   const cleaned = raw.replace(/[^0-9.-]/g, "");
-  if (!cleaned || cleaned === "-" || cleaned === ".") return 0;
+  if (!cleaned) return 0;
+  // Allow typing a leading minus / decimal without wiping the field
+  if (cleaned === "-" || cleaned === "." || cleaned === "-.") return null;
   const n = Number(cleaned);
-  return Number.isFinite(n) ? n : 0;
+  return Number.isFinite(n) ? n : null;
 }
 
 export function SalesSection({ controller }: { controller: ReportDraftController }) {
@@ -59,6 +62,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const [autoNarratives, setAutoNarratives] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  /** In-progress amount text so "-" can be typed before digits. */
+  const [amountDrafts, setAmountDrafts] = useState<Record<string, string>>({});
   const fingerprintsRef = useRef<Record<string, string>>({});
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const salesRef = useRef(sales);
@@ -827,25 +832,46 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                   <td className="px-0.5 py-1 align-middle">
                                     <input
                                       type="text"
-                                      inputMode="decimal"
+                                      inputMode="text"
                                       placeholder="0"
-                                      value={adj.amount === 0 ? "" : String(adj.amount)}
-                                      onChange={(e) =>
-                                        patchAdjustment(sale.id, feature.id, {
-                                          amount: parseAmountInput(e.target.value),
-                                        })
+                                      value={
+                                        amountDrafts[`${sale.id}:${feature.id}`] !== undefined
+                                          ? amountDrafts[`${sale.id}:${feature.id}`]
+                                          : adj.amount === 0
+                                            ? ""
+                                            : String(adj.amount)
                                       }
-                                      readOnly={rateActive}
+                                      onChange={(e) => {
+                                        const raw = e.target.value;
+                                        const key = `${sale.id}:${feature.id}`;
+                                        setAmountDrafts((prev) => ({ ...prev, [key]: raw }));
+                                        const parsed = parseAmountInput(raw);
+                                        if (parsed !== null) {
+                                          patchAdjustment(sale.id, feature.id, {
+                                            amount: parsed,
+                                          });
+                                        }
+                                      }}
+                                      onBlur={(e) => {
+                                        const key = `${sale.id}:${feature.id}`;
+                                        const raw = e.currentTarget.value;
+                                        setAmountDrafts((prev) => {
+                                          if (prev[key] === undefined) return prev;
+                                          const next = { ...prev };
+                                          delete next[key];
+                                          return next;
+                                        });
+                                        const parsed = parseAmountInput(raw);
+                                        patchAdjustment(sale.id, feature.id, {
+                                          amount: parsed ?? 0,
+                                        });
+                                      }}
                                       title={
                                         rateActive
-                                          ? "Auto from $/m² rate × (subject − comp), nearest $1,000"
-                                          : "Dollar adjustment"
+                                          ? "Auto-filled from $/m² rate when rate/area changes — you can still override (negative = inferior to subject)"
+                                          : "Dollar adjustment (use leading − for negative)"
                                       }
-                                      className={`w-full rounded border border-input px-1 py-0.5 text-[0.65rem] text-foreground outline-none focus:ring-1 focus:ring-ring ${
-                                        rateActive
-                                          ? "bg-muted/50 cursor-default"
-                                          : "bg-card"
-                                      }`}
+                                      className="w-full rounded border border-input bg-card px-1 py-0.5 text-[0.65rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
                                     />
                                   </td>
                                 </Fragment>
