@@ -13,7 +13,7 @@ import {
   subjectFeatureDisplay,
   type Relativity,
 } from "@/lib/report/adjustmentGrid";
-import { cmaExtractsToSales } from "@/lib/report/importSalesCma";
+import { cmaExtractsToSales, parseCmaTextHeuristic } from "@/lib/report/importSalesCma";
 import { importSalesFromCsv } from "@/lib/report/importSalesCsv";
 import { MOCK_COTALITY_SALES } from "@/lib/report/mock-sales";
 import {
@@ -47,6 +47,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const sales = draft.sales.map(ensureSaleAdjustments);
   const fileRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
+  const [cmaPaste, setCmaPaste] = useState("");
   const [autoNarratives, setAutoNarratives] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -200,30 +201,26 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     const buf = await file.arrayBuffer();
     let binary = "";
     const bytes = new Uint8Array(buf);
-    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]!);
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
     return btoa(binary);
   }
 
   async function onCmaFileSelected(file: File | null) {
     if (!file) return;
-    const settings = loadAiSettings();
-    if (!isAiConfigured(settings)) {
-      toast.error("Configure AI in Settings first", {
-        description: "CMA PDF extract uses your configured provider (e.g. xAI / Grok).",
-      });
-      return;
-    }
+
+    const isPdf =
+      file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    const isCsv =
+      file.type === "text/csv" ||
+      file.name.toLowerCase().endsWith(".csv") ||
+      file.type === "application/vnd.ms-excel";
 
     setImporting(true);
-    setStatus("Extracting comparable sales from CMA…");
+    setStatus("Importing…");
     try {
-      const isPdf =
-        file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-      const isCsv =
-        file.type === "text/csv" ||
-        file.name.toLowerCase().endsWith(".csv") ||
-        file.type === "application/vnd.ms-excel";
-
       if (isCsv) {
         const text = await file.text();
         const result = importSalesFromCsv(text);
@@ -231,6 +228,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           toast.error("No sales in CSV", {
             description: result.warnings.join(" ") || "Check headers.",
           });
+          setStatus("No sales in CSV.");
           return;
         }
         fingerprintsRef.current = {};
@@ -240,50 +238,76 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         return;
       }
 
-      const result = await extractComparableSales({
-        data: {
-          settings: {
-            provider: settings.provider,
-            model: settings.model,
-            apiKey: settings.apiKey,
-            ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
-          },
-          source: isPdf ? "file" : "text",
-          ...(isPdf
-            ? {
-                file: {
-                  mimeType: file.type || "application/pdf",
-                  base64: await fileToBase64(file),
-                },
-              }
-            : { text: await file.text() }),
-        },
-      });
-
-      const rawSales =
-        result && typeof result === "object" && "sales" in result
-          ? (result as { sales: unknown[] }).sales
-          : [];
-      const mapped = cmaExtractsToSales(
-        Array.isArray(rawSales) ? (rawSales as Parameters<typeof cmaExtractsToSales>[0]) : [],
-      );
-
-      if (mapped.length === 0) {
-        toast.error("No comparable sales found in the CMA", {
-          description: "Try a full CMA PDF with Comparable Sales pages, or paste text.",
+      // Large CMA PDFs often exceed serverless body limits when base64-encoded (~4MB PDF → ~5.5MB).
+      if (isPdf && file.size > 2_500_000) {
+        toast.error("CMA PDF is too large to upload directly", {
+          description:
+            "Paste the Comparable Sales page text into the box below (or use a smaller export). Heuristic extract does not need AI.",
         });
-        setStatus("No sales extracted.");
+        setStatus("PDF too large for direct upload — paste Comparable Sales text instead.");
         return;
       }
 
-      fingerprintsRef.current = {};
-      replaceSales(mapped.map(ensureSaleAdjustments));
-      toast.success(`Extracted ${mapped.length} comparable sale(s) from CMA`, {
-        description: autoNarratives
-          ? "Grid marks pre-filled from COMPARABLE/SUPERIOR/INFERIOR where found. Narratives will follow if auto is on."
-          : "Grid marks pre-filled from CMA comparison lines where found.",
-      });
-      setStatus(`Extracted ${mapped.length} sale(s) from CMA.`);
+      if (isPdf) {
+        const settings = loadAiSettings();
+        if (!isAiConfigured(settings)) {
+          toast.error("Configure AI in Settings first", {
+            description:
+              "Or paste Comparable Sales text below — text paste can extract without AI.",
+          });
+          setStatus("AI not configured for PDF extract.");
+          return;
+        }
+
+        setStatus("Extracting sales from CMA PDF…");
+        const result = await extractComparableSales({
+          data: {
+            settings: {
+              provider: settings.provider,
+              model: settings.model,
+              apiKey: settings.apiKey,
+              ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
+            },
+            source: "file",
+            file: {
+              mimeType: file.type || "application/pdf",
+              base64: await fileToBase64(file),
+            },
+          },
+        });
+
+        const error =
+          result && typeof result === "object" && "error" in result
+            ? (result as { error?: string | null }).error
+            : null;
+        const rawSales =
+          result && typeof result === "object" && "sales" in result
+            ? (result as { sales: unknown[] }).sales
+            : [];
+        const mapped = cmaExtractsToSales(
+          Array.isArray(rawSales) ? (rawSales as Parameters<typeof cmaExtractsToSales>[0]) : [],
+        );
+
+        if (mapped.length === 0) {
+          toast.error("No comparable sales extracted from PDF", {
+            description:
+              error ||
+              "Paste the Comparable Sales pages as text below and click Extract from pasted text.",
+          });
+          setStatus(error ? `Failed: ${error}` : "No sales extracted from PDF.");
+          return;
+        }
+
+        fingerprintsRef.current = {};
+        replaceSales(mapped.map(ensureSaleAdjustments));
+        toast.success(`Extracted ${mapped.length} comparable sale(s) from CMA`);
+        setStatus(`Extracted ${mapped.length} sale(s) from CMA PDF.`);
+        return;
+      }
+
+      // Plain text file
+      const text = await file.text();
+      await importFromCmaText(text);
     } catch (err) {
       console.error("[CMA import]", err);
       const message = err instanceof Error ? err.message : "CMA import failed";
@@ -295,7 +319,77 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     }
   }
 
+  async function importFromCmaText(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed) {
+      toast.error("Paste CMA text first");
+      return;
+    }
+
+    setImporting(true);
+    setStatus("Parsing CMA text…");
+    try {
+      // 1) Heuristic (no AI) — works for standard Cotality Comparable Sales layout
+      let mapped = cmaExtractsToSales(parseCmaTextHeuristic(trimmed));
+
+      // 2) AI fallback if heuristic found nothing and AI is configured
+      if (mapped.length === 0 && isAiConfigured()) {
+        setStatus("Heuristic found nothing — trying AI…");
+        const settings = loadAiSettings();
+        const result = await extractComparableSales({
+          data: {
+            settings: {
+              provider: settings.provider,
+              model: settings.model,
+              apiKey: settings.apiKey,
+              ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
+            },
+            source: "text",
+            text: trimmed,
+          },
+        });
+        const error =
+          result && typeof result === "object" && "error" in result
+            ? (result as { error?: string | null }).error
+            : null;
+        const rawSales =
+          result && typeof result === "object" && "sales" in result
+            ? (result as { sales: unknown[] }).sales
+            : [];
+        mapped = cmaExtractsToSales(
+          Array.isArray(rawSales) ? (rawSales as Parameters<typeof cmaExtractsToSales>[0]) : [],
+        );
+        if (mapped.length === 0 && error) {
+          toast.error("CMA extract failed", { description: error });
+          setStatus(`Failed: ${error}`);
+          return;
+        }
+      }
+
+      if (mapped.length === 0) {
+        toast.error("No comparable sales found", {
+          description:
+            "Paste text from the Comparable Sales pages (address, sold price, sold date).",
+        });
+        setStatus("No sales found in pasted text.");
+        return;
+      }
+
+      fingerprintsRef.current = {};
+      replaceSales(mapped.map(ensureSaleAdjustments));
+      toast.success(`Imported ${mapped.length} comparable sale(s)`);
+      setStatus(`Imported ${mapped.length} sale(s) from CMA text.`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Import failed";
+      toast.error("CMA import failed", { description: message });
+      setStatus(`Failed: ${message}`);
+    } finally {
+      setImporting(false);
+    }
+  }
+
   return (
+
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-4">
         <div className="min-w-0 flex-1">
@@ -370,6 +464,33 @@ export function SalesSection({ controller }: { controller: ReportDraftController
             Add sale
           </button>
         </div>
+      </div>
+
+      <div className="rounded-md border border-border bg-card p-4 space-y-2">
+        <label className="text-sm font-medium text-foreground" htmlFor="cma-paste">
+          Or paste Comparable Sales text from the CMA
+        </label>
+        <p className="text-xs text-muted-foreground">
+          Large PDFs often fail on upload. Copy the Comparable Sales pages (addresses, prices, dates,
+          COMPARABLE/SUPERIOR/INFERIOR lines) and paste here. Works without AI when the layout is
+          standard Cotality.
+        </p>
+        <textarea
+          id="cma-paste"
+          rows={5}
+          value={cmaPaste}
+          onChange={(e) => setCmaPaste(e.target.value)}
+          placeholder="9 ROBINSON CRESCENT RUNCORN QLD 4113&#10;Sold Price $1,050,000&#10;Sold Date 16-Jun-26&#10;…"
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-1 focus:ring-ring"
+        />
+        <button
+          type="button"
+          disabled={importing || !cmaPaste.trim()}
+          onClick={() => void importFromCmaText(cmaPaste)}
+          className="rounded-md border border-input bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+        >
+          Extract from pasted text
+        </button>
       </div>
 
       {sales.length === 0 ? (
