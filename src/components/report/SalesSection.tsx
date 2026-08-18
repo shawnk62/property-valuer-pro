@@ -31,7 +31,7 @@ import {
   saleNarrativeFingerprint,
   saveAutoSaleNarratives,
 } from "@/lib/report/saleNarrative";
-import { cleanSaleProse, withRelativityNarrative } from "@/lib/report/salesRelativity";
+import { withRelativityNarrative } from "@/lib/report/salesRelativity";
 import type { ComparableSale, FeatureAdjustment } from "@/lib/report/types";
 
 function emptySale(): ComparableSale {
@@ -1184,15 +1184,6 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                       // Editing locks the text so auto/regenerate will not wipe it
                                       narrativeManual: true,
                                     })
-                                  }
-                                  onBlur={(e) => {
-                                    const cleaned = cleanSaleProse(e.target.value);
-                                    if (cleaned !== (sale.narrative ?? "")) {
-                                      patchSale(sale.id, {
-                                        narrative: cleaned,
-                                        narrativeManual: true,
-                                      });
-                                    }
                                   }}
                                   placeholder="Auto-generated from relativity marks…"
                                   className={`w-full resize-y rounded border bg-transparent px-1.5 py-1 text-[0.7rem] outline-none focus:bg-accent/40 ${
@@ -1241,12 +1232,6 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                 value={sale.comments}
                                 onChange={(e) =>
                                   patchSale(sale.id, { comments: e.target.value })
-                                }
-                                onBlur={(e) => {
-                                  const cleaned = cleanSaleProse(e.target.value);
-                                  if (cleaned !== sale.comments) {
-                                    patchSale(sale.id, { comments: cleaned });
-                                  }
                                 }}
                                 className="w-full resize-y rounded border border-transparent bg-transparent px-1.5 py-1 text-[0.7rem] outline-none focus:border-input focus:bg-accent/40"
                               />

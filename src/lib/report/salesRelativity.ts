@@ -112,7 +112,7 @@ function resegmentJoinedLetters(joined: string): string {
 
 export function collapseSpacedLetters(text: string): string {
   if (!text) return text;
-  return String(text).replace(/(?:\b[A-Za-z0-9]\s+){3,}[A-Za-z0-9]\b/g, (m) => {
+  return String(text).replace(/(?:\b[A-Za-z0-9]\s+){5,}[A-Za-z0-9]\b/g, (m) => {
     const joined = m.replace(/\s+/g, "");
     if (joined.length >= 10) return resegmentJoinedLetters(joined);
     return joined;
@@ -139,7 +139,7 @@ export function withRelativityComment(
   salePrice: string,
   valueAmount: string,
 ): string {
-  const base = stripRelativityPhrase(cleanSaleProse(comments));
+  const base = stripRelativityPhrase(comments);
   const phrase = relativityPhrase(salePrice, valueAmount);
   if (!phrase) return base;
   return base ? `${base} ${phrase}` : phrase;
@@ -154,7 +154,7 @@ export function withRelativityNarrative(
   salePrice: string,
   valueAmount: string,
 ): string {
-  const base = stripRelativityPhrase(cleanSaleProse(narrative));
+  const base = stripRelativityPhrase(narrative);
   const phrase = relativityPhrase(salePrice, valueAmount);
   if (!phrase) return base;
   if (!base) return `${phrase}.`;
@@ -168,6 +168,8 @@ export type SaleWithRelativityFields = {
   salePrice: string;
   comments: string;
   narrative?: string;
+  /** When true, narrative is valuer-owned — do not rewrite on each keystroke. */
+  narrativeManual?: boolean;
 };
 
 /**
@@ -181,6 +183,9 @@ export function applyRelativityToSales<T extends SaleWithRelativityFields>(
   return sales.map((s) => {
     const comments = withRelativityComment(s.comments, s.salePrice, valueAmount);
     const next: T = { ...s, comments };
+    // Manual narratives are not rewritten while typing (prevents cursor jumps /
+    // letter-spacing sanitiser fighting the keyboard).
+    if (s.narrativeManual) return next;
     if (typeof s.narrative === "string" && s.narrative.trim()) {
       next.narrative = withRelativityNarrative(s.narrative, s.salePrice, valueAmount);
     }
