@@ -32,6 +32,8 @@ function applyMirrors(values: InspectionValues): InspectionValues {
 export function useInspection(id: string) {
   const [record, setRecord] = useState<InspectionRecord | null>(null);
   const [values, setValues] = useState<InspectionValues>({});
+  const valuesRef = useRef<InspectionValues>({});
+  valuesRef.current = values;
   const [loaded, setLoaded] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -122,6 +124,29 @@ export function useInspection(id: string) {
       if (timer.current) clearTimeout(timer.current);
     };
   }, []);
+
+  // iPad / hotspot: flush answers when backgrounded or network returns
+  useEffect(() => {
+    const flushNow = () => {
+      if (!loaded) return;
+      if (timer.current) {
+        clearTimeout(timer.current);
+        timer.current = null;
+      }
+      flush(valuesRef.current);
+    };
+    const onVis = () => {
+      if (document.visibilityState === "hidden") flushNow();
+    };
+    window.addEventListener("pagehide", flushNow);
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("online", flushNow);
+    return () => {
+      window.removeEventListener("pagehide", flushNow);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("online", flushNow);
+    };
+  }, [flush, loaded]);
 
   return { record, values, setValue, saveNow, savedAt, loaded, error };
 }

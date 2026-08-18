@@ -74,12 +74,25 @@ function isDurablePhotoUrl(url: string | undefined): boolean {
   return isHttpUrl(url) || url.startsWith("data:image/");
 }
 
-/** Cloud payload: only HTTPS photo URLs (data: is device-local and too large for rows). */
+/** Cloud payload: only HTTPS media (data: is device-local and too large for JSON rows / mobile). */
 function toCloudExtras(draft: ReportDraft): ReportExtras {
+  const sales = (draft.sales ?? []).map((s) => {
+    const next = { ...s };
+    if (next.photoUrl && !isHttpUrl(next.photoUrl)) {
+      // Keep photo on-device only; do not push multi-MB data URLs through report_extras
+      const { photoUrl: _drop, ...rest } = next;
+      return rest;
+    }
+    return next;
+  });
+  const reportMeta = { ...draft.reportMeta };
+  if (reportMeta.salesMapUrl && !isHttpUrl(reportMeta.salesMapUrl)) {
+    delete reportMeta.salesMapUrl;
+  }
   return {
     narrative: draft.narrative,
-    sales: draft.sales,
-    reportMeta: draft.reportMeta,
+    sales,
+    reportMeta,
     photos: draft.photos
       .filter((p) => isHttpUrl(p.url))
       .map((p) => ({
@@ -262,12 +275,39 @@ export function useReportDraft(inspectionId: string) {
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
         void persistCloud(d).catch(() => {
-          /* leave dirty */
+          /* leave dirty — online handler will retry */
         });
-      }, 600);
+      }, 900);
     },
     [persistCloud],
   );
+
+  // iPad / hotspot: flush when backgrounded or when connectivity returns
+  useEffect(() => {
+    const flush = () => {
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+      }
+      if (!hydrated.current) return;
+      const d = draftRef.current;
+      writeLocalCache(d);
+      void persistCloud(d).catch(() => {
+        /* leave dirty */
+      });
+    };
+    const onVis = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("online", flush);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("online", flush);
+    };
+  }, [persistCloud]);
 
   const update = useCallback(
     (patch: Partial<ReportDraft>) => {

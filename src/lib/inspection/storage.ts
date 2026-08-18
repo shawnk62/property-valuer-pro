@@ -64,6 +64,25 @@ function emit() {
   for (const l of listeners) l();
 }
 
+
+/** iPad/Safari often keeps an expired access token that still looks readable. */
+async function ensureFreshSession(): Promise<void> {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) {
+    throw new Error(sessionError.message || "Could not read sign-in session");
+  }
+  if (!sessionData.session) {
+    throw new Error("You are signed out. Sign in again on this device.");
+  }
+  const { error: refreshError } = await supabase.auth.refreshSession();
+  if (refreshError) {
+    const msg = refreshError.message || "";
+    if (/jwt|expired|session|refresh/i.test(msg)) {
+      throw new Error("Session expired. Sign in again on this device.");
+    }
+  }
+}
+
 export const inspectionStore = {
   subscribe(listener: () => void) {
     listeners.add(listener);
@@ -112,6 +131,7 @@ export const inspectionStore = {
   async save(id: string, values: InspectionValues): Promise<void> {
     // Live form_values stay editable after submit so answers can be corrected.
     // submitted_form_values (first-submit snapshot) is left unchanged.
+    await ensureFreshSession();
     const existing = await this.get(id);
     if (!existing) throw new Error("Inspection not found");
     const { error } = await supabase
@@ -121,7 +141,16 @@ export const inspectionStore = {
         updated_at: new Date().toISOString(),
       })
       .eq("id", id);
-    if (error) throw error;
+    if (error) {
+      const msg = error.message || "Failed to save";
+      if (/jwt|expired|session|not authorized|401|403/i.test(msg)) {
+        throw new Error("Session expired or blocked. Sign in again on this device, then save.");
+      }
+      if (/network|fetch|Failed to fetch|timeout/i.test(msg)) {
+        throw new Error("Network error while saving. Check the hotspot connection and try again.");
+      }
+      throw error;
+    }
     emit();
   },
 
@@ -131,22 +160,7 @@ export const inspectionStore = {
    * Refreshes the auth session first (iPad Safari often has a stale JWT).
    */
   async submit(id: string): Promise<void> {
-    // Mobile Safari frequently keeps a readable but expired access token.
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) {
-      throw new Error(sessionError.message || "Could not read sign-in session");
-    }
-    if (!sessionData.session) {
-      throw new Error("You are signed out. Sign in again, then submit.");
-    }
-    const { error: refreshError } = await supabase.auth.refreshSession();
-    if (refreshError) {
-      // Still try the update with the existing token; only hard-fail if clearly expired
-      const msg = refreshError.message || "";
-      if (/jwt|expired|session|refresh/i.test(msg)) {
-        throw new Error("Session expired. Sign in again on this device, then submit.");
-      }
-    }
+    await ensureFreshSession();
 
     const existing = await this.get(id);
     if (!existing) throw new Error("Inspection not found");
@@ -229,6 +243,7 @@ export const inspectionStore = {
   },
 
   async saveReportExtras(id: string, extras: ReportExtras): Promise<void> {
+    await ensureFreshSession();
     const { error } = await supabase
       .from("inspections")
       .update({
@@ -236,7 +251,21 @@ export const inspectionStore = {
         updated_at: new Date().toISOString(),
       })
       .eq("id", id);
-    if (error) throw error;
+    if (error) {
+      const msg = error.message || "Failed to save report draft";
+      if (/jwt|expired|session|not authorized|401|403/i.test(msg)) {
+        throw new Error("Session expired. Sign in again on this device, then save.");
+      }
+      if (/network|fetch|Failed to fetch|timeout/i.test(msg)) {
+        throw new Error("Network error while saving the report. Check the hotspot and try Save again.");
+      }
+      if (/too large|payload|value too long|json/i.test(msg)) {
+        throw new Error(
+          "Report draft is too large to sync (often large photo data). Use cloud photo upload, or remove data-URL map/photos and save again.",
+        );
+      }
+      throw error;
+    }
     emit();
   },
 };
