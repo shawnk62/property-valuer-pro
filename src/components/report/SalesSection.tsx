@@ -1232,7 +1232,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                 value={sale.comments}
                                 onChange={(e) =>
                                   patchSale(sale.id, { comments: e.target.value })
-                                }}
+                                }
                                 className="w-full resize-y rounded border border-transparent bg-transparent px-1.5 py-1 text-[0.7rem] outline-none focus:border-input focus:bg-accent/40"
                               />
                             </td>
