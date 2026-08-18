@@ -124,6 +124,7 @@ Sale price: ${sale.salePrice || "(not stated)"}
 Land area: ${sale.landArea || "(not stated)"}
 ${sale.gla ? `Living area: ${sale.gla}` : ""}
 ${sale.comments?.trim() ? `CSV / user notes: ${sale.comments.trim()}` : ""}
+${sale.narrative?.trim() ? `VALUER DRAFT NARRATIVE (revise and improve; preserve the valuer's intent and any facts they added; do not discard their wording without reason):\n${sale.narrative.trim()}` : ""}
 
 VALUER RELATIVITY MARKS (vs subject)
 ${marks.length ? marks.join("\n") : "- All features marked similar (or not differentiated)."}

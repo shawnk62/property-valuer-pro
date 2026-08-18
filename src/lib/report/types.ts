@@ -76,6 +76,11 @@ export interface ComparableSale {
    */
   narrative?: string;
   /**
+   * When true, AI must not overwrite narrative (auto or Regenerate).
+   * Set automatically when the valuer edits the narrative text, or via Manual lock.
+   */
+  narrativeManual?: boolean;
+  /**
    * Front elevation photo from the Cotality CMA (data URL or storage URL).
    * Extracted on CMA PDF import; shown in Sales Evidence.
    */

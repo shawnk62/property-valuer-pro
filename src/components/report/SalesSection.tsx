@@ -241,6 +241,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       const current = salesRef.current;
       const todo = current.filter((s) => {
         if (!s.address.trim() && !s.salePrice.trim()) return false;
+        // Manual lock: never overwrite, including Regenerate narratives
+        if (s.narrativeManual) return false;
         const fp = saleNarrativeFingerprint(s);
         if (!force && fingerprintsRef.current[s.id] === fp && s.narrative?.trim()) {
           return false;
@@ -249,7 +251,12 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       });
 
       if (todo.length === 0) {
-        setStatus("Sale narratives up to date.");
+        const locked = current.filter((s) => s.narrativeManual).length;
+        setStatus(
+          locked
+            ? `Sale narratives up to date (${locked} locked as manual).`
+            : "Sale narratives up to date.",
+        );
         return;
       }
 
@@ -1159,7 +1166,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                             Report narrative
                           </td>
                           <td className="px-2 py-1.5 text-xs text-muted-foreground">
-                            From grid marks (AI)
+                            AI or manual (lock to keep)
                           </td>
                           {chunk.map((sale) => (
                             <td
@@ -1167,15 +1174,45 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                               colSpan={2}
                               className="border-l border-border px-1 py-1"
                             >
-                              <textarea
-                                rows={3}
-                                value={sale.narrative ?? ""}
-                                onChange={(e) =>
-                                  patchSale(sale.id, { narrative: e.target.value })
-                                }
-                                placeholder="Auto-generated from relativity marks…"
-                                className="w-full resize-y rounded border border-transparent bg-transparent px-1.5 py-1 text-[0.7rem] outline-none focus:border-input focus:bg-accent/40"
-                              />
+                              <div className="space-y-1">
+                                <textarea
+                                  rows={3}
+                                  value={sale.narrative ?? ""}
+                                  onChange={(e) =>
+                                    patchSale(sale.id, {
+                                      narrative: e.target.value,
+                                      // Editing locks the text so auto/regenerate will not wipe it
+                                      narrativeManual: true,
+                                    })
+                                  }
+                                  placeholder="Auto-generated from relativity marks…"
+                                  className={`w-full resize-y rounded border bg-transparent px-1.5 py-1 text-[0.7rem] outline-none focus:bg-accent/40 ${
+                                    sale.narrativeManual
+                                      ? "border-amber-500/60 focus:border-amber-500"
+                                      : "border-transparent focus:border-input"
+                                  }`}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    patchSale(sale.id, {
+                                      narrativeManual: !sale.narrativeManual,
+                                    })
+                                  }
+                                  className={`rounded px-1.5 py-0.5 text-[0.65rem] font-medium transition-colors ${
+                                    sale.narrativeManual
+                                      ? "bg-amber-500/15 text-amber-800 ring-1 ring-amber-500/40 dark:text-amber-200"
+                                      : "bg-muted text-muted-foreground hover:bg-accent"
+                                  }`}
+                                  title={
+                                    sale.narrativeManual
+                                      ? "Manual lock on — AI will not overwrite this narrative"
+                                      : "Click to lock as manual so AI will not overwrite"
+                                  }
+                                >
+                                  {sale.narrativeManual ? "Manual ✓" : "Allow AI"}
+                                </button>
+                              </div>
                             </td>
                           ))}
                         </tr>
