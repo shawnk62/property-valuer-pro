@@ -16,7 +16,8 @@ import {
   type Relativity,
 } from "@/lib/report/adjustmentGrid";
 import { extractTextFromPdf } from "@/lib/report/extractPdfText";
-import { fileToDataUrl } from "@/lib/report/photo-data";
+import { dataUrlToFile, fileToDataUrl } from "@/lib/report/photo-data";
+import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import {
   cmaExtractsToSales,
   mergeCmaExtracts,
@@ -166,9 +167,28 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       return;
     }
     try {
-      const url = await fileToDataUrl(file);
-      setMeta({ salesMapUrl: url });
-      toast.success("Sales map attached");
+      // Instant local preview
+      const dataUrl = await fileToDataUrl(file);
+      setMeta({ salesMapUrl: dataUrl });
+      // Cloud upgrade so other devices (iPad/phone) see the same map
+      try {
+        const prevPath = draft.reportMeta.salesMapStoragePath;
+        if (prevPath) await deleteReportPhoto(prevPath);
+        const { url, storagePath } = await uploadReportPhoto({
+          inspectionId: draft.inspectionId,
+          photoId: "sales-map",
+          file,
+        });
+        setMeta({ salesMapUrl: url, salesMapStoragePath: storagePath });
+        toast.success("Sales map attached and synced");
+      } catch (cloudErr) {
+        toast.message("Sales map saved on this device only", {
+          description:
+            cloudErr instanceof Error
+              ? cloudErr.message
+              : "Cloud upload failed — check sign-in and network, then re-attach.",
+        });
+      }
     } catch (err) {
       toast.error("Could not read map image", {
         description: err instanceof Error ? err.message : "Try another file",
@@ -176,8 +196,16 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     }
   }
 
-  function clearSalesMap() {
-    setMeta({ salesMapUrl: "" });
+  async function clearSalesMap() {
+    const path = draft.reportMeta.salesMapStoragePath;
+    if (path) {
+      try {
+        await deleteReportPhoto(path);
+      } catch {
+        /* ignore */
+      }
+    }
+    setMeta({ salesMapUrl: "", salesMapStoragePath: "" });
   }
 
   async function onSalePhotoFile(saleId: string, file: File | null) {
@@ -187,9 +215,28 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       return;
     }
     try {
-      const url = await fileToDataUrl(file);
-      patchSale(saleId, { photoUrl: url });
-      toast.success("Front photo attached");
+      const dataUrl = await fileToDataUrl(file);
+      patchSale(saleId, { photoUrl: dataUrl });
+      try {
+        const existing = sales.find((s) => s.id === saleId);
+        if (existing?.photoStoragePath) {
+          await deleteReportPhoto(existing.photoStoragePath);
+        }
+        const { url, storagePath } = await uploadReportPhoto({
+          inspectionId: draft.inspectionId,
+          photoId: `sale-${saleId}-front`,
+          file,
+        });
+        patchSale(saleId, { photoUrl: url, photoStoragePath: storagePath });
+        toast.success("Front photo attached and synced");
+      } catch (cloudErr) {
+        toast.message("Front photo saved on this device only", {
+          description:
+            cloudErr instanceof Error
+              ? cloudErr.message
+              : "Cloud upload failed — check sign-in and network, then re-attach.",
+        });
+      }
     } catch (err) {
       toast.error("Could not read photo", {
         description: err instanceof Error ? err.message : "Try another file",
@@ -197,9 +244,63 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     }
   }
 
-  function clearSalePhoto(saleId: string) {
-    patchSale(saleId, { photoUrl: "" });
+  async function clearSalePhoto(saleId: string) {
+    const existing = sales.find((s) => s.id === saleId);
+    if (existing?.photoStoragePath) {
+      try {
+        await deleteReportPhoto(existing.photoStoragePath);
+      } catch {
+        /* ignore */
+      }
+    }
+    patchSale(saleId, { photoUrl: "", photoStoragePath: "" });
   }
+
+  /**
+   * Promote any local data: images to Storage so they appear on other devices.
+   * Runs once per draft load when signed-in cloud is available.
+   */
+  const mediaPromoteRef = useRef(false);
+  useEffect(() => {
+    if (mediaPromoteRef.current) return;
+    if (!draft.inspectionId) return;
+
+    const mapIsData = !!draft.reportMeta.salesMapUrl?.startsWith("data:image/");
+    const salesNeed = sales.filter((s) => s.photoUrl?.startsWith("data:image/"));
+    if (!mapIsData && salesNeed.length === 0) return;
+    mediaPromoteRef.current = true;
+
+    void (async () => {
+      try {
+        if (mapIsData && draft.reportMeta.salesMapUrl) {
+          const file = await dataUrlToFile(draft.reportMeta.salesMapUrl, "sales-map.jpg");
+          const { url, storagePath } = await uploadReportPhoto({
+            inspectionId: draft.inspectionId,
+            photoId: "sales-map",
+            file,
+          });
+          setMeta({ salesMapUrl: url, salesMapStoragePath: storagePath });
+        }
+        for (const s of salesNeed) {
+          if (!s.photoUrl) continue;
+          try {
+            const file = await dataUrlToFile(s.photoUrl, `sale-${s.id}.jpg`);
+            const { url, storagePath } = await uploadReportPhoto({
+              inspectionId: draft.inspectionId,
+              photoId: `sale-${s.id}-front`,
+              file,
+            });
+            patchSale(s.id, { photoUrl: url, photoStoragePath: storagePath });
+          } catch {
+            /* leave data URL on this device */
+          }
+        }
+      } catch {
+        /* optional promotion */
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once when sales media needs promotion
+  }, [draft.inspectionId, draft.reportMeta.salesMapUrl, sales]);
 
 
   function patchAdjustment(

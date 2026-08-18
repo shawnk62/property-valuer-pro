@@ -81,10 +81,11 @@ export interface ComparableSale {
    */
   narrativeManual?: boolean;
   /**
-   * Front elevation photo from the Cotality CMA (data URL or storage URL).
-   * Extracted on CMA PDF import; shown in Sales Evidence.
+   * Front elevation photo (HTTPS preferred for cross-device; data URL local-only).
    */
   photoUrl?: string;
+  /** Supabase Storage path for photoUrl when uploaded. */
+  photoStoragePath?: string;
 }
 
 export interface ReportNarrative {
@@ -113,9 +114,11 @@ export interface ReportMeta {
    */
   siteRatePerM2?: string;
   /**
-   * Cotality "Map: Sales" image (data URL or storage URL), extracted on CMA import.
+   * Sales map image (HTTPS preferred for cross-device; data URL local-only).
    */
   salesMapUrl?: string;
+  /** Supabase Storage path for salesMapUrl when uploaded. */
+  salesMapStoragePath?: string;
 }
 
 export interface ReportDraft {
