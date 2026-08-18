@@ -1184,7 +1184,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                       // Editing locks the text so auto/regenerate will not wipe it
                                       narrativeManual: true,
                                     })
-                                  }}
+                                  }
                                   placeholder="Auto-generated from relativity marks…"
                                   className={`w-full resize-y rounded border bg-transparent px-1.5 py-1 text-[0.7rem] outline-none focus:bg-accent/40 ${
                                     sale.narrativeManual
