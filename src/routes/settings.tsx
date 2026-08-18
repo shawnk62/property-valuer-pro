@@ -137,6 +137,10 @@ function SettingsScreen() {
                 onChange={(e) => setModel(e.target.value)}
                 placeholder={meta.defaultModel}
                 list="model-suggestions"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
               />
               <datalist id="model-suggestions">
                 {meta.modelSuggestions.map((m) => (
@@ -155,6 +159,11 @@ function SettingsScreen() {
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder="sk-..."
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  inputMode="text"
                 />
                 <button
                   type="button"

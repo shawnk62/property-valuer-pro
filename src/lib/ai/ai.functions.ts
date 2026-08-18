@@ -7,12 +7,61 @@ import { providerMeta } from "./types";
 import { buildBlockPrompt } from "@/lib/narrative/promptBuilders";
 import type { InspectionValues } from "@/lib/inspection/types";
 
-const SettingsInput = z.object({
-  provider: z.enum(["openai", "xai", "custom"]),
-  model: z.string().min(1),
-  apiKey: z.string().min(1),
-  baseUrl: z.string().optional(),
-});
+/** Strip zero-width / smart-paste characters common on iPad when pasting keys. */
+function cleanSecret(s: string): string {
+  return s
+    .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .trim();
+}
+
+const SettingsInput = z
+  .object({
+    provider: z.enum(["openai", "xai", "custom"]),
+    model: z.string().min(1),
+    apiKey: z.string().min(1),
+    baseUrl: z.union([z.string(), z.null(), z.undefined()]).optional(),
+  })
+  .transform((raw) => {
+    const model = raw.model.trim();
+    const apiKey = cleanSecret(raw.apiKey);
+    const baseUrlRaw = typeof raw.baseUrl === "string" ? raw.baseUrl.trim() : "";
+    const out: {
+      provider: "openai" | "xai" | "custom";
+      model: string;
+      apiKey: string;
+      baseUrl?: string;
+    } = {
+      provider: raw.provider,
+      model,
+      apiKey,
+    };
+    if (baseUrlRaw) out.baseUrl = baseUrlRaw;
+    return out;
+  });
+
+function parseSettingsInput(input: unknown) {
+  // Accept either the settings object or { data: settings } if a client double-wraps.
+  const raw =
+    input &&
+    typeof input === "object" &&
+    "data" in input &&
+    (input as { data: unknown }).data &&
+    typeof (input as { data: unknown }).data === "object" &&
+    "provider" in ((input as { data: unknown }).data as object)
+      ? (input as { data: unknown }).data
+      : input;
+  try {
+    return SettingsInput.parse(raw);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      const detail = err.issues.map((i) => `${i.path.join(".") || "settings"}: ${i.message}`).join("; ");
+      throw new Error(`Invalid AI settings (${detail})`);
+    }
+    throw err;
+  }
+}
 
 function asAiSettings(data: z.infer<typeof SettingsInput>): AiSettings {
   const settings: AiSettings = {
@@ -22,6 +71,19 @@ function asAiSettings(data: z.infer<typeof SettingsInput>): AiSettings {
   };
   if (data.baseUrl) settings.baseUrl = data.baseUrl;
   return settings;
+}
+
+function formatAiError(err: unknown): string {
+  if (!(err instanceof Error)) return String(err);
+  const any = err as Error & { statusCode?: number; responseBody?: string; data?: unknown; cause?: unknown };
+  const parts = [any.message];
+  if (any.statusCode) parts.push(`HTTP ${any.statusCode}`);
+  if (typeof any.responseBody === "string" && any.responseBody.trim()) {
+    parts.push(any.responseBody.slice(0, 400));
+  } else if (any.cause instanceof Error && any.cause.message) {
+    parts.push(any.cause.message);
+  }
+  return parts.filter(Boolean).join(" — ");
 }
 
 const ValueCell = z.union([
@@ -55,15 +117,24 @@ function createModel(settings: AiSettings) {
 }
 
 export const testAiConnection = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => SettingsInput.parse(input))
+  .inputValidator((input: unknown) => parseSettingsInput(input))
   .handler(async ({ data }) => {
-    const settings = asAiSettings(data);
-    const model = createModel(settings);
-    const { text } = await generateText({
-      model,
-      prompt: "Reply with exactly: connection ok",
-    });
-    return { ok: text.toLowerCase().includes("ok"), response: text };
+    try {
+      const settings = asAiSettings(data);
+      if (!settings.apiKey) {
+        return { ok: false, response: "API key is empty after cleaning. Re-paste the key and Save." };
+      }
+      const model = createModel(settings);
+      const { text } = await generateText({
+        model,
+        prompt: "Reply with exactly: connection ok",
+      });
+      return { ok: text.toLowerCase().includes("ok"), response: text };
+    } catch (err) {
+      const message = formatAiError(err);
+      // Return structured failure so the iPad UI shows the real cause (not generic Bad Request)
+      return { ok: false, response: message };
+    }
   });
 
 export const generateNarrativeBlock = createServerFn({ method: "POST" })
