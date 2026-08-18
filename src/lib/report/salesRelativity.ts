@@ -33,15 +33,90 @@ export function stripRelativityPhrase(text: string): string {
 
 /**
  * Collapse accidental letter-spaced runs, e.g. "R e m o d e l e d" → "Remodeled".
- * Only runs of 4+ single letters separated by spaces are collapsed so normal
- * short phrases like "a b c" are left alone.
+ * Multi-word runs are re-segmented with a small valuation vocabulary so spaces
+ * return between real words ("Remodeled kitchen and baths").
  */
+const RESEGMENT_WORDS = [
+  "remodeled",
+  "remodelled",
+  "kitchen",
+  "kitchens",
+  "bath",
+  "baths",
+  "bathroom",
+  "bathrooms",
+  "ensuite",
+  "and",
+  "with",
+  "the",
+  "new",
+  "fully",
+  "partially",
+  "updated",
+  "original",
+  "inferior",
+  "superior",
+  "similar",
+  "slightly",
+  "overall",
+  "subject",
+  "comparable",
+  "location",
+  "elevated",
+  "quieter",
+  "land",
+  "area",
+  "living",
+  "built",
+  "car",
+  "garage",
+  "carport",
+  "brick",
+  "tile",
+  "lowset",
+  "highset",
+  "midset",
+];
+
+function resegmentJoinedLetters(joined: string): string {
+  const lower = joined.toLowerCase();
+  const parts: string[] = [];
+  let i = 0;
+  while (i < lower.length) {
+    let matched = false;
+    // Prefer longer dictionary words first
+    const sorted = [...RESEGMENT_WORDS].sort((a, b) => b.length - a.length);
+    for (const w of sorted) {
+      if (lower.startsWith(w, i)) {
+        parts.push(joined.slice(i, i + w.length));
+        i += w.length;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      let j = i + 1;
+      while (j <= lower.length) {
+        const rest = lower.slice(j);
+        if (sorted.some((w) => rest.startsWith(w)) || j === lower.length) {
+          parts.push(joined.slice(i, j));
+          i = j;
+          break;
+        }
+        j += 1;
+      }
+    }
+  }
+  return parts.filter(Boolean).join(" ");
+}
+
 export function collapseSpacedLetters(text: string): string {
   if (!text) return text;
-  return String(text).replace(
-    /(?:[A-Za-z0-9] ){3,}[A-Za-z0-9]/g,
-    (m) => m.replace(/ /g, ""),
-  );
+  return String(text).replace(/(?:\b[A-Za-z0-9]\s+){3,}[A-Za-z0-9]\b/g, (m) => {
+    const joined = m.replace(/\s+/g, "");
+    if (joined.length >= 10) return resegmentJoinedLetters(joined);
+    return joined;
+  });
 }
 
 /** Normalise narrative/comment text before save or display. */
@@ -49,10 +124,6 @@ export function cleanSaleProse(text: string): string {
   return collapseSpacedLetters(String(text ?? "").replace(/\s{2,}/g, " ")).trim();
 }
 
-/**
- * Deterministic overall phrase from sale price vs valuation amount.
- * Returns null when either figure is missing/unparseable.
- */
 export function relativityPhrase(salePrice: string, valueAmount: string): string | null {
   const sale = parseMoney(salePrice);
   const value = parseMoney(valueAmount);
