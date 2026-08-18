@@ -52,9 +52,50 @@ function SettingsScreen() {
   );
 
   const save = () => {
-    saveAiSettings(settings);
-    toast.success("AI settings saved");
+    const cleaned = {
+      ...settings,
+      apiKey: settings.apiKey
+        .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
+        .replace(/^(Bearer\s+)/i, "")
+        .trim(),
+    };
+    setApiKey(cleaned.apiKey);
+    saveAiSettings(cleaned);
+    const k = cleaned.apiKey;
+    const fp = k
+      ? `${k.slice(0, Math.min(7, k.length))}…${k.length > 10 ? k.slice(-4) : ""} (len ${k.length})`
+      : "(empty)";
+    toast.success("AI settings saved", { description: `Key fingerprint: ${fp}` });
   };
+
+  async function pasteKeyFromClipboard() {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text?.trim()) {
+        toast.error("Clipboard is empty");
+        return;
+      }
+      let key = text
+        .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
+        .replace(/^(Bearer\s+)/i, "")
+        .trim();
+      if (
+        (key.startsWith('"') && key.endsWith('"')) ||
+        (key.startsWith("'") && key.endsWith("'"))
+      ) {
+        key = key.slice(1, -1).trim();
+      }
+      setApiKey(key);
+      setShowKey(true);
+      toast.success("API key pasted", {
+        description: `${key.slice(0, Math.min(7, key.length))}… (len ${key.length}). Tap Save, then Test.`,
+      });
+    } catch {
+      toast.error("Could not read clipboard", {
+        description: "Allow paste permission, or use Show key and type/paste into the field.",
+      });
+    }
+  }
 
   const test = async () => {
     if (!settings.apiKey || !settings.model) {
@@ -174,7 +215,18 @@ function SettingsScreen() {
                   {showKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
-              <p className="text-xs text-muted-foreground">Never shared outside this app.</p>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => void pasteKeyFromClipboard()}>
+                  Paste key from clipboard
+                </Button>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setShowKey((s) => !s)}>
+                  {showKey ? "Hide key" : "Show key"}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                xAI keys usually start with <span className="font-mono">xai-</span>. Never shared outside this app.
+                Stored only in this browser (iPad and iMac each need their own Save).
+              </p>
             </div>
 
             {showBaseUrl && (

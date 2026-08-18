@@ -9,11 +9,30 @@ import type { InspectionValues } from "@/lib/inspection/types";
 
 /** Strip zero-width / smart-paste characters common on iPad when pasting keys. */
 function cleanSecret(s: string): string {
-  return s
+  let out = s
     .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
     .trim();
+  // Pasted "Bearer xai-..." would become Authorization: Bearer Bearer xai-...
+  out = out.replace(/^(Bearer\s+)/i, "").trim();
+  // Surrounding quotes from some password managers
+  if (
+    (out.startsWith('"') && out.endsWith('"')) ||
+    (out.startsWith("'") && out.endsWith("'"))
+  ) {
+    out = out.slice(1, -1).trim();
+  }
+  return out;
+}
+
+/** Safe fingerprint so the user can compare iPad vs desktop without exposing the key. */
+function keyFingerprint(apiKey: string): string {
+  const k = cleanSecret(apiKey);
+  if (!k) return "(empty)";
+  const prefix = k.slice(0, Math.min(7, k.length));
+  const suffix = k.length > 10 ? k.slice(-4) : "";
+  return `${prefix}…${suffix} (len ${k.length})`;
 }
 
 const SettingsInput = z
@@ -131,7 +150,13 @@ export const testAiConnection = createServerFn({ method: "POST" })
       });
       return { ok: text.toLowerCase().includes("ok"), response: text };
     } catch (err) {
-      const message = formatAiError(err);
+      let message = formatAiError(err);
+      try {
+        const settings = asAiSettings(data);
+        message = `${message} | key sent: ${keyFingerprint(settings.apiKey)}`;
+      } catch {
+        /* ignore */
+      }
       // Return structured failure so the iPad UI shows the real cause (not generic Bad Request)
       return { ok: false, response: message };
     }
