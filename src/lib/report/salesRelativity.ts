@@ -32,6 +32,24 @@ export function stripRelativityPhrase(text: string): string {
 }
 
 /**
+ * Collapse accidental letter-spaced runs, e.g. "R e m o d e l e d" → "Remodeled".
+ * Only runs of 4+ single letters separated by spaces are collapsed so normal
+ * short phrases like "a b c" are left alone.
+ */
+export function collapseSpacedLetters(text: string): string {
+  if (!text) return text;
+  return String(text).replace(
+    /(?:[A-Za-z0-9] ){3,}[A-Za-z0-9]/g,
+    (m) => m.replace(/ /g, ""),
+  );
+}
+
+/** Normalise narrative/comment text before save or display. */
+export function cleanSaleProse(text: string): string {
+  return collapseSpacedLetters(String(text ?? "").replace(/\s{2,}/g, " ")).trim();
+}
+
+/**
  * Deterministic overall phrase from sale price vs valuation amount.
  * Returns null when either figure is missing/unparseable.
  */
@@ -50,7 +68,7 @@ export function withRelativityComment(
   salePrice: string,
   valueAmount: string,
 ): string {
-  const base = stripRelativityPhrase(comments);
+  const base = stripRelativityPhrase(cleanSaleProse(comments));
   const phrase = relativityPhrase(salePrice, valueAmount);
   if (!phrase) return base;
   return base ? `${base} ${phrase}` : phrase;
@@ -65,7 +83,7 @@ export function withRelativityNarrative(
   salePrice: string,
   valueAmount: string,
 ): string {
-  const base = stripRelativityPhrase(narrative);
+  const base = stripRelativityPhrase(cleanSaleProse(narrative));
   const phrase = relativityPhrase(salePrice, valueAmount);
   if (!phrase) return base;
   if (!base) return `${phrase}.`;

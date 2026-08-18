@@ -2,6 +2,7 @@ import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { get, hasValue, joinValues, labelFor, pick } from "@/lib/report/schema";
 import { PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
 import { getReportTypeConfig, isPhilReportType } from "@/lib/report/reportTypes";
+import { cleanSaleProse } from "@/lib/report/salesRelativity";
 
 /* ---------- primitives ---------- */
 
@@ -1023,8 +1024,8 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                     <td className="border border-[var(--rule)] px-2 py-1.5 whitespace-nowrap">
                       {s.landArea}
                     </td>
-                    <td className="border border-[var(--rule)] px-2 py-1.5">
-                      {s.narrative?.trim() || s.comments}
+                    <td className="border border-[var(--rule)] px-2 py-1.5 text-left normal-case tracking-normal">
+                      {cleanSaleProse(s.narrative?.trim() || s.comments || "")}
                     </td>
                   </tr>
                 ))}

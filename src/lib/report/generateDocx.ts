@@ -611,7 +611,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     const bodyRows = sales.map(
       (s) =>
         new TableRow({
-          children: [s.address, s.saleDate, s.salePrice, s.landArea, s.comments].map(
+          children: [s.address, s.saleDate, s.salePrice, s.landArea, cleanSaleProse((s.narrative && s.narrative.trim()) || s.comments || "")].map(
             (cell, i) =>
               new TableCell({
                 width: { size: colW[i], type: WidthType.DXA },
