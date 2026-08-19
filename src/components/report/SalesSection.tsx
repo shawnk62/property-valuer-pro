@@ -1368,7 +1368,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                 detail.trim() !== "";
                               return (
                                 <Fragment key={sale.id}>
-                                  <td className="border-l border-border px-0.5 py-1 align-middle">
+                                  <td className="border-l border-border px-0.5 py-1 align-bottom">
                                     <div className="flex min-w-0 flex-col gap-0.5">
                                       <input
                                         value={detail}
