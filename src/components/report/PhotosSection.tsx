@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import { fileToDataUrl } from "@/lib/report/photo-data";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
-import { PHOTO_SLOTS, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
+import { MAP_SLOTS, PHOTO_SLOTS, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
 
 function newId() {
   return `photo-${Math.random().toString(36).slice(2, 10)}`;
@@ -233,10 +233,10 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
   return (
     <div className="space-y-6">
       <div className="rounded-md border border-border bg-card p-4">
-        <h3 className="text-sm font-semibold text-foreground">Photo annexure</h3>
+        <h3 className="text-sm font-semibold text-foreground">Subject photographs</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Images appear in Preview Annexure 2 immediately. Uploads go to Supabase Storage
-          so the same photos open on desktop and iPad (requires the report-photos bucket).
+          Front, street, interior and other inspection photos. Empty slots are omitted from the
+          exported report. Uploads sync via Storage when available.
         </p>
       </div>
 
@@ -305,6 +305,32 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
           ))}
         </div>
       ) : null}
+
+      <div className="rounded-md border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold text-foreground">Maps &amp; overlays</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Drop screenshots from the Landchecker Property Report (site dimensions, zoning, flood,
+          bushfire, etc.). Only slots with an image are included in Preview and Word export —
+          empty map slots never print.
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {MAP_SLOTS.map(({ slot, label }) => {
+          const photo = photos.find((p) => p.slot === slot);
+          return (
+            <PhotoCard
+              key={slot}
+              slotLabel={label}
+              photo={photo}
+              uploading={photo ? uploadingIds.has(photo.id) : false}
+              onFile={(file) => void onSlotFile(slot, label, file)}
+              onCaption={(caption) => upsertSlotCaption(slot, label, caption)}
+              onRemove={photo?.url ? () => void removePhoto(photo) : undefined}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }

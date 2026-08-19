@@ -19,7 +19,22 @@ export type PhotoSlot =
   | "living"
   | "view"
   | "view_2"
-  | "pool";
+  | "pool"
+  // Subject maps / overlays — manual attach only; omit from export when empty
+  | "map_site_dimensions"
+  | "map_aerial"
+  | "map_zoning"
+  | "map_overlays"
+  | "map_nearby_overlays"
+  | "map_place_based"
+  | "map_flood"
+  | "map_bushfire"
+  | "map_heritage"
+  | "map_landslide"
+  | "map_acid_sulfate"
+  | "map_easements"
+  | "map_topography"
+  | "map_planning_permits";
 
 export interface ReportPhoto {
   id: string;
@@ -138,6 +153,7 @@ export interface InspectionListItem {
   updatedAt: string;
 }
 
+/** Subject improvement photographs (inspection / annex). */
 export const PHOTO_SLOTS: { slot: PhotoSlot; label: string }[] = [
   { slot: "front", label: "Front" },
   { slot: "rear", label: "Rear" },
@@ -150,4 +166,30 @@ export const PHOTO_SLOTS: { slot: PhotoSlot; label: string }[] = [
   { slot: "view", label: "View" },
   { slot: "view_2", label: "View" },
   { slot: "pool", label: "Pool" },
+];
+
+/**
+ * Planning / site maps for the report annex (Landchecker-style layers).
+ * Manual insert only. Empty slots are never written to Word/PDF export.
+ */
+export const MAP_SLOTS: { slot: PhotoSlot; label: string }[] = [
+  { slot: "map_site_dimensions", label: "Site dimensions" },
+  { slot: "map_aerial", label: "Aerial / site plan" },
+  { slot: "map_zoning", label: "Zoning map" },
+  { slot: "map_overlays", label: "Overlays" },
+  { slot: "map_nearby_overlays", label: "Nearby overlays" },
+  { slot: "map_place_based", label: "Place-based plans" },
+  { slot: "map_flood", label: "Flood map" },
+  { slot: "map_bushfire", label: "Bushfire prone area" },
+  { slot: "map_heritage", label: "Heritage" },
+  { slot: "map_landslide", label: "Landslide" },
+  { slot: "map_acid_sulfate", label: "Acid sulfate" },
+  { slot: "map_easements", label: "Easements" },
+  { slot: "map_topography", label: "Topography" },
+  { slot: "map_planning_permits", label: "Planning permits" },
+];
+
+export const ALL_MEDIA_SLOTS: { slot: PhotoSlot; label: string }[] = [
+  ...PHOTO_SLOTS,
+  ...MAP_SLOTS,
 ];

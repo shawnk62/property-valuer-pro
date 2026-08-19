@@ -1,20 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { FileUp, Loader2, MapPin, Search, Wand2 } from "lucide-react";
+import { useCallback, useState } from "react";
+import { FileUp, Loader2, MapPin, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { extractPropertyData } from "@/lib/ai/ai.functions";
 import { isAiConfigured, loadAiSettings } from "@/lib/ai/settings";
 import { labelForField } from "@/lib/inspection/schema";
 import type { InspectionValues } from "@/lib/inspection/types";
-import {
-  landcheckerLookup,
-  landcheckerSuggest,
-} from "@/lib/landchecker/landchecker.functions";
-import type { LandcheckerSuggestion } from "@/lib/landchecker/api";
 
 interface ImportPanelProps {
   values: InspectionValues;
@@ -39,7 +33,11 @@ const TARGET_FIELDS = [
   "prop_dimensions",
   "prop_zoning",
   "prop_zoning_desc",
+  "prop_flood",
+  "prop_flood_map",
   "prop_adverse_site",
+  "imp_beds",
+  "imp_baths",
 ] as const;
 
 /** Map common AI / legacy aliases → schema keys. */
@@ -73,6 +71,12 @@ const FIELD_ALIASES: Record<string, (typeof TARGET_FIELDS)[number]> = {
   council: "prop_lga",
   overlays: "prop_adverse_site",
   prop_overlays: "prop_adverse_site",
+  flood: "prop_flood",
+  prop_flood_hazard: "prop_flood",
+  beds: "imp_beds",
+  bedrooms: "imp_beds",
+  baths: "imp_baths",
+  bathrooms: "imp_baths",
 };
 
 function normalizeCandidates(
@@ -101,9 +105,24 @@ function normalizeCandidates(
     const s = out.prop_state.toUpperCase();
     if (s.includes("QUEENSLAND") || s === "QLD") out.prop_state = "QLD";
   }
-  // Land area unit hint
-  if (out.prop_sitearea && /m\s*²|m2|sqm/i.test(out.prop_sitearea) && !out.prop_areaunit) {
-    out.prop_areaunit = "m2";
+  // Land area unit hint + strip unit text from site area
+  if (out.prop_sitearea) {
+    const raw = out.prop_sitearea.replace(/,/g, "");
+    const num = raw.match(/(\d+(?:\.\d+)?)/);
+    if (num) out.prop_sitearea = num[1]!;
+    if (/m\s*²|m2|sqm/i.test(raw) && !out.prop_areaunit) out.prop_areaunit = "m2";
+    if (/\bha\b|hectare/i.test(raw) && !out.prop_areaunit) out.prop_areaunit = "ha";
+  }
+  // Flood select: Yes | No | Unknown
+  if (out.prop_flood) {
+    const f = out.prop_flood.toLowerCase();
+    if (/\byes\b|affected|within|prone|hazard/.test(f) && !/unaffected|not\s+affected|not\s+within/.test(f)) {
+      out.prop_flood = "Yes";
+    } else if (/\bno\b|unaffected|not\s+affected|not\s+within|not\s+specified\s+as/.test(f)) {
+      out.prop_flood = "No";
+    } else if (/unknown/.test(f)) {
+      out.prop_flood = "Unknown";
+    }
   }
 
   // Split Landchecker-style "LDR - Low Density Residential" into classification + description
@@ -247,70 +266,7 @@ export function ImportPanel({ values, onApply }: ImportPanelProps) {
   }, [text, file, applyPatch]);
 
 
-  // ---- Landchecker live address lookup (Section 1 identity fields) ----
-  const [lcQuery, setLcQuery] = useState("");
-  const [lcSuggestions, setLcSuggestions] = useState<LandcheckerSuggestion[]>([]);
-  const [lcSearching, setLcSearching] = useState(false);
-  const [lcLookingUp, setLcLookingUp] = useState(false);
-  const [lcApplied, setLcApplied] = useState<Record<string, string> | null>(null);
-  const [lcNote, setLcNote] = useState<string | null>(null);
-  const suggestTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (suggestTimer.current) clearTimeout(suggestTimer.current);
-    const q = lcQuery.trim();
-    if (q.length < 3) {
-      setLcSuggestions([]);
-      return;
-    }
-    suggestTimer.current = setTimeout(() => {
-      void (async () => {
-        setLcSearching(true);
-        try {
-          const result = await landcheckerSuggest({ data: { query: q } });
-          setLcSuggestions(result?.suggestions ?? []);
-        } catch (err) {
-          console.error("[landchecker suggest]", err);
-          setLcSuggestions([]);
-        } finally {
-          setLcSearching(false);
-        }
-      })();
-    }, 350);
-    return () => {
-      if (suggestTimer.current) clearTimeout(suggestTimer.current);
-    };
-  }, [lcQuery]);
-
-  async function selectLandcheckerAddress(s: LandcheckerSuggestion) {
-    setLcQuery(s.value);
-    setLcSuggestions([]);
-    setLcLookingUp(true);
-    setLcNote(null);
-    try {
-      const result = await landcheckerLookup({ data: { addressId: s.id } });
-      const fields = result?.fields ?? {};
-      if (!Object.keys(fields).length) {
-        toast.message("No fields returned from Landchecker for this address");
-        return;
-      }
-      applyPatch(fields);
-      setLcApplied(fields);
-      setLcNote(result?.meta?.note ?? null);
-      toast.success("Landchecker fields applied", {
-        description: result?.meta?.fullAddress || s.value,
-      });
-    } catch (err) {
-      console.error("[landchecker lookup]", err);
-      toast.error("Landchecker lookup failed", {
-        description: err instanceof Error ? err.message : "Try again or paste a summary below",
-      });
-    } finally {
-      setLcLookingUp(false);
-    }
-  }
-
-  const hasResults = candidates && Object.keys(candidates).length > 0;
+    const hasResults = candidates && Object.keys(candidates).length > 0;
 
   return (
     <Card className="border-dashed">
@@ -320,79 +276,14 @@ export function ImportPanel({ values, onApply }: ImportPanelProps) {
           Import property data
         </CardTitle>
         <CardDescription>
-          Look up an address live from Landchecker, or paste/upload a summary for AI extraction into
-          Section 1 (address, lot/plan, LGA, zoning, etc.).
+          Upload a Landchecker Property Report PDF (preferred) or paste a property summary. AI fills
+          Section 1 identity fields (address, lot/plan, LGA, land size, zoning, overlays, flood).
+          Maps are attached manually on the report Photos tab.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2 rounded-md border border-primary/20 bg-primary/5 p-3">
-          <Label htmlFor="landchecker-lookup">Lookup address (Landchecker)</Label>
-          <p className="text-xs text-muted-foreground">
-            Type a street address, pick a match, and Section 1 identity fields are filled
-            (address, suburb, state, postcode, LGA, lot/plan). Trial data does not include
-            zoning, overlays, site area or maps.
-          </p>
-          <div className="relative">
-            <Input
-              id="landchecker-lookup"
-              value={lcQuery}
-              onChange={(e) => setLcQuery(e.target.value)}
-              placeholder="e.g. 6 Hill Road Runcorn QLD"
-              autoComplete="off"
-              disabled={lcLookingUp}
-              className="pr-10"
-            />
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-              {lcSearching || lcLookingUp ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Search className="size-4" />
-              )}
-            </span>
-            {lcSuggestions.length > 0 ? (
-              <ul className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-border bg-card shadow-md">
-                {lcSuggestions.map((s) => (
-                  <li key={s.id}>
-                    <button
-                      type="button"
-                      className="w-full px-3 py-2 text-left text-sm hover:bg-accent"
-                      onClick={() => void selectLandcheckerAddress(s)}
-                      disabled={lcLookingUp}
-                    >
-                      {s.value}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-          {lcApplied && Object.keys(lcApplied).length > 0 ? (
-            <div className="rounded-md border border-border bg-card p-2">
-              <p className="text-xs font-medium text-foreground">Applied from Landchecker</p>
-              <dl className="mt-1 space-y-0.5 text-xs">
-                {Object.entries(lcApplied).map(([field, value]) => (
-                  <div key={field} className="flex justify-between gap-2">
-                    <dt className="text-muted-foreground">{labelForField(field)}</dt>
-                    <dd className="max-w-[60%] truncate font-medium">{value}</dd>
-                  </div>
-                ))}
-              </dl>
-              {lcNote ? <p className="mt-2 text-[0.7rem] text-muted-foreground">{lcNote}</p> : null}
-            </div>
-          ) : null}
-        </div>
-
-        <div className="relative py-1">
-          <div className="absolute inset-0 flex items-center" aria-hidden>
-            <div className="w-full border-t border-border" />
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="bg-card px-2 text-muted-foreground">or paste / upload a summary</span>
-          </div>
-        </div>
-
         <div className="space-y-2">
-          <Label htmlFor="landchecker-text">Property summary text</Label>
+          <Label htmlFor="landchecker-text">Property summary text (optional if uploading a PDF)</Label>
           <Textarea
             id="landchecker-text"
             value={text}
@@ -403,7 +294,7 @@ export function ImportPanel({ values, onApply }: ImportPanelProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="landchecker-file">Or upload a file</Label>
+          <Label htmlFor="landchecker-file">Landchecker Property Report PDF (or image)</Label>
           <input
             id="landchecker-file"
             type="file"
@@ -421,7 +312,7 @@ export function ImportPanel({ values, onApply }: ImportPanelProps) {
           className="w-full"
         >
           {extracting ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Wand2 className="mr-2 size-4" />}
-          {extracting ? "Extracting..." : "Extract fields"}
+          {extracting ? "Extracting..." : "Extract from Landchecker / summary"}
         </Button>
 
         {hasResults ? (

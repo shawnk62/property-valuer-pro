@@ -107,5 +107,6 @@ export const BOILERPLATE = {
   annexures: [
     "Annexure 1  Council Property Search",
     "Annexure 2  Photographs",
+    "Annexure 3  Maps & planning layers",
   ],
 } as const;

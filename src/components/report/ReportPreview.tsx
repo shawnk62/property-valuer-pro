@@ -1,6 +1,6 @@
 import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { get, hasValue, joinValues, labelFor, pick } from "@/lib/report/schema";
-import { PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
+import { MAP_SLOTS, PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
 import { getReportTypeConfig, isPhilReportType } from "@/lib/report/reportTypes";
 import { cleanSaleProse } from "@/lib/report/salesRelativity";
 
@@ -329,12 +329,19 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
     .join(", ");
 
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], "");
-  const slotPhotos = PHOTO_SLOTS.map(({ slot, label }) => {
-    const found = draft.photos.find((p) => p.slot === slot);
-    return found ?? { id: slot, slot, caption: label, url: "" };
-  });
-  const extraPhotos = draft.photos.filter((p) => p.slot === null);
-  const annexurePhotos = [...slotPhotos, ...extraPhotos].filter((p) => p.url);
+  const annexurePhotos = [
+    ...PHOTO_SLOTS.map(({ slot, label }) => {
+      const found = draft.photos.find((p) => p.slot === slot && p.url);
+      return found ? { ...found, caption: found.caption || label } : null;
+    }).filter(Boolean),
+    ...draft.photos.filter((p) => p.slot === null && p.url),
+  ] as typeof draft.photos;
+
+  const mapPhotos = MAP_SLOTS.map(({ slot, label }) => {
+    const found = draft.photos.find((p) => p.slot === slot && p.url);
+    return found ? { ...found, caption: found.caption || label } : null;
+  }).filter(Boolean) as typeof draft.photos;
+
   const frontPhoto = draft.photos.find((p) => p.slot === "front" && p.url);
 
   return (
@@ -1108,15 +1115,10 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         </div>
       </Section>
 
-      {/* ---- Photo annexure ---- */}
-      <section id="report-annexure-photos" className="report-annexure mt-12">
-        <h2 className="report-h1 text-center">Annexure 2 — Photographs</h2>
-        {annexurePhotos.length === 0 &&
-        !draft.sales.some((s) => s.photoUrl) ? (
-          <p className="mt-4 text-center text-sm italic text-[var(--page-foreground)]/70">
-            No photographs have been attached.
-          </p>
-        ) : (
+      {/* ---- Photo annexure (only when images exist) ---- */}
+      {annexurePhotos.length > 0 || draft.sales.some((s) => s.photoUrl) ? (
+        <section id="report-annexure-photos" className="report-annexure mt-12">
+          <h2 className="report-h1 text-center">Annexure 2 — Photographs</h2>
           <div className="mt-6 space-y-8">
             {annexurePhotos.length > 0 ? (
               <div className="grid gap-6 sm:grid-cols-2">
@@ -1168,8 +1170,31 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               </div>
             ) : null}
           </div>
-        )}
-      </section>
+        </section>
+      ) : null}
+
+      {/* ---- Maps annexure (only filled map slots) ---- */}
+      {mapPhotos.length > 0 ? (
+        <section id="report-annexure-maps" className="report-annexure mt-12">
+          <h2 className="report-h1 text-center">Annexure 3 — Maps &amp; planning layers</h2>
+          <div className="mt-6 grid gap-6 sm:grid-cols-1">
+            {mapPhotos.map((photo) => (
+              <figure key={photo.id} className="report-photo-figure break-inside-avoid">
+                <img
+                  src={photo.url}
+                  alt={photo.caption || "Map"}
+                  className="w-full border border-[var(--rule)] object-contain"
+                  loading="eager"
+                  decoding="sync"
+                />
+                <figcaption className="mt-1.5 text-center text-sm font-medium">
+                  {photo.caption}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </article>
   );
 }

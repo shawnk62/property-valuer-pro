@@ -20,7 +20,7 @@ import {
 import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
 import { get, hasValue, joinValues, labelFor } from "@/lib/report/schema";
-import { PHOTO_SLOTS, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
+import { MAP_SLOTS, PHOTO_SLOTS, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
 
 /** A4 (matches Australian report paper). */
 const PAGE_WIDTH = 11906;
@@ -708,51 +708,58 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     children.push(p(a, { size: 18, after: 40 }));
   }
 
-  // ---- Annexure 2 photos (same order as Preview) ----
-  children.push(new Paragraph({ children: [new PageBreak()] }));
-  children.push(p("Annexure 2 — Photographs", { center: true, bold: true, size: 26, after: 240 }));
+  // ---- Annexures: subject photos, maps, comparable photos (omit empty) ----
+  const subjectPhotos = [
+    ...PHOTO_SLOTS.map(({ slot, label }) => {
+      const found = draft.photos.find((ph) => ph.slot === slot && ph.url);
+      return found ? { ...found, caption: found.caption || label } : null;
+    }).filter(Boolean),
+    ...draft.photos.filter((ph) => ph.slot === null && ph.url),
+  ] as typeof draft.photos;
 
-  const slotPhotos = PHOTO_SLOTS.map(({ slot, label }) => {
-    const found = draft.photos.find((ph) => ph.slot === slot);
-    return found ?? { id: slot, slot, caption: label, url: "" };
-  });
-  const extraPhotos = draft.photos.filter((ph) => ph.slot === null);
-  const annexurePhotos = [...slotPhotos, ...extraPhotos].filter((ph) => ph.url);
+  const mapPhotos = MAP_SLOTS.map(({ slot, label }) => {
+    const found = draft.photos.find((ph) => ph.slot === slot && ph.url);
+    return found ? { ...found, caption: found.caption || label } : null;
+  }).filter(Boolean) as typeof draft.photos;
 
   const salesWithPhotos = draft.sales.filter((s) => s.photoUrl);
-  if (annexurePhotos.length === 0 && salesWithPhotos.length === 0) {
-    children.push(p("No photographs have been attached.", { center: true, italics: true }));
-  } else {
-    for (const photo of annexurePhotos) {
-      const img = await imageFromUrl(photo.url);
-      if (img) {
-        children.push(
-          new Paragraph({
-            children: [
-              new ImageRun({
-                data: img.data,
-                type: img.type,
-                transformation: { width: 420, height: 315 },
-                altText: {
-                  title: photo.caption || "Photograph",
-                  description: photo.caption || "Report photograph",
-                  name: photo.id,
-                },
-              }),
-            ],
-            alignment: AlignmentType.CENTER,
-            spacing: { before: 160, after: 60 },
-          }),
-        );
-      }
-      const caption =
-        photo.caption ||
-        PHOTO_SLOTS.find((s) => s.slot === photo.slot)?.label ||
-        "Photograph";
-      children.push(p(caption, { center: true, size: 18, after: 200 }));
-    }
 
-    // Full-size comparable front elevations (manually attached)
+  async function pushImageAnnex(
+    photo: { id: string; url: string; caption?: string; slot?: string | null },
+    opts?: { width?: number; height?: number },
+  ) {
+    const img = await imageFromUrl(photo.url);
+    if (!img) return;
+    children.push(
+      new Paragraph({
+        children: [
+          new ImageRun({
+            data: img.data,
+            type: img.type,
+            transformation: {
+              width: opts?.width ?? 480,
+              height: opts?.height ?? 360,
+            },
+            altText: {
+              title: photo.caption || "Image",
+              description: photo.caption || "Report image",
+              name: photo.id,
+            },
+          }),
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 160, after: 60 },
+      }),
+    );
+    children.push(p(photo.caption || "Image", { center: true, size: 18, after: 200 }));
+  }
+
+  if (subjectPhotos.length > 0 || salesWithPhotos.length > 0) {
+    children.push(new Paragraph({ children: [new PageBreak()] }));
+    children.push(p("Annexure 2 — Photographs", { center: true, bold: true, size: 26, after: 240 }));
+    for (const photo of subjectPhotos) {
+      await pushImageAnnex(photo, { width: 420, height: 315 });
+    }
     if (salesWithPhotos.length > 0) {
       children.push(
         p("Comparable sales — front elevations", {
@@ -766,29 +773,25 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
       for (let i = 0; i < draft.sales.length; i++) {
         const s = draft.sales[i]!;
         if (!s.photoUrl) continue;
-        const img = await imageFromUrl(s.photoUrl);
-        if (!img) continue;
-        const label = `Comparable ${i + 1}${s.address ? ` — ${s.address}` : ""}`;
-        children.push(
-          new Paragraph({
-            children: [
-              new ImageRun({
-                data: img.data,
-                type: img.type,
-                transformation: { width: 480, height: 320 },
-                altText: {
-                  title: label,
-                  description: "Comparable sale front elevation",
-                  name: s.id,
-                },
-              }),
-            ],
-            alignment: AlignmentType.CENTER,
-            spacing: { before: 160, after: 60 },
-          }),
+        await pushImageAnnex(
+          {
+            id: s.id,
+            url: s.photoUrl,
+            caption: `Comparable ${i + 1}${s.address ? ` — ${s.address}` : ""}`,
+          },
+          { width: 480, height: 320 },
         );
-        children.push(p(label, { center: true, size: 18, after: 200 }));
       }
+    }
+  }
+
+  if (mapPhotos.length > 0) {
+    children.push(new Paragraph({ children: [new PageBreak()] }));
+    children.push(
+      p("Annexure 3 — Maps & planning layers", { center: true, bold: true, size: 26, after: 240 }),
+    );
+    for (const photo of mapPhotos) {
+      await pushImageAnnex(photo, { width: 500, height: 375 });
     }
   }
 

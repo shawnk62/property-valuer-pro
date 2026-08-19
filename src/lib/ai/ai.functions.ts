@@ -379,9 +379,11 @@ export const extractPropertyData = createServerFn({ method: "POST" })
     const settings = asAiSettings(data.settings);
     const model = createModel(settings);
 
-    const system = `You are extracting property identification details from a Landchecker or similar property summary.
-Return a JSON object with a single key "candidates" whose value is an object mapping field names to extracted string values.
-Use null when a field is not present. Do not guess — only extract what is explicitly stated.`;
+    const system = `You extract property identification data for a Queensland valuation inspection form.
+Source documents are usually Landchecker Property Reports (or similar planning summaries).
+Return JSON only: {"candidates": { "<field>": "<value or null>", ... }}.
+Accuracy is critical. Extract only facts explicitly stated. Never invent values.
+Ignore sales history, nearby permits lists, school lists, and terms-and-conditions unless needed for a mapped field.`;
 
     // Must match inspection-schema.json field names exactly
     const fieldList = [
@@ -398,26 +400,45 @@ Use null when a field is not present. Do not guess — only extract what is expl
       "prop_dimensions",
       "prop_zoning",
       "prop_zoning_desc",
+      "prop_flood",
+      "prop_flood_map",
       "prop_adverse_site",
+      "imp_beds",
+      "imp_baths",
     ];
 
-    const extractionPrompt = `Extract the following fields from the property summary below.
-Return ONLY valid JSON of the form {"candidates": { "<field>": "<value or null>", ... }}.
-Use these exact field names (do not invent alternatives):
+    const extractionPrompt = `Extract the following fields from the Landchecker (or similar) property report / summary.
+Return ONLY valid JSON: {"candidates": { "<field>": "<value or null>", ... }}.
+Exact field names only:
 ${fieldList.join(", ")}
 
-Mapping hints:
-- prop_lotplan = lot and plan (e.g. Lot 44 RP884458)
-- prop_lga = council / local government
-- prop_zoning = zone CODE only from the ZONES field (e.g. LDR, CR, MDR). Do not put the full name here.
-- prop_zoning_desc = zone NAME / description (e.g. Low Density Residential). If the source says "LDR - Low Density Residential", put "LDR" in prop_zoning and "Low Density Residential" in prop_zoning_desc. If a longer purpose paragraph exists (e.g. "The purpose of the low density residential zone…"), put that full paragraph in prop_zoning_desc instead of or after the short name.
-- prop_adverse_site = overlays, flood, noise, airport surfaces, or other constraints listed
-- prop_sitearea = land size only if an actual figure is stated (not "Premium report only")
-- prop_state = QLD / NSW etc.
-Do not guess. Use null when not explicitly stated.
+Landchecker Property Report mapping (page "Details" and related sections):
+- prop_address = street line only (e.g. "13 Banksia Street"). Do NOT include suburb/state/postcode here.
+- prop_suburb = locality (e.g. "Shelly Beach")
+- prop_state = QLD / NSW / VIC / etc. (2–3 letter code preferred)
+- prop_postcode = 4-digit postcode only
+- prop_lga = LOCAL GOVERNMENT (COUNCIL) value (e.g. "Sunshine Coast Regional")
+- prop_lotplan = LOT/PLAN value as written (e.g. "Lot 7 RP85297")
+- prop_legal = same as lot/plan description if no separate legal description
+- prop_title = title reference only if explicitly stated (else null)
+- prop_sitearea = LAND SIZE numeric part only (e.g. "1915" from "1,915m² Approx"). Strip commas and unit text.
+- prop_areaunit = "m2" when land size is in square metres; "ha" for hectares
+- prop_dimensions = FRONTAGE and any stated side lengths, e.g. "Frontage 26.87m" or combined boundary lengths if listed. Do not invent lengths from a map image.
+- prop_zoning = short zone name/code from ZONES (e.g. "Low Density Residential"). If a code like LDR appears, prefer the code; otherwise the short zone title.
+- prop_zoning_desc = zone purpose paragraph if present ("The purpose of the Low density residential zone…"); otherwise the full zone title
+- prop_flood = "Yes" if the FLOOD section says the property is affected / in a flood area; "No" if Unaffected / not specified as affected; "Unknown" only if flood is not mentioned at all
+- prop_flood_map = short source note e.g. "Landchecker / Sunshine Coast Regional Council flood layers"
+- prop_adverse_site = concise list of OVERLAYS and other hazards that affect the subject (e.g. obstacle limitation, moderate hazard, landslide affected, acid sulfate affected). Include bushfire only if affected. Do not dump nearby-only layers.
+- imp_beds / imp_baths = from PropTrack or dwelling summary icons/numbers when explicitly stated (e.g. HOUSE 3 bed 1 bath)
+
+Rules:
+- Prefer null over guessing.
+- "Unavailable" → null.
+- Do not put suburb into prop_address.
+- Do not put the full address into prop_suburb.
 
 Property summary:
-${data.source === "text" ? (data.text ?? "") : "[file attached]"}`;
+${data.source === "text" ? (data.text ?? "") : "[Landchecker or property report file attached — read text from the document carefully]"}`;
 
     if (data.source === "file" && data.file) {
       try {
