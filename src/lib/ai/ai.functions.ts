@@ -442,7 +442,19 @@ Rules:
 Property summary:
 ${data.source === "text" ? (data.text ?? "") : "[Landchecker Property Report file attached — extract from Details, Zones, Flood, and Place-based Plans sections]"}`;
 
-    if (data.source === "file" && data.file) {
+    // Prefer text path when the client already extracted PDF text (most reliable).
+    // File path uses the same file-part shape as extractComparableSales (working).
+    if (data.source === "file" && data.file?.base64) {
+      const filePart = {
+        type: "file" as const,
+        data: data.file.base64,
+        mediaType: data.file.mimeType || "application/pdf",
+      };
+      const userText = (data.text ?? "").trim();
+      const promptWithOptionalText = userText
+        ? `${extractionPrompt}\n\nAdditional extracted PDF text:\n${userText.slice(0, 100_000)}`
+        : extractionPrompt;
+
       try {
         const { output } = await generateText({
           model,
@@ -452,34 +464,79 @@ ${data.source === "text" ? (data.text ?? "") : "[Landchecker Property Report fil
             {
               role: "user",
               content: [
-                { type: "text", text: extractionPrompt },
-                {
-                  type: "file",
-                  data: { type: "data", data: data.file.base64 },
-                  mediaType: data.file.mimeType,
-                },
+                { type: "text", text: promptWithOptionalText },
+                filePart,
               ],
             },
           ],
         });
-        return output;
+        if (output?.candidates && Object.keys(output.candidates).length > 0) {
+          return output;
+        }
       } catch {
-        const { text } = await generateText({
+        /* fall through to plain text + file */
+      }
+
+      try {
+        const { text: raw } = await generateText({
           model,
-          system,
-          prompt: extractionPrompt,
+          messages: [
+            { role: "system", content: system },
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: `${promptWithOptionalText}\n\nReturn only JSON: {"candidates":{...}}.`,
+                },
+                filePart,
+              ],
+            },
+          ],
         });
-        return parseExtractionResponse(text);
+        return parseExtractionResponse(raw);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "PDF extract failed";
+        // Last resort: text-only if client provided extracted text
+        if (userText) {
+          const { text: raw } = await generateText({
+            model,
+            system,
+            prompt: `${extractionPrompt}\n\n${userText.slice(0, 100_000)}`,
+          });
+          return parseExtractionResponse(raw);
+        }
+        throw new Error(message);
       }
     }
 
-    const { text } = await generateText({
+    const userText = (data.text ?? "").trim();
+    if (!userText) {
+      return { candidates: {} };
+    }
+
+    try {
+      const { output } = await generateText({
+        model,
+        output: Output.object({ schema: ExtractionSchema }),
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: extractionPrompt },
+        ],
+      });
+      if (output?.candidates && Object.keys(output.candidates).length > 0) {
+        return output;
+      }
+    } catch {
+      /* plain text below */
+    }
+
+    const { text: raw } = await generateText({
       model,
       system,
       prompt: extractionPrompt,
     });
-
-    return parseExtractionResponse(text);
+    return parseExtractionResponse(raw);
   });
 
 function parseExtractionResponse(text: string): { candidates: Record<string, string | null> } {
