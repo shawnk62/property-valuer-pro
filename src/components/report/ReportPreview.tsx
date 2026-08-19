@@ -3,6 +3,7 @@ import { get, hasValue, joinValues, labelFor, pick } from "@/lib/report/schema";
 import { MAP_SLOTS, PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
 import { getReportTypeConfig, isPhilReportType } from "@/lib/report/reportTypes";
 import { cleanSaleProse } from "@/lib/report/salesRelativity";
+import { overlaySectionNumber, parseOverlayList } from "@/lib/report/overlays";
 
 /* ---------- primitives ---------- */
 
@@ -874,24 +875,60 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 caption="Bushfire hazard map"
               />
             </Sub>
-            <Sub title="6.5  Biodiversity / Overlays">
-              <Para>
-                {get(v, "prop_adverse_site") ||
-                  (draft.photos.some((p) => p.slot === "map_overlays" && p.url)
-                    ? "See overlay map below."
-                    : "—")}
-              </Para>
-              <InlineMap
-                photos={draft.photos}
-                slot="map_overlays"
-                caption="Biodiversity / planning overlays"
-              />
-              <InlineMap
-                photos={draft.photos}
-                slot="map_landslide"
-                caption="Landslide hazard map"
-              />
-            </Sub>
+            {(() => {
+              const overlays = parseOverlayList(get(v, "prop_adverse_site"));
+              if (overlays.length === 0) {
+                return (
+                  <Sub title="6.5  Overlays">
+                    <Para>
+                      {draft.photos.some((p) => p.slot === "map_overlays" && p.url)
+                        ? "See overlay map below."
+                        : "No planning overlays recorded for the subject."}
+                    </Para>
+                    <InlineMap
+                      photos={draft.photos}
+                      slot="map_overlays"
+                      caption="Planning overlays"
+                    />
+                    <InlineMap
+                      photos={draft.photos}
+                      slot="map_landslide"
+                      caption="Landslide hazard map"
+                    />
+                  </Sub>
+                );
+              }
+              return (
+                <>
+                  {overlays.map((name, i) => (
+                    <Sub key={name} title={`${overlaySectionNumber(i)}  ${name}`}>
+                      <Para>
+                        {`The property is subject to ${name}.`}
+                      </Para>
+                      {i === 0 ? (
+                        <InlineMap
+                          photos={draft.photos}
+                          slot="map_overlays"
+                          caption="Planning overlays"
+                        />
+                      ) : null}
+                    </Sub>
+                  ))}
+                  {draft.photos.some((p) => p.slot === "map_landslide" && p.url) ? (
+                    <Sub
+                      title={`${overlaySectionNumber(overlays.length)}  Landslide Hazard`}
+                    >
+                      <Para>See landslide hazard map below.</Para>
+                      <InlineMap
+                        photos={draft.photos}
+                        slot="map_landslide"
+                        caption="Landslide hazard map"
+                      />
+                    </Sub>
+                  ) : null}
+                </>
+              );
+            })()}
           </>
         ) : (
           <>
@@ -943,19 +980,47 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 caption="Bushfire hazard map"
               />
             </Sub>
-            <Sub title="Overlays / other hazards">
-              <Para>{get(v, "prop_adverse_site") || "—"}</Para>
-              <InlineMap
-                photos={draft.photos}
-                slot="map_overlays"
-                caption="Biodiversity / planning overlays"
-              />
-              <InlineMap
-                photos={draft.photos}
-                slot="map_landslide"
-                caption="Landslide hazard map"
-              />
-            </Sub>
+            {(() => {
+              const overlays = parseOverlayList(get(v, "prop_adverse_site"));
+              if (overlays.length === 0) {
+                return (
+                  <Sub title="Overlays / other hazards">
+                    <Para>—</Para>
+                    <InlineMap
+                      photos={draft.photos}
+                      slot="map_overlays"
+                      caption="Planning overlays"
+                    />
+                    <InlineMap
+                      photos={draft.photos}
+                      slot="map_landslide"
+                      caption="Landslide hazard map"
+                    />
+                  </Sub>
+                );
+              }
+              return (
+                <>
+                  {overlays.map((name, i) => (
+                    <Sub key={name} title={name}>
+                      <Para>{`The property is subject to ${name}.`}</Para>
+                      {i === 0 ? (
+                        <InlineMap
+                          photos={draft.photos}
+                          slot="map_overlays"
+                          caption="Planning overlays"
+                        />
+                      ) : null}
+                    </Sub>
+                  ))}
+                  <InlineMap
+                    photos={draft.photos}
+                    slot="map_landslide"
+                    caption="Landslide hazard map"
+                  />
+                </>
+              );
+            })()}
             <Sub title="Encroachments">
               <Para>{BOILERPLATE.encroachments}</Para>
             </Sub>

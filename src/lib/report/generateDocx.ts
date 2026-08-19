@@ -18,6 +18,7 @@ import {
   WidthType,
 } from "docx";
 import { BOILERPLATE } from "@/lib/report/boilerplate";
+import { overlaySectionNumber, parseOverlayList } from "@/lib/report/overlays";
 import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
 import { get, hasValue, joinValues, labelFor } from "@/lib/report/schema";
 import { MAP_SLOTS, PHOTO_SLOTS, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
@@ -533,10 +534,33 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   children.push(subHeading("6.4  Bushfire Hazard"));
   await pushInlineMap(children, draft, "map_bushfire", "Bushfire hazard map");
 
-  children.push(subHeading("6.5  Biodiversity / Overlays"));
-  if (get(v, "prop_adverse_site")) children.push(p(get(v, "prop_adverse_site")));
-  await pushInlineMap(children, draft, "map_overlays", "Biodiversity / planning overlays");
-  await pushInlineMap(children, draft, "map_landslide", "Landslide hazard map");
+  {
+    const overlays = parseOverlayList(get(v, "prop_adverse_site"));
+    if (overlays.length === 0) {
+      children.push(subHeading("6.5  Overlays"));
+      children.push(p("No planning overlays recorded for the subject."));
+      await pushInlineMap(children, draft, "map_overlays", "Planning overlays");
+    } else {
+      for (let i = 0; i < overlays.length; i++) {
+        const name = overlays[i]!;
+        children.push(subHeading(`${overlaySectionNumber(i)}  ${name}`));
+        children.push(p(`The property is subject to ${name}.`));
+        if (i === 0) {
+          await pushInlineMap(children, draft, "map_overlays", "Planning overlays");
+        }
+      }
+    }
+    const landslidePhoto = draft.photos.find((ph) => ph.slot === "map_landslide" && ph.url);
+    if (landslidePhoto) {
+      children.push(
+        subHeading(
+          `${overlaySectionNumber(Math.max(overlays.length, 1))}  Landslide Hazard`,
+        ),
+      );
+      children.push(p("See landslide hazard map below."));
+      await pushInlineMap(children, draft, "map_landslide", "Landslide hazard map");
+    }
+  }
 
   children.push(subHeading("Encroachments"));
   children.push(p(BOILERPLATE.encroachments));
