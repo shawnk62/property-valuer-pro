@@ -1252,9 +1252,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                 patchSale(id, { verificationSource: v }),
                             },
                           ] as const
-                        ).map((row) => (
-                          <tr key={row.key} className="border-b border-border">
-                            <td className="sticky left-0 z-10 bg-card px-2 py-1.5 font-medium text-foreground">
+                        ).map((row, metaRowIdx) => (
+                          <tr key={row.key} className={`border-b border-border ${adjustmentRowClass(metaRowIdx)}`}>
+                            <td className={`sticky left-0 z-10 px-2 py-1.5 font-medium text-foreground ${adjustmentRowClass(metaRowIdx)}`}>
                               {row.label}
                             </td>
                             <td className="px-2 py-1.5 text-muted-foreground">{row.subject()}</td>
