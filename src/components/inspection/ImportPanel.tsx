@@ -31,11 +31,13 @@ const TARGET_FIELDS = [
   "prop_sitearea",
   "prop_areaunit",
   "prop_dimensions",
+  "prop_orientation",
   "prop_zoning",
   "prop_zoning_desc",
   "prop_flood",
   "prop_flood_map",
   "prop_adverse_site",
+  "prop_place_based",
   "imp_beds",
   "imp_baths",
 ] as const;
@@ -77,6 +79,12 @@ const FIELD_ALIASES: Record<string, (typeof TARGET_FIELDS)[number]> = {
   bedrooms: "imp_beds",
   baths: "imp_baths",
   bathrooms: "imp_baths",
+  orientation: "prop_orientation",
+  frontage: "prop_dimensions",
+  prop_frontage: "prop_dimensions",
+  place_based: "prop_place_based",
+  place_based_plans: "prop_place_based",
+  prop_place_based_plans: "prop_place_based",
 };
 
 function normalizeCandidates(

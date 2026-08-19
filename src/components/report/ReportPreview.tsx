@@ -818,7 +818,12 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           <>
             <Sub title="6.1  Physical Description">
               <Para>
-                {[get(v, "prop_shape"), get(v, "topo"), get(v, "prop_dimensions")]
+                {[
+                  get(v, "prop_shape"),
+                  get(v, "topo"),
+                  get(v, "prop_dimensions"),
+                  get(v, "prop_orientation") && `Orientation ${get(v, "prop_orientation")}`,
+                ]
                   .filter(Boolean)
                   .join(". ") || "—"}
               </Para>
@@ -892,7 +897,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           <>
             <Facts
               values={v}
-              fields={["prop_dimensions", "prop_shape", "topo", "land", "va", "fence", "exc", "prop_view"]}
+              fields={["prop_dimensions", "prop_orientation", "prop_shape", "topo", "land", "va", "fence", "exc", "prop_view"]}
               extra={siteArea ? [{ label: labelFor("prop_sitearea"), value: siteArea }] : []}
             />
             <Sub title="Services">
@@ -1330,6 +1335,26 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               </figure>
             ))}
           </div>
+        </section>
+      ) : null}
+
+      {get(v, "prop_place_based")?.trim() ? (
+        <section id="report-annexure-place-based" className="report-annexure mt-12">
+          <h2 className="report-h1 text-center">Annexure 4 — Place-based plans</h2>
+          <div className="mt-6 space-y-3 text-sm leading-relaxed">
+            {get(v, "prop_place_based")!
+              .split(/\n+/)
+              .map((para) => para.trim())
+              .filter(Boolean)
+              .map((para, i) => (
+                <p key={i}>{para}</p>
+              ))}
+          </div>
+          <InlineMap
+            photos={draft.photos}
+            slot="map_place_based"
+            caption="Place-based plans map"
+          />
         </section>
       ) : null}
     </article>

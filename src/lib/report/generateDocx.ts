@@ -487,7 +487,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     children,
     factsTable(
       draft,
-      ["prop_dimensions", "prop_shape", "topo", "land", "va", "fence", "exc", "prop_view"],
+      ["prop_dimensions", "prop_orientation", "prop_shape", "topo", "land", "va", "fence", "exc", "prop_view"],
       siteArea ? [{ label: labelFor("prop_sitearea"), value: siteArea }] : [],
     ),
   );
@@ -880,6 +880,21 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     for (const photo of mapPhotos) {
       await pushImageAnnex(photo, { width: 500, height: 375 });
     }
+  }
+
+  const placeBased = get(v, "prop_place_based")?.trim();
+  if (placeBased) {
+    children.push(new Paragraph({ children: [new PageBreak()] }));
+    children.push(
+      p("Annexure 4 — Place-based plans", { center: true, bold: true, size: 26, after: 240 }),
+    );
+    for (const para of placeBased.split(/\n+/).map((s) => s.trim()).filter(Boolean)) {
+      children.push(p(para, { size: 18, after: 120 }));
+    }
+    await pushInlineMap(children, draft, "map_place_based", "Place-based plans map", {
+      width: 500,
+      height: 375,
+    });
   }
 
   const doc = new Document({

@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "18",
+  "version": 19,
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -185,6 +185,12 @@
           "multiline": false
         },
         {
+          "name": "prop_orientation",
+          "label": "Orientation",
+          "type": "text",
+          "placeholder": "e.g. East, North-west"
+        },
+        {
           "name": "prop_shape",
           "label": "Shape",
           "type": "text",
@@ -244,6 +250,12 @@
           "label": "Adverse site conditions / external factors",
           "type": "text",
           "multiline": true
+        },
+        {
+          "name": "prop_place_based",
+          "label": "Place-based plans / local plan notes",
+          "type": "textarea",
+          "placeholder": "Paste place-based plan purpose text from Landchecker (appears in report addendum)"
         },
         {
           "name": "prop_offered",

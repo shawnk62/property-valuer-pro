@@ -398,47 +398,49 @@ Ignore sales history, nearby permits lists, school lists, and terms-and-conditio
       "prop_sitearea",
       "prop_areaunit",
       "prop_dimensions",
+      "prop_orientation",
       "prop_zoning",
       "prop_zoning_desc",
       "prop_flood",
       "prop_flood_map",
       "prop_adverse_site",
+      "prop_place_based",
       "imp_beds",
       "imp_baths",
     ];
 
-    const extractionPrompt = `Extract the following fields from the Landchecker (or similar) property report / summary.
+    const extractionPrompt = `Extract the following fields from the Landchecker Property Report (or similar planning summary).
 Return ONLY valid JSON: {"candidates": { "<field>": "<value or null>", ... }}.
 Exact field names only:
 ${fieldList.join(", ")}
 
-Landchecker Property Report mapping (page "Details" and related sections):
-- prop_address = street line only (e.g. "13 Banksia Street"). Do NOT include suburb/state/postcode here.
-- prop_suburb = locality (e.g. "Shelly Beach")
-- prop_state = QLD / NSW / VIC / etc. (2–3 letter code preferred)
-- prop_postcode = 4-digit postcode only
-- prop_lga = LOCAL GOVERNMENT (COUNCIL) value (e.g. "Sunshine Coast Regional")
-- prop_lotplan = LOT/PLAN value as written (e.g. "Lot 7 RP85297")
-- prop_legal = same as lot/plan description if no separate legal description
-- prop_title = title reference only if explicitly stated (else null)
-- prop_sitearea = LAND SIZE numeric part only (e.g. "1915" from "1,915m² Approx"). Strip commas and unit text.
-- prop_areaunit = "m2" when land size is in square metres; "ha" for hectares
-- prop_dimensions = FRONTAGE and any stated side lengths, e.g. "Frontage 26.87m" or combined boundary lengths if listed. Do not invent lengths from a map image.
-- prop_zoning = short zone name/code from ZONES (e.g. "Low Density Residential"). If a code like LDR appears, prefer the code; otherwise the short zone title.
-- prop_zoning_desc = zone purpose paragraph if present ("The purpose of the Low density residential zone…"); otherwise the full zone title
-- prop_flood = "Yes" if the FLOOD section says the property is affected / in a flood area; "No" if Unaffected / not specified as affected; "Unknown" only if flood is not mentioned at all
-- prop_flood_map = short source note e.g. "Landchecker / Sunshine Coast Regional Council flood layers"
-- prop_adverse_site = concise list of OVERLAYS and other hazards that affect the subject (e.g. obstacle limitation, moderate hazard, landslide affected, acid sulfate affected). Include bushfire only if affected. Do not dump nearby-only layers.
-- imp_beds / imp_baths = from PropTrack or dwelling summary icons/numbers when explicitly stated (e.g. HOUSE 3 bed 1 bath)
+Landchecker "Details" page (must capture when present):
+- LOCAL GOVERNMENT (COUNCIL) → prop_lga (e.g. "Sunshine Coast Regional")
+- LAND SIZE → prop_sitearea = numeric only (e.g. "1915" from "1,915m² Approx"); prop_areaunit = "m2" or "ha"
+- ORIENTATION → prop_orientation (e.g. "East")
+- FRONTAGE → include in prop_dimensions as "Frontage 26.87m" (strip "Approx")
+- ZONES → prop_zoning = the zone title as written (e.g. "Low Density Residential")
+- ZONES purpose paragraph on the Zones page ("The purpose of the Low density residential zone…") → prop_zoning_desc (full paragraph when present; else same as prop_zoning)
+- OVERLAYS list → prop_adverse_site as a concise semicolon-separated list of each overlay name that affects the subject (e.g. "Caloundra Obstacle Limitation Surface Area; Caloundra Obstacle Limitation Surface Contour; Land Above 5m Ahd And Below 20m Ahd; Moderate Hazard Area")
+- LOT/PLAN → prop_lotplan and prop_legal (e.g. "Lot 7 RP85297")
+- PropTrack HOUSE bed/bath/car icons → imp_beds, imp_baths (numbers only, e.g. "3", "1"). Ignore car count if no field for it.
+- Full address on cover → prop_address = street only ("13 Banksia Street"); prop_suburb; prop_state; prop_postcode
+
+Flood / bushfire / landslide / acid sulfate pages:
+- prop_flood = "Yes" if affected / in flood area; "No" if Unaffected / not subject to flood; "Unknown" if flood not mentioned
+- prop_flood_map = short source (e.g. "Landchecker flood layers / Sunshine Coast Regional Council")
+- If landslide or acid sulfate is Affected, append those facts to prop_adverse_site
+
+Place-based plans section (critical):
+- prop_place_based = the full place-based plan identification AND purpose / overall outcomes text for plans that affect the property (e.g. Caloundra Local Plan Area, Moffat Beach / Shelly Beach – CAL LPP-2 and the purpose paragraphs). Preserve structure; do not summarise away the purpose statements. If the report says there are no place-based plans, use null.
 
 Rules:
-- Prefer null over guessing.
-- "Unavailable" → null.
+- Prefer null over guessing. "Unavailable" → null.
+- Do not invent boundary lengths from map images.
 - Do not put suburb into prop_address.
-- Do not put the full address into prop_suburb.
 
 Property summary:
-${data.source === "text" ? (data.text ?? "") : "[Landchecker or property report file attached — read text from the document carefully]"}`;
+${data.source === "text" ? (data.text ?? "") : "[Landchecker Property Report file attached — extract from Details, Zones, Flood, and Place-based Plans sections]"}`;
 
     if (data.source === "file" && data.file) {
       try {
