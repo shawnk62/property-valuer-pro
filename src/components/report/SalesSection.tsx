@@ -67,6 +67,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const [status, setStatus] = useState<string | null>(null);
   /** In-progress amount text so "-" can be typed before digits. */
   const [amountDrafts, setAmountDrafts] = useState<Record<string, string>>({});
+  /** Right-click menu for paste into map / comp photo slots. */
+  const [photoMenu, setPhotoMenu] = useState<
+    | null
+    | { x: number; y: number; kind: "map" }
+    | { x: number; y: number; kind: "sale"; saleId: string }
+  >(null);
+  const photoFileInputRef = useRef<HTMLInputElement>(null);
+  const photoMenuTargetRef = useRef<"map" | { saleId: string } | null>(null);
   const fingerprintsRef = useRef<Record<string, string>>({});
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const salesRef = useRef(sales);
@@ -75,6 +83,20 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   useEffect(() => {
     setAutoNarratives(loadAutoSaleNarratives());
   }, []);
+
+  useEffect(() => {
+    if (!photoMenu) return;
+    const close = () => setPhotoMenu(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    window.addEventListener("click", close);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("click", close);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [photoMenu]);
 
   function replaceSales(next: ComparableSale[]) {
     // Collapse near-duplicate addresses (street number + name + type)
@@ -243,6 +265,64 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     return null;
   }
 
+  /** Right-click / long-press paste: read image from system clipboard. */
+  async function imageFileFromNavigatorClipboard(): Promise<File | null> {
+    try {
+      if (!navigator.clipboard || !("read" in navigator.clipboard)) return null;
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        const type = item.types.find((t) => t.startsWith("image/"));
+        if (!type) continue;
+        const blob = await item.getType(type);
+        if (!blob || blob.size <= 0) continue;
+        const ext = type.split("/")[1] || "png";
+        return new File([blob], `pasted-photo.${ext}`, { type });
+      }
+    } catch (err) {
+      console.warn("[clipboard.read]", err);
+    }
+    return null;
+  }
+
+  function openPhotoMenu(
+    e: React.MouseEvent,
+    target: "map" | { saleId: string },
+  ) {
+    e.preventDefault();
+    e.stopPropagation();
+    // Focus the slot so keyboard paste still works afterwards
+    (e.currentTarget as HTMLElement).focus?.();
+    photoMenuTargetRef.current = target;
+    setPhotoMenu({
+      x: e.clientX,
+      y: e.clientY,
+      ...(target === "map" ? { kind: "map" as const } : { kind: "sale" as const, saleId: target.saleId }),
+    });
+  }
+
+  async function pasteFromMenu() {
+    const target = photoMenuTargetRef.current;
+    setPhotoMenu(null);
+    const file = await imageFileFromNavigatorClipboard();
+    if (!file) {
+      toast.error("No image on the clipboard", {
+        description: "Copy a photo from the CMA PDF first, then right-click → Paste image.",
+      });
+      return;
+    }
+    if (target === "map") {
+      void onSalesMapFile(file);
+    } else if (target && "saleId" in target) {
+      void onSalePhotoFile(target.saleId, file);
+    }
+  }
+
+  function chooseFileFromMenu() {
+    setPhotoMenu(null);
+    // Defer so the menu unmounts before the file dialog opens
+    requestAnimationFrame(() => photoFileInputRef.current?.click());
+  }
+
   function onSalePhotoPaste(saleId: string, e: React.ClipboardEvent) {
     const file = imageFileFromClipboard(e);
     if (!file) return;
@@ -273,7 +353,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     if (file) void onSalesMapFile(file);
   }
 
-    async function onSalePhotoFile(saleId: string, file: File | null) {
+  async function onSalePhotoFile(saleId: string, file: File | null) {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       toast.error("Choose an image file for the front photo");
@@ -788,13 +868,56 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         </button>
       </div>
 
+
+      {/* Right-click menu for photo / map paste */}
+      {photoMenu ? (
+        <div
+          role="menu"
+          className="fixed z-50 min-w-[10rem] rounded-md border border-border bg-card py-1 text-sm shadow-lg"
+          style={{ left: photoMenu.x, top: photoMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className="block w-full px-3 py-2 text-left text-foreground hover:bg-muted"
+            onClick={() => void pasteFromMenu()}
+          >
+            Paste image
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="block w-full px-3 py-2 text-left text-foreground hover:bg-muted"
+            onClick={chooseFileFromMenu}
+          >
+            Choose file…
+          </button>
+        </div>
+      ) : null}
+      <input
+        ref={photoFileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0] ?? null;
+          e.target.value = "";
+          const target = photoMenuTargetRef.current;
+          if (!file || !target) return;
+          if (target === "map") void onSalesMapFile(file);
+          else void onSalePhotoFile(target.saleId, file);
+        }}
+      />
+
       {/* Manual sales map + front photos — reliable path for report placement */}
       <div className="rounded-md border border-border bg-card p-4 space-y-4">
         <div>
           <h4 className="text-sm font-semibold text-foreground">Sales map &amp; front photos</h4>
           <p className="mt-1 text-xs text-muted-foreground">
-            Attach the Cotality sales map and each comparable&apos;s front elevation. Click a slot,
-            then paste (⌘V / Ctrl+V) a screenshot from the CMA PDF, or drop / choose a file.
+            Attach the Cotality sales map and each comparable&apos;s front elevation. Right-click a
+            slot and choose Paste image, or use ⌘V / Ctrl+V, drop, or choose a file.
             These appear in the grid and in §12 Sales Evidence (Preview and Word).
           </p>
         </div>
@@ -821,10 +944,11 @@ export function SalesSection({ controller }: { controller: ReportDraftController
               <label
                 tabIndex={0}
                 onPaste={onSalesMapPaste}
+                onContextMenu={(e) => openPhotoMenu(e, "map")}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={onSalesMapDrop}
                 className="flex h-28 w-44 cursor-pointer flex-col items-center justify-center rounded border border-dashed border-border bg-muted/30 text-center text-xs text-muted-foreground hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                title="Click, then paste (⌘V) or drop an image"
+                title="Right-click → Paste image, or ⌘V / drop"
               >
                 <span>Upload / paste map</span>
                 <span className="mt-0.5 text-[0.65rem] opacity-80">⌘V or drop</span>
@@ -840,8 +964,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
               <label
                 tabIndex={0}
                 onPaste={onSalesMapPaste}
+                onContextMenu={(e) => openPhotoMenu(e, "map")}
                 className="block text-xs text-primary cursor-pointer hover:underline focus:outline-none focus:ring-2 focus:ring-primary/40"
-                title="Paste (⌘V) to replace, or choose file"
+                title="Right-click → Paste image, or ⌘V"
               >
                 Replace map (or paste)
                 <input
@@ -887,10 +1012,11 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                   <label
                     tabIndex={0}
                     onPaste={(e) => onSalePhotoPaste(sale.id, e)}
+                    onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => onSalePhotoDrop(sale.id, e)}
                     className="flex h-20 cursor-pointer flex-col items-center justify-center gap-0.5 rounded border border-dashed border-border text-xs text-muted-foreground hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    title="Click, then paste (⌘V) a CMA screenshot, or drop / choose a file"
+                    title="Right-click → Paste image, or ⌘V / drop"
                   >
                     <span>Upload / paste photo</span>
                     <span className="text-[0.65rem] opacity-80">⌘V or drop</span>
@@ -908,8 +1034,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                   <label
                     tabIndex={0}
                     onPaste={(e) => onSalePhotoPaste(sale.id, e)}
+                    onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
                     className="text-[0.65rem] text-primary cursor-pointer hover:underline focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    title="Paste (⌘V) to replace"
+                    title="Right-click → Paste image, or ⌘V"
                   >
                     Replace photo (or paste)
                     <input
@@ -994,7 +1121,13 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                       </span>
                                     ) : null}
                                     {sale.photoUrl ? (
-                                      <label className="mt-1 block cursor-pointer" title="Replace front photo">
+                                      <label
+                                        tabIndex={0}
+                                        onPaste={(e) => onSalePhotoPaste(sale.id, e)}
+                                        onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
+                                        className="mt-1 block cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                        title="Right-click → Paste image to replace"
+                                      >
                                         <img
                                           src={sale.photoUrl}
                                           alt=""
@@ -1016,10 +1149,11 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                       <label
                                         tabIndex={0}
                                         onPaste={(e) => onSalePhotoPaste(sale.id, e)}
+                                        onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
                                         onDragOver={(e) => e.preventDefault()}
                                         onDrop={(e) => onSalePhotoDrop(sale.id, e)}
                                         className="mt-1 flex cursor-pointer flex-col items-center justify-center rounded border border-dashed border-border px-1 py-2 text-[0.6rem] font-normal text-muted-foreground hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                                        title="Click, then paste (⌘V) or drop"
+                                        title="Right-click → Paste image, or ⌘V"
                                       >
                                         + Photo / paste
                                         <input
