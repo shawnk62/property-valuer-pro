@@ -170,8 +170,16 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
               : p,
           ),
         );
-      } catch {
-        // Preview already has data: URL. Cloud optional.
+      } catch (uploadErr) {
+        // Keep data: URL preview, but warn — without HTTPS URL the photo will not
+        // survive reopen on another device (and may be lost if local cache clears).
+        console.warn("[photos] cloud upload failed", uploadErr);
+        toast.message("Photo saved on this device only", {
+          description:
+            uploadErr instanceof Error
+              ? uploadErr.message
+              : "Cloud upload failed. Sign in and check report-photos storage, then re-attach to sync.",
+        });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not read image");

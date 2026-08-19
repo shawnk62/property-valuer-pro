@@ -52,29 +52,38 @@ function serializableValues(
 }
 
 export function NarrativeSection({ controller }: { controller: ReportDraftController }) {
-  const { draft, setNarrative } = controller;
+  const { draft, setNarrative, loaded } = controller;
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [source, setSource] = useState<"template" | "ai" | null>(null);
   const [busy, setBusy] = useState<"template" | "ai" | keyof ReportNarrative | null>(null);
   const [lastStatus, setLastStatus] = useState<string | null>(null);
   const autoStarted = useRef(false);
+  const narrativeRef = useRef(draft.narrative);
+  narrativeRef.current = draft.narrative;
 
-  function emptyNarrativeKeys(): (keyof ReportNarrative)[] {
+  function emptyNarrativeKeys(
+    narrative: ReportDraftController["draft"]["narrative"] = narrativeRef.current,
+  ): (keyof ReportNarrative)[] {
     return BLOCKS.map((b) => b.key).filter(
-      (key) => !String(draft.narrative[key] ?? "").trim(),
+      (key) => !String(narrative[key] ?? "").trim(),
     );
   }
 
-  // Default: auto-generate any empty narrative blocks with AI when this tab opens
+  // Auto-fill only truly empty blocks, and only after the draft has loaded from
+  // cloud/local cache — never race AI against a reopened report's saved text.
   useEffect(() => {
+    if (!loaded) return;
     if (autoStarted.current) return;
     if (!isAiConfigured()) return;
-    const keys = emptyNarrativeKeys();
-    if (keys.length === 0) return;
+    const keys = emptyNarrativeKeys(draft.narrative);
+    if (keys.length === 0) {
+      autoStarted.current = true; // mark done so we don't fire later if user clears a block
+      return;
+    }
     autoStarted.current = true;
     void generateWithAi(keys);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per mount when empty blocks exist
-  }, [draft.inspectionId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once after load when empty blocks exist
+  }, [loaded, draft.inspectionId]);
 
   function generateFromTemplate() {
     setBusy("template");
@@ -148,19 +157,30 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         }
       }
 
-      if (Object.keys(next).length > 0) {
-        setNarrative(next);
-        setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
-        setSource("ai");
-        const preview = Object.entries(next)
-          .map(([k, v]) => `${k}: ${v.slice(0, 60)}…`)
-          .join(" | ");
-        setLastStatus(`AI updated: ${Object.keys(next).join(", ")}. ${preview}`);
-      } else {
-        setLastStatus(`No text returned. ${errors.join(" · ")}`);
+      // Never overwrite blocks the user (or a prior save) already filled while AI was running
+      const safe: Partial<ReportNarrative> = {};
+      const current = narrativeRef.current;
+      for (const [k, v] of Object.entries(next) as [keyof ReportNarrative, string][]) {
+        if (!String(current[k] ?? "").trim() && v.trim()) safe[k] = v;
       }
 
-      if (errors.length && Object.keys(next).length) {
+      if (Object.keys(safe).length > 0) {
+        setNarrative(safe);
+        setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
+        setSource("ai");
+        const preview = Object.entries(safe)
+          .map(([k, v]) => `${k}: ${v.slice(0, 60)}…`)
+          .join(" | ");
+        setLastStatus(`AI updated: ${Object.keys(safe).join(", ")}. ${preview}`);
+      } else {
+        setLastStatus(
+          Object.keys(next).length && !Object.keys(safe).length
+            ? "Saved narrative kept — AI did not overwrite existing text."
+            : `No text returned. ${errors.join(" · ")}`,
+        );
+      }
+
+      if (errors.length && Object.keys(safe).length) {
         toast.message("Some blocks failed", { description: errors.join(" · ") });
       } else if (errors.length) {
         toast.error("AI generation failed", { description: errors.join(" · ") });
@@ -188,7 +208,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-foreground">Narrative</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            AI generates empty sections automatically when this tab opens (requires Settings). You can regenerate any block or fill from the inspection template instead.
+            Empty sections generate with AI once after the draft loads (Settings required). Saved text is never overwritten on reopen — use Regenerate to replace a block.
             Edit any block before exporting the report.
             {generatedAt ? (
               <>

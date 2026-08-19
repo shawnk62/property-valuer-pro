@@ -208,28 +208,47 @@ export function useReportDraft(inspectionId: string) {
         const localPhotos = local?.photos ?? [];
         const photos = mergePhotos(cloudPhotos, localPhotos);
 
-        const cloudNarrative = cloud?.narrative as ReportNarrative | undefined;
-        const narrativeEmpty =
-          !cloudNarrative ||
-          Object.values(cloudNarrative).every((s) => !String(s ?? "").trim());
-        const localNarrativeEmpty =
-          !local?.narrative ||
-          Object.values(local.narrative).every((s) => !String(s ?? "").trim());
-
-        let narrative: ReportNarrative;
-        if (!narrativeEmpty && cloudNarrative) narrative = normalizeNarrative(cloudNarrative);
-        else if (!localNarrativeEmpty && local?.narrative) narrative = normalizeNarrative(local.narrative);
-        else narrative = emptyNarrative(); // AI is the default fill path on Narrative tab
+        // Per-key merge: keep any non-empty text from cloud or local (never wipe a reopened report)
+        const cloudNarrative = normalizeNarrative(cloud?.narrative as ReportNarrative | undefined);
+        const localNarrative = normalizeNarrative(local?.narrative);
+        const narrative: ReportNarrative = emptyNarrative();
+        for (const key of Object.keys(narrative) as (keyof ReportNarrative)[]) {
+          const c = cloudNarrative[key]?.trim() ?? "";
+          const l = localNarrative[key]?.trim() ?? "";
+          // Prefer longer/non-empty; cloud wins on equal non-empty to stay multi-device consistent
+          if (c) narrative[key] = c;
+          else if (l) narrative[key] = l;
+        }
 
         const reportMeta =
           (cloud?.reportMeta as ReportMeta | undefined) ||
           local?.reportMeta ||
           emptyMeta(values);
 
-        const sales =
-          (Array.isArray(cloud?.sales) ? (cloud!.sales as ComparableSale[]) : null) ||
-          local?.sales ||
-          [];
+        const cloudSales = Array.isArray(cloud?.sales) ? (cloud!.sales as ComparableSale[]) : null;
+        const localSales = Array.isArray(local?.sales) ? (local!.sales as ComparableSale[]) : null;
+        let sales: ComparableSale[] = [];
+        if (cloudSales && cloudSales.length > 0 && localSales && localSales.length > 0) {
+          // Merge by index / address — restore local-only photoUrl when cloud stripped data URLs
+          const n = Math.max(cloudSales.length, localSales.length);
+          for (let i = 0; i < n; i++) {
+            const c = cloudSales[i];
+            const l = localSales[i];
+            if (c && l) {
+              sales.push({
+                ...l,
+                ...c,
+                photoUrl: isHttpUrl(c.photoUrl) ? c.photoUrl : l.photoUrl || c.photoUrl,
+                narrativeManual: c.narrativeManual ?? l.narrativeManual,
+                narrative: (c.narrative && c.narrative.trim()) || l.narrative || "",
+              });
+            } else {
+              sales.push((c || l)!);
+            }
+          }
+        } else {
+          sales = cloudSales?.length ? cloudSales : localSales || [];
+        }
 
         const next: ReportDraft = {
           ...base,

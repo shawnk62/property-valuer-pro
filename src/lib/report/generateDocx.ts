@@ -21,6 +21,7 @@ import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { overlaySectionNumber, parseOverlayList } from "@/lib/report/overlays";
 import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
 import { get, hasValue, joinValues, labelFor } from "@/lib/report/schema";
+import { cleanSaleProse } from "@/lib/report/salesRelativity";
 import { MAP_SLOTS, PHOTO_SLOTS, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
 
 /** A4 (matches Australian report paper). */

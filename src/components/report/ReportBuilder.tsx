@@ -34,9 +34,13 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
   async function handleDownloadWord() {
     setDownloading(true);
     try {
-      save();
-      const blob = await generateValuationDocx(draft);
-      downloadBlob(blob, suggestedDocxFilename(draft));
+      try {
+        await save();
+      } catch {
+        /* still export current in-memory draft */
+      }
+      const blob = await generateValuationDocx(controller.draft);
+      downloadBlob(blob, suggestedDocxFilename(controller.draft));
       toast.success("Word report downloaded");
     } catch (err) {
       console.error(err);
@@ -130,7 +134,13 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm text-muted-foreground">
-              {dirty ? "Unsaved changes" : savedAt ? `Saved ${savedAt}` : "Draft"}
+              {dirty
+                ? "Unsaved changes"
+                : savedAt
+                  ? `Saved ${savedAt}`
+                  : draft.photos.length || draft.sales.length || Object.values(draft.narrative).some((s) => String(s || "").trim())
+                    ? "Saved report — edit and re-export anytime"
+                    : "New draft"}
             </span>
             <button
               type="button"
