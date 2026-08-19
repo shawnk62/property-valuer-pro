@@ -46,6 +46,49 @@ export function adjustmentRowClass(index: number): string {
   return index % 2 === 1 ? "bg-slate-100/90" : "bg-card";
 }
 
+const AMOUNT_INPUT_BASE =
+  "w-full rounded border px-1 py-0.5 text-[0.65rem] outline-none focus:ring-1 focus:ring-ring";
+
+/**
+ * Dollar adjustment cell: green if positive, red if negative, neutral if zero/empty.
+ * `displayRaw` is the live input string (supports mid-typing e.g. "-").
+ */
+export function adjustmentAmountClass(
+  amount: number | null | undefined,
+  displayRaw?: string,
+): string {
+  let n: number | null =
+    typeof amount === "number" && Number.isFinite(amount) ? amount : null;
+  if (displayRaw !== undefined) {
+    const cleaned = displayRaw.replace(/[^0-9.-]/g, "").trim();
+    if (!cleaned || cleaned === "-" || cleaned === "." || cleaned === "-.") {
+      n = null; // mid-typing — keep neutral
+    } else {
+      const parsed = Number(cleaned);
+      n = Number.isFinite(parsed) ? parsed : n;
+    }
+  }
+  if (n === null || n === 0) {
+    return `${AMOUNT_INPUT_BASE} border-input bg-card text-foreground`;
+  }
+  if (n < 0) {
+    return `${AMOUNT_INPUT_BASE} border-red-400/60 bg-red-200 text-red-950`;
+  }
+  return `${AMOUNT_INPUT_BASE} border-emerald-400/60 bg-emerald-200 text-emerald-950`;
+}
+
+const RATE_INPUT_BASE =
+  "w-full rounded border px-1 py-0.5 text-[0.7rem] outline-none focus:ring-1 focus:ring-ring";
+
+/** $/m² rate under subject: light blue when a figure is entered, otherwise blank/neutral. */
+export function areaRateInputClass(rateValue: string | null | undefined): string {
+  const hasFigure = String(rateValue ?? "").trim().length > 0;
+  if (hasFigure) {
+    return `${RATE_INPUT_BASE} border-sky-400/60 bg-sky-100 text-sky-950`;
+  }
+  return `${RATE_INPUT_BASE} border-input bg-card text-foreground`;
+}
+
 export interface FeatureAdjustment {
   /** Qualitative mark in URAR DESCRIPTION (similar / superior / …). */
   relativity: Relativity;

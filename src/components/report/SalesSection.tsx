@@ -6,8 +6,10 @@ import { isAiConfigured, loadAiSettings } from "@/lib/ai/settings";
 import {
   ADJUSTMENT_FEATURES,
   RELATIVITY_OPTIONS,
+  adjustmentAmountClass,
   adjustmentRowClass,
   applyAreaRateAdjustments,
+  areaRateInputClass,
   computeSaleAdjustmentTotals,
   ensureSaleAdjustments,
   formatMoney,
@@ -1331,7 +1333,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                         ? "GLA adjustment = rate × (subject GLA − comp GLA), nearest $1,000"
                                         : "Site adjustment = rate × (subject site − comp site), nearest $1,000"
                                     }
-                                    className="w-full rounded border border-input bg-card px-1 py-0.5 text-[0.7rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
+                                    className={areaRateInputClass(rateValue)}
                                   />
                                 </label>
                               ) : null}
@@ -1438,7 +1440,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                           ? "Auto-filled from $/m² rate when rate/area changes — you can still override (negative = inferior to subject)"
                                           : "Dollar adjustment (use leading − for negative)"
                                       }
-                                      className="w-full rounded border border-input bg-card px-1 py-0.5 text-[0.65rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
+                                      className={adjustmentAmountClass(
+                                        adj.amount,
+                                        amountDrafts[`${sale.id}:${feature.id}`],
+                                      )}
                                     />
                                   </td>
                                 </Fragment>
