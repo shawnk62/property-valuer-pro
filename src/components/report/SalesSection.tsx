@@ -1398,7 +1398,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                       </select>
                                     </div>
                                   </td>
-                                  <td className="px-0.5 py-1 align-middle">
+                                  <td className="px-0.5 py-1 align-bottom">
                                     <input
                                       type="text"
                                       inputMode="text"
