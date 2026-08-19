@@ -309,9 +309,9 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
       <div className="rounded-md border border-border bg-card p-4">
         <h3 className="text-sm font-semibold text-foreground">Maps &amp; overlays</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Drop screenshots from the Landchecker Property Report (site dimensions, zoning, flood,
-          bushfire, etc.). Only slots with an image are included in Preview and Word export —
-          empty map slots never print.
+          Drop maps for the report body and annexure. Location map appears under s.5.2; aerial
+          under s.6.1; flood / bushfire / overlays under s.6.3–6.5. Other layers go to Annexure 3.
+          Empty slots never print.
         </p>
       </div>
 

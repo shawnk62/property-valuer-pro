@@ -247,6 +247,46 @@ function addressLine(draft: ReportDraft): string {
 }
 
 /** Build Word document matching ReportPreview structure and content. */
+
+async function pushInlineMap(
+  children: Paragraph[],
+  draft: ReportDraft,
+  slot: string,
+  caption?: string,
+  opts?: { width?: number; height?: number },
+) {
+  const photo = draft.photos.find((ph) => ph.slot === slot && ph.url);
+  if (!photo?.url) return;
+  const img = await imageFromUrl(photo.url);
+  if (!img) return;
+  children.push(
+    new Paragraph({
+      children: [
+        new ImageRun({
+          data: img.data,
+          type: img.type,
+          transformation: {
+            width: opts?.width ?? 420,
+            height: opts?.height ?? 300,
+          },
+          altText: {
+            title: caption || photo.caption || "Map",
+            description: caption || photo.caption || "Map",
+            name: photo.id,
+          },
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 120, after: 60 },
+    }),
+  );
+  if (caption || photo.caption) {
+    children.push(
+      p(caption || photo.caption || "", { center: true, size: 16, after: 160 }),
+    );
+  }
+}
+
 export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   const v = draft.values;
   const m = draft.reportMeta;
@@ -437,9 +477,12 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     children.push(subHeading("Off-site improvements"));
     children.push(offsite);
   }
+  // 5.2-style locality map (manual)
+  await pushInlineMap(children, draft, "map_location", "Property location");
 
   // ---- 6 ----
   children.push(sectionHeading("6.", "Site Details"));
+  children.push(subHeading("6.1  Physical Description"));
   push(
     children,
     factsTable(
@@ -448,6 +491,12 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
       siteArea ? [{ label: labelFor("prop_sitearea"), value: siteArea }] : [],
     ),
   );
+  await pushInlineMap(children, draft, "map_aerial", "Aerial view of subject site", {
+    width: 460,
+    height: 320,
+  });
+  await pushInlineMap(children, draft, "map_site_dimensions", "Site dimensions");
+
   const services = factsTable(draft, [
     "svc_water_type",
     "svc_sewer_type",
@@ -457,10 +506,38 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     "svc_internet_type",
     "svc_gas_type",
   ]);
-  if (services) {
-    children.push(subHeading("Services"));
-    children.push(services);
+  children.push(subHeading("6.2  Services/Amenities"));
+  if (services) children.push(services);
+  else children.push(p("—"));
+
+  children.push(subHeading("6.3  Flood Inquiry"));
+  {
+    const flood = get(v, "prop_flood");
+    const floodMap = get(v, "prop_flood_map");
+    if (flood === "Yes") {
+      children.push(
+        p(
+          `The property is subject to flood hazard${floodMap ? ` (${floodMap})` : ""}.`,
+        ),
+      );
+    } else if (flood === "No") {
+      children.push(p("The property is not subject to flood."));
+    } else if (flood) {
+      children.push(p(flood));
+    } else {
+      children.push(p("—"));
+    }
   }
+  await pushInlineMap(children, draft, "map_flood", "Flood hazard map");
+
+  children.push(subHeading("6.4  Bushfire Hazard"));
+  await pushInlineMap(children, draft, "map_bushfire", "Bushfire hazard map");
+
+  children.push(subHeading("6.5  Biodiversity / Overlays"));
+  if (get(v, "prop_adverse_site")) children.push(p(get(v, "prop_adverse_site")));
+  await pushInlineMap(children, draft, "map_overlays", "Biodiversity / planning overlays");
+  await pushInlineMap(children, draft, "map_landslide", "Landslide hazard map");
+
   children.push(subHeading("Encroachments"));
   children.push(p(BOILERPLATE.encroachments));
 
@@ -717,7 +794,17 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     ...draft.photos.filter((ph) => ph.slot === null && ph.url),
   ] as typeof draft.photos;
 
+  const bodyMapSlotSet = new Set([
+    "map_location",
+    "map_aerial",
+    "map_site_dimensions",
+    "map_flood",
+    "map_bushfire",
+    "map_overlays",
+    "map_landslide",
+  ]);
   const mapPhotos = MAP_SLOTS.map(({ slot, label }) => {
+    if (bodyMapSlotSet.has(slot)) return null;
     const found = draft.photos.find((ph) => ph.slot === slot && ph.url);
     return found ? { ...found, caption: found.caption || label } : null;
   }).filter(Boolean) as typeof draft.photos;

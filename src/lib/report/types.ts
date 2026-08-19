@@ -21,6 +21,7 @@ export type PhotoSlot =
   | "view_2"
   | "pool"
   // Subject maps / overlays — manual attach only; omit from export when empty
+  | "map_location"
   | "map_site_dimensions"
   | "map_aerial"
   | "map_zoning"
@@ -173,20 +174,34 @@ export const PHOTO_SLOTS: { slot: PhotoSlot; label: string }[] = [
  * Manual insert only. Empty slots are never written to Word/PDF export.
  */
 export const MAP_SLOTS: { slot: PhotoSlot; label: string }[] = [
-  { slot: "map_site_dimensions", label: "Site dimensions" },
-  { slot: "map_aerial", label: "Aerial / site plan" },
+  // Inline in report body (sections 5–6) when attached
+  { slot: "map_location", label: "Location map (s.5.2)" },
+  { slot: "map_aerial", label: "Aerial of subject site (s.6.1)" },
+  { slot: "map_site_dimensions", label: "Site dimensions plan" },
+  { slot: "map_flood", label: "Flood hazard map (s.6.3)" },
+  { slot: "map_bushfire", label: "Bushfire hazard map (s.6.4)" },
+  { slot: "map_overlays", label: "Biodiversity / overlays map (s.6.5)" },
+  { slot: "map_landslide", label: "Landslide hazard map" },
+  // Additional planning layers (annexure if attached)
   { slot: "map_zoning", label: "Zoning map" },
-  { slot: "map_overlays", label: "Overlays" },
   { slot: "map_nearby_overlays", label: "Nearby overlays" },
   { slot: "map_place_based", label: "Place-based plans" },
-  { slot: "map_flood", label: "Flood map" },
-  { slot: "map_bushfire", label: "Bushfire prone area" },
   { slot: "map_heritage", label: "Heritage" },
-  { slot: "map_landslide", label: "Landslide" },
   { slot: "map_acid_sulfate", label: "Acid sulfate" },
   { slot: "map_easements", label: "Easements" },
   { slot: "map_topography", label: "Topography" },
   { slot: "map_planning_permits", label: "Planning permits" },
+];
+
+/** Slots rendered inline in the report body (not only annexure). */
+export const BODY_MAP_SLOTS: PhotoSlot[] = [
+  "map_location",
+  "map_aerial",
+  "map_site_dimensions",
+  "map_flood",
+  "map_bushfire",
+  "map_overlays",
+  "map_landslide",
 ];
 
 export const ALL_MEDIA_SLOTS: { slot: PhotoSlot; label: string }[] = [

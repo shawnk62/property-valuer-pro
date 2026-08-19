@@ -314,6 +314,37 @@ function Facts({
 
 /* ---------- report ---------- */
 
+
+/** Map/photo slot inline in body — renders nothing when empty. */
+function InlineMap({
+  photos,
+  slot,
+  caption,
+}: {
+  photos: ReportDraft["photos"];
+  slot: string;
+  caption?: string;
+}) {
+  const photo = photos.find((p) => p.slot === slot && p.url);
+  if (!photo?.url) return null;
+  return (
+    <figure className="my-4 break-inside-avoid">
+      <img
+        src={photo.url}
+        alt={caption || photo.caption || "Map"}
+        className="mx-auto max-h-[22rem] w-auto max-w-full border border-[var(--rule)] object-contain"
+        loading="eager"
+        decoding="sync"
+      />
+      {(caption || photo.caption) ? (
+        <figcaption className="mt-1.5 text-center text-xs text-[var(--page-foreground)]/80">
+          {caption || photo.caption}
+        </figcaption>
+      ) : null}
+    </figure>
+  );
+}
+
 export function ReportPreview({ draft }: { draft: ReportDraft }) {
   const v = draft.values;
   const m = draft.reportMeta;
@@ -337,7 +368,18 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
     ...draft.photos.filter((p) => p.slot === null && p.url),
   ] as typeof draft.photos;
 
+  const bodyMapSlotSet = new Set([
+    "map_location",
+    "map_aerial",
+    "map_site_dimensions",
+    "map_flood",
+    "map_bushfire",
+    "map_overlays",
+    "map_landslide",
+  ]);
+  // Annexure only lists maps that are not already embedded in sections 5–6
   const mapPhotos = MAP_SLOTS.map(({ slot, label }) => {
+    if (bodyMapSlotSet.has(slot)) return null;
     const found = draft.photos.find((p) => p.slot === slot && p.url);
     return found ? { ...found, caption: found.caption || label } : null;
   }).filter(Boolean) as typeof draft.photos;
@@ -717,6 +759,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                   ? `The property is located at ${addressLine}.`
                   : "—"}
               </Para>
+              <InlineMap photos={draft.photos} slot="map_location" caption="Property location" />
             </Sub>
             <Sub title="5.3  Transport Patterns">
               <Para>
@@ -747,6 +790,9 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 "nbhd_age",
               ]}
             />
+            <Sub title="Property location map">
+              <InlineMap photos={draft.photos} slot="map_location" caption="Property location" />
+            </Sub>
             <Sub title="Off-site improvements">
               <Facts
                 values={v}
@@ -776,6 +822,16 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                   .filter(Boolean)
                   .join(". ") || "—"}
               </Para>
+              <InlineMap
+                photos={draft.photos}
+                slot="map_aerial"
+                caption="Aerial view of subject site"
+              />
+              <InlineMap
+                photos={draft.photos}
+                slot="map_site_dimensions"
+                caption="Site dimensions"
+              />
             </Sub>
             <Sub title="6.2  Services/Amenities">
               <Para>
@@ -790,7 +846,46 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               </Para>
             </Sub>
             <Sub title="6.3  Flood Inquiry">
-              <Para>{get(v, "prop_flood") || "—"}</Para>
+              <Para>
+                {get(v, "prop_flood") === "Yes"
+                  ? `The property is subject to flood hazard${get(v, "prop_flood_map") ? ` (${get(v, "prop_flood_map")})` : ""}.`
+                  : get(v, "prop_flood") === "No"
+                    ? "The property is not subject to flood."
+                    : get(v, "prop_flood") || "—"}
+              </Para>
+              <InlineMap photos={draft.photos} slot="map_flood" caption="Flood hazard map" />
+            </Sub>
+            <Sub title="6.4  Bushfire Hazard">
+              <Para>
+                {draft.photos.some((p) => p.slot === "map_bushfire" && p.url)
+                  ? "See bushfire hazard map below."
+                  : get(v, "prop_adverse_site")?.toLowerCase().includes("bushfire")
+                    ? get(v, "prop_adverse_site")
+                    : "See attached bushfire mapping if applicable."}
+              </Para>
+              <InlineMap
+                photos={draft.photos}
+                slot="map_bushfire"
+                caption="Bushfire hazard map"
+              />
+            </Sub>
+            <Sub title="6.5  Biodiversity / Overlays">
+              <Para>
+                {get(v, "prop_adverse_site") ||
+                  (draft.photos.some((p) => p.slot === "map_overlays" && p.url)
+                    ? "See overlay map below."
+                    : "—")}
+              </Para>
+              <InlineMap
+                photos={draft.photos}
+                slot="map_overlays"
+                caption="Biodiversity / planning overlays"
+              />
+              <InlineMap
+                photos={draft.photos}
+                slot="map_landslide"
+                caption="Landslide hazard map"
+              />
             </Sub>
           </>
         ) : (
@@ -812,6 +907,48 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                   "svc_internet_type",
                   "svc_gas_type",
                 ]}
+              />
+            </Sub>
+            <Sub title="Aerial / site plan">
+              <InlineMap
+                photos={draft.photos}
+                slot="map_aerial"
+                caption="Aerial view of subject site"
+              />
+              <InlineMap
+                photos={draft.photos}
+                slot="map_site_dimensions"
+                caption="Site dimensions"
+              />
+            </Sub>
+            <Sub title="Flood Inquiry">
+              <Para>
+                {get(v, "prop_flood") === "Yes"
+                  ? `The property is subject to flood hazard${get(v, "prop_flood_map") ? ` (${get(v, "prop_flood_map")})` : ""}.`
+                  : get(v, "prop_flood") === "No"
+                    ? "The property is not subject to flood."
+                    : get(v, "prop_flood") || "—"}
+              </Para>
+              <InlineMap photos={draft.photos} slot="map_flood" caption="Flood hazard map" />
+            </Sub>
+            <Sub title="Bushfire Hazard">
+              <InlineMap
+                photos={draft.photos}
+                slot="map_bushfire"
+                caption="Bushfire hazard map"
+              />
+            </Sub>
+            <Sub title="Overlays / other hazards">
+              <Para>{get(v, "prop_adverse_site") || "—"}</Para>
+              <InlineMap
+                photos={draft.photos}
+                slot="map_overlays"
+                caption="Biodiversity / planning overlays"
+              />
+              <InlineMap
+                photos={draft.photos}
+                slot="map_landslide"
+                caption="Landslide hazard map"
               />
             </Sub>
             <Sub title="Encroachments">
