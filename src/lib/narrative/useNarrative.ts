@@ -10,14 +10,46 @@ function storageKey(recordId: string) {
   return `${KEY}-${recordId}`;
 }
 
-function read(recordId: string): NarrativeState | null {
-  if (typeof window === "undefined") return null;
+function normalizeNarrativeState(raw: unknown): NarrativeState {
+  const fallback = defaultNarrativeState();
+  if (!raw || typeof raw !== "object") return fallback;
+  const obj = raw as Partial<NarrativeState>;
+  if (!Array.isArray(obj.blocks) || obj.blocks.length === 0) return fallback;
+  // Reconcile against canonical block list (keys/headings)
+  const byKey = new Map(
+    obj.blocks
+      .filter((b) => b && typeof b === "object" && typeof (b as NarrativeBlock).key === "string")
+      .map((b) => [(b as NarrativeBlock).key, b as NarrativeBlock]),
+  );
+  return {
+    startedAt: typeof obj.startedAt === "string" ? obj.startedAt : undefined,
+    completedAt: typeof obj.completedAt === "string" ? obj.completedAt : undefined,
+    blocks: NARRATIVE_BLOCKS.map((meta) => {
+      const existing = byKey.get(meta.key);
+      if (!existing) {
+        return { key: meta.key, heading: meta.heading, status: "pending" as const, text: "" };
+      }
+      return {
+        key: meta.key,
+        heading: meta.heading,
+        status: existing.status ?? "pending",
+        text: typeof existing.text === "string" ? existing.text : "",
+        model: existing.model,
+        generatedAt: existing.generatedAt,
+        error: existing.error,
+      };
+    }),
+  };
+}
+
+function read(recordId: string): NarrativeState {
+  if (typeof window === "undefined") return defaultNarrativeState();
   try {
     const raw = window.localStorage.getItem(storageKey(recordId));
-    if (!raw) return null;
-    return JSON.parse(raw) as NarrativeState;
+    if (!raw) return defaultNarrativeState();
+    return normalizeNarrativeState(JSON.parse(raw));
   } catch {
-    return null;
+    return defaultNarrativeState();
   }
 }
 
@@ -63,10 +95,10 @@ export function defaultNarrativeState(): NarrativeState {
 }
 
 export function useNarrative(recordId: string, values: InspectionValues, isSubmitted: boolean) {
-  const [state, setState] = useState<NarrativeState>(() => read(recordId) ?? defaultNarrativeState());
+  const [state, setState] = useState<NarrativeState>(() => read(recordId));
 
   useEffect(() => {
-    setState(read(recordId) ?? defaultNarrativeState());
+    setState(read(recordId));
   }, [recordId]);
 
   useEffect(() => {

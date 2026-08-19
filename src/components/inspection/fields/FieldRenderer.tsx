@@ -59,7 +59,7 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
     const isAssignment = field.name === "prop_assignment";
     const selectOptions = isAssignment
       ? ([...PROP_ASSIGNMENT_OPTIONS] as string[])
-      : field.options;
+      : (field.options ?? []);
     return (
       <div className="space-y-2">
         <FieldLabel htmlFor={field.name} required={required}>
