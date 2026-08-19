@@ -36,7 +36,7 @@ import {
   saleNarrativeFingerprint,
   saveAutoSaleNarratives,
 } from "@/lib/report/saleNarrative";
-import { withRelativityNarrative } from "@/lib/report/salesRelativity";
+import { formatCurrencyDisplay, withRelativityNarrative } from "@/lib/report/salesRelativity";
 import type { ComparableSale, FeatureAdjustment } from "@/lib/report/types";
 
 function emptySale(): ComparableSale {
@@ -1228,7 +1228,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                               label: "Sale Price",
                               subject: () =>
                                 draft.reportMeta.valueAmount
-                                  ? `Subject value ${draft.reportMeta.valueAmount}`
+                                  ? `Subject value ${formatCurrencyDisplay(draft.reportMeta.valueAmount)}`
                                   : "—",
                               read: (s: (typeof sales)[0]) => s.salePrice,
                               write: (id: string, v: string) => patchSale(id, { salePrice: v }),

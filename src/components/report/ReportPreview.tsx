@@ -2,7 +2,7 @@ import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { get, hasValue, joinValues, labelFor, pick } from "@/lib/report/schema";
 import { MAP_SLOTS, PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
 import { getReportTypeConfig, isPhilReportType } from "@/lib/report/reportTypes";
-import { cleanSaleProse } from "@/lib/report/salesRelativity";
+import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { overlaySectionNumber, parseOverlayList } from "@/lib/report/overlays";
 
 /* ---------- primitives ---------- */
@@ -498,7 +498,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 </p>
               ) : (
                 <p className="mt-3 font-serif text-2xl font-bold">
-                  {m.valueAmount ? `$${m.valueAmount}` : "—"}
+                  {m.valueAmount ? `$${formatCurrencyDisplay(m.valueAmount)}` : "—"}
                 </p>
               )}
               {m.valueDate ? (
@@ -557,7 +557,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               <p className="mt-1 text-sm">{get(v, "prop_lotplan")}</p>
             ) : null}
             <p className="mt-5 font-serif text-2xl font-bold">
-              Market Value: {m.valueAmount ? `$${m.valueAmount}` : "—"}
+              Market Value: {m.valueAmount ? `$${formatCurrencyDisplay(m.valueAmount)}` : "—"}
             </p>
             {m.valueDate ? (
               <p className="mt-1 text-sm">As at {m.valueDate}</p>
@@ -1300,7 +1300,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             </Para>
             {m.valueAmount ? (
               <p className="py-3 text-center font-serif text-xl font-bold">
-                ${m.valueAmount}
+                ${formatCurrencyDisplay(m.valueAmount)}
               </p>
             ) : null}
           </>

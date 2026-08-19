@@ -21,7 +21,7 @@ import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { overlaySectionNumber, parseOverlayList } from "@/lib/report/overlays";
 import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
 import { get, hasValue, joinValues, labelFor } from "@/lib/report/schema";
-import { cleanSaleProse } from "@/lib/report/salesRelativity";
+import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { MAP_SLOTS, PHOTO_SLOTS, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
 
 /** A4 (matches Australian report paper). */
@@ -329,7 +329,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     children.push(p(get(v, "prop_lotplan"), { center: true, size: 18, after: 60 }));
   }
   if (m.valueAmount) {
-    children.push(p(`Market Value: $${m.valueAmount}`, { center: true, bold: true, size: 28, before: 120, after: 60 }));
+    children.push(p(`Market Value: $${formatCurrencyDisplay(m.valueAmount)}`, { center: true, bold: true, size: 28, before: 120, after: 60 }));
   }
   if (m.valueDate) {
     children.push(p(`As at ${m.valueDate}`, { center: true, size: 18, after: 200 }));
@@ -801,7 +801,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     ),
   );
   if (m.valueAmount) {
-    children.push(p(`$${m.valueAmount}`, { center: true, bold: true, size: 28, before: 160, after: 160 }));
+    children.push(p(`$${formatCurrencyDisplay(m.valueAmount)}`, { center: true, bold: true, size: 28, before: 160, after: 160 }));
   }
   children.push(p(m.valuerName || get(v, "insp_valuer") || "", { bold: true, after: 40, before: 200 }));
   if (get(v, "sign_member")) children.push(p(get(v, "sign_member"), { size: 18, after: 40 }));

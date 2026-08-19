@@ -24,6 +24,27 @@ export function parseMoney(raw: string): number | null {
   return n;
 }
 
+/**
+ * Format a whole-dollar amount for display / input: 895000 → "895,000".
+ * Strips non-digits; empty input stays empty. Uses en-AU grouping.
+ */
+export function formatCurrencyInput(raw: string): string {
+  const digits = String(raw ?? "").replace(/\D/g, "");
+  if (!digits) return "";
+  // Avoid leading zeros collapsing oddly: Number("0895000") works fine
+  const n = Number(digits);
+  if (!Number.isFinite(n)) return "";
+  return n.toLocaleString("en-AU", { maximumFractionDigits: 0 });
+}
+
+/** Format stored valueAmount for report output ( tolerates already-comma'd strings). */
+export function formatCurrencyDisplay(raw: string | null | undefined): string {
+  if (raw == null || !String(raw).trim()) return "";
+  const n = parseMoney(String(raw));
+  if (n == null) return String(raw).trim();
+  return n.toLocaleString("en-AU", { maximumFractionDigits: 0 });
+}
+
 export function stripRelativityPhrase(text: string): string {
   return String(text ?? "")
     .replace(OVERALL_RE, " ")

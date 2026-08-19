@@ -1,4 +1,5 @@
 import type { ReportDraftController } from "@/hooks/useReportDraft";
+import { formatCurrencyInput } from "@/lib/report/salesRelativity";
 import { pick } from "@/lib/report/schema";
 
 /** Options kept in sync with inspection-schema.json prop_assignment */
@@ -167,8 +168,8 @@ export function SubjectSection({ controller }: { controller: ReportDraftControll
           <MetaInput
             label="Assessed market value"
             prefix="$"
-            value={reportMeta.valueAmount}
-            onChange={(v) => setMeta({ valueAmount: v })}
+            value={formatCurrencyInput(reportMeta.valueAmount)}
+            onChange={(v) => setMeta({ valueAmount: formatCurrencyInput(v) })}
             placeholder="895,000"
           />
           <MetaInput
