@@ -19,6 +19,33 @@ export type Relativity = (typeof RELATIVITY_OPTIONS)[number];
 
 export const DEFAULT_RELATIVITY: Relativity = "similar";
 
+/**
+ * Working-grid only: background for the relativity select.
+ * Default "similar" stays neutral; superior = green, inferior = red.
+ */
+export function relativitySelectClass(relativity: Relativity | string | undefined): string {
+  const base =
+    "w-full rounded border px-0.5 py-0.5 text-[0.6rem] outline-none focus:ring-1 focus:ring-ring";
+  switch (relativity) {
+    case "superior":
+      return `${base} border-emerald-500/60 bg-emerald-300 text-emerald-950`;
+    case "slightly superior":
+      return `${base} border-emerald-400/50 bg-emerald-100 text-emerald-900`;
+    case "inferior":
+      return `${base} border-red-500/60 bg-red-300 text-red-950`;
+    case "slightly inferior":
+      return `${base} border-red-400/50 bg-red-100 text-red-900`;
+    default:
+      // similar or unknown
+      return `${base} border-input bg-card text-foreground`;
+  }
+}
+
+/** Working-grid zebra row: light gray on odd rows (Excel-style). */
+export function adjustmentRowClass(index: number): string {
+  return index % 2 === 1 ? "bg-slate-100/90" : "bg-card";
+}
+
 export interface FeatureAdjustment {
   /** Qualitative mark in URAR DESCRIPTION (similar / superior / …). */
   relativity: Relativity;

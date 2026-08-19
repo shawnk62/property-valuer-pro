@@ -1289,7 +1289,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                         </tr>
 
                         {/* ---- URAR VALUE ADJUSTMENTS: Description | $ side by side ---- */}
-                        {ADJUSTMENT_FEATURES.map((feature) => {
+                        {ADJUSTMENT_FEATURES.map((feature, featureIdx) => {
                           const isSite = feature.id === "site";
                           const isGla = feature.id === "grossLivingArea";
                           const isAreaRateRow = isSite || isGla;
@@ -1302,10 +1302,11 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                             : isSite
                               ? (draft.reportMeta.siteRatePerM2 ?? "")
                               : "";
+                          const rowBg = adjustmentRowClass(featureIdx);
 
                           return (
-                          <tr key={feature.id} className="border-b border-border">
-                            <td className="sticky left-0 z-10 bg-card px-1.5 py-1 text-xs font-medium text-foreground">
+                          <tr key={feature.id} className={`border-b border-border ${rowBg}`}>
+                            <td className={`sticky left-0 z-10 px-1.5 py-1 text-xs font-medium text-foreground ${rowBg}`}>
                               {feature.label}
                             </td>
                             <td className="px-1 py-1 text-[0.7rem] text-muted-foreground align-top">
@@ -1382,7 +1383,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                             relativity: e.target.value as Relativity,
                                           })
                                         }
-                                        className="w-full rounded border border-input bg-card px-0.5 py-0.5 text-[0.6rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
+                                        className={relativitySelectClass(adj.relativity)}
                                         title="Relativity vs subject"
                                       >
                                         {RELATIVITY_OPTIONS.map((opt) => (
