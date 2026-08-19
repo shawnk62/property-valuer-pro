@@ -208,7 +208,72 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     setMeta({ salesMapUrl: "", salesMapStoragePath: "" });
   }
 
-  async function onSalePhotoFile(saleId: string, file: File | null) {
+  /** Image from clipboard (Cmd/Ctrl+V) — screenshots from CMA PDF viewers. */
+  function imageFileFromClipboard(e: React.ClipboardEvent | ClipboardEvent): File | null {
+    const items = e.clipboardData?.items;
+    if (!items) return null;
+    for (const item of Array.from(items)) {
+      if (item.kind === "file" && item.type.startsWith("image/")) {
+        const f = item.getAsFile();
+        if (f && f.size > 0) return f;
+      }
+    }
+    // Some browsers put a file in clipboardData.files
+    const files = e.clipboardData?.files;
+    if (files) {
+      for (const f of Array.from(files)) {
+        if (f.type.startsWith("image/") && f.size > 0) return f;
+      }
+    }
+    return null;
+  }
+
+  function imageFileFromDataTransfer(dt: DataTransfer | null): File | null {
+    if (!dt) return null;
+    for (const f of Array.from(dt.files ?? [])) {
+      if (f.type.startsWith("image/") && f.size > 0) return f;
+    }
+    // Dragged image may appear as an item
+    for (const item of Array.from(dt.items ?? [])) {
+      if (item.kind === "file" && item.type.startsWith("image/")) {
+        const f = item.getAsFile();
+        if (f && f.size > 0) return f;
+      }
+    }
+    return null;
+  }
+
+  function onSalePhotoPaste(saleId: string, e: React.ClipboardEvent) {
+    const file = imageFileFromClipboard(e);
+    if (!file) return;
+    e.preventDefault();
+    e.stopPropagation();
+    void onSalePhotoFile(saleId, file);
+  }
+
+  function onSalePhotoDrop(saleId: string, e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = imageFileFromDataTransfer(e.dataTransfer);
+    if (file) void onSalePhotoFile(saleId, file);
+  }
+
+  function onSalesMapPaste(e: React.ClipboardEvent) {
+    const file = imageFileFromClipboard(e);
+    if (!file) return;
+    e.preventDefault();
+    e.stopPropagation();
+    void onSalesMapFile(file);
+  }
+
+  function onSalesMapDrop(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = imageFileFromDataTransfer(e.dataTransfer);
+    if (file) void onSalesMapFile(file);
+  }
+
+    async function onSalePhotoFile(saleId: string, file: File | null) {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       toast.error("Choose an image file for the front photo");
@@ -728,7 +793,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         <div>
           <h4 className="text-sm font-semibold text-foreground">Sales map &amp; front photos</h4>
           <p className="mt-1 text-xs text-muted-foreground">
-            Attach the Cotality sales map and each comparable&apos;s front elevation manually.
+            Attach the Cotality sales map and each comparable&apos;s front elevation. Click a slot,
+            then paste (⌘V / Ctrl+V) a screenshot from the CMA PDF, or drop / choose a file.
             These appear in the grid and in §12 Sales Evidence (Preview and Word).
           </p>
         </div>
@@ -752,8 +818,16 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                 </button>
               </div>
             ) : (
-              <label className="flex h-28 w-44 cursor-pointer flex-col items-center justify-center rounded border border-dashed border-border bg-muted/30 text-center text-xs text-muted-foreground hover:bg-muted/50">
-                <span>Upload map</span>
+              <label
+                tabIndex={0}
+                onPaste={onSalesMapPaste}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={onSalesMapDrop}
+                className="flex h-28 w-44 cursor-pointer flex-col items-center justify-center rounded border border-dashed border-border bg-muted/30 text-center text-xs text-muted-foreground hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                title="Click, then paste (⌘V) or drop an image"
+              >
+                <span>Upload / paste map</span>
+                <span className="mt-0.5 text-[0.65rem] opacity-80">⌘V or drop</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -763,8 +837,13 @@ export function SalesSection({ controller }: { controller: ReportDraftController
               </label>
             )}
             {draft.reportMeta.salesMapUrl ? (
-              <label className="block text-xs text-primary cursor-pointer hover:underline">
-                Replace map
+              <label
+                tabIndex={0}
+                onPaste={onSalesMapPaste}
+                className="block text-xs text-primary cursor-pointer hover:underline focus:outline-none focus:ring-2 focus:ring-primary/40"
+                title="Paste (⌘V) to replace, or choose file"
+              >
+                Replace map (or paste)
                 <input
                   type="file"
                   accept="image/*"
@@ -805,8 +884,16 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                     </button>
                   </div>
                 ) : (
-                  <label className="flex h-20 cursor-pointer items-center justify-center rounded border border-dashed border-border text-xs text-muted-foreground hover:bg-muted/40">
-                    Upload front photo
+                  <label
+                    tabIndex={0}
+                    onPaste={(e) => onSalePhotoPaste(sale.id, e)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => onSalePhotoDrop(sale.id, e)}
+                    className="flex h-20 cursor-pointer flex-col items-center justify-center gap-0.5 rounded border border-dashed border-border text-xs text-muted-foreground hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    title="Click, then paste (⌘V) a CMA screenshot, or drop / choose a file"
+                  >
+                    <span>Upload / paste photo</span>
+                    <span className="text-[0.65rem] opacity-80">⌘V or drop</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -818,8 +905,13 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                   </label>
                 )}
                 {sale.photoUrl ? (
-                  <label className="text-[0.65rem] text-primary cursor-pointer hover:underline">
-                    Replace photo
+                  <label
+                    tabIndex={0}
+                    onPaste={(e) => onSalePhotoPaste(sale.id, e)}
+                    className="text-[0.65rem] text-primary cursor-pointer hover:underline focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    title="Paste (⌘V) to replace"
+                  >
+                    Replace photo (or paste)
                     <input
                       type="file"
                       accept="image/*"
@@ -921,8 +1013,15 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                         />
                                       </label>
                                     ) : (
-                                      <label className="mt-1 flex cursor-pointer items-center justify-center rounded border border-dashed border-border px-1 py-2 text-[0.6rem] font-normal text-muted-foreground hover:bg-muted/40">
-                                        + Photo
+                                      <label
+                                        tabIndex={0}
+                                        onPaste={(e) => onSalePhotoPaste(sale.id, e)}
+                                        onDragOver={(e) => e.preventDefault()}
+                                        onDrop={(e) => onSalePhotoDrop(sale.id, e)}
+                                        className="mt-1 flex cursor-pointer flex-col items-center justify-center rounded border border-dashed border-border px-1 py-2 text-[0.6rem] font-normal text-muted-foreground hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                        title="Click, then paste (⌘V) or drop"
+                                      >
+                                        + Photo / paste
                                         <input
                                           type="file"
                                           accept="image/*"
