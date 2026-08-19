@@ -6,11 +6,13 @@ import { isAiConfigured, loadAiSettings } from "@/lib/ai/settings";
 import {
   ADJUSTMENT_FEATURES,
   RELATIVITY_OPTIONS,
+  adjustmentRowClass,
   applyAreaRateAdjustments,
   computeSaleAdjustmentTotals,
   ensureSaleAdjustments,
   formatMoney,
   formatPct,
+  relativitySelectClass,
   salePricePerGla,
   subjectFeatureDisplay,
   type Relativity,
