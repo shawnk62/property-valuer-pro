@@ -254,8 +254,9 @@
         {
           "name": "prop_place_based",
           "label": "Place-based plans / local plan notes",
-          "type": "textarea",
-          "placeholder": "Paste place-based plan purpose text from Landchecker (appears in report addendum)"
+          "type": "text",
+          "multiline": true,
+          "placeholder": "Place-based plan purpose text from Landchecker (report Annexure 4)"
         },
         {
           "name": "prop_offered",

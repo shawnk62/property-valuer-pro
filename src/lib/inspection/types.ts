@@ -12,6 +12,15 @@ export interface TextField {
   label: string;
   type: "text";
   multiline?: boolean;
+  placeholder?: string;
+}
+
+/** Long free-text (treated like multiline text in the form). */
+export interface TextareaField {
+  name: string;
+  label: string;
+  type: "textarea";
+  placeholder?: string;
 }
 
 export interface SelectField {
@@ -50,6 +59,7 @@ export interface SingleRowField {
 
 export type InspectionField =
   | TextField
+  | TextareaField
   | SelectField
   | CheckboxField
   | CheckboxGroupField

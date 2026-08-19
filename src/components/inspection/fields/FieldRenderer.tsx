@@ -32,7 +32,11 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
   const required = REQUIRED_SET.has(field.name);
   const invalid = showErrors && required && !isFilled(values[field.name]);
 
-  if (field.type === "text") {
+  // text + textarea (long notes / place-based plans)
+  if (field.type === "text" || field.type === "textarea") {
+    const multiline =
+      field.type === "textarea" ||
+      ("multiline" in field && field.multiline === true);
     return (
       <div className="space-y-2">
         <FieldLabel htmlFor={field.name} required={required}>
@@ -41,7 +45,7 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
         <TextInput
           id={field.name}
           value={asString(values[field.name])}
-          multiline={field.multiline === true}
+          multiline={multiline}
           invalid={invalid}
           onChange={(v) => onChange(field.name, v)}
         />
@@ -129,7 +133,27 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
     );
   }
 
-  return <CheckboxGroup field={field} values={values} onChange={onChange} />;
+  if (field.type === "checkbox_group") {
+    return <CheckboxGroup field={field} values={values} onChange={onChange} />;
+  }
+
+  // Unknown field type — do not crash the wizard
+  console.warn("[FieldRenderer] unsupported field type", field.name, (field as { type?: string }).type);
+  return (
+    <div className="space-y-2 rounded-md border border-dashed border-border p-3">
+      <FieldLabel htmlFor={field.name} required={required}>
+        {field.label}
+      </FieldLabel>
+      <TextInput
+        id={field.name}
+        value={asString(values[field.name])}
+        multiline
+        invalid={invalid}
+        onChange={(v) => onChange(field.name, v)}
+      />
+      <p className="text-xs text-muted-foreground">Unsupported control type; editing as text.</p>
+    </div>
+  );
 }
 
 function CheckboxGroup({
