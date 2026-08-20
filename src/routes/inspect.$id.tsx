@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Check, ChevronLeft, Save } from "lucide-react";
+import { ArrowLeft, ArrowRight, Camera, Check, ChevronLeft, Save } from "lucide-react";
 import { toast } from "sonner";
 import { FieldRenderer } from "@/components/inspection/fields/FieldRenderer";
 import { ImportPanel } from "@/components/inspection/ImportPanel";
+import { InspectionPhotosPanel } from "@/components/inspection/InspectionPhotosPanel";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { labelForField, sections } from "@/lib/inspection/schema";
@@ -41,6 +42,9 @@ function InspectionWizard() {
   const { record, values, setValue, saveNow, loaded } = useInspection(id);
   const [step, setStep] = useState(Math.min(initialStep ?? 0, sections.length - 1));
   const [showErrors, setShowErrors] = useState(false);
+  /** Photo grid overlay — return target is the form step + scroll position. */
+  const [photosOpen, setPhotosOpen] = useState(false);
+  const returnTargetRef = useRef<{ step: number; scrollY: number } | null>(null);
   const isSubmitted = record?.status === "submitted";
 
   const section = sections[step];
@@ -93,6 +97,26 @@ function InspectionWizard() {
     window.scrollTo({ top: 0 });
   };
 
+  const openPhotos = () => {
+    returnTargetRef.current = { step, scrollY: window.scrollY };
+    setPhotosOpen(true);
+    window.scrollTo({ top: 0 });
+  };
+
+  const returnToForm = () => {
+    const target = returnTargetRef.current;
+    setPhotosOpen(false);
+    if (target) {
+      setStep(target.step);
+      // Restore scroll after paint so the section is laid out
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: target.scrollY });
+        });
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-muted/40 pb-28">
       <header className="sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur">
@@ -103,11 +127,12 @@ function InspectionWizard() {
             </Link>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {isSubmitted ? "Submitted · editable · " : ""}
-                Step {step + 1} of {sections.length} · Section {section?.id}
+                {photosOpen
+                  ? "Subject photos"
+                  : `${isSubmitted ? "Submitted · editable · " : ""}Step ${step + 1} of ${sections.length} · Section ${section?.id ?? ""}`}
               </p>
               <h1 className="truncate font-serif text-lg font-semibold text-foreground">
-                {section?.title}
+                {photosOpen ? "Photos" : section?.title}
               </h1>
             </div>
             <Button
@@ -127,75 +152,100 @@ function InspectionWizard() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
-        {isSubmitted ? (
-          <div className="mb-5 rounded-lg border border-border bg-card p-4">
-            <p className="text-sm font-medium text-foreground">Submitted inspection — editable</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Same form as on site. You can change any answer; saves update the live record used by the report.
-              A snapshot from the first submit is kept separately for reference.
-            </p>
-            <Button
-              className="mt-3"
-              variant="outline"
-              onClick={() => void navigate({ to: "/inspect/$id/review", params: { id } })}
-            >
-              Back to review / report
-            </Button>
-          </div>
-        ) : null}
-        {showErrors && missing.length > 0 ? (
-          <div className="mb-5 rounded-lg border border-destructive/40 bg-destructive/5 p-4">
-            <p className="text-sm font-medium text-destructive">
-              Required on this step
-            </p>
-            <ul className="mt-2 list-disc pl-5 text-sm text-destructive/90">
-              {missing.map((m) => (
-                <li key={m.name}>{labelForField(m.name)}</li>
+        {photosOpen ? (
+          <InspectionPhotosPanel
+            inspectionId={id}
+            onPhotoSaved={returnToForm}
+            onClose={returnToForm}
+          />
+        ) : (
+          <>
+            {isSubmitted ? (
+              <div className="mb-5 rounded-lg border border-border bg-card p-4">
+                <p className="text-sm font-medium text-foreground">Submitted inspection — editable</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Same form as on site. You can change any answer; saves update the live record used by the report.
+                  A snapshot from the first submit is kept separately for reference.
+                </p>
+                <Button
+                  className="mt-3"
+                  variant="outline"
+                  onClick={() => void navigate({ to: "/inspect/$id/review", params: { id } })}
+                >
+                  Back to review / report
+                </Button>
+              </div>
+            ) : null}
+            {showErrors && missing.length > 0 ? (
+              <div className="mb-5 rounded-lg border border-destructive/40 bg-destructive/5 p-4">
+                <p className="text-sm font-medium text-destructive">
+                  Required on this step
+                </p>
+                <ul className="mt-2 list-disc pl-5 text-sm text-destructive/90">
+                  {missing.map((m) => (
+                    <li key={m.name}>{labelForField(m.name)}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {step === 0 ? (
+              <div className="mb-6">
+                <ImportPanel values={values} onApply={(patch) => { for (const [k, v] of Object.entries(patch)) setValue(k, v); }} />
+              </div>
+            ) : null}
+
+            <div className="space-y-4">
+              {section?.fields.map((field) => (
+                <FieldRenderer
+                  key={field.name}
+                  field={field}
+                  values={values}
+                  showErrors={showErrors}
+                  onChange={setValue}
+                />
               ))}
-            </ul>
-          </div>
-        ) : null}
-
-        {step === 0 ? (
-          <div className="mb-6">
-            <ImportPanel values={values} onApply={(patch) => { for (const [k, v] of Object.entries(patch)) setValue(k, v); }} />
-          </div>
-        ) : null}
-
-        <div className="space-y-4">
-          {section?.fields.map((field) => (
-            <FieldRenderer
-              key={field.name}
-              field={field}
-              values={values}
-              showErrors={showErrors}
-              onChange={setValue}
-            />
-          ))}
-        </div>
+            </div>
+          </>
+        )}
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card/95 backdrop-blur">
-        <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3 sm:px-6">
-          <Button variant="outline" size="lg" onClick={goBack} disabled={step === 0} className="flex-1 sm:flex-none">
-            <ArrowLeft className="size-4" />
-            Back
-          </Button>
-          <Button size="lg" onClick={goNext} className="flex-1">
-            {step === sections.length - 1 ? (
-              <>
-                <Check className="size-4" />
-                {isSubmitted ? "Back to review" : "Review"}
-              </>
-            ) : (
-              <>
-                Next
-                <ArrowRight className="size-4" />
-              </>
-            )}
-          </Button>
+      {/* Persistent Photos entry — above bottom nav, does not cover form controls */}
+      {!photosOpen ? (
+        <button
+          type="button"
+          onClick={openPhotos}
+          className="fixed bottom-24 right-4 z-30 flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground shadow-lg hover:bg-accent"
+          aria-label="Photos"
+        >
+          <Camera className="size-4" />
+          Photos
+        </button>
+      ) : null}
+
+      {!photosOpen ? (
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card/95 backdrop-blur">
+          <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3 sm:px-6">
+            <Button variant="outline" size="lg" onClick={goBack} disabled={step === 0} className="flex-1 sm:flex-none">
+              <ArrowLeft className="size-4" />
+              Back
+            </Button>
+            <Button size="lg" onClick={goNext} className="flex-1">
+              {step === sections.length - 1 ? (
+                <>
+                  <Check className="size-4" />
+                  {isSubmitted ? "Back to review" : "Review"}
+                </>
+              ) : (
+                <>
+                  Next
+                  <ArrowRight className="size-4" />
+                </>
+              )}
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }
