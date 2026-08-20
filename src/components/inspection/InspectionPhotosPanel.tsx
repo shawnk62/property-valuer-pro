@@ -61,6 +61,8 @@ type PendingCapture = {
   slot: PhotoSlot | null;
   /** Existing photo id when replacing */
   replaceId?: string;
+  /** Draft extra slot id when capturing from an unlabeled empty card */
+  draftId?: string;
   caption: string;
   file: File;
   previewUrl: string;
@@ -79,12 +81,14 @@ export function InspectionPhotosPanel({ inspectionId, onPhotoSaved, onClose }: P
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<PendingCapture | null>(null);
   const [saving, setSaving] = useState(false);
-  const [extraLabels, setExtraLabels] = useState<Record<string, string>>({});
+  /** Empty extra slots waiting for a photo — label is editable before capture. */
+  const [draftExtras, setDraftExtras] = useState<Array<{ id: string; label: string }>>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const captureTargetRef = useRef<{
     slot: PhotoSlot | null;
     replaceId?: string;
     caption: string;
+    draftId?: string;
   } | null>(null);
 
   useEffect(() => {
@@ -107,7 +111,12 @@ export function InspectionPhotosPanel({ inspectionId, onPhotoSaved, onClose }: P
 
   const extras = photos.filter((p) => p.slot === null && p.url);
 
-  function openCamera(opts: { slot: PhotoSlot | null; replaceId?: string; caption: string }) {
+  function openCamera(opts: {
+    slot: PhotoSlot | null;
+    replaceId?: string;
+    caption: string;
+    draftId?: string;
+  }) {
     captureTargetRef.current = opts;
     const input = fileRef.current;
     if (!input) return;
@@ -127,6 +136,7 @@ export function InspectionPhotosPanel({ inspectionId, onPhotoSaved, onClose }: P
     setPending({
       slot: target.slot,
       replaceId: target.replaceId,
+      draftId: target.draftId,
       caption: target.caption,
       file,
       previewUrl,
@@ -181,6 +191,9 @@ export function InspectionPhotosPanel({ inspectionId, onPhotoSaved, onClose }: P
 
       if (pending.previewUrl) URL.revokeObjectURL(pending.previewUrl);
       setPending(null);
+      if (pending.draftId) {
+        setDraftExtras((prev) => prev.filter((d) => d.id !== pending.draftId));
+      }
       toast.success("Photo saved");
       onPhotoSaved();
     } catch (err) {
@@ -206,7 +219,8 @@ export function InspectionPhotosPanel({ inspectionId, onPhotoSaved, onClose }: P
   }
 
   function addExtraSlot() {
-    openCamera({ slot: null, caption: "Extra photo" });
+    // Create a labeled empty slot first — user names it, then taps to photograph.
+    setDraftExtras((prev) => [...prev, { id: newPhotoId(), label: "" }]);
   }
 
   return (
@@ -276,20 +290,24 @@ export function InspectionPhotosPanel({ inspectionId, onPhotoSaved, onClose }: P
             <div key={photo.id} className="rounded-md border border-border bg-card p-3">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <input
-                  value={extraLabels[photo.id] ?? photo.caption}
+                  value={photo.caption}
                   onChange={(e) => {
                     const caption = e.target.value;
-                    setExtraLabels((prev) => ({ ...prev, [photo.id]: caption }));
+                    setPhotos((prev) =>
+                      prev.map((p) => (p.id === photo.id ? { ...p, caption } : p)),
+                    );
                   }}
                   onBlur={() => {
-                    const caption = (extraLabels[photo.id] ?? photo.caption).trim() || "Extra photo";
+                    const caption = photo.caption.trim() || "Extra photo";
                     const next = photos.map((p) =>
                       p.id === photo.id ? { ...p, caption } : p,
                     );
                     setPhotos(next);
                     void persistPhotos(inspectionId, next);
                   }}
-                  className="w-full rounded-md border border-input bg-card px-2 py-1 text-sm font-semibold text-foreground outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="Label"
+                  aria-label="Photo label"
+                  className="w-full border-0 bg-transparent p-0 text-sm font-semibold text-foreground outline-none placeholder:text-muted-foreground focus:ring-0"
                 />
                 <button
                   type="button"
@@ -305,7 +323,7 @@ export function InspectionPhotosPanel({ inspectionId, onPhotoSaved, onClose }: P
                   openCamera({
                     slot: null,
                     replaceId: photo.id,
-                    caption: (extraLabels[photo.id] ?? photo.caption) || "Extra photo",
+                    caption: photo.caption.trim() || "Extra photo",
                   })
                 }
                 className="relative flex aspect-4/3 w-full items-center justify-center overflow-hidden rounded-md border-2 border-dashed border-border bg-muted/50"
@@ -315,6 +333,51 @@ export function InspectionPhotosPanel({ inspectionId, onPhotoSaved, onClose }: P
                   alt={photo.caption}
                   className="h-full w-full object-cover"
                 />
+              </button>
+            </div>
+          ))}
+
+          {draftExtras.map((draft) => (
+            <div key={draft.id} className="rounded-md border border-border bg-card p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <input
+                  value={draft.label}
+                  onChange={(e) => {
+                    const label = e.target.value;
+                    setDraftExtras((prev) =>
+                      prev.map((d) => (d.id === draft.id ? { ...d, label } : d)),
+                    );
+                  }}
+                  placeholder="Label (e.g. Ensuite)"
+                  aria-label="Photo label"
+                  autoFocus
+                  className="w-full border-0 bg-transparent p-0 text-sm font-semibold text-foreground outline-none placeholder:text-muted-foreground focus:ring-0"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDraftExtras((prev) => prev.filter((d) => d.id !== draft.id))
+                  }
+                  className="shrink-0 text-sm text-muted-foreground underline-offset-2 hover:text-destructive hover:underline"
+                >
+                  Remove
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  openCamera({
+                    slot: null,
+                    caption: draft.label.trim() || "Extra photo",
+                    draftId: draft.id,
+                  })
+                }
+                className="relative flex aspect-4/3 w-full items-center justify-center overflow-hidden rounded-md border-2 border-dashed border-border bg-muted/50 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+              >
+                <span className="flex flex-col items-center gap-2 px-4 text-center">
+                  <Camera className="size-6 opacity-70" />
+                  Tap to photograph
+                </span>
               </button>
             </div>
           ))}
