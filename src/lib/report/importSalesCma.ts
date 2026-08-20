@@ -97,6 +97,11 @@ function parseRelativityWord(word: string): Relativity | null {
   return null;
 }
 
+/**
+ * Parse CMA comparison-note lines into feature relativities.
+ * Not applied on import — new reports start all qualitative marks at "similar".
+ * Kept for optional future “apply CMA marks” tools.
+ */
 export function adjustmentsFromComparisonNotes(
   notes: string | null | undefined,
 ): Record<string, FeatureAdjustment> {
@@ -188,7 +193,11 @@ export function cmaExtractsToSales(rows: CmaSaleExtract[]): ComparableSale[] {
     const saleDate = String(r.saleDate ?? "").trim();
     const proximity = r.distance ? String(r.distance).trim() : "";
 
-    const adjustments = adjustmentsFromComparisonNotes(comparisonNotes || comments);
+    // New comps always start with qualitative marks = "similar".
+    // CMA comparison notes are kept in comments only — they must not pre-fill
+    // superior/inferior on the grid. Manual edits after import are preserved
+    // because ensureSaleAdjustments keeps any existing relativity on reload.
+    const adjustments = defaultAdjustments() as Record<string, FeatureAdjustment>;
 
     // Seed URAR DESCRIPTION facts so they appear on the grid (not only in comments)
     const seed = (id: string, detail: string) => {

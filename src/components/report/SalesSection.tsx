@@ -694,7 +694,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         : "";
       const mapNote = media?.salesMapUrl ? " · sales map" : "";
       toast.success(`Imported ${mapped.length} comparable sale(s)`, {
-        description: `${sourceLabel}${mapNote}${photoNote}. Relativity marks applied where present.`,
+        description: `${sourceLabel}${mapNote}${photoNote}. Qualitative marks start at Similar.`,
       });
       setStatus(`Imported ${mapped.length} sale(s) from ${sourceLabel}${mapNote}${photoNote}.`);
     } catch (err) {
