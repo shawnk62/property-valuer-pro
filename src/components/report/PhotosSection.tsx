@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import { fileToDataUrl } from "@/lib/report/photo-data";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
-import { MAP_SLOTS, PHOTO_SLOTS, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
+import { mapSlotsForImport, PHOTO_SLOTS, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
 
 function newId() {
   return `photo-${Math.random().toString(36).slice(2, 10)}`;
@@ -317,14 +317,15 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
       <div className="rounded-md border border-border bg-card p-4">
         <h3 className="text-sm font-semibold text-foreground">Maps &amp; overlays</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Drop maps for the report body and annexure. Location map appears under s.5.2; aerial
-          under s.6.1; flood / bushfire / overlays under s.6.3–6.5. Other layers go to Annexure 3.
-          Empty slots never print.
+          Panels follow Landchecker Property Report order (location → aerial → zones → overlays →
+          flood → bushfire → …) so you can drop maps in the same sequence as the PDF. Report
+          placement is unchanged: zones in s.4, location in s.5.2, aerial in s.6.1, flood/bushfire
+          in s.6.3–6.4, overlay maps in Annexure 3. Empty slots never print.
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {MAP_SLOTS.map(({ slot, label }) => {
+        {mapSlotsForImport().map(({ slot, label }) => {
           const photo = photos.find((p) => p.slot === slot);
           return (
             <PhotoCard

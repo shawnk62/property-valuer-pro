@@ -203,6 +203,45 @@ export const BODY_MAP_SLOTS: PhotoSlot[] = [
   "map_bushfire",
 ];
 
+/**
+ * Order of map drop-zones in the Photos import panel only.
+ * Mirrors a typical Landchecker Property Report page sequence so maps can be
+ * dropped in the same order they appear in that PDF. Does not control where
+ * each map is placed in the finished report (that is slot-based).
+ */
+export const MAP_SLOT_IMPORT_ORDER: PhotoSlot[] = [
+  "map_location",
+  "map_aerial",
+  "map_zoning",
+  "map_overlays",
+  "map_flood",
+  "map_bushfire",
+  "map_landslide",
+  "map_place_based",
+  "map_nearby_overlays",
+  "map_heritage",
+  "map_acid_sulfate",
+  "map_easements",
+  "map_topography",
+  "map_site_dimensions",
+  "map_planning_permits",
+];
+
+/** MAP_SLOTS sorted for the import panel (Landchecker order). */
+export function mapSlotsForImport(): { slot: PhotoSlot; label: string }[] {
+  const bySlot = new Map(MAP_SLOTS.map((m) => [m.slot, m]));
+  const ordered: { slot: PhotoSlot; label: string }[] = [];
+  for (const slot of MAP_SLOT_IMPORT_ORDER) {
+    const entry = bySlot.get(slot);
+    if (entry) ordered.push(entry);
+  }
+  // Any slots added to MAP_SLOTS later but missing from the order list still appear
+  for (const entry of MAP_SLOTS) {
+    if (!MAP_SLOT_IMPORT_ORDER.includes(entry.slot)) ordered.push(entry);
+  }
+  return ordered;
+}
+
 export const ALL_MEDIA_SLOTS: { slot: PhotoSlot; label: string }[] = [
   ...PHOTO_SLOTS,
   ...MAP_SLOTS,
