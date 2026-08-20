@@ -3,7 +3,7 @@ import { get, hasValue, joinValues, labelFor, pick } from "@/lib/report/schema";
 import { MAP_SLOTS, PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
 import { getReportTypeConfig, isPhilReportType } from "@/lib/report/reportTypes";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
-import { overlaySectionNumber, parseOverlayList } from "@/lib/report/overlays";
+import { parseOverlayList } from "@/lib/report/overlays";
 
 /* ---------- primitives ---------- */
 
@@ -369,11 +369,12 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
     ...draft.photos.filter((p) => p.slot === null && p.url),
   ] as typeof draft.photos;
 
-  // Maps shown inline in the body (5–6). Overlay / landslide maps are annex-only.
+  // Maps shown inline in the body. Overlay / landslide maps are annex-only.
   const bodyMapSlotSet = new Set([
     "map_location",
     "map_aerial",
     "map_site_dimensions",
+    "map_zoning",
     "map_flood",
     "map_bushfire",
   ]);
@@ -735,6 +736,11 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             </Sub>
           </>
         )}
+        <InlineMap
+          photos={draft.photos}
+          slot="map_zoning"
+          caption="Zones"
+        />
       </Section>
 
       {/* ---- 5. Location ---- */}
@@ -881,38 +887,19 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               );
               const annexRef =
                 "Refer to Annexure 3 — Maps & planning layers for the associated mapping.";
-              if (overlays.length === 0) {
-                return (
-                  <Sub title="6.5  Overlays">
-                    <Para>
-                      {hasOverlayAnnexMaps
-                        ? `No planning overlays recorded for the subject. ${annexRef}`
-                        : "No planning overlays recorded for the subject."}
-                    </Para>
-                  </Sub>
-                );
-              }
               return (
-                <>
-                  {overlays.map((name, i) => (
-                    <Sub key={name} title={`${overlaySectionNumber(i)}  ${name}`}>
-                      <Para>
-                        {hasOverlayAnnexMaps && i === 0
-                          ? `The property is subject to ${name}. ${annexRef}`
-                          : `The property is subject to ${name}.`}
-                      </Para>
-                    </Sub>
-                  ))}
-                  {draft.photos.some((p) => p.slot === "map_landslide" && p.url) ? (
-                    <Sub
-                      title={`${overlaySectionNumber(overlays.length)}  Landslide Hazard`}
-                    >
-                      <Para>
-                        {`The property is subject to landslide hazard mapping. ${annexRef}`}
-                      </Para>
-                    </Sub>
-                  ) : null}
-                </>
+                <Sub title="6.5  Overlays">
+                  {overlays.length > 0 ? (
+                    <ul className="ml-6 list-disc space-y-0.5">
+                      {overlays.map((name) => (
+                        <li key={name}>{name}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <Para>No planning overlays recorded for the subject.</Para>
+                  )}
+                  {hasOverlayAnnexMaps ? <Para>{annexRef}</Para> : null}
+                </Sub>
               );
             })()}
           </>
@@ -974,36 +961,19 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               );
               const annexRef =
                 "Refer to Annexure 3 — Maps & planning layers for the associated mapping.";
-              if (overlays.length === 0) {
-                return (
-                  <Sub title="Overlays / other hazards">
-                    <Para>
-                      {hasOverlayAnnexMaps
-                        ? `No planning overlays recorded for the subject. ${annexRef}`
-                        : "—"}
-                    </Para>
-                  </Sub>
-                );
-              }
               return (
-                <>
-                  {overlays.map((name, i) => (
-                    <Sub key={name} title={name}>
-                      <Para>
-                        {hasOverlayAnnexMaps && i === 0
-                          ? `The property is subject to ${name}. ${annexRef}`
-                          : `The property is subject to ${name}.`}
-                      </Para>
-                    </Sub>
-                  ))}
-                  {draft.photos.some((p) => p.slot === "map_landslide" && p.url) ? (
-                    <Sub title="Landslide Hazard">
-                      <Para>
-                        {`The property is subject to landslide hazard mapping. ${annexRef}`}
-                      </Para>
-                    </Sub>
-                  ) : null}
-                </>
+                <Sub title="Overlays">
+                  {overlays.length > 0 ? (
+                    <ul className="ml-6 list-disc space-y-0.5">
+                      {overlays.map((name) => (
+                        <li key={name}>{name}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <Para>—</Para>
+                  )}
+                  {hasOverlayAnnexMaps ? <Para>{annexRef}</Para> : null}
+                </Sub>
               );
             })()}
             <Sub title="Encroachments">

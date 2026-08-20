@@ -180,10 +180,10 @@ export const MAP_SLOTS: { slot: PhotoSlot; label: string }[] = [
   { slot: "map_site_dimensions", label: "Site dimensions plan" },
   { slot: "map_flood", label: "Flood hazard map (s.6.3)" },
   { slot: "map_bushfire", label: "Bushfire hazard map (s.6.4)" },
-  { slot: "map_overlays", label: "Biodiversity / overlays map (s.6.5)" },
+  { slot: "map_overlays", label: "Overlays map (Annexure 3)" },
   { slot: "map_landslide", label: "Landslide hazard map" },
   // Additional planning layers (annexure if attached)
-  { slot: "map_zoning", label: "Zoning map" },
+  { slot: "map_zoning", label: "Zoning map — Zones (s.4)" },
   { slot: "map_nearby_overlays", label: "Nearby overlays" },
   { slot: "map_place_based", label: "Place-based plans" },
   { slot: "map_heritage", label: "Heritage" },
@@ -198,10 +198,9 @@ export const BODY_MAP_SLOTS: PhotoSlot[] = [
   "map_location",
   "map_aerial",
   "map_site_dimensions",
+  "map_zoning",
   "map_flood",
   "map_bushfire",
-  "map_overlays",
-  "map_landslide",
 ];
 
 export const ALL_MEDIA_SLOTS: { slot: PhotoSlot; label: string }[] = [

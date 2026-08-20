@@ -18,7 +18,7 @@ import {
   WidthType,
 } from "docx";
 import { BOILERPLATE } from "@/lib/report/boilerplate";
-import { overlaySectionNumber, parseOverlayList } from "@/lib/report/overlays";
+import { parseOverlayList } from "@/lib/report/overlays";
 import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
 import { get, hasValue, joinValues, labelFor } from "@/lib/report/schema";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
@@ -442,6 +442,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   children.push(p(BOILERPLATE.townPlanningConsent));
   children.push(subHeading("Development potential"));
   children.push(p(BOILERPLATE.developmentPotential));
+  await pushInlineMap(children, draft, "map_zoning", "Zones");
 
   // ---- 5 ----
   children.push(sectionHeading("5.", "Location and Neighbourhood"));
@@ -542,38 +543,21 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     );
     const annexRef =
       "Refer to Annexure 3 — Maps & planning layers for the associated mapping.";
+    children.push(subHeading("6.5  Overlays"));
     if (overlays.length === 0) {
-      children.push(subHeading("6.5  Overlays"));
-      children.push(
-        p(
-          hasOverlayAnnexMaps
-            ? `No planning overlays recorded for the subject. ${annexRef}`
-            : "No planning overlays recorded for the subject.",
-        ),
-      );
+      children.push(p("No planning overlays recorded for the subject."));
     } else {
-      for (let i = 0; i < overlays.length; i++) {
-        const name = overlays[i]!;
-        children.push(subHeading(`${overlaySectionNumber(i)}  ${name}`));
+      for (const name of overlays) {
         children.push(
-          p(
-            hasOverlayAnnexMaps && i === 0
-              ? `The property is subject to ${name}. ${annexRef}`
-              : `The property is subject to ${name}.`,
-          ),
+          new Paragraph({
+            children: [run(`•  ${name}`, { size: 20 })],
+            spacing: { after: 80, before: 0, line: 276 },
+          }),
         );
       }
     }
-    const landslidePhoto = draft.photos.find((ph) => ph.slot === "map_landslide" && ph.url);
-    if (landslidePhoto) {
-      children.push(
-        subHeading(
-          `${overlaySectionNumber(Math.max(overlays.length, 1))}  Landslide Hazard`,
-        ),
-      );
-      children.push(
-        p(`The property is subject to landslide hazard mapping. ${annexRef}`),
-      );
+    if (hasOverlayAnnexMaps) {
+      children.push(p(annexRef));
     }
   }
 
@@ -833,11 +817,12 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     ...draft.photos.filter((ph) => ph.slot === null && ph.url),
   ] as typeof draft.photos;
 
-  // Overlay / landslide maps are annex-only; flood & bushfire stay in body 6.3 / 6.4.
+  // Overlay / landslide maps are annex-only; zoning, flood & bushfire stay in body.
   const bodyMapSlotSet = new Set([
     "map_location",
     "map_aerial",
     "map_site_dimensions",
+    "map_zoning",
     "map_flood",
     "map_bushfire",
   ]);
