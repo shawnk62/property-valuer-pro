@@ -31,6 +31,7 @@ export type ReportExtras = {
     caption: string;
     url: string;
     storagePath?: string;
+    capturedAt?: string;
   }>;
   sales?: unknown[];
   reportMeta?: Record<string, string>;

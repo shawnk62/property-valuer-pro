@@ -45,6 +45,8 @@ export interface ReportPhoto {
   url: string;
   /** Supabase Storage object path — used for delete. */
   storagePath?: string;
+  /** ISO timestamp when the photo was captured / approved (auto-set). */
+  capturedAt?: string;
 }
 
 /** Relativity mark on a comparison feature (URAR-style description). */

@@ -101,6 +101,7 @@ function toCloudExtras(draft: ReportDraft): ReportExtras {
         caption: p.caption,
         url: p.url,
         storagePath: p.storagePath,
+        ...(p.capturedAt ? { capturedAt: p.capturedAt } : {}),
       })),
   };
 }
@@ -115,6 +116,9 @@ function photosFromCloud(extras: ReportExtras | null | undefined): ReportPhoto[]
       caption: p.caption ?? "",
       url: p.url,
       storagePath: p.storagePath,
+      ...((p as { capturedAt?: string }).capturedAt
+        ? { capturedAt: String((p as { capturedAt?: string }).capturedAt) }
+        : {}),
     }));
 }
 

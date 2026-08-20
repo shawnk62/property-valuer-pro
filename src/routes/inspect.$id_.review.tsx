@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Copy, Download, FileText, RefreshCw, Send, Sparkles } from "lucide-react";
+import { Camera, ChevronLeft, Copy, Download, FileText, RefreshCw, Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,9 @@ import { fieldKeys, itemLabels, labelForField, sections } from "@/lib/inspection
 import { inspectionStore } from "@/lib/inspection/storage";
 import type { InspectionField, InspectionValues } from "@/lib/inspection/types";
 import { useInspection } from "@/lib/inspection/useInspection";
+import { missingRequiredPhotos, type RequiredPhotoElement } from "@/lib/inspection/photoRequirements";
 import { isFilled, missingFields } from "@/lib/inspection/validation";
+import type { ReportPhoto } from "@/lib/report/types";
 import { useNarrative } from "@/lib/narrative/useNarrative";
 
 export const Route = createFileRoute("/inspect/$id_/review")({
@@ -57,6 +59,7 @@ function ReviewScreen() {
   const { record, values, loaded } = useInspection(id);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [photoGaps, setPhotoGaps] = useState<RequiredPhotoElement[] | null>(null);
   const isSubmitted = submitted || record?.status === "submitted";
   const { state: narrative, updateBlock, resetBlock } = useNarrative(id, values, isSubmitted);
 
@@ -79,13 +82,9 @@ function ReviewScreen() {
     );
   }
 
-  const submit = async () => {
-    if (submitting) return;
-    if (missing.length > 0) {
-      toast.error("Complete all required fields before submitting.");
-      return;
-    }
+  const doSubmit = async () => {
     setSubmitting(true);
+    setPhotoGaps(null);
     try {
       await inspectionStore.submit(id);
       setSubmitted(true);
@@ -100,6 +99,53 @@ function ReviewScreen() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const submit = async () => {
+    if (submitting) return;
+    if (missing.length > 0) {
+      toast.error("Complete all required fields before submitting.");
+      return;
+    }
+    // Load subject photos from the same store the report uses
+    let photos: ReportPhoto[] = [];
+    try {
+      const extras = await inspectionStore.getReportExtras(id);
+      const list = extras?.photos;
+      if (Array.isArray(list)) {
+        photos = list
+          .filter((p) => p && typeof p.url === "string" && p.url.trim())
+          .map((p) => ({
+            id: String(p.id),
+            slot: (p.slot as ReportPhoto["slot"]) ?? null,
+            caption: String(p.caption || ""),
+            url: String(p.url),
+            ...(p.storagePath ? { storagePath: String(p.storagePath) } : {}),
+            ...(p.capturedAt ? { capturedAt: String(p.capturedAt) } : {}),
+          }));
+      }
+    } catch {
+      photos = [];
+    }
+    const gaps = missingRequiredPhotos(photos);
+    if (gaps.length > 0) {
+      setPhotoGaps(gaps);
+      return;
+    }
+    await doSubmit();
+  };
+
+  const takeMissingPhoto = (gap: RequiredPhotoElement) => {
+    setPhotoGaps(null);
+    void navigate({
+      to: "/inspect/$id",
+      params: { id },
+      search: {
+        photos: true,
+        ...(gap.focusSlot ? { focusSlot: gap.focusSlot } : {}),
+        returnTo: "review",
+      },
+    });
   };
 
   const copyJson = async () => {
@@ -333,6 +379,62 @@ function ReviewScreen() {
               <Send className="size-4" />
               {submitting ? "Submitting…" : "Submit inspection"}
             </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {photoGaps && photoGaps.length > 0 ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/80 p-4 sm:items-center">
+          <div
+            role="dialog"
+            aria-labelledby="photo-gaps-title"
+            className="w-full max-w-lg rounded-lg border border-border bg-card p-5 shadow-lg"
+          >
+            <h2 id="photo-gaps-title" className="font-serif text-lg font-semibold text-foreground">
+              Subject photos incomplete
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Industry practice requires at least five colour photographs, including the front, rear,
+              kitchen(s) and bathroom(s). The following are missing:
+            </p>
+            <ul className="mt-4 space-y-3">
+              {photoGaps.map((gap) => (
+                <li
+                  key={gap.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2"
+                >
+                  <span className="text-sm font-medium text-foreground">{gap.label}</span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => takeMissingPhoto(gap)}
+                  >
+                    <Camera className="size-3.5" />
+                    Take photo
+                  </Button>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-muted-foreground"
+                disabled={submitting}
+                onClick={() => void doSubmit()}
+              >
+                Ignore and submit
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="ml-auto"
+                onClick={() => setPhotoGaps(null)}
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
         </div>
       ) : null}

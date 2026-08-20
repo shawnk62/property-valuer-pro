@@ -12,9 +12,25 @@ import { useInspection } from "@/lib/inspection/useInspection";
 import { missingForStep } from "@/lib/inspection/validation";
 
 export const Route = createFileRoute("/inspect/$id")({
-  validateSearch: (search: Record<string, unknown>): { step?: number } => {
+  validateSearch: (search: Record<string, unknown>): {
+    step?: number;
+    photos?: boolean;
+    focusSlot?: string;
+    returnTo?: string;
+  } => {
     const raw = Number(search["step"]);
-    return Number.isFinite(raw) && raw >= 0 ? { step: Math.floor(raw) } : {};
+    const out: { step?: number; photos?: boolean; focusSlot?: string; returnTo?: string } = {};
+    if (Number.isFinite(raw) && raw >= 0) out.step = Math.floor(raw);
+    if (search["photos"] === true || search["photos"] === "1" || search["photos"] === 1) {
+      out.photos = true;
+    }
+    if (typeof search["focusSlot"] === "string" && search["focusSlot"].trim()) {
+      out.focusSlot = search["focusSlot"].trim();
+    }
+    if (typeof search["returnTo"] === "string" && search["returnTo"].trim()) {
+      out.returnTo = search["returnTo"].trim();
+    }
+    return out;
   },
   head: () => ({
     meta: [
@@ -37,13 +53,15 @@ export const Route = createFileRoute("/inspect/$id")({
 
 function InspectionWizard() {
   const { id } = Route.useParams();
-  const { step: initialStep } = Route.useSearch();
+  const search = Route.useSearch();
+  const initialStep = search.step;
   const navigate = useNavigate();
   const { record, values, setValue, saveNow, loaded } = useInspection(id);
   const [step, setStep] = useState(Math.min(initialStep ?? 0, sections.length - 1));
   const [showErrors, setShowErrors] = useState(false);
   /** Photo grid overlay — return target is the form step + scroll position. */
-  const [photosOpen, setPhotosOpen] = useState(false);
+  const [photosOpen, setPhotosOpen] = useState(() => Boolean(search.photos));
+  const [focusSlot, setFocusSlot] = useState<string | null>(search.focusSlot ?? null);
   const returnTargetRef = useRef<{ step: number; scrollY: number } | null>(null);
   const isSubmitted = record?.status === "submitted";
 
@@ -104,11 +122,18 @@ function InspectionWizard() {
   };
 
   const returnToForm = () => {
+    // Deep-link from review submit: return to submit after a photo is saved
+    if (search.returnTo === "review") {
+      setPhotosOpen(false);
+      setFocusSlot(null);
+      void navigate({ to: "/inspect/$id/review", params: { id } });
+      return;
+    }
     const target = returnTargetRef.current;
     setPhotosOpen(false);
+    setFocusSlot(null);
     if (target) {
       setStep(target.step);
-      // Restore scroll after paint so the section is laid out
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           window.scrollTo({ top: target.scrollY });
@@ -155,6 +180,7 @@ function InspectionWizard() {
         {photosOpen ? (
           <InspectionPhotosPanel
             inspectionId={id}
+            focusSlot={focusSlot}
             onPhotoSaved={returnToForm}
             onClose={returnToForm}
           />

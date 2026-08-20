@@ -137,6 +137,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
           slot: opts.slot,
           caption: opts.caption,
           url: dataUrl,
+          capturedAt: nowPhotoTimestamp(),
         };
         if (opts.slot) {
           return [...prev.filter((p) => p.slot !== opts.slot && p.id !== photoId), entry];

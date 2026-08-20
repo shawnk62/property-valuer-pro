@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { inspectionStore } from "@/lib/inspection/storage";
 import { fileToDataUrl } from "@/lib/report/photo-data";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
+import { formatPhotoTimestamp, nowPhotoTimestamp } from "@/lib/inspection/photoRequirements";
 import { PHOTO_SLOTS, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
 
 function newPhotoId(): string {
@@ -33,6 +34,7 @@ async function loadPhotos(inspectionId: string): Promise<ReportPhoto[]> {
           caption: String(raw.caption || ""),
           url: String(raw.url || ""),
           ...(raw.storagePath ? { storagePath: String(raw.storagePath) } : {}),
+          ...(raw.capturedAt ? { capturedAt: String(raw.capturedAt) } : {}),
         };
       })
       .filter((p) => p.url);
@@ -52,6 +54,7 @@ async function persistPhotos(inspectionId: string, photos: ReportPhoto[]): Promi
       caption: p.caption,
       url: p.url,
       ...(p.storagePath ? { storagePath: p.storagePath } : {}),
+      ...(p.capturedAt ? { capturedAt: p.capturedAt } : {}),
     })),
   });
 }
@@ -70,13 +73,20 @@ type PendingCapture = {
 
 interface Props {
   inspectionId: string;
+  /** When set (e.g. from review submit), scroll to / open that slot once loaded. */
+  focusSlot?: string | null;
   /** Called after OK saves a photo — parent returns user to prior form position. */
   onPhotoSaved: () => void;
   /** Close grid without capturing (Back). */
   onClose: () => void;
 }
 
-export function InspectionPhotosPanel({ inspectionId, onPhotoSaved, onClose }: Props) {
+export function InspectionPhotosPanel({
+  inspectionId,
+  focusSlot = null,
+  onPhotoSaved,
+  onClose,
+}: Props) {
   const [photos, setPhotos] = useState<ReportPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<PendingCapture | null>(null);
@@ -103,6 +113,15 @@ export function InspectionPhotosPanel({ inspectionId, onPhotoSaved, onClose }: P
       cancelled = true;
     };
   }, [inspectionId]);
+
+  // Deep-link from review: bring the missing slot into view once the grid is ready
+  useEffect(() => {
+    if (loading || !focusSlot) return;
+    const el = document.querySelector(`[data-photo-slot="${focusSlot}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [loading, focusSlot]);
 
   const photoForSlot = useCallback(
     (slot: PhotoSlot) => photos.find((p) => p.slot === slot && p.url),
@@ -178,6 +197,7 @@ export function InspectionPhotosPanel({ inspectionId, onPhotoSaved, onClose }: P
         caption: pending.caption,
         url,
         ...(storagePath ? { storagePath } : {}),
+        capturedAt: nowPhotoTimestamp(),
       };
 
       const withoutOld = photos.filter((p) => {
@@ -245,9 +265,22 @@ export function InspectionPhotosPanel({ inspectionId, onPhotoSaved, onClose }: P
           {PHOTO_SLOTS.map(({ slot, label }) => {
             const photo = photoForSlot(slot);
             return (
-              <div key={slot} className="rounded-md border border-border bg-card p-3">
+              <div
+                key={slot}
+                data-photo-slot={slot}
+                className={`rounded-md border bg-card p-3 ${
+                  focusSlot === slot ? "border-primary ring-2 ring-primary/30" : "border-border"
+                }`}
+              >
                 <div className="mb-2 flex items-center justify-between gap-2">
-                  <span className="text-sm font-semibold text-foreground">{label}</span>
+                  <div className="min-w-0">
+                    <span className="text-sm font-semibold text-foreground">{label}</span>
+                    {photo?.capturedAt ? (
+                      <p className="text-[0.7rem] text-muted-foreground">
+                        {formatPhotoTimestamp(photo.capturedAt)}
+                      </p>
+                    ) : null}
+                  </div>
                   {photo ? (
                     <button
                       type="button"
@@ -289,26 +322,33 @@ export function InspectionPhotosPanel({ inspectionId, onPhotoSaved, onClose }: P
           {extras.map((photo) => (
             <div key={photo.id} className="rounded-md border border-border bg-card p-3">
               <div className="mb-2 flex items-center justify-between gap-2">
-                <input
-                  value={photo.caption}
-                  onChange={(e) => {
-                    const caption = e.target.value;
-                    setPhotos((prev) =>
-                      prev.map((p) => (p.id === photo.id ? { ...p, caption } : p)),
-                    );
-                  }}
-                  onBlur={() => {
-                    const caption = photo.caption.trim() || "Extra photo";
-                    const next = photos.map((p) =>
-                      p.id === photo.id ? { ...p, caption } : p,
-                    );
-                    setPhotos(next);
-                    void persistPhotos(inspectionId, next);
-                  }}
-                  placeholder="Label"
-                  aria-label="Photo label"
-                  className="w-full border-0 bg-transparent p-0 text-sm font-semibold text-foreground outline-none placeholder:text-muted-foreground focus:ring-0"
-                />
+                <div className="min-w-0 flex-1">
+                  <input
+                    value={photo.caption}
+                    onChange={(e) => {
+                      const caption = e.target.value;
+                      setPhotos((prev) =>
+                        prev.map((p) => (p.id === photo.id ? { ...p, caption } : p)),
+                      );
+                    }}
+                    onBlur={() => {
+                      const caption = photo.caption.trim() || "Extra photo";
+                      const next = photos.map((p) =>
+                        p.id === photo.id ? { ...p, caption } : p,
+                      );
+                      setPhotos(next);
+                      void persistPhotos(inspectionId, next);
+                    }}
+                    placeholder="Label"
+                    aria-label="Photo label"
+                    className="w-full border-0 bg-transparent p-0 text-sm font-semibold text-foreground outline-none placeholder:text-muted-foreground focus:ring-0"
+                  />
+                  {photo.capturedAt ? (
+                    <p className="text-[0.7rem] text-muted-foreground">
+                      {formatPhotoTimestamp(photo.capturedAt)}
+                    </p>
+                  ) : null}
+                </div>
                 <button
                   type="button"
                   onClick={() => void removePhoto(photo)}
