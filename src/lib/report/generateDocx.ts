@@ -537,18 +537,31 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
 
   {
     const overlays = parseOverlayList(get(v, "prop_adverse_site"));
+    const hasOverlayAnnexMaps = draft.photos.some(
+      (ph) => (ph.slot === "map_overlays" || ph.slot === "map_landslide") && ph.url,
+    );
+    const annexRef =
+      "Refer to Annexure 3 — Maps & planning layers for the associated mapping.";
     if (overlays.length === 0) {
       children.push(subHeading("6.5  Overlays"));
-      children.push(p("No planning overlays recorded for the subject."));
-      await pushInlineMap(children, draft, "map_overlays", "Planning overlays");
+      children.push(
+        p(
+          hasOverlayAnnexMaps
+            ? `No planning overlays recorded for the subject. ${annexRef}`
+            : "No planning overlays recorded for the subject.",
+        ),
+      );
     } else {
       for (let i = 0; i < overlays.length; i++) {
         const name = overlays[i]!;
         children.push(subHeading(`${overlaySectionNumber(i)}  ${name}`));
-        children.push(p(`The property is subject to ${name}.`));
-        if (i === 0) {
-          await pushInlineMap(children, draft, "map_overlays", "Planning overlays");
-        }
+        children.push(
+          p(
+            hasOverlayAnnexMaps && i === 0
+              ? `The property is subject to ${name}. ${annexRef}`
+              : `The property is subject to ${name}.`,
+          ),
+        );
       }
     }
     const landslidePhoto = draft.photos.find((ph) => ph.slot === "map_landslide" && ph.url);
@@ -558,8 +571,9 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
           `${overlaySectionNumber(Math.max(overlays.length, 1))}  Landslide Hazard`,
         ),
       );
-      children.push(p("See landslide hazard map below."));
-      await pushInlineMap(children, draft, "map_landslide", "Landslide hazard map");
+      children.push(
+        p(`The property is subject to landslide hazard mapping. ${annexRef}`),
+      );
     }
   }
 
@@ -819,14 +833,13 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     ...draft.photos.filter((ph) => ph.slot === null && ph.url),
   ] as typeof draft.photos;
 
+  // Overlay / landslide maps are annex-only; flood & bushfire stay in body 6.3 / 6.4.
   const bodyMapSlotSet = new Set([
     "map_location",
     "map_aerial",
     "map_site_dimensions",
     "map_flood",
     "map_bushfire",
-    "map_overlays",
-    "map_landslide",
   ]);
   const mapPhotos = MAP_SLOTS.map(({ slot, label }) => {
     if (bodyMapSlotSet.has(slot)) return null;
