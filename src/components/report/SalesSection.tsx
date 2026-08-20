@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import { extractComparableSales, generateSaleNarrative } from "@/lib/ai/ai.functions";
@@ -83,6 +83,27 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const salesRef = useRef(sales);
   salesRef.current = sales;
+
+  /**
+   * Stable key so auto-narrative debounce is not reset on every parent re-render.
+   * (draft.sales.map(...) creates a new array each render — that previously
+   * cancelled the timer indefinitely so AI never ran.)
+   */
+  const salesNarrativeKey = useMemo(
+    () =>
+      draft.sales
+        .map((s) => {
+          const ensured = ensureSaleAdjustments(s);
+          return [
+            ensured.id,
+            saleNarrativeFingerprint(ensured),
+            ensured.narrativeManual ? "1" : "0",
+            (ensured.narrative ?? "").trim() ? "1" : "0",
+          ].join(":");
+        })
+        .join("|"),
+    [draft.sales],
+  );
 
   useEffect(() => {
     setAutoNarratives(loadAutoSaleNarratives());
@@ -577,26 +598,27 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       }
       setGenerating(false);
     },
-    [draft.values, draft.reportMeta],
+    // Intentionally narrow deps so parent re-renders do not recreate this callback
+    // and cancel the auto-narrative debounce.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [draft.values, draft.reportMeta.valueAmount, draft.reportMeta.valueDate],
   );
 
   // Auto-generate when sales / adjustments change (debounced). Default on.
   useEffect(() => {
     if (!autoNarratives) return;
     if (!isAiConfigured()) return;
-    if (sales.length === 0) return;
+    if (draft.sales.length === 0) return;
 
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       void runNarratives(false);
-    }, 1600);
+    }, 1200);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-    // fingerprint via sales content
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoNarratives, sales, runNarratives]);
+  }, [autoNarratives, salesNarrativeKey, runNarratives, draft.sales.length]);
 
   /**
    * Import sales from CMA text (paste or PDF-extracted).
@@ -694,9 +716,15 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         : "";
       const mapNote = media?.salesMapUrl ? " · sales map" : "";
       toast.success(`Imported ${mapped.length} comparable sale(s)`, {
-        description: `${sourceLabel}${mapNote}${photoNote}. Qualitative marks start at Similar.`,
+        description: `${sourceLabel}${mapNote}${photoNote}. Qualitative marks start at Similar — AI narratives will follow.`,
       });
       setStatus(`Imported ${mapped.length} sale(s) from ${sourceLabel}${mapNote}${photoNote}.`);
+      // Kick AI narratives after import (auto may also fire via salesNarrativeKey).
+      if (autoNarratives && isAiConfigured()) {
+        window.setTimeout(() => {
+          void runNarratives(true);
+        }, 400);
+      }
     } catch (err) {
       console.error("[CMA text import]", err);
       const message = err instanceof Error ? err.message : "Import failed";

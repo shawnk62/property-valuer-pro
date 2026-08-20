@@ -93,9 +93,9 @@ Style examples (match this brevity):
 - "Lowset brick and tile, 4 bed 2 bath, 1 car, land 390 m², living 177 m², quieter elevated site."
 - "3 bedroom, 1 bathroom, 1 car garage, in need of full renovation, land area 604 square metres, build area 171 square metres."
 Rules:
-- Lead with physical facts (beds/baths/cars, land, living area, condition or age if given).
-- Mention only material differences from the subject using the VALUER RELATIVITY MARKS. Do not list every "similar" feature.
-- The VALUER RELATIVITY MARKS are authoritative for superior / inferior / similar. Ignore any superior/inferior wording that may appear in CSV / user notes — notes are facts only, not qualitative settings.
+- Lead with physical facts from the comparable sale data and source notes (beds/baths/cars, land, living area, condition or age).
+- Combine source notes with the VALUER RELATIVITY MARKS: use marks for similar / superior / inferior feature language; use notes for physical facts and CMA context.
+- Mention only material differences from the subject. Do not list every "similar" feature.
 - Use ONLY the facts and marks provided. Do not invent features, prices, or adjustments.
 - Do NOT invent overall superior/inferior — that phrase is appended outside the model.
 - No bullet points, headings, or dollar adjustment schedules.
@@ -103,9 +103,8 @@ Rules:
     : `You are writing sales evidence comments for an Australian Capital Gains Tax / full valuation report (QLD), matching Peterson CGT sample style.
 Write ONE professional paragraph of 3–6 sentences comparing this comparable sale to the subject.
 Style (match this tone and density):
-- Open with the comparable's key physical facts (dwelling type, beds/baths, land, living area, condition/age if known).
-- State material differences vs the subject using the VALUER RELATIVITY MARKS (location, site, GLA, condition, etc.). Those marks are authoritative for superior / inferior / similar.
-- CSV / user notes may include CMA comparison text — treat them as physical facts only. Do not adopt superior/inferior conclusions from notes if they conflict with the valuer marks.
+- Open with the comparable's key physical facts from sale data and source notes (dwelling type, beds/baths, land, living area, condition/age if known).
+- Combine source notes with the VALUER RELATIVITY MARKS: notes supply facts and CMA context; marks supply similar / superior / inferior feature comparisons.
 - Keep language plain and direct — short sentences preferred over long compound ones (as in the Remarks sections of the CGT samples).
 - Do not invent features, prices, or adjustments. Use only facts and marks provided.
 - Do NOT invent overall superior/inferior — that phrase is appended outside the model.
