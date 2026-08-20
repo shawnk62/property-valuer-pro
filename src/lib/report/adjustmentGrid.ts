@@ -403,6 +403,138 @@ export function computeAreaAdjustment(
   return roundToNearestThousand(ratePerM2 * (subjectArea - comparableArea));
 }
 
+
+/**
+ * Extract a leading count from strings like "2", "2 car", "3 bd / 2 ba", "2.5 ba".
+ * When preferToken is set (e.g. "ba", "car"), prefer the number next to that token.
+ */
+export function parseCountNumber(
+  raw: string | number | null | undefined,
+  preferToken?: string,
+): number | null {
+  if (raw === undefined || raw === null || raw === "") return null;
+  if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
+  const s = String(raw).replace(/,/g, " ").trim().toLowerCase();
+  if (!s) return null;
+  if (preferToken) {
+    const token = preferToken.toLowerCase();
+    const re = new RegExp(
+      String.raw`(\d+(?:\.\d+)?)\s*` + token + String.raw`\b|` + token + String.raw`\s*[:=]?\s*(\d+(?:\.\d+)?)`,
+      "i",
+    );
+    const m = s.match(re);
+    if (m) {
+      const n = Number(m[1] || m[2]);
+      if (Number.isFinite(n)) return n;
+    }
+  }
+  const m = s.match(/(\d+(?:\.\d+)?)/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Comparable larger / more than subject → superior; smaller / less → inferior; equal → similar.
+ * (Descriptor is from the comparable's perspective relative to the subject.)
+ */
+export function relativityFromQuantity(
+  subject: number,
+  comparable: number,
+): Relativity {
+  if (!Number.isFinite(subject) || !Number.isFinite(comparable)) return DEFAULT_RELATIVITY;
+  if (comparable > subject) return "superior";
+  if (comparable < subject) return "inferior";
+  return "similar";
+}
+
+function saleFeatureDetail(
+  sale: ComparableSale,
+  featureId: string,
+): string {
+  const adj = sale.adjustments?.[featureId];
+  const fromAdj = adj?.detail?.trim() || "";
+  if (fromAdj) return fromAdj;
+  if (featureId === "grossLivingArea") return String(sale.gla ?? "").trim();
+  if (featureId === "site") return String(sale.landArea ?? "").trim();
+  if (featureId === "aboveGradeRoomCount") {
+    const bits = [
+      sale.beds ? `${sale.beds} bd` : "",
+      sale.baths ? `${sale.baths} ba` : "",
+    ].filter(Boolean);
+    return bits.join(" / ");
+  }
+  if (featureId === "garageCarport") {
+    return sale.cars ? `${sale.cars} car` : "";
+  }
+  return "";
+}
+
+/**
+ * Auto-set qualitative marks for quantitative features (site, GLA, baths, garage)
+ * from subject vs comparable numbers. Does not change features that cannot be
+ * compared numerically. Leaves other features untouched.
+ */
+export function applyQuantitativeRelativity(
+  sales: ComparableSale[],
+  values: InspectionValues,
+): ComparableSale[] {
+  const subjectGla = parseAreaNumber(values["imp_gla"]);
+  const subjectSite = parseAreaNumber(values["prop_sitearea"]);
+  const subjectBaths = parseCountNumber(values["imp_baths"] as string | number | null | undefined);
+  const subjectCars =
+    parseCountNumber(values["area_garage"] as string | number | null | undefined) ??
+    parseCountNumber(values["area_carport"] as string | number | null | undefined) ??
+    parseCountNumber(
+      Array.isArray(values["park"])
+        ? (values["park"] as string[]).join(" ")
+        : (values["park"] as string | number | null | undefined),
+      "car",
+    );
+
+  return sales.map((sale) => {
+    const ensured = ensureSaleAdjustments(sale);
+    const adjustments = { ...ensured.adjustments };
+    let changed = false;
+
+    const setRel = (featureId: string, subjectN: number | null, compRaw: string) => {
+      if (subjectN == null) return;
+      const prefer =
+        featureId === "aboveGradeRoomCount"
+          ? "ba"
+          : featureId === "garageCarport"
+            ? "car"
+            : undefined;
+      const compN =
+        featureId === "site" || featureId === "grossLivingArea"
+          ? parseAreaNumber(compRaw)
+          : parseCountNumber(compRaw, prefer);
+      if (compN == null) return;
+      const rel = relativityFromQuantity(subjectN, compN);
+      const cur = adjustments[featureId] ?? defaultFeatureAdjustment();
+      // Only auto-drive qualitative when still at default "similar" so a manual
+      // superior/inferior choice is not wiped on the next sales refresh.
+      const canAutoRel = cur.relativity === "similar" || cur.relativity === DEFAULT_RELATIVITY;
+      const nextRel = canAutoRel ? rel : cur.relativity;
+      const nextDetail = cur.detail?.trim() ? cur.detail : compRaw;
+      if (cur.relativity === nextRel && (cur.detail?.trim() || !compRaw)) return;
+      adjustments[featureId] = {
+        ...cur,
+        relativity: nextRel,
+        detail: nextDetail,
+      };
+      changed = true;
+    };
+
+    setRel("grossLivingArea", subjectGla, saleFeatureDetail(ensured, "grossLivingArea"));
+    setRel("site", subjectSite, saleFeatureDetail(ensured, "site"));
+    setRel("aboveGradeRoomCount", subjectBaths, saleFeatureDetail(ensured, "aboveGradeRoomCount"));
+    setRel("garageCarport", subjectCars, saleFeatureDetail(ensured, "garageCarport"));
+
+    return changed ? { ...ensured, adjustments } : ensured;
+  });
+}
+
 /**
  * Apply GLA and Site $/m² rates from report meta to every sale's adjustment amounts.
  * Leaves other features untouched. No-ops when rate or either area is missing.
@@ -429,11 +561,17 @@ export function applyAreaRateAdjustments(
       const compGla = parseAreaNumber(detail);
       if (compGla != null) {
         const cur = adjustments.grossLivingArea ?? defaultFeatureAdjustment();
-        adjustments.grossLivingArea = {
-          ...cur,
-          detail: cur.detail?.trim() ? cur.detail : detail,
-          amount: computeAreaAdjustment(glaRate, subjectGla, compGla),
-        };
+        {
+          const autoRel = relativityFromQuantity(subjectGla, compGla);
+          const keepManual =
+            cur.relativity !== "similar" && cur.relativity !== DEFAULT_RELATIVITY;
+          adjustments.grossLivingArea = {
+            ...cur,
+            detail: cur.detail?.trim() ? cur.detail : detail,
+            amount: computeAreaAdjustment(glaRate, subjectGla, compGla),
+            relativity: keepManual ? cur.relativity : autoRel,
+          };
+        }
       }
     }
 
@@ -442,11 +580,17 @@ export function applyAreaRateAdjustments(
       const compSite = parseAreaNumber(detail);
       if (compSite != null) {
         const cur = adjustments.site ?? defaultFeatureAdjustment();
-        adjustments.site = {
-          ...cur,
-          detail: cur.detail?.trim() ? cur.detail : detail,
-          amount: computeAreaAdjustment(siteRate, subjectSite, compSite),
-        };
+        {
+          const autoRel = relativityFromQuantity(subjectSite, compSite);
+          const keepManual =
+            cur.relativity !== "similar" && cur.relativity !== DEFAULT_RELATIVITY;
+          adjustments.site = {
+            ...cur,
+            detail: cur.detail?.trim() ? cur.detail : detail,
+            amount: computeAreaAdjustment(siteRate, subjectSite, compSite),
+            relativity: keepManual ? cur.relativity : autoRel,
+          };
+        }
       }
     }
 

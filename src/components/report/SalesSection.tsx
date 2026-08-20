@@ -9,6 +9,7 @@ import {
   adjustmentAmountClass,
   adjustmentRowClass,
   applyAreaRateAdjustments,
+  applyQuantitativeRelativity,
   areaRateInputClass,
   computeSaleAdjustmentTotals,
   ensureSaleAdjustments,
@@ -69,6 +70,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const [autoNarratives, setAutoNarratives] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  /** Expanded report-narrative editor (manual working mode). */
+  const [expandedNarrativeId, setExpandedNarrativeId] = useState<string | null>(null);
   /** In-progress amount text so "-" can be typed before digits. */
   const [amountDrafts, setAmountDrafts] = useState<Record<string, string>>({});
   /** Right-click menu for paste into map / comp photo slots. */
@@ -146,8 +149,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       deduped.push(s);
     }
     const ensured = deduped.map(ensureSaleAdjustments);
+    const withQuant = applyQuantitativeRelativity(ensured, draft.values);
     const withRates = applyAreaRateAdjustments(
-      ensured,
+      withQuant,
       draft.values,
       draft.reportMeta.glaRatePerM2,
       draft.reportMeta.siteRatePerM2,
@@ -161,9 +165,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     setMeta(patch);
     const meta = { ...draft.reportMeta, ...patch };
     const ensured = sales.map(ensureSaleAdjustments);
+    const withQuant = applyQuantitativeRelativity(ensured, draft.values);
     setSales(
       applyAreaRateAdjustments(
-        ensured,
+        withQuant,
         draft.values,
         meta.glaRatePerM2,
         meta.siteRatePerM2,
@@ -1546,8 +1551,15 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                             >
                               <div className="space-y-1">
                                 <textarea
-                                  rows={3}
+                                  rows={expandedNarrativeId === sale.id ? 14 : 3}
                                   value={sale.narrative ?? ""}
+                                  onFocus={() => {
+                                    // Click / focus → manual lock + expand for readable editing
+                                    setExpandedNarrativeId(sale.id);
+                                    if (!sale.narrativeManual) {
+                                      patchSale(sale.id, { narrativeManual: true });
+                                    }
+                                  }}
                                   onChange={(e) =>
                                     patchSale(sale.id, {
                                       narrative: e.target.value,
@@ -1556,32 +1568,47 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                     })
                                   }
                                   placeholder="Auto-generated from relativity marks…"
-                                  className={`w-full resize-y rounded border bg-transparent px-1.5 py-1 text-[0.7rem] outline-none focus:bg-accent/40 ${
+                                  className={`w-full rounded border bg-transparent px-1.5 py-1 text-[0.7rem] leading-relaxed outline-none focus:bg-accent/40 ${
+                                    expandedNarrativeId === sale.id
+                                      ? "min-h-[12rem] resize-y"
+                                      : "resize-y"
+                                  } ${
                                     sale.narrativeManual
                                       ? "border-amber-500/60 focus:border-amber-500"
                                       : "border-transparent focus:border-input"
                                   }`}
                                 />
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    patchSale(sale.id, {
-                                      narrativeManual: !sale.narrativeManual,
-                                    })
-                                  }
-                                  className={`rounded px-1.5 py-0.5 text-[0.65rem] font-medium transition-colors ${
-                                    sale.narrativeManual
-                                      ? "bg-amber-500/15 text-amber-800 ring-1 ring-amber-500/40 dark:text-amber-200"
-                                      : "bg-muted text-muted-foreground hover:bg-accent"
-                                  }`}
-                                  title={
-                                    sale.narrativeManual
-                                      ? "Manual lock on — AI will not overwrite this narrative"
-                                      : "Click to lock as manual so AI will not overwrite"
-                                  }
-                                >
-                                  {sale.narrativeManual ? "Manual ✓" : "Allow AI"}
-                                </button>
+                                <div className="flex flex-wrap items-center gap-1">
+                                  {expandedNarrativeId === sale.id ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setExpandedNarrativeId(null)}
+                                      className="rounded bg-primary px-2 py-0.5 text-[0.7rem] font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
+                                    >
+                                      Done
+                                    </button>
+                                  ) : null}
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      patchSale(sale.id, {
+                                        narrativeManual: !sale.narrativeManual,
+                                      })
+                                    }
+                                    className={`rounded px-1.5 py-0.5 text-[0.65rem] font-medium transition-colors ${
+                                      sale.narrativeManual
+                                        ? "bg-amber-500/15 text-amber-800 ring-1 ring-amber-500/40 dark:text-amber-200"
+                                        : "bg-muted text-muted-foreground hover:bg-accent"
+                                    }`}
+                                    title={
+                                      sale.narrativeManual
+                                        ? "Manual lock on — AI will not overwrite this narrative"
+                                        : "Click to lock as manual so AI will not overwrite"
+                                    }
+                                  >
+                                    {sale.narrativeManual ? "Manual ✓" : "Allow AI"}
+                                  </button>
+                                </div>
                               </div>
                             </td>
                           ))}
