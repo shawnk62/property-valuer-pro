@@ -15,6 +15,13 @@ export interface TextField {
   placeholder?: string;
 }
 
+/** Calendar date picker; stored as DD/MM/YYYY (Australian). */
+export interface DateField {
+  name: string;
+  label: string;
+  type: "date";
+}
+
 /** Long free-text (treated like multiline text in the form). */
 export interface TextareaField {
   name: string;
@@ -60,6 +67,7 @@ export interface SingleRowField {
 export type InspectionField =
   | TextField
   | TextareaField
+  | DateField
   | SelectField
   | CheckboxField
   | CheckboxGroupField

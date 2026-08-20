@@ -7,6 +7,7 @@ import {
   SelectInput,
   TextInput,
 } from "./primitives";
+import { DatePickerField } from "./DatePickerField";
 import { REQUIRED_SET } from "@/lib/inspection/required";
 import { isFilled } from "@/lib/inspection/validation";
 import type { InspectionField, InspectionValues } from "@/lib/inspection/types";
@@ -46,6 +47,22 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
           id={field.name}
           value={asString(values[field.name])}
           multiline={multiline}
+          invalid={invalid}
+          onChange={(v) => onChange(field.name, v)}
+        />
+      </div>
+    );
+  }
+
+  if (field.type === "date") {
+    return (
+      <div className="space-y-2">
+        <FieldLabel htmlFor={field.name} required={required}>
+          {field.label}
+        </FieldLabel>
+        <DatePickerField
+          id={field.name}
+          value={asString(values[field.name])}
           invalid={invalid}
           onChange={(v) => onChange(field.name, v)}
         />

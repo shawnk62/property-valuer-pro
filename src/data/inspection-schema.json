@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "20",
+  "version": "21",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -317,8 +317,7 @@
         {
           "name": "insp_date",
           "label": "Inspection Date",
-          "type": "text",
-          "multiline": false
+          "type": "date"
         },
         {
           "name": "insp_time",
@@ -3948,8 +3947,7 @@
         {
           "name": "sign_date",
           "label": "Date",
-          "type": "text",
-          "multiline": false
+          "type": "date"
         },
         {
           "name": "sign_member",
