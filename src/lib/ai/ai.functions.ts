@@ -135,6 +135,62 @@ function createModel(settings: AiSettings) {
   return provider(settings.model);
 }
 
+
+/**
+ * xAI Grok API rejects role:"system" in messages / the system field on some models
+ * ("Use the instructions option instead"). Fold system text into the user turn so
+ * OpenAI, xAI, and custom OpenAI-compatible endpoints all accept the same calls.
+ */
+function foldSystemIntoPrompt(system: string | undefined, prompt: string): string {
+  const s = system?.trim();
+  if (!s) return prompt;
+  return `${s}\n\n${prompt}`;
+}
+
+type ChatContentPart =
+  | { type: "text"; text: string }
+  | { type: "file"; data: string; mediaType: string }
+  | { type: string; [k: string]: unknown };
+
+type ChatMessage = {
+  role: "system" | "user" | "assistant";
+  content: string | ChatContentPart[];
+};
+
+function messagesWithoutSystemRole(messages: ChatMessage[]): ChatMessage[] {
+  const systemParts: string[] = [];
+  const rest: ChatMessage[] = [];
+  for (const m of messages) {
+    if (m.role === "system") {
+      if (typeof m.content === "string" && m.content.trim()) {
+        systemParts.push(m.content.trim());
+      }
+      continue;
+    }
+    rest.push(m);
+  }
+  if (!systemParts.length) return rest;
+  const preamble = systemParts.join("\n\n");
+  if (rest.length === 0) {
+    return [{ role: "user", content: preamble }];
+  }
+  const first = rest[0]!;
+  if (first.role === "user") {
+    if (typeof first.content === "string") {
+      rest[0] = { role: "user", content: `${preamble}\n\n${first.content}` };
+    } else if (Array.isArray(first.content)) {
+      rest[0] = {
+        role: "user",
+        content: [{ type: "text", text: preamble }, ...first.content],
+      };
+    }
+  } else {
+    rest.unshift({ role: "user", content: preamble });
+  }
+  return rest;
+}
+
+
 export const testAiConnection = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => parseSettingsInput(input))
   .handler(async ({ data }) => {
@@ -171,8 +227,7 @@ export const generateNarrativeBlock = createServerFn({ method: "POST" })
 
     const { text } = await generateText({
       model,
-      system,
-      prompt,
+      prompt: foldSystemIntoPrompt(system, prompt),
     });
 
     return { text: text.trim() };
@@ -191,8 +246,7 @@ export const generateSaleNarrative = createServerFn({ method: "POST" })
     const model = createModel(settings);
     const { text } = await generateText({
       model,
-      system: data.system,
-      prompt: data.prompt,
+      prompt: foldSystemIntoPrompt(data.system, data.prompt),
     });
     return { text: text.trim() };
   });
@@ -268,7 +322,7 @@ Do not invent sales. If none found, return { "sales": [] }.`;
           const { output } = await generateText({
             model,
             output: Output.object({ schema: CmaSalesExtractionSchema }),
-            messages: [
+            messages: messagesWithoutSystemRole([
               { role: "system", content: system },
               {
                 role: "user",
@@ -277,7 +331,7 @@ Do not invent sales. If none found, return { "sales": [] }.`;
                   filePart,
                 ],
               },
-            ],
+            ]),
           });
           return { sales: output?.sales ?? [], error: null as string | null };
         } catch (err1) {
@@ -285,7 +339,7 @@ Do not invent sales. If none found, return { "sales": [] }.`;
           try {
             const { text } = await generateText({
               model,
-              messages: [
+              messages: messagesWithoutSystemRole([
                 { role: "system", content: system },
                 {
                   role: "user",
@@ -297,7 +351,7 @@ Do not invent sales. If none found, return { "sales": [] }.`;
                     filePart,
                   ],
                 },
-              ],
+              ]),
             });
             const parsed = parseCmaSalesResponse(text);
             return { sales: parsed.sales, error: null as string | null };
@@ -322,19 +376,23 @@ Do not invent sales. If none found, return { "sales": [] }.`;
         const { output } = await generateText({
           model,
           output: Output.object({ schema: CmaSalesExtractionSchema }),
-          system,
-          prompt: `CMA text:
+          prompt: foldSystemIntoPrompt(
+            system,
+            `CMA text:
 
 ${userText}`,
+          ),
         });
         return { sales: output?.sales ?? [], error: null as string | null };
       } catch {
         const { text } = await generateText({
           model,
-          system,
-          prompt: `CMA text:
+          prompt: foldSystemIntoPrompt(
+            system,
+            `CMA text:
 
 ${userText}`,
+          ),
         });
         const parsed = parseCmaSalesResponse(text);
         return { sales: parsed.sales, error: null as string | null };
@@ -459,7 +517,7 @@ ${data.source === "text" ? (data.text ?? "") : "[Landchecker Property Report fil
         const { output } = await generateText({
           model,
           output: Output.object({ schema: ExtractionSchema }),
-          messages: [
+          messages: messagesWithoutSystemRole([
             { role: "system", content: system },
             {
               role: "user",
@@ -468,7 +526,7 @@ ${data.source === "text" ? (data.text ?? "") : "[Landchecker Property Report fil
                 filePart,
               ],
             },
-          ],
+          ]),
         });
         if (output?.candidates && Object.keys(output.candidates).length > 0) {
           return output;
@@ -519,10 +577,10 @@ ${data.source === "text" ? (data.text ?? "") : "[Landchecker Property Report fil
       const { output } = await generateText({
         model,
         output: Output.object({ schema: ExtractionSchema }),
-        messages: [
+        messages: messagesWithoutSystemRole([
           { role: "system", content: system },
           { role: "user", content: extractionPrompt },
-        ],
+        ]),
       });
       if (output?.candidates && Object.keys(output.candidates).length > 0) {
         return output;
@@ -533,8 +591,7 @@ ${data.source === "text" ? (data.text ?? "") : "[Landchecker Property Report fil
 
     const { text: raw } = await generateText({
       model,
-      system,
-      prompt: extractionPrompt,
+      prompt: foldSystemIntoPrompt(system, extractionPrompt),
     });
     return parseExtractionResponse(raw);
   });
