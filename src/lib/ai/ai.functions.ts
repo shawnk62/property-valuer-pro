@@ -538,19 +538,21 @@ ${data.source === "text" ? (data.text ?? "") : "[Landchecker Property Report fil
       try {
         const { text: raw } = await generateText({
           model,
-          messages: [
+messages: messagesWithoutSystemRole([
             { role: "system", content: system },
             {
               role: "user",
               content: [
                 {
                   type: "text",
-                  text: `${promptWithOptionalText}\n\nReturn only JSON: {"candidates":{...}}.`,
+                  text: `${promptWithOptionalText}
+
+Return only JSON: {"candidates":{...}}.`,
                 },
                 filePart,
               ],
             },
-          ],
+          ]),
         });
         return parseExtractionResponse(raw);
       } catch (err) {
@@ -559,8 +561,10 @@ ${data.source === "text" ? (data.text ?? "") : "[Landchecker Property Report fil
         if (userText) {
           const { text: raw } = await generateText({
             model,
-            system,
-            prompt: `${extractionPrompt}\n\n${userText.slice(0, 100_000)}`,
+            prompt: foldSystemIntoPrompt(
+              system,
+              `${extractionPrompt}\n\n${userText.slice(0, 100_000)}`,
+            ),
           });
           return parseExtractionResponse(raw);
         }
