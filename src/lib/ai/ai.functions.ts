@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { generateText, Output } from "ai";
+import { generateText } from "ai";
 import { z } from "zod";
 import { createAiProvider } from "./ai-gateway.server";
 import type { AiSettings } from "./types";
@@ -147,49 +147,6 @@ function foldSystemIntoPrompt(system: string | undefined, prompt: string): strin
   return `${s}\n\n${prompt}`;
 }
 
-type ChatContentPart =
-  | { type: "text"; text: string }
-  | { type: "file"; data: string; mediaType: string }
-  | { type: string; [k: string]: unknown };
-
-type ChatMessage = {
-  role: "system" | "user" | "assistant";
-  content: string | ChatContentPart[];
-};
-
-function messagesWithoutSystemRole(messages: ChatMessage[]): ChatMessage[] {
-  const systemParts: string[] = [];
-  const rest: ChatMessage[] = [];
-  for (const m of messages) {
-    if (m.role === "system") {
-      if (typeof m.content === "string" && m.content.trim()) {
-        systemParts.push(m.content.trim());
-      }
-      continue;
-    }
-    rest.push(m);
-  }
-  if (!systemParts.length) return rest;
-  const preamble = systemParts.join("\n\n");
-  if (rest.length === 0) {
-    return [{ role: "user", content: preamble }];
-  }
-  const first = rest[0]!;
-  if (first.role === "user") {
-    if (typeof first.content === "string") {
-      rest[0] = { role: "user", content: `${preamble}\n\n${first.content}` };
-    } else if (Array.isArray(first.content)) {
-      rest[0] = {
-        role: "user",
-        content: [{ type: "text", text: preamble }, ...first.content],
-      };
-    }
-  } else {
-    rest.unshift({ role: "user", content: preamble });
-  }
-  return rest;
-}
-
 
 export const testAiConnection = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => parseSettingsInput(input))
@@ -310,6 +267,9 @@ Extract EVERY comparable sale listed (often 3–12+). Do not stop after three.
 Skip floor-plan-only pages, disclaimer pages, and the subject property itself.
 Do not invent sales. If none found, return { "sales": [] }.`;
 
+    // xAI rejects role:"system" and also rejects structured-output paths that
+    // inject a system message ("Use the instructions option instead").
+    // Always send a single user turn with instructions folded into the prompt.
     try {
       if (data.source === "file" && data.file?.base64) {
         const filePart = {
@@ -317,53 +277,30 @@ Do not invent sales. If none found, return { "sales": [] }.`;
           data: data.file.base64,
           mediaType: data.file.mimeType || "application/pdf",
         };
-
         try {
-          const { output } = await generateText({
+          const { text } = await generateText({
             model,
-            output: Output.object({ schema: CmaSalesExtractionSchema }),
-            messages: messagesWithoutSystemRole([
-              { role: "system", content: system },
+            messages: [
               {
                 role: "user",
                 content: [
-                  { type: "text", text: "Extract all comparable sales from the attached CMA PDF." },
+                  {
+                    type: "text",
+                    text: foldSystemIntoPrompt(
+                      system,
+                      "Extract all comparable sales from the attached CMA PDF. Return only JSON: {\"sales\":[...]}",
+                    ),
+                  },
                   filePart,
                 ],
               },
-            ]),
+            ],
           });
-          return { sales: output?.sales ?? [], error: null as string | null };
-        } catch (err1) {
-          // Retry with plain text generation, still attaching the file
-          try {
-            const { text } = await generateText({
-              model,
-              messages: messagesWithoutSystemRole([
-                { role: "system", content: system },
-                {
-                  role: "user",
-                  content: [
-                    {
-                      type: "text",
-                      text: "Extract all comparable sales from the attached CMA PDF. Return only JSON.",
-                    },
-                    filePart,
-                  ],
-                },
-              ]),
-            });
-            const parsed = parseCmaSalesResponse(text);
-            return { sales: parsed.sales, error: null as string | null };
-          } catch (err2) {
-            const message =
-              err2 instanceof Error
-                ? err2.message
-                : err1 instanceof Error
-                  ? err1.message
-                  : "PDF extract failed";
-            return { sales: [], error: message };
-          }
+          const parsed = parseCmaSalesResponse(text);
+          return { sales: parsed.sales, error: null as string | null };
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "PDF extract failed";
+          return { sales: [], error: message };
         }
       }
 
@@ -372,31 +309,19 @@ Do not invent sales. If none found, return { "sales": [] }.`;
         return { sales: [], error: "No CMA text provided." };
       }
 
-      try {
-        const { output } = await generateText({
-          model,
-          output: Output.object({ schema: CmaSalesExtractionSchema }),
-          prompt: foldSystemIntoPrompt(
-            system,
-            `CMA text:
+      const { text } = await generateText({
+        model,
+        prompt: foldSystemIntoPrompt(
+          system,
+          `CMA text:
 
-${userText}`,
-          ),
-        });
-        return { sales: output?.sales ?? [], error: null as string | null };
-      } catch {
-        const { text } = await generateText({
-          model,
-          prompt: foldSystemIntoPrompt(
-            system,
-            `CMA text:
+${userText}
 
-${userText}`,
-          ),
-        });
-        const parsed = parseCmaSalesResponse(text);
-        return { sales: parsed.sales, error: null as string | null };
-      }
+Return only JSON: {"sales":[...]}`,
+        ),
+      });
+      const parsed = parseCmaSalesResponse(text);
+      return { sales: parsed.sales, error: null as string | null };
     } catch (err) {
       const message = err instanceof Error ? err.message : "CMA extract failed";
       return { sales: [], error: message };
@@ -501,7 +426,8 @@ Property summary:
 ${data.source === "text" ? (data.text ?? "") : "[Landchecker Property Report file attached — extract from Details, Zones, Flood, and Place-based Plans sections]"}`;
 
     // Prefer text path when the client already extracted PDF text (most reliable).
-    // File path uses the same file-part shape as extractComparableSales (working).
+    // xAI rejects system messages and structured-output helpers that inject them —
+    // use a single user message with instructions folded into the prompt.
     if (data.source === "file" && data.file?.base64) {
       const filePart = {
         type: "file" as const,
@@ -510,60 +436,46 @@ ${data.source === "text" ? (data.text ?? "") : "[Landchecker Property Report fil
       };
       const userText = (data.text ?? "").trim();
       const promptWithOptionalText = userText
-        ? `${extractionPrompt}\n\nAdditional extracted PDF text:\n${userText.slice(0, 100_000)}`
-        : extractionPrompt;
+        ? `${extractionPrompt}
 
-      try {
-        const { output } = await generateText({
-          model,
-          output: Output.object({ schema: ExtractionSchema }),
-          messages: messagesWithoutSystemRole([
-            { role: "system", content: system },
-            {
-              role: "user",
-              content: [
-                { type: "text", text: promptWithOptionalText },
-                filePart,
-              ],
-            },
-          ]),
-        });
-        if (output?.candidates && Object.keys(output.candidates).length > 0) {
-          return output;
-        }
-      } catch {
-        /* fall through to plain text + file */
-      }
+Additional extracted PDF text:
+${userText.slice(0, 100_000)}`
+        : extractionPrompt;
 
       try {
         const { text: raw } = await generateText({
           model,
-messages: messagesWithoutSystemRole([
-            { role: "system", content: system },
+          messages: [
             {
               role: "user",
               content: [
                 {
                   type: "text",
-                  text: `${promptWithOptionalText}
+                  text: foldSystemIntoPrompt(
+                    system,
+                    `${promptWithOptionalText}
 
 Return only JSON: {"candidates":{...}}.`,
+                  ),
                 },
                 filePart,
               ],
             },
-          ]),
+          ],
         });
         return parseExtractionResponse(raw);
       } catch (err) {
         const message = err instanceof Error ? err.message : "PDF extract failed";
-        // Last resort: text-only if client provided extracted text
         if (userText) {
           const { text: raw } = await generateText({
             model,
             prompt: foldSystemIntoPrompt(
               system,
-              `${extractionPrompt}\n\n${userText.slice(0, 100_000)}`,
+              `${extractionPrompt}
+
+${userText.slice(0, 100_000)}
+
+Return only JSON: {"candidates":{...}}.`,
             ),
           });
           return parseExtractionResponse(raw);
@@ -577,25 +489,14 @@ Return only JSON: {"candidates":{...}}.`,
       return { candidates: {} };
     }
 
-    try {
-      const { output } = await generateText({
-        model,
-        output: Output.object({ schema: ExtractionSchema }),
-        messages: messagesWithoutSystemRole([
-          { role: "system", content: system },
-          { role: "user", content: extractionPrompt },
-        ]),
-      });
-      if (output?.candidates && Object.keys(output.candidates).length > 0) {
-        return output;
-      }
-    } catch {
-      /* plain text below */
-    }
-
     const { text: raw } = await generateText({
       model,
-      prompt: foldSystemIntoPrompt(system, extractionPrompt),
+      prompt: foldSystemIntoPrompt(
+        system,
+        `${extractionPrompt}
+
+Return only JSON: {"candidates":{...}}.`,
+      ),
     });
     return parseExtractionResponse(raw);
   });
