@@ -1,5 +1,10 @@
 import { schema } from "./schema";
 import type { InspectionRecord, InspectionValues } from "./types";
+import {
+  getDeviceId,
+  isLockStale,
+  type EditLockInfo,
+} from "@/lib/inspection/editLock";
 import { supabase } from "@/lib/supabase";
 
 /**
@@ -268,5 +273,112 @@ export const inspectionStore = {
       throw error;
     }
     emit();
+  },
+
+  /**
+   * Read current edit lock (device columns). Returns null if unlocked or columns
+   * not installed yet.
+   */
+  async getEditLock(id: string): Promise<EditLockInfo | null> {
+    const { data, error } = await supabase
+      .from("inspections")
+      .select("edit_lock_device_id, edit_lock_label, edit_lock_at")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) {
+      if (/edit_lock_|column/i.test(error.message)) return null;
+      throw error;
+    }
+    const row = data as {
+      edit_lock_device_id?: string | null;
+      edit_lock_label?: string | null;
+      edit_lock_at?: string | null;
+    } | null;
+    if (!row?.edit_lock_device_id || !row.edit_lock_at) return null;
+    return {
+      deviceId: row.edit_lock_device_id,
+      label: row.edit_lock_label?.trim() || "Another device",
+      at: row.edit_lock_at,
+    };
+  },
+
+  /**
+   * Try to become the sole editor. Succeeds if unlocked, held by this device,
+   * or the existing lock is stale. Returns { ok, lock, readOnly }.
+   */
+  async tryAcquireEditLock(
+    id: string,
+    opts?: { label?: string; force?: boolean },
+  ): Promise<{ ok: boolean; lock: EditLockInfo | null; readOnly: boolean; setupRequired?: boolean }> {
+    await ensureFreshSession();
+    const deviceId = getDeviceId();
+    let label = opts?.label?.trim() || "";
+    if (!label) {
+      try {
+        const { data } = await supabase.auth.getUser();
+        label = data.user?.email?.trim() || "Valuer";
+      } catch {
+        label = "Valuer";
+      }
+    }
+
+    const existing = await this.getEditLock(id);
+    // getEditLock returns null both for unlocked and for missing columns —
+    // probe write to detect missing columns.
+    const now = new Date().toISOString();
+
+    if (existing && existing.deviceId !== deviceId && !isLockStale(existing.at) && !opts?.force) {
+      return { ok: false, lock: existing, readOnly: true };
+    }
+
+    const { error } = await supabase
+      .from("inspections")
+      .update({
+        edit_lock_device_id: deviceId,
+        edit_lock_label: label,
+        edit_lock_at: now,
+      })
+      .eq("id", id);
+
+    if (error) {
+      if (/edit_lock_|column/i.test(error.message)) {
+        return { ok: true, lock: null, readOnly: false, setupRequired: true };
+      }
+      throw error;
+    }
+
+    return {
+      ok: true,
+      lock: { deviceId, label, at: now },
+      readOnly: false,
+    };
+  },
+
+  async heartbeatEditLock(id: string): Promise<void> {
+    const deviceId = getDeviceId();
+    const { error } = await supabase
+      .from("inspections")
+      .update({ edit_lock_at: new Date().toISOString() })
+      .eq("id", id)
+      .eq("edit_lock_device_id", deviceId);
+    if (error && !/edit_lock_|column/i.test(error.message)) {
+      console.warn("[editLock] heartbeat failed", error.message);
+    }
+  },
+
+  async releaseEditLock(id: string): Promise<void> {
+    const deviceId = getDeviceId();
+    const { error } = await supabase
+      .from("inspections")
+      .update({
+        edit_lock_device_id: null,
+        edit_lock_label: null,
+        edit_lock_at: null,
+      })
+      .eq("id", id)
+      .eq("edit_lock_device_id", deviceId);
+    if (error && !/edit_lock_|column/i.test(error.message)) {
+      console.warn("[editLock] release failed", error.message);
+    }
   },
 };

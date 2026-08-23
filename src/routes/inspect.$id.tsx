@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { labelForField, sections } from "@/lib/inspection/schema";
 import { useInspection } from "@/lib/inspection/useInspection";
+import { useEditLock } from "@/hooks/useEditLock";
+import { EditLockBanner } from "@/components/EditLockBanner";
 import { missingForStep } from "@/lib/inspection/validation";
 
 export const Route = createFileRoute("/inspect/$id")({
@@ -56,7 +58,10 @@ function InspectionWizard() {
   const search = Route.useSearch();
   const initialStep = search.step;
   const navigate = useNavigate();
-  const { record, values, setValue, saveNow, loaded } = useInspection(id);
+  const lock = useEditLock(id);
+  const { record, values, setValue, saveNow, loaded } = useInspection(id, {
+    readOnly: !lock.canEdit || lock.checking,
+  });
   const [step, setStep] = useState(Math.min(initialStep ?? 0, sections.length - 1));
   const [showErrors, setShowErrors] = useState(false);
   /** Photo grid overlay — return target is the form step + scroll position. */
@@ -144,6 +149,14 @@ function InspectionWizard() {
 
   return (
     <div className="min-h-screen bg-muted/40 pb-28">
+      <EditLockBanner
+        checking={lock.checking}
+        canEdit={lock.canEdit}
+        heldBy={lock.heldBy}
+        setupRequired={lock.setupRequired}
+        onTakeOver={() => void lock.takeOver()}
+        onRefresh={() => void lock.refresh()}
+      />
       <header className="sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur">
         <div className="mx-auto max-w-4xl px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
@@ -176,7 +189,7 @@ function InspectionWizard() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+      <main className={`mx-auto max-w-4xl px-4 py-6 sm:px-6${!lock.canEdit || lock.checking ? " pointer-events-none opacity-70" : ""}`}>
         {photosOpen ? (
           <InspectionPhotosPanel
             inspectionId={id}

@@ -29,7 +29,8 @@ function applyMirrors(values: InspectionValues): InspectionValues {
 }
 
 /** Loads a record on the client and autosaves value changes. */
-export function useInspection(id: string) {
+export function useInspection(id: string, opts?: { readOnly?: boolean }) {
+  const readOnly = Boolean(opts?.readOnly);
   const [record, setRecord] = useState<InspectionRecord | null>(null);
   const [values, setValues] = useState<InspectionValues>({});
   const valuesRef = useRef<InspectionValues>({});
@@ -63,6 +64,7 @@ export function useInspection(id: string) {
 
   const flush = useCallback(
     (next: InspectionValues) => {
+      if (readOnly) return;
       void inspectionStore
         .save(id, next)
         .then(() => setSavedAt(new Date().toISOString()))
@@ -70,7 +72,7 @@ export function useInspection(id: string) {
           setError(err instanceof Error ? err.message : "Failed to save");
         });
     },
-    [id],
+    [id, readOnly],
   );
 
   const setValue = useCallback(

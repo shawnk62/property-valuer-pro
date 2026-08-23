@@ -10,6 +10,8 @@ import { fieldKeys, itemLabels, labelForField, sections } from "@/lib/inspection
 import { inspectionStore } from "@/lib/inspection/storage";
 import type { InspectionField, InspectionValues } from "@/lib/inspection/types";
 import { useInspection } from "@/lib/inspection/useInspection";
+import { useEditLock } from "@/hooks/useEditLock";
+import { EditLockBanner } from "@/components/EditLockBanner";
 import { missingRequiredPhotos, type RequiredPhotoElement } from "@/lib/inspection/photoRequirements";
 import { isFilled, missingFields } from "@/lib/inspection/validation";
 import type { ReportPhoto } from "@/lib/report/types";
@@ -56,7 +58,10 @@ function subLabel(field: InspectionField, key: string): string {
 function ReviewScreen() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const { record, values, loaded } = useInspection(id);
+  const lock = useEditLock(id);
+  const { record, values, loaded } = useInspection(id, {
+    readOnly: !lock.canEdit || lock.checking,
+  });
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [photoGaps, setPhotoGaps] = useState<RequiredPhotoElement[] | null>(null);
@@ -103,6 +108,10 @@ function ReviewScreen() {
 
   const submit = async () => {
     if (submitting) return;
+    if (!lock.canEdit) {
+      toast.error("This job is open for editing on another device.");
+      return;
+    }
     if (missing.length > 0) {
       toast.error("Complete all required fields before submitting.");
       return;
@@ -166,6 +175,14 @@ function ReviewScreen() {
 
   return (
     <div className="min-h-screen bg-muted/40 pb-28">
+      <EditLockBanner
+        checking={lock.checking}
+        canEdit={lock.canEdit}
+        heldBy={lock.heldBy}
+        setupRequired={lock.setupRequired}
+        onTakeOver={() => void lock.takeOver()}
+        onRefresh={() => void lock.refresh()}
+      />
       <header className="sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur">
         <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-4 sm:px-6">
           <Link to="/" className="text-muted-foreground hover:text-foreground" aria-label="Back to inspections">

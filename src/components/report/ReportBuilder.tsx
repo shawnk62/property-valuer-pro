@@ -11,6 +11,8 @@ import { PhotosSection } from "@/components/report/PhotosSection";
 import { ReportPreview } from "@/components/report/ReportPreview";
 import { SalesSection } from "@/components/report/SalesSection";
 import { SubjectSection } from "@/components/report/SubjectSection";
+import { EditLockBanner } from "@/components/EditLockBanner";
+import { useEditLock } from "@/hooks/useEditLock";
 import { useReportDraft } from "@/hooks/useReportDraft";
 import { get } from "@/lib/report/schema";
 
@@ -25,7 +27,8 @@ const TABS = [
 type TabId = (typeof TABS)[number]["id"];
 
 export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
-  const controller = useReportDraft(inspectionId);
+  const lock = useEditLock(inspectionId);
+  const controller = useReportDraft(inspectionId, { readOnly: !lock.canEdit || lock.checking });
   const { draft, dirty, savedAt, save, loaded, loadError } = controller;
   const [tab, setTab] = useState<TabId>("subject");
   const [downloading, setDownloading] = useState(false);
@@ -116,6 +119,16 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
 
   return (
     <div className="min-h-screen bg-background">
+      <div className="no-print">
+        <EditLockBanner
+          checking={lock.checking}
+          canEdit={lock.canEdit}
+          heldBy={lock.heldBy}
+          setupRequired={lock.setupRequired}
+          onTakeOver={() => void lock.takeOver()}
+          onRefresh={() => void lock.refresh()}
+        />
+      </div>
       <header className="no-print sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-3 sm:px-6">
           <img
@@ -201,7 +214,11 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
         </nav>
       </header>
 
-      <main className={tab === "preview" ? "bg-muted/50 py-8" : "py-8"}>
+      <main
+        className={`${tab === "preview" ? "bg-muted/50 py-8" : "py-8"}${
+          !lock.canEdit || lock.checking ? " pointer-events-none select-none opacity-70" : ""
+        }`}
+      >
         <div
           className={
             tab === "preview" ? "px-2 sm:px-6" : "mx-auto max-w-7xl px-4 sm:px-6"

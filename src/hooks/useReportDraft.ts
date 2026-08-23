@@ -169,7 +169,11 @@ function mergePhotos(cloud: ReportPhoto[], local: ReportPhoto[]): ReportPhoto[] 
   return Array.from(byKey.values());
 }
 
-export function useReportDraft(inspectionId: string) {
+export function useReportDraft(
+  inspectionId: string,
+  opts?: { readOnly?: boolean },
+) {
+  const readOnly = Boolean(opts?.readOnly);
   const [draft, setDraft] = useState<ReportDraft>(() => createEmptyDraft(inspectionId));
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -281,6 +285,10 @@ export function useReportDraft(inspectionId: string) {
 
   const persistCloud = useCallback(async (d: ReportDraft) => {
     writeLocalCache(d);
+    if (readOnly) {
+      setDirty(true);
+      return;
+    }
     try {
       await inspectionStore.saveReportExtras(d.inspectionId, toCloudExtras(d));
       setSavedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
