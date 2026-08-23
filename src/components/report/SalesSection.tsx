@@ -953,9 +953,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         <div>
           <h4 className="text-sm font-semibold text-foreground">Sales map &amp; front photos</h4>
           <p className="mt-1 text-xs text-muted-foreground">
-            Attach the Cotality sales map and each comparable&apos;s front elevation. Right-click a
-            slot and choose Paste image, or use ⌘V / Ctrl+V, drop, or choose a file.
-            These appear in the grid and in §12 Sales Evidence (Preview and Word).
+            Attach the Cotality sales map and each comparable&apos;s front elevation using the
+            photo slots below. On a phone or iPad, tap a slot to open the camera; you can also
+            paste (⌘V / Ctrl+V or right-click), drop an image file, or choose from the library.
+            These appear in the adjustment grid and in §12 Sales Evidence (Preview and Word).
           </p>
         </div>
 
@@ -985,13 +986,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={onSalesMapDrop}
                 className="flex h-28 w-44 cursor-pointer flex-col items-center justify-center rounded border border-dashed border-border bg-muted/30 text-center text-xs text-muted-foreground hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                title="Right-click → Paste image, or ⌘V / drop"
+                title="Tap to photograph map, or paste / drop"
               >
-                <span>Upload / paste map</span>
-                <span className="mt-0.5 text-[0.65rem] opacity-80">⌘V or drop</span>
+                <span>Tap to photograph map</span>
+                <span className="mt-0.5 text-[0.65rem] opacity-80">or paste / drop / library</span>
                 <input
                   type="file"
                   accept="image/*"
+                  capture="environment"
                   className="hidden"
                   onChange={(e) => void onSalesMapFile(e.target.files?.[0] ?? null)}
                 />
@@ -1053,13 +1055,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => onSalePhotoDrop(sale.id, e)}
                     className="flex h-20 cursor-pointer flex-col items-center justify-center gap-0.5 rounded border border-dashed border-border text-xs text-muted-foreground hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    title="Right-click → Paste image, or ⌘V / drop"
+                    title="Tap to open camera, or paste / drop an image"
                   >
-                    <span>Upload / paste photo</span>
-                    <span className="text-[0.65rem] opacity-80">⌘V or drop</span>
+                    <span>Tap to photograph</span>
+                    <span className="text-[0.65rem] opacity-80">or paste / drop / library</span>
                     <input
                       type="file"
                       accept="image/*"
+                      capture="environment"
                       className="hidden"
                       onChange={(e) =>
                         void onSalePhotoFile(sale.id, e.target.files?.[0] ?? null)
@@ -1073,12 +1076,13 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                     onPaste={(e) => onSalePhotoPaste(sale.id, e)}
                     onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
                     className="text-[0.65rem] text-primary cursor-pointer hover:underline focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    title="Right-click → Paste image, or ⌘V"
+                    title="Take or choose a new photo, or paste"
                   >
-                    Replace photo (or paste)
+                    Replace / take photo
                     <input
                       type="file"
                       accept="image/*"
+                      capture="environment"
                       className="hidden"
                       onChange={(e) =>
                         void onSalePhotoFile(sale.id, e.target.files?.[0] ?? null)
