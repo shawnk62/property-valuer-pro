@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import { fileToDataUrl } from "@/lib/report/photo-data";
@@ -55,6 +55,7 @@ function PhotoCard({
   onRemove,
   labelEditable = false,
   onLabelChange,
+  onOpenPasteMenu,
 }: {
   photo: ReportPhoto | undefined;
   slotLabel: string;
@@ -65,6 +66,7 @@ function PhotoCard({
   /** When true, the top label is an input in the same style as fixed map captions. */
   labelEditable?: boolean;
   onLabelChange?: (label: string) => void;
+  onOpenPasteMenu?: (e: React.MouseEvent, onFile: (file: File) => void) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -146,6 +148,13 @@ function PhotoCard({
           })();
         }}
         onMouseEnter={(e) => (e.currentTarget as HTMLElement).focus?.()}
+        onContextMenu={(e) => {
+          if (uploading) return;
+          e.preventDefault();
+          e.stopPropagation();
+          (e.currentTarget as HTMLElement).focus?.();
+          onOpenPasteMenu?.(e, onFile);
+        }}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
           e.preventDefault();
@@ -205,6 +214,26 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
   const inspectionId = draft.inspectionId;
   const extraInputRef = useRef<HTMLInputElement>(null);
   const [uploadingIds, setUploadingIds] = useState<Set<string>>(new Set());
+  const [photoMenu, setPhotoMenu] = useState<null | {
+    x: number;
+    y: number;
+    onPasteFile: (file: File) => void;
+  }>(null);
+  const photoMenuPasteRef = useRef<((file: File) => void) | null>(null);
+
+  useEffect(() => {
+    if (!photoMenu) return;
+    const close = () => setPhotoMenu(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    window.addEventListener("click", close);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("click", close);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [photoMenu]);
 
   function markUploading(id: string, on: boolean) {
     setUploadingIds((prev) => {
@@ -344,6 +373,46 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     })();
   }
 
+
+  function openPasteMenu(e: React.MouseEvent, onFile: (file: File) => void) {
+    photoMenuPasteRef.current = onFile;
+    setPhotoMenu({ x: e.clientX, y: e.clientY, onPasteFile: onFile });
+  }
+
+  async function pasteFromPhotoMenu() {
+    const onFile = photoMenuPasteRef.current;
+    let file: File | null = null;
+    try {
+      if (navigator.clipboard?.read) {
+        const items = await navigator.clipboard.read();
+        for (const item of items) {
+          const type =
+            item.types.find((x) => x === "image/png") ||
+            item.types.find((x) => x === "image/jpeg") ||
+            item.types.find((x) => x.startsWith("image/"));
+          if (!type) continue;
+          const blob = await item.getType(type);
+          if (!blob || blob.size <= 0) continue;
+          const ext = type.split("/")[1] || "png";
+          file = new File([blob], `screenshot.${ext}`, { type });
+          break;
+        }
+      }
+    } catch (err) {
+      console.warn("[photos paste menu]", err);
+    }
+    setPhotoMenu(null);
+    if (!file) {
+      toast.error("Could not paste from the right-click menu", {
+        description:
+          "Click the photo tile once, then press ⌘V. That path works when the browser blocks right-click clipboard access.",
+      });
+      return;
+    }
+    onFile?.(file);
+    toast.success("Image pasted");
+  }
+
   const extras = photos.filter((p) => p.slot === null && p.kind !== "map");
   const extraMaps = photos.filter((p) => p.slot === null && p.kind === "map");
 
@@ -369,6 +438,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
               onFile={(file) => void onSlotFile(slot, label, file)}
               onCaption={(caption) => upsertSlotCaption(slot, label, caption)}
               onRemove={photo?.url ? () => void removePhoto(photo) : undefined}
+              onOpenPasteMenu={openPasteMenu}
             />
           );
         })}
@@ -418,6 +488,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
                 setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, caption } : p)))
               }
               onRemove={() => void removePhoto(photo)}
+              onOpenPasteMenu={openPasteMenu}
             />
           ))}
         </div>
@@ -445,6 +516,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
               onFile={(file) => void onSlotFile(slot, label, file)}
               onCaption={(caption) => upsertSlotCaption(slot, label, caption)}
               onRemove={photo?.url ? () => void removePhoto(photo) : undefined}
+              onOpenPasteMenu={openPasteMenu}
             />
           );
         })}
@@ -477,6 +549,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
               );
             }}
             onRemove={() => void removePhoto(photo)}
+            onOpenPasteMenu={openPasteMenu}
           />
         ))}
       </div>
@@ -505,6 +578,27 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
           Extra labeled tiles for additional overlays or maps. Empty tiles do not print.
         </span>
       </div>
+
+      {photoMenu ? (
+        <div
+          role="menu"
+          className="fixed z-50 min-w-[11rem] rounded-md border border-border bg-card py-1 text-sm shadow-lg"
+          style={{ left: photoMenu.x, top: photoMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className="flex w-full px-3 py-2 text-left text-foreground hover:bg-muted"
+            onClick={(e) => {
+              e.stopPropagation();
+              void pasteFromPhotoMenu();
+            }}
+          >
+            Paste image
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -308,15 +308,20 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   /** Right-click / long-press paste: read image from system clipboard. */
   async function imageFileFromNavigatorClipboard(): Promise<File | null> {
     try {
-      if (!navigator.clipboard || !("read" in navigator.clipboard)) return null;
+      if (typeof navigator === "undefined" || !navigator.clipboard?.read) return null;
       const items = await navigator.clipboard.read();
       for (const item of items) {
-        const type = item.types.find((t) => t.startsWith("image/"));
-        if (!type) continue;
-        const blob = await item.getType(type);
+        // Prefer png/jpeg/webp explicitly; some browsers list types in odd order
+        const preferred =
+          item.types.find((t) => t === "image/png") ||
+          item.types.find((t) => t === "image/jpeg") ||
+          item.types.find((t) => t === "image/webp") ||
+          item.types.find((t) => t.startsWith("image/"));
+        if (!preferred) continue;
+        const blob = await item.getType(preferred);
         if (!blob || blob.size <= 0) continue;
-        const ext = type.split("/")[1] || "png";
-        return new File([blob], `pasted-photo.${ext}`, { type });
+        const ext = preferred.split("/")[1] || "png";
+        return new File([blob], `screenshot.${ext}`, { type: preferred });
       }
     } catch (err) {
       console.warn("[clipboard.read]", err);
@@ -341,20 +346,29 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   }
 
   async function pasteFromMenu() {
+    // Capture target first. Read the clipboard WHILE this click is still a user
+    // gesture — closing the menu first can break clipboard.read() in Safari/Chrome.
     const target = photoMenuTargetRef.current;
+    let file: File | null = null;
+    try {
+      file = await imageFileFromNavigatorClipboard();
+    } catch (err) {
+      console.warn("[pasteFromMenu]", err);
+    }
     setPhotoMenu(null);
-    const file = await imageFileFromNavigatorClipboard();
     if (!file) {
-      toast.error("No image on the clipboard", {
+      toast.error("Could not paste from the right-click menu", {
         description:
-          "Copy a screenshot (⌘⇧4 / screenshot tool), then use ⌘V on the slot or right-click → Paste image. If the browser blocks clipboard access, use ⌘V after clicking the slot.",
+          "The browser blocked clipboard access. Click the photo slot once, then press ⌘V (that path always works for screenshots).",
       });
       return;
     }
     if (target === "map") {
       void onSalesMapFile(file);
+      toast.success("Image pasted");
     } else if (target && "saleId" in target) {
       void onSalePhotoFile(target.saleId, file);
+      toast.success("Image pasted");
     }
   }
 
