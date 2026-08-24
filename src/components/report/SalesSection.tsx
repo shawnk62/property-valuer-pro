@@ -27,6 +27,7 @@ import {
   cmaExtractsToSales,
   mergeCmaExtracts,
   parseCmaTextHeuristic,
+  streetKey,
   type CmaSaleExtract,
 } from "@/lib/report/importSalesCma";
 import { importSalesFromCsv } from "@/lib/report/importSalesCsv";
@@ -127,23 +128,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   }, [photoMenu]);
 
   function replaceSales(next: ComparableSale[]) {
-    // Collapse near-duplicate addresses (street number + name + type)
-    const streetTypes =
-      "STREET|ST|ROAD|RD|CRESCENT|CRES|CR|COURT|CT|AVENUE|AVE|DRIVE|DR|PLACE|PL|WAY|CLOSE|CL|TERRACE|TCE|PARADE|PDE|BOULEVARD|BLVD|LANE|LN|CIRCUIT|CCT";
-    const sk = (addr: string) => {
-      const a = addr.replace(/\s+/g, " ").trim().toUpperCase();
-      const m = a.match(
-        new RegExp(
-          String.raw`(?:UNIT\s+\d+[A-Z]?\s*)?(?:\d+[A-Z]?\s*\/\s*)?(\d+[A-Z]?)\s+([A-Z][A-Z0-9'./ -]*?)\s+\b(${streetTypes})\b`,
-        ),
-      );
-      if (!m) return a.replace(/[^A-Z0-9]/g, "");
-      return `${m[1]}${m[2].replace(/[^A-Z0-9]/g, "")}${m[3]}`;
-    };
+    // Soft dedupe only for true address collisions. Uses unit-aware streetKey
+    // (24/31 vs 68/31 North Street must remain two sales). Prefer id when
+    // address is empty so placeholder rows are not collapsed together.
     const deduped: ComparableSale[] = [];
     const seen = new Set<string>();
     for (const s of next) {
-      const key = sk(s.address || "") || s.id;
+      const addr = (s.address || "").trim();
+      const key = addr ? streetKey(addr) || addr.toUpperCase() : `id:${s.id}`;
       if (seen.has(key)) continue;
       seen.add(key);
       deduped.push(s);

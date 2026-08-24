@@ -144,7 +144,7 @@ function addressKey(addr: string): string {
  * Prevents "9 ROBINSON CRESCENT" and "9 ROBINSON CRESCENT RUNCORN QLD 4113"
  * from becoming two separate comps (which produced grids 1–3 and 4–6).
  */
-function streetKey(addr: string): string {
+export function streetKey(addr: string): string {
   const a = normaliseAddress(addr).toUpperCase();
   if (!a) return "";
   const streetTypes =
