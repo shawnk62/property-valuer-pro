@@ -304,7 +304,7 @@
 @page {
   size: A4 portrait;
   margin: 14mm 12mm 18mm 12mm;
-  @bottom-center {
+  @bottom-left {
     content: counter(page);
     font-family: Arial, Helvetica, sans-serif;
     font-size: 10pt;
@@ -321,15 +321,17 @@
 
   /*
    * Page numbers: ONLY via @page margin boxes (real paged counter).
+   * Position: bottom-left (matches preferred footer placement).
    * Do NOT use position:fixed + counter(page) — Chrome evaluates that as 0.
-   * Turn browser "Headers and footers" OFF to hide URL/date/title; these
-   * CSS page numbers still print.
+   * Browser "Headers and footers" must be turned OFF in the print dialog
+   * to hide URL / date / time; CSS cannot suppress those browser chrome items.
+   * Our page numbers still print from this margin box when the checkbox is off.
    */
   @page {
     size: A4 portrait;
     margin: 14mm 12mm 18mm 12mm;
 
-    @bottom-center {
+    @bottom-left {
       content: counter(page);
       font-family: Arial, Helvetica, sans-serif;
       font-size: 10pt;
@@ -403,16 +405,20 @@
   }
 
 
-  /* Unified photo cover — fill first A4 page like the sample PDF */
+  /* Unified photo cover — fill first A4 page like the sample PDF.
+   * Printable content height ≈ 297mm − 14mm top − 18mm bottom = 265mm.
+   * 268mm previously overflowed by a few mm and created a blank page after
+   * the cover. Use a safe max and clip any transform overflow so the
+   * forced break-after does not leave an empty intermediate page. */
   #report-cover.cover-photo-page {
     break-after: page !important;
     page-break-after: always !important;
     display: flex !important;
     flex-direction: column !important;
-    /* Nearly full printable height (A4 297mm − page margins) */
-    min-height: 268mm !important;
-    height: 268mm !important;
-    max-height: 268mm !important;
+    min-height: 250mm !important;
+    height: 255mm !important;
+    max-height: 255mm !important;
+    overflow: hidden !important;
     box-sizing: border-box !important;
     padding: 0 !important;
     margin: 0 !important;

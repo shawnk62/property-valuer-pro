@@ -106,13 +106,14 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
 
     // Inject a dedicated @page rule at print time (margin-box page numbers).
     // Do not use position:fixed + counter(page) — that prints "0" in Chrome.
+    // Position bottom-left to match the preferred footer placement.
     const pageStyle = document.createElement("style");
     pageStyle.setAttribute("data-ppv-page-numbers", "1");
     pageStyle.textContent = `
       @page {
         size: A4 portrait;
         margin: 14mm 12mm 18mm 12mm;
-        @bottom-center {
+        @bottom-left {
           content: counter(page);
           font-family: Arial, Helvetica, sans-serif;
           font-size: 10pt;
@@ -124,8 +125,8 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
 
     toast.message("Save as PDF", {
       description:
-        "Turn OFF “Headers and footers” (removes URL/date). Page numbers are from the report @page footer, not that checkbox.",
-      duration: 12000,
+        "In the print dialog, turn OFF “Headers and footers”. That is the only way to remove the URL and date/time. Page numbers (bottom-left) come from the report and will still print.",
+      duration: 14000,
     });
 
     const restore = () => {
