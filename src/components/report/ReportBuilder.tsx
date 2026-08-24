@@ -81,17 +81,26 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
       return;
     }
 
-    const onAfterPrint = () => {
-      window.removeEventListener("afterprint", onAfterPrint);
+    // Browser print headers often show document.title + URL + date.
+    // Clear the title for the print job; restore afterwards. User should also
+    // disable "Headers and footers" in the print dialog when that option exists.
+    const previousTitle = document.title;
+    document.title = " ";
+
+    toast.message("Print / Save as PDF", {
+      description:
+        "Choose A4. Turn off Headers and footers in the print dialog if address, URL or date still appear — keep page numbers only.",
+      duration: 8000,
+    });
+
+    const restore = () => {
+      document.title = previousTitle;
+      window.removeEventListener("afterprint", restore);
       setPrinting(false);
-      toast.message("In the print dialog: Save as PDF, A4, and turn off Headers and footers if shown.");
     };
-    window.addEventListener("afterprint", onAfterPrint);
+    window.addEventListener("afterprint", restore);
     window.print();
-    // Fallback if afterprint does not fire (some browsers)
-    window.setTimeout(() => {
-      setPrinting(false);
-    }, 1000);
+    window.setTimeout(restore, 1500);
   }
 
   const heading =

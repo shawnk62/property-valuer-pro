@@ -289,7 +289,21 @@
 
   @page {
     size: A4 portrait;
-    margin: 12mm 12mm 14mm 12mm;
+    /* Room for page number only — no address / URL / firm strip */
+    margin: 12mm 12mm 16mm 12mm;
+
+    /* Suppress default margin-box text where the engine supports it */
+    @top-left { content: none; }
+    @top-center { content: none; }
+    @top-right { content: none; }
+    @bottom-left { content: none; }
+    @bottom-right { content: none; }
+    @bottom-center {
+      content: counter(page);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9pt;
+      color: #333;
+    }
   }
 
   html,
