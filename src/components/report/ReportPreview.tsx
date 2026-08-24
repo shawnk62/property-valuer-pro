@@ -497,16 +497,18 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           </div>
         </header>
 
-        <div className="cover-photo-frame">
-          {frontPhoto ? (
-            <img
-              src={frontPhoto.url}
-              alt="Subject property"
-              className="cover-front-photo"
-            />
-          ) : (
-            <div className="cover-photo-placeholder">Front photo not set</div>
-          )}
+        <div className="cover-photo-band">
+          <div className="cover-photo-frame">
+            {frontPhoto ? (
+              <img
+                src={frontPhoto.url}
+                alt="Subject property"
+                className="cover-front-photo"
+              />
+            ) : (
+              <div className="cover-photo-placeholder">Front photo not set</div>
+            )}
+          </div>
         </div>
 
         <div className="cover-title-block">

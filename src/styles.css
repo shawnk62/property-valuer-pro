@@ -204,11 +204,11 @@
 }
 
 
-/* ---- Photo cover page (all report types) ---- */
+/* ---- Photo cover page (all report types) — matches issued PDF cover ---- */
 .cover-photo-page {
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  min-height: 36rem;
 }
 .cover-letterhead {
   display: flex;
@@ -216,9 +216,10 @@
   justify-content: space-between;
   gap: 1rem;
   text-align: left;
+  flex-shrink: 0;
 }
 .cover-logo {
-  height: 5.5rem;
+  height: 5.75rem;
   width: auto;
   object-fit: contain;
   flex-shrink: 0;
@@ -231,7 +232,7 @@
 }
 .cover-firm-title {
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   margin-bottom: 0.15rem;
 }
 .cover-firm-email {
@@ -240,21 +241,30 @@
 .cover-firm-gap {
   margin-top: 0.35rem;
 }
-.cover-photo-frame {
+/* Photo sits in a flexible band so it fills the middle of the page */
+.cover-photo-band {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  min-height: 18rem;
+}
+.cover-photo-frame {
   margin-left: auto;
   margin-right: auto;
-  padding: 0.65rem;
+  padding: 0.85rem;
   background: #000;
   width: 100%;
-  max-width: 34rem;
+  max-width: 38rem;
   box-sizing: border-box;
 }
 .cover-front-photo {
   display: block;
   width: 100%;
   height: auto;
-  max-height: 22rem;
+  max-height: 28rem;
   object-fit: contain;
   background: #000;
 }
@@ -262,22 +272,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 14rem;
+  min-height: 16rem;
   color: #999;
   background: #111;
   font-size: 0.875rem;
 }
 .cover-title-block {
-  margin-top: 1.5rem;
+  flex-shrink: 0;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
   text-align: center;
   font-family: Arial, Helvetica, sans-serif;
   font-weight: 700;
-  font-size: 1.15rem;
-  line-height: 1.35;
+  font-size: 1.25rem;
+  line-height: 1.4;
   text-transform: none;
 }
 .cover-title-block p {
-  margin: 0.15rem 0;
+  margin: 0.2rem 0;
 }
 
 @media print {
@@ -355,23 +367,37 @@
   }
 
 
-  /* Unified photo cover — all report types */
+  /* Unified photo cover — fill first A4 page like the sample PDF */
   #report-cover.cover-photo-page {
     break-after: page !important;
     page-break-after: always !important;
     display: flex !important;
     flex-direction: column !important;
-    min-height: 250mm !important;
+    /* Nearly full printable height (A4 297mm − page margins) */
+    min-height: 268mm !important;
+    height: 268mm !important;
+    max-height: 268mm !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
   .cover-letterhead {
     display: flex !important;
     align-items: flex-start !important;
     justify-content: space-between !important;
     gap: 8pt !important;
+    flex-shrink: 0 !important;
   }
   .cover-logo {
-    height: 72px !important;
-    max-height: 72px !important;
+    height: 78px !important;
+    max-height: 78px !important;
+    width: auto !important;
+  }
+  /* Override generic #report-cover header img { 56px } for logo */
+  #report-cover.cover-photo-page .cover-logo,
+  #report-cover.cover-photo-page > header img {
+    height: 78px !important;
+    max-height: 78px !important;
     width: auto !important;
   }
   .cover-firm-block {
@@ -389,38 +415,50 @@
   .cover-firm-email {
     font-weight: 600 !important;
   }
+  /* Flexible middle band centres a large photo (sample proportion) */
+  .cover-photo-band {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-top: 8mm !important;
+    margin-bottom: 4mm !important;
+    min-height: 0 !important;
+  }
   .cover-photo-frame {
-    margin-top: 14pt !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    padding: 8pt !important;
+    margin: 0 auto !important;
+    padding: 10pt !important;
     background: #000 !important;
     width: 100% !important;
-    max-width: 155mm !important;
+    max-width: 168mm !important;
     print-color-adjust: exact !important;
     -webkit-print-color-adjust: exact !important;
   }
   .cover-front-photo {
     display: block !important;
     width: 100% !important;
-    max-height: 115mm !important;
+    /* Large photo — sample is roughly half the page */
+    max-height: 145mm !important;
     height: auto !important;
     object-fit: contain !important;
   }
   .cover-photo-placeholder {
-    min-height: 80mm !important;
+    min-height: 100mm !important;
     color: #ccc !important;
   }
   .cover-title-block {
-    margin-top: 16pt !important;
+    flex-shrink: 0 !important;
+    margin-top: 2mm !important;
+    margin-bottom: 4mm !important;
+    padding-bottom: 0 !important;
     text-align: center !important;
     font-family: Arial, Helvetica, sans-serif !important;
     font-weight: 700 !important;
-    font-size: 14pt !important;
-    line-height: 1.35 !important;
+    font-size: 15pt !important;
+    line-height: 1.4 !important;
   }
   .cover-title-block p {
-    margin: 2pt 0 !important;
+    margin: 3pt 0 !important;
   }
   .report-cover-summary {
     break-after: page !important;
