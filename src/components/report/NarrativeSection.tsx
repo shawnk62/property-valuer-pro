@@ -74,19 +74,48 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     );
   }
 
+  /** Fill only empty keys from the inspection-data template (never overwrites). */
+  function applyTemplateToEmptyKeys(
+    keys: (keyof ReportNarrative)[],
+  ): Partial<ReportNarrative> {
+    const full = generateNarrative(draft.values);
+    const current = narrativeRef.current;
+    const patch: Partial<ReportNarrative> = {};
+    for (const key of keys) {
+      if (!String(current[key] ?? "").trim() && String(full[key] ?? "").trim()) {
+        patch[key] = full[key];
+      }
+    }
+    if (Object.keys(patch).length > 0) {
+      setNarrative(patch);
+    }
+    return patch;
+  }
+
   // Auto-fill only truly empty blocks, and only after the draft has loaded from
   // cloud/local cache — never race AI against a reopened report's saved text.
+  // Prefer AI when configured; otherwise use the inspection-data template.
   useEffect(() => {
     if (!loaded) return;
     if (autoStarted.current) return;
-    if (!isAiConfigured()) return;
     const keys = emptyNarrativeKeys(draft.narrative);
     if (keys.length === 0) {
       autoStarted.current = true; // mark done so we don't fire later if user clears a block
       return;
     }
     autoStarted.current = true;
-    void generateWithAi(keys);
+    if (isAiConfigured()) {
+      void generateWithAi(keys);
+    } else {
+      const patch = applyTemplateToEmptyKeys(keys);
+      if (Object.keys(patch).length > 0) {
+        setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
+        setSource("template");
+        setLastStatus(
+          `Filled empty blocks from inspection data (AI not configured): ${Object.keys(patch).join(", ")}.`,
+        );
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once after load when empty blocks exist
   }, [loaded, draft.inspectionId]);
 
@@ -107,10 +136,22 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   async function generateWithAi(keys: (keyof ReportNarrative)[] = BLOCKS.map((b) => b.key)) {
     const settings = loadAiSettings();
     if (!isAiConfigured(settings)) {
-      const msg =
-        "AI is not configured. Open Settings, choose xAI (Grok), add your API key, Save, then Test connection.";
-      setLastStatus(msg);
-      toast.error("AI is not configured", { description: msg });
+      // Fall back to template for empty keys only so 6.2 (and others) still populate.
+      const emptyKeys = keys.filter((k) => !String(narrativeRef.current[k] ?? "").trim());
+      const patch = emptyKeys.length ? applyTemplateToEmptyKeys(emptyKeys) : {};
+      if (Object.keys(patch).length > 0) {
+        setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
+        setSource("template");
+        const msg =
+          "AI is not configured — filled empty text from inspection data. Open Settings, add an API key, Save, then Test connection for true AI wording.";
+        setLastStatus(msg);
+        toast.message("Filled from inspection data", { description: msg, duration: 10000 });
+      } else {
+        const msg =
+          "AI is not configured. Open Settings, choose xAI (Grok) or OpenAI, add your API key, Save, then Test connection.";
+        setLastStatus(msg);
+        toast.error("AI is not configured", { description: msg });
+      }
       return;
     }
 
