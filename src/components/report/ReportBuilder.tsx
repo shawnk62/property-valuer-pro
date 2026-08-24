@@ -28,12 +28,14 @@ const TABS = [
 type TabId = (typeof TABS)[number]["id"];
 
 export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
+  const navigate = useNavigate();
   const lock = useEditLock(inspectionId);
   const controller = useReportDraft(inspectionId, { readOnly: !lock.canEdit || lock.checking });
   const { draft, dirty, savedAt, save, loaded, loadError } = controller;
   const [tab, setTab] = useState<TabId>("subject");
   const [downloading, setDownloading] = useState(false);
   const [printing, setPrinting] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
 
   async function handleDownloadWord() {
     setDownloading(true);
