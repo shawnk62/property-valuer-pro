@@ -43,7 +43,7 @@ function run(value: string, opts?: { bold?: boolean; italics?: boolean; size?: n
     bold: opts?.bold,
     italics: opts?.italics,
     size: opts?.size ?? 20, // 10pt
-    font: "Times New Roman",
+    font: "Arial",
   });
 }
 
@@ -930,7 +930,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     styles: {
       default: {
         document: {
-          run: { font: "Times New Roman", size: 20 },
+          run: { font: "Arial", size: 20 },
           paragraph: { spacing: { after: 120, line: 276 } },
         },
       },
@@ -941,7 +941,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
           basedOn: "Normal",
           next: "Normal",
           quickStyle: true,
-          run: { font: "Times New Roman", size: 22, bold: true },
+          run: { font: "Arial", size: 22, bold: true },
           paragraph: { spacing: { before: 280, after: 140 } },
         },
       ],
