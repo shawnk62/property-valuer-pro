@@ -8,17 +8,33 @@ type Props = {
   height?: number;
 };
 
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Could not read image file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function isImageFile(f: File | null | undefined): f is File {
+  if (!f || f.size <= 0) return false;
+  if (f.type.startsWith("image/")) return true;
+  return /\.(png|jpe?g|webp|gif)$/i.test(f.name);
+}
+
 /**
- * Touch-friendly signature capture. value is a data:image/png URL when signed,
- * or empty when cleared. Drawing is disabled when disabled=true except Clear
- * is still offered via parent when unlocking.
+ * Signature capture: draw, upload PNG/JPEG, or paste.
+ * value is a data:image URL when signed, or empty when cleared.
  */
 export function SignaturePad({ value, disabled, onChange, height = 160 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const drawing = useRef(false);
   const [hasInk, setHasInk] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Paint existing signature
+  // Paint existing signature onto canvas for redraw path
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -39,7 +55,13 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
     if (value && value.startsWith("data:image")) {
       const img = new Image();
       img.onload = () => {
-        ctx.drawImage(img, 0, 0, rect.width, height);
+        // Fit image within canvas preserving aspect ratio
+        const scale = Math.min(rect.width / img.width, height / img.height, 1);
+        const w = img.width * scale;
+        const h = img.height * scale;
+        const x = (rect.width - w) / 2;
+        const y = (height - h) / 2;
+        ctx.drawImage(img, x, y, w, h);
         setHasInk(true);
       };
       img.src = value;
@@ -52,17 +74,17 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
     const canvas = canvasRef.current!;
     const rect = canvas.getBoundingClientRect();
     if ("touches" in e) {
-      const t = e.touches[0];
+      const t = e.touches[0]!;
       return { x: t.clientX - rect.left, y: t.clientY - rect.top };
     }
-    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
+    const m = e as React.MouseEvent;
+    return { x: m.clientX - rect.left, y: m.clientY - rect.top };
   }
 
   function start(e: React.TouchEvent | React.MouseEvent) {
     if (disabled) return;
     e.preventDefault();
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
+    const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
     drawing.current = true;
     const p = pos(e);
@@ -82,37 +104,75 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
   }
 
   function end() {
-    if (!drawing.current) return;
     drawing.current = false;
   }
 
-  function apply() {
+  function applyDrawn() {
     const canvas = canvasRef.current;
     if (!canvas || !hasInk) return;
     onChange(canvas.toDataURL("image/png"));
+    setError(null);
+  }
+
+  async function applyFile(file: File | null) {
+    if (!file || !isImageFile(file)) {
+      setError("Choose a PNG, JPEG, or WebP image.");
+      return;
+    }
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      if (!dataUrl.startsWith("data:image")) {
+        setError("Could not read that image.");
+        return;
+      }
+      onChange(dataUrl);
+      setError(null);
+    } catch {
+      setError("Could not read that image.");
+    }
   }
 
   function clear() {
     onChange("");
     setHasInk(false);
+    setError(null);
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     const rect = canvas.getBoundingClientRect();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, rect.width, height);
   }
 
+  function onPaste(e: React.ClipboardEvent) {
+    if (disabled) return;
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.kind === "file" && item.type.startsWith("image/")) {
+        const f = item.getAsFile();
+        if (f) {
+          e.preventDefault();
+          void applyFile(f);
+          return;
+        }
+      }
+    }
+  }
+
   const signed = Boolean(value && value.startsWith("data:image"));
 
   return (
-    <div className="space-y-2">
-      {signed && disabled ? (
-        <div className="rounded-md border border-border bg-card p-2">
-          <img src={value} alt="Signature" className="max-h-28 w-auto bg-white" />
+    <div className="space-y-2" onPaste={onPaste}>
+      {signed ? (
+        <div className="rounded-md border border-border bg-white p-2">
+          <img
+            src={value}
+            alt="Signature"
+            className="max-h-28 w-auto max-w-full object-contain"
+          />
         </div>
       ) : (
         <canvas
@@ -128,42 +188,57 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
           onTouchEnd={end}
         />
       )}
+
       <div className="flex flex-wrap gap-2">
-        {!disabled ? (
+        {!signed ? (
           <>
             <button
               type="button"
-              onClick={apply}
-              disabled={!hasInk && !signed}
+              onClick={applyDrawn}
+              disabled={!hasInk}
               className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
             >
-              Apply signature
+              Apply drawn signature
             </button>
             <button
               type="button"
-              onClick={clear}
+              onClick={() => fileRef.current?.click()}
               className="rounded-md border border-input bg-card px-3 py-2 text-sm font-semibold text-foreground"
             >
-              Clear
+              Upload PNG / JPEG
             </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,.png,.jpg,.jpeg,.webp"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                void applyFile(f);
+                e.target.value = "";
+              }}
+            />
           </>
-        ) : signed ? (
-          <button
-            type="button"
-            onClick={clear}
-            className="rounded-md border border-input bg-card px-3 py-2 text-sm font-semibold text-foreground"
-          >
-            Remove signature (unlock report)
-          </button>
         ) : null}
+        <button
+          type="button"
+          onClick={clear}
+          className="rounded-md border border-input bg-card px-3 py-2 text-sm font-semibold text-foreground"
+        >
+          {signed ? "Remove signature (unlock report)" : "Clear"}
+        </button>
       </div>
+
+      {error ? <p className="text-xs text-destructive">{error}</p> : null}
+
       {signed ? (
         <p className="text-xs text-muted-foreground">
           Signature applied — report is locked for editing until the signature is removed.
         </p>
       ) : (
         <p className="text-xs text-muted-foreground">
-          Draw your signature, then tap Apply. Applying locks the valuation report until cleared.
+          Draw and apply, upload a PNG/JPEG, or paste an image. Applying locks the valuation
+          report until cleared.
         </p>
       )}
     </div>
