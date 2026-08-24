@@ -366,7 +366,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       const found = draft.photos.find((p) => p.slot === slot && p.url);
       return found ? { ...found, caption: found.caption || label } : null;
     }).filter(Boolean),
-    ...draft.photos.filter((p) => p.slot === null && p.url),
+    ...draft.photos.filter((p) => p.slot === null && p.url && p.kind !== "map"),
   ] as typeof draft.photos;
 
   // Maps shown inline in the body. Overlay / landslide maps are annex-only.
@@ -378,11 +378,14 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
     "map_flood",
     "map_bushfire",
   ]);
-  const mapPhotos = MAP_SLOTS.map(({ slot, label }) => {
-    if (bodyMapSlotSet.has(slot)) return null;
-    const found = draft.photos.find((p) => p.slot === slot && p.url);
-    return found ? { ...found, caption: found.caption || label } : null;
-  }).filter(Boolean) as typeof draft.photos;
+  const mapPhotos = [
+    ...MAP_SLOTS.map(({ slot, label }) => {
+      if (bodyMapSlotSet.has(slot)) return null;
+      const found = draft.photos.find((p) => p.slot === slot && p.url);
+      return found ? { ...found, caption: found.caption || label } : null;
+    }).filter(Boolean),
+    ...draft.photos.filter((p) => p.slot === null && p.kind === "map" && p.url),
+  ] as typeof draft.photos;
 
   const frontPhoto = draft.photos.find((p) => p.slot === "front" && p.url);
 

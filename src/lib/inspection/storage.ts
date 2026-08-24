@@ -37,6 +37,7 @@ export type ReportExtras = {
     url: string;
     storagePath?: string;
     capturedAt?: string;
+    kind?: "map" | "photo";
   }>;
   sales?: unknown[];
   reportMeta?: Record<string, string>;

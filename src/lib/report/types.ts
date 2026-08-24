@@ -47,6 +47,11 @@ export interface ReportPhoto {
   storagePath?: string;
   /** ISO timestamp when the photo was captured / approved (auto-set). */
   capturedAt?: string;
+  /**
+   * When slot is null: "map" = additional labeled map/overlay tile (annex maps);
+   * "photo" or omitted = additional subject photograph.
+   */
+  kind?: "map" | "photo";
 }
 
 /** Relativity mark on a comparison feature (URAR-style description). */

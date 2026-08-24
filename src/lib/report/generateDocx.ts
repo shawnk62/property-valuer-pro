@@ -814,7 +814,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
       const found = draft.photos.find((ph) => ph.slot === slot && ph.url);
       return found ? { ...found, caption: found.caption || label } : null;
     }).filter(Boolean),
-    ...draft.photos.filter((ph) => ph.slot === null && ph.url),
+    ...draft.photos.filter((ph) => ph.slot === null && ph.url && ph.kind !== "map"),
   ] as typeof draft.photos;
 
   // Overlay / landslide maps are annex-only; zoning, flood & bushfire stay in body.
@@ -826,11 +826,14 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     "map_flood",
     "map_bushfire",
   ]);
-  const mapPhotos = MAP_SLOTS.map(({ slot, label }) => {
-    if (bodyMapSlotSet.has(slot)) return null;
-    const found = draft.photos.find((ph) => ph.slot === slot && ph.url);
-    return found ? { ...found, caption: found.caption || label } : null;
-  }).filter(Boolean) as typeof draft.photos;
+  const mapPhotos = [
+    ...MAP_SLOTS.map(({ slot, label }) => {
+      if (bodyMapSlotSet.has(slot)) return null;
+      const found = draft.photos.find((ph) => ph.slot === slot && ph.url);
+      return found ? { ...found, caption: found.caption || label } : null;
+    }).filter(Boolean),
+    ...draft.photos.filter((ph) => ph.slot === null && ph.kind === "map" && ph.url),
+  ] as typeof draft.photos;
 
   const salesWithPhotos = draft.sales.filter((s) => s.photoUrl);
 

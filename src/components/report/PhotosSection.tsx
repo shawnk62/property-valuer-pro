@@ -53,6 +53,8 @@ function PhotoCard({
   onFile,
   onCaption,
   onRemove,
+  labelEditable = false,
+  onLabelChange,
 }: {
   photo: ReportPhoto | undefined;
   slotLabel: string;
@@ -60,13 +62,26 @@ function PhotoCard({
   onFile: (file: File) => void;
   onCaption: (caption: string) => void;
   onRemove?: () => void;
+  /** When true, the top label is an input in the same style as fixed map captions. */
+  labelEditable?: boolean;
+  onLabelChange?: (label: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="rounded-md border border-border bg-card p-3">
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-sm font-semibold text-foreground">{slotLabel}</span>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        {labelEditable ? (
+          <input
+            value={slotLabel}
+            onChange={(e) => onLabelChange?.(e.target.value)}
+            placeholder="Label (e.g. Coastal hazard overlay)"
+            aria-label="Map label"
+            className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-semibold text-foreground outline-none placeholder:text-muted-foreground focus:ring-0"
+          />
+        ) : (
+          <span className="text-sm font-semibold text-foreground">{slotLabel}</span>
+        )}
         {onRemove ? (
           <button
             type="button"
@@ -172,12 +187,14 @@ function PhotoCard({
         }}
       />
 
-      <input
-        value={photo?.caption ?? slotLabel}
-        onChange={(e) => onCaption(e.target.value)}
-        placeholder="Caption"
-        className="mt-3 w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-      />
+      {labelEditable ? null : (
+        <input
+          value={photo?.caption ?? slotLabel}
+          onChange={(e) => onCaption(e.target.value)}
+          placeholder="Caption"
+          className="mt-3 w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+        />
+      )}
     </div>
   );
 }
@@ -207,6 +224,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     slot: PhotoSlot | null;
     caption: string;
     replaceId?: string;
+    kind?: "map" | "photo";
   }) {
     if (!opts.file || opts.file.size <= 0) {
       toast.error("The selected file is empty.");
@@ -226,6 +244,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
           caption: opts.caption,
           url: dataUrl,
           capturedAt: nowPhotoTimestamp(),
+          ...(opts.kind ? { kind: opts.kind } : {}),
         };
         if (opts.slot) {
           return [...prev.filter((p) => p.slot !== opts.slot && p.id !== photoId), entry];
@@ -325,7 +344,8 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     })();
   }
 
-  const extras = photos.filter((p) => p.slot === null);
+  const extras = photos.filter((p) => p.slot === null && p.kind !== "map");
+  const extraMaps = photos.filter((p) => p.slot === null && p.kind === "map");
 
   return (
     <div className="space-y-6">
@@ -428,6 +448,62 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
             />
           );
         })}
+
+        {extraMaps.map((photo) => (
+          <PhotoCard
+            key={photo.id}
+            slotLabel={photo.caption || "Additional map"}
+            photo={photo}
+            uploading={uploadingIds.has(photo.id)}
+            labelEditable
+            onLabelChange={(label) => {
+              const caption = label.trim() || "Additional map";
+              setPhotos((prev) =>
+                prev.map((p) => (p.id === photo.id ? { ...p, caption } : p)),
+              );
+            }}
+            onFile={(file) =>
+              void attachPhoto({
+                file,
+                slot: null,
+                caption: photo.caption || "Additional map",
+                replaceId: photo.id,
+                kind: "map",
+              })
+            }
+            onCaption={(caption) => {
+              setPhotos((prev) =>
+                prev.map((p) => (p.id === photo.id ? { ...p, caption } : p)),
+              );
+            }}
+            onRemove={() => void removePhoto(photo)}
+          />
+        ))}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={() => {
+            const id = newId();
+            setPhotos((prev) => [
+              ...prev,
+              {
+                id,
+                slot: null,
+                caption: "",
+                url: "",
+                kind: "map" as const,
+              },
+            ]);
+          }}
+          className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+        >
+          + Add map / overlay
+        </button>
+        <span className="text-sm text-muted-foreground">
+          Extra labeled tiles for additional overlays or maps. Empty tiles do not print.
+        </span>
       </div>
     </div>
   );
