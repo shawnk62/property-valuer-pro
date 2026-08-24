@@ -3,11 +3,48 @@ import { toast } from "sonner";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import { fileToDataUrl } from "@/lib/report/photo-data";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
+import { nowPhotoTimestamp } from "@/lib/inspection/photoRequirements";
 import { mapSlotsForImport, PHOTO_SLOTS, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
 
 function newId() {
   return `photo-${Math.random().toString(36).slice(2, 10)}`;
 }
+
+function isImageFile(f: File | null | undefined): f is File {
+  if (!f || f.size <= 0) return false;
+  if (f.type.startsWith("image/")) return true;
+  // macOS / iPad screenshots sometimes arrive with an empty MIME type
+  if (!f.type && /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(f.name)) return true;
+  if (!f.type && /^image$/i.test(f.name)) return true;
+  return false;
+}
+
+function imageFileFromClipboardEvent(e: React.ClipboardEvent): File | null {
+  const items = e.clipboardData?.items;
+  if (items) {
+    for (const item of Array.from(items)) {
+      if (item.kind !== "file") continue;
+      const f = item.getAsFile();
+      if (isImageFile(f)) return f;
+      // Screenshot paste: type may be image/png even when getAsFile name is blank
+      if (item.type.startsWith("image/")) {
+        const blob = f ?? null;
+        if (blob && blob.size > 0) {
+          const ext = item.type.split("/")[1] || "png";
+          return new File([blob], `screenshot.${ext}`, { type: item.type || "image/png" });
+        }
+      }
+    }
+  }
+  const files = e.clipboardData?.files;
+  if (files) {
+    for (const f of Array.from(files)) {
+      if (isImageFile(f)) return f;
+    }
+  }
+  return null;
+}
+
 
 function PhotoCard({
   photo,
@@ -41,28 +78,48 @@ function PhotoCard({
         ) : null}
       </div>
 
-      <button
-        type="button"
-        disabled={uploading}
-        onClick={() => inputRef.current?.click()}
+      <div
+        role="button"
+        tabIndex={0}
+        aria-disabled={uploading || undefined}
+        onClick={() => {
+          if (!uploading) inputRef.current?.click();
+        }}
+        onKeyDown={(e) => {
+          if (uploading) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
+        onPaste={(e) => {
+          if (uploading) return;
+          const file = imageFileFromClipboardEvent(e);
+          if (!file) return;
+          e.preventDefault();
+          e.stopPropagation();
+          onFile(file);
+        }}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
           e.preventDefault();
           if (uploading) return;
-          const file = e.dataTransfer.files?.[0];
+          const file = Array.from(e.dataTransfer.files ?? []).find((f) => isImageFile(f));
           if (file) onFile(file);
         }}
-        className="relative flex aspect-4/3 w-full items-center justify-center overflow-hidden rounded-md border-2 border-dashed border-border bg-muted/50 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-foreground disabled:opacity-60"
+        className="relative flex aspect-4/3 w-full cursor-pointer items-center justify-center overflow-hidden rounded-md border-2 border-dashed border-border bg-muted/50 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
       >
         {photo?.url ? (
           <img
             src={photo.url}
             alt={photo.caption || slotLabel}
-            className="h-full w-full object-cover"
+            className="pointer-events-none h-full w-full object-cover"
           />
         ) : (
           <span className="px-4 text-center">
-            {uploading ? "Reading…" : "Drop an image here, or tap to choose"}
+            {uploading
+              ? "Reading…"
+              : "Paste screenshot (⌘V), drop image, or tap to choose"}
           </span>
         )}
         {uploading && photo?.url ? (
@@ -70,7 +127,7 @@ function PhotoCard({
             Saving…
           </span>
         ) : null}
-      </button>
+      </div>
       <input
         ref={inputRef}
         type="file"

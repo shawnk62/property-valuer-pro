@@ -206,7 +206,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
   async function onSalesMapFile(file: File | null) {
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
+    if (file.type && !file.type.startsWith("image/")) {
       toast.error("Choose an image file for the sales map");
       return;
     }
@@ -252,21 +252,39 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     setMeta({ salesMapUrl: "", salesMapStoragePath: "" });
   }
 
-  /** Image from clipboard (Cmd/Ctrl+V) — screenshots from CMA PDF viewers. */
+  /** Image from clipboard (Cmd/Ctrl+V) — screenshots (PNG/JPEG) from CMA or OS. */
   function imageFileFromClipboard(e: React.ClipboardEvent | ClipboardEvent): File | null {
     const items = e.clipboardData?.items;
-    if (!items) return null;
-    for (const item of Array.from(items)) {
-      if (item.kind === "file" && item.type.startsWith("image/")) {
+    if (items) {
+      for (const item of Array.from(items)) {
+        if (item.kind !== "file") continue;
         const f = item.getAsFile();
-        if (f && f.size > 0) return f;
+        if (f && f.size > 0 && (f.type.startsWith("image/") || !f.type)) {
+          if (f.type.startsWith("image/")) return f;
+          if (!f.type) {
+            const ext = /png/i.test(f.name) ? "png" : /jpe?g/i.test(f.name) ? "jpeg" : "png";
+            return new File([f], f.name || `screenshot.${ext}`, {
+              type: f.type || `image/${ext}`,
+            });
+          }
+        }
+        if (item.type.startsWith("image/")) {
+          const blob = f;
+          if (blob && blob.size > 0) {
+            const ext = item.type.split("/")[1] || "png";
+            return new File([blob], `screenshot.${ext}`, { type: item.type });
+          }
+        }
       }
     }
-    // Some browsers put a file in clipboardData.files
     const files = e.clipboardData?.files;
     if (files) {
       for (const f of Array.from(files)) {
-        if (f.type.startsWith("image/") && f.size > 0) return f;
+        if (f.size > 0 && (f.type.startsWith("image/") || !f.type)) {
+          return f.type
+            ? f
+            : new File([f], f.name || "screenshot.png", { type: "image/png" });
+        }
       }
     }
     return null;
@@ -377,7 +395,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
   async function onSalePhotoFile(saleId: string, file: File | null) {
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
+    if (file.type && !file.type.startsWith("image/")) {
       toast.error("Choose an image file for the front photo");
       return;
     }
