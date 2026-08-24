@@ -335,9 +335,9 @@
     overflow: visible !important;
   }
 
-  /* Only app chrome — never the report cover <header> with the logo */
+  /* App chrome only — do NOT hide all <button> (breaks some browsers' print trees) */
   .no-print,
-  button,
+  .no-print * ,
   [data-sonner-toaster] {
     display: none !important;
   }
@@ -348,9 +348,26 @@
     background: white !important;
   }
 
+  /* Preview is always in the DOM; force it visible for print even if tab was hidden */
+  .report-print-host,
+  .report-print-host.hidden {
+    display: block !important;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
   #report-preview-sheet {
     position: static !important;
     display: block !important;
+    visibility: visible !important;
     width: 100% !important;
     max-width: none !important;
     margin: 0 !important;

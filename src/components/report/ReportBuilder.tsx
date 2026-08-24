@@ -60,7 +60,7 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
     }
   }
 
-  /** PDF via browser print of the live Preview sheet (matches on-screen report). */
+  /** PDF via browser print of the live Preview sheet (always mounted in DOM). */
   async function handleDownloadPdf() {
     setPrinting(true);
     try {
@@ -68,36 +68,41 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
     } catch {
       /* still print current draft */
     }
-    const previousTab = tab;
+
+    // Switch UI to Preview so the user sees what will print (Preview is always mounted).
     if (tab !== "preview") {
       setTab("preview");
     }
-    // Wait for Preview to paint with current draft, then open the system print dialog.
-    await new Promise<void>((resolve) => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => resolve());
-      });
-    });
-    await new Promise((r) => setTimeout(r, 200));
 
-    const sheet = document.getElementById("report-preview-sheet");
+    // Wait until the sheet is in the DOM and has layout (not a fixed 200ms guess).
+    const sheet = await new Promise<HTMLElement | null>((resolve) => {
+      const started = Date.now();
+      const tick = () => {
+        const el = document.getElementById("report-preview-sheet");
+        if (el && el.offsetHeight > 0) {
+          resolve(el);
+          return;
+        }
+        if (Date.now() - started > 3000) {
+          resolve(el);
+          return;
+        }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+
     if (!sheet) {
       toast.error("Report preview is not ready. Open the Preview tab and try again.");
-      setTab(previousTab);
       setPrinting(false);
       return;
     }
 
-    // Blank title reduces browser header text. Page numbers come from @page CSS.
-    // Turn OFF "Headers and footers" in the print dialog so only the page number remains.
-    const previousTitle = document.title;
-    document.title = "\u00A0"; // non-breaking space — some browsers ignore a pure space
+    // Give images a moment to decode after the sheet is present
+    await new Promise((r) => setTimeout(r, 150));
 
-    toast.message("Save as PDF", {
-      description:
-        "A4. Turn OFF “Headers and footers” in the print dialog — only the page number should stay in the footer.",
-      duration: 10000,
-    });
+    const previousTitle = document.title;
+    document.title = "\u00A0";
 
     const restore = () => {
       document.title = previousTitle;
@@ -105,6 +110,7 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
       setPrinting(false);
     };
     window.addEventListener("afterprint", restore);
+
     window.print();
     window.setTimeout(restore, 2000);
   }
@@ -306,7 +312,17 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
               />
             </div>
           ) : null}
-          {tab === "preview" ? <ReportPreview draft={draft} /> : null}
+          {/* Always mounted so Download PDF never prints a blank page when another tab is active */}
+          <div
+            className={
+              tab === "preview"
+                ? "report-print-host"
+                : "report-print-host hidden"
+            }
+            aria-hidden={tab !== "preview"}
+          >
+            <ReportPreview draft={draft} />
+          </div>
         </div>
       </main>
     </div>
