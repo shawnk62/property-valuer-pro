@@ -348,6 +348,25 @@ function InlineMap({
 
 
 /** Cover title date: "6th of AUGUST 2026" */
+function instructionsFromLine(values: ReportDraft["values"]): string {
+  const name = String(get(values, "instr_from_name") || "").trim();
+  if (name) return `This report prepared as per instructions from ${name}`;
+  return "This report prepared as per instructions from";
+}
+
+function contactDetailsLine(values: ReportDraft["values"]): string {
+  return [
+    get(values, "instr_from_email")
+      ? `Email: ${get(values, "instr_from_email")}`
+      : "",
+    get(values, "instr_from_mobile")
+      ? `Mobile: ${get(values, "instr_from_mobile")}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("  ·  ");
+}
+
 function formatCoverDate(raw: string | undefined | null): string {
   const s = String(raw ?? "").trim();
   if (!s) return "";
@@ -529,19 +548,13 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 },
                 { label: "LAND AREA", value: siteArea },
                 { label: "ZONING", value: get(v, "prop_zoning") },
-                { label: "INSTRUCTIONS", value: get(v, "instr_from_name") },
+                {
+                  label: "INSTRUCTIONS",
+                  value: instructionsFromLine(v),
+                },
                 {
                   label: "CONTACT DETAILS",
-                  value: [
-                    get(v, "instr_from_email")
-                      ? `Email: ${get(v, "instr_from_email")}`
-                      : "",
-                    get(v, "instr_from_mobile")
-                      ? `Mobile: ${get(v, "instr_from_mobile")}`
-                      : "",
-                  ]
-                    .filter(Boolean)
-                    .join("  ·  "),
+                  value: contactDetailsLine(v),
                 },
                 {
                   label: "PURPOSE OF VALUATION",
@@ -626,19 +639,13 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               values={v}
               fields={["prop_assignment", "prop_owner", "prop_rights"]}
               extra={[
-                { label: "Instructions", value: get(v, "instr_from_name") },
                 {
-                  label: "Contact details",
-                  value: [
-                    get(v, "instr_from_email")
-                      ? `Email: ${get(v, "instr_from_email")}`
-                      : "",
-                    get(v, "instr_from_mobile")
-                      ? `Mobile: ${get(v, "instr_from_mobile")}`
-                      : "",
-                  ]
-                    .filter(Boolean)
-                    .join("  ·  "),
+                  label: "INSTRUCTIONS",
+                  value: instructionsFromLine(v),
+                },
+                {
+                  label: "CONTACT DETAILS",
+                  value: contactDetailsLine(v),
                 },
                 { label: "Date of inspection", value: m.inspectionDate },
                 { label: "Date of valuation", value: m.valueDate },
