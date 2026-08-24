@@ -149,17 +149,49 @@ function streetKey(addr: string): string {
   if (!a) return "";
   const streetTypes =
     "STREET|ST|ROAD|RD|CRESCENT|CRES|CR|COURT|CT|AVENUE|AVE|DRIVE|DR|PLACE|PL|WAY|CLOSE|CL|TERRACE|TCE|PARADE|PDE|BOULEVARD|BLVD|LANE|LN|CIRCUIT|CCT|HIGHWAY|HWY|ESPLANADE|ESP|GROVE|GR|RISE|MEWS|WALK|ROW|QUAY|POINT|PT|CIRCLE|CIR|TRAIL|TRL|LINK|VISTA|HEIGHTS|HTS|PARK|GARDENS|GDNS|SQUARE|SQ|PROMENADE|PROM|ALLEY|MALL|BYPASS|LOOP";
-  const m = a.match(
+  const post = a.match(/\b(QLD|QUEENSLAND|NSW|VIC|SA|WA|TAS|NT|ACT)\s*(\d{4})\b/);
+  const postBit = post ? `|${post[2]}` : "";
+
+  // Unit / duplex style: "24/31 NORTH STREET" or "1/25 CYAN STREET".
+  // The unit prefix MUST be part of the key — otherwise 24/31 and 68/31 North
+  // Street both collapse to "31NORTHSTREET" and one sale is dropped.
+  const unitSlash = a.match(
     new RegExp(
-      String.raw`(?:UNIT\s+\d+[A-Z]?\s*[\/,]?\s*)?(?:LOT\s+\d+\s+)?(?:\d+[A-Z]?\s*\/\s*)?(\d+[A-Z]?)\s+([A-Z][A-Z0-9'./ -]*?)\s+\b(${streetTypes})\b`,
+      String.raw`(?:UNIT\s+)?(\d+[A-Z]?)\s*[\/]\s*(\d+[A-Z]?)\s+([A-Z][A-Z0-9'./ -]*?)\s+\b(${streetTypes})\b`,
     ),
   );
-  if (!m) return addressKey(a);
-  const post = a.match(/\b(QLD|QUEENSLAND|NSW|VIC|SA|WA|TAS|NT|ACT)\s*(\d{4})\b/);
+  if (unitSlash) {
+    const base =
+      `U${unitSlash[1]}P${unitSlash[2]}${unitSlash[3]!.replace(/[^A-Z0-9]/g, "")}${unitSlash[4]}`.replace(
+        /\s+/g,
+        "",
+      );
+    return `${base}${postBit}`;
+  }
+
+  // UNIT 5, 12 SMITH STREET
+  const unitWord = a.match(
+    new RegExp(
+      String.raw`UNIT\s+(\d+[A-Z]?)\s*[,]?\s*(\d+[A-Z]?)\s+([A-Z][A-Z0-9'./ -]*?)\s+\b(${streetTypes})\b`,
+    ),
+  );
+  if (unitWord) {
+    const base =
+      `U${unitWord[1]}P${unitWord[2]}${unitWord[3]!.replace(/[^A-Z0-9]/g, "")}${unitWord[4]}`.replace(
+        /\s+/g,
+        "",
+      );
+    return `${base}${postBit}`;
+  }
+
+  const m = a.match(
+    new RegExp(
+      String.raw`(?:LOT\s+\d+\s+)?(\d+[A-Z]?)\s+([A-Z][A-Z0-9'./ -]*?)\s+\b(${streetTypes})\b`,
+    ),
+  );
+  if (!m) return addressKey(a) + postBit;
   const base = `${m[1]}${m[2].replace(/[^A-Z0-9]/g, "")}${m[3]}`.replace(/\s+/g, "");
-  // Include postcode when present so two different suburbs with the same
-  // street number/name are not collapsed into one comparable.
-  return post ? `${base}|${post[2]}` : base;
+  return `${base}${postBit}`;
 }
 
 export function cmaExtractsToSales(rows: CmaSaleExtract[]): ComparableSale[] {
@@ -445,6 +477,43 @@ export function parseCmaTextHeuristic(text: string): CmaSaleExtract[] {
       cars: lm[4] || null,
       salePrice: lm[5]!.replace(/\s+/g, ""),
     });
+  }
+
+
+  // Map-legend unit addresses: "24/31 NORTH STREET CALOUNDRA QLD 4551  2 1 1 $815,500"
+  // (postcode may sit on the same line or the next; beds/baths/cars optional)
+  {
+    const unitLegendRe = new RegExp(
+      String.raw`((?:\d+[A-Z]?\s*[\/]\s*)?\d+[A-Z]?\s+${NAME}\s+\b(?:${STREET})\b\s+${SUBURB}\s+(?:QLD|QUEENSLAND)\s*\d{4})\s+(?:([1-6])\s+([1-6])\s+([0-4])\s+)?(\$\s*[\d,]+)`,
+      "gi",
+    );
+    for (const lm of cleaned.matchAll(unitLegendRe)) {
+      merge({
+        address: normaliseAddress(lm[1]!),
+        beds: lm[2] || null,
+        baths: lm[3] || null,
+        cars: lm[4] || null,
+        salePrice: lm[5]!.replace(/\s+/g, ""),
+      });
+    }
+  }
+
+  // When pdf.js puts postcode on the next line after "… QLD":
+  // "24/31 NORTH STREET CALOUNDRA QLD\n4551\n2 1 1 $815,500"
+  {
+    const splitPostRe = new RegExp(
+      String.raw`((?:\d+[A-Z]?\s*[\/]\s*)?\d+[A-Z]?\s+${NAME}\s+\b(?:${STREET})\b\s+${SUBURB}\s+(?:QLD|QUEENSLAND))\s+(\d{4})\s+(?:([1-6])\s+([1-6])\s+([0-4])\s+)?(\$\s*[\d,]+)`,
+      "gi",
+    );
+    for (const lm of cleaned.matchAll(splitPostRe)) {
+      merge({
+        address: normaliseAddress(`${lm[1]} ${lm[2]}`),
+        beds: lm[3] || null,
+        baths: lm[4] || null,
+        cars: lm[5] || null,
+        salePrice: lm[6]!.replace(/\s+/g, ""),
+      });
+    }
   }
 
   return [...byKey.values()].filter((r) => {
