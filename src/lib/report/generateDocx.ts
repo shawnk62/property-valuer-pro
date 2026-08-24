@@ -640,11 +640,22 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
 
   // ---- 9 ----
   children.push(sectionHeading("9.", "Improvements – Other Valuation Issues"));
-  children.push(subHeading("Encroachments"));
+  children.push(subHeading("9.1  Encroachments"));
   children.push(p(BOILERPLATE.encroachments));
-  children.push(subHeading("Condition of improvements"));
-  children.push(p(BOILERPLATE.conditionOfImprovements));
-  children.push(subHeading("Development potential"));
+  children.push(subHeading("9.2  Condition of Improvements"));
+  {
+    const condText = (draft.narrative.conditionImprovements || "").trim();
+    if (condText) {
+      children.push(...prose(condText));
+    } else {
+      const defects = get(v, "defects_notes");
+      const other = get(v, "other_notes");
+      if (defects) children.push(...prose(defects));
+      if (other) children.push(...prose(other));
+    }
+    children.push(p(BOILERPLATE.conditionOfImprovements));
+  }
+  children.push(subHeading("9.3  Development Potential"));
   children.push(p(BOILERPLATE.developmentPotential));
   push(children, factsTable(draft, ["other_notes", "defects_notes", "overall_site_cond"]));
 

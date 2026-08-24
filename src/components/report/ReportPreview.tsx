@@ -1211,7 +1211,11 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               <Para>{BOILERPLATE.encroachments}</Para>
             </Sub>
             <Sub title="9.2  Condition of Improvements">
-              <Prose text={get(v, "defects_notes") || get(v, "other_notes") || ""} />
+              {draft.narrative.conditionImprovements?.trim() ? (
+                <Prose text={draft.narrative.conditionImprovements} />
+              ) : (
+                <Prose text={get(v, "defects_notes") || get(v, "other_notes") || ""} />
+              )}
               <Para>
                 Our assessment of the condition of the improvements was based on visual
                 inspection. No liability is assumed for the soundness of the structure

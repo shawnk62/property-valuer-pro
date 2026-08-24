@@ -24,6 +24,7 @@ function emptyNarrative(): ReportNarrative {
     servicesAmenities: "",
     improvements: "",
     accommodation: "",
+    conditionImprovements: "",
     remarks: "",
   };
 }
@@ -38,6 +39,8 @@ function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): R
       typeof raw.servicesAmenities === "string" ? raw.servicesAmenities : "",
     improvements: typeof raw.improvements === "string" ? raw.improvements : "",
     accommodation: typeof raw.accommodation === "string" ? raw.accommodation : "",
+    conditionImprovements:
+      typeof raw.conditionImprovements === "string" ? raw.conditionImprovements : "",
     remarks: typeof raw.remarks === "string" ? raw.remarks : "",
   };
 }

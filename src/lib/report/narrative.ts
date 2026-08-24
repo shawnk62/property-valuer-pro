@@ -231,6 +231,80 @@ function buildServicesAmenities(values: InspectionValues): string {
   ]);
 }
 
+function buildConditionImprovements(values: InspectionValues): string {
+  const overall = v(values, "overall_cond");
+  const site = v(values, "overall_site_cond");
+  const defects = v(values, "defects_notes");
+  const other = v(values, "other_notes");
+  const kitNotes = v(values, "kit_overall_notes");
+  const bathNotes = v(values, "bath_overall_notes");
+
+  // Collect component condition ratings (key ends with _cond)
+  const componentConds: { label: string; cond: string }[] = [];
+  for (const [key, raw] of Object.entries(values)) {
+    if (!/_cond$/i.test(key)) continue;
+    if (key === "overall_cond" || key === "overall_site_cond") continue;
+    const cond = displayValue(raw);
+    if (!cond || cond === "Select" || cond === "—") continue;
+    // Prefer a readable label from the key prefix
+    const base = key.replace(/_cond$/i, "").replace(/_/g, " ");
+    componentConds.push({ label: base, cond });
+  }
+
+  // Group by rating
+  const byRating = new Map<string, string[]>();
+  for (const c of componentConds) {
+    const list = byRating.get(c.cond) ?? [];
+    list.push(c.label);
+    byRating.set(c.cond, list);
+  }
+
+  const parts: string[] = [];
+  if (overall) {
+    parts.push(
+      sentence([
+        "The improvements are assessed to be in",
+        overall.toLowerCase(),
+        "condition overall based on a visual inspection",
+      ]),
+    );
+  } else if (byRating.size) {
+    parts.push(
+      sentence([
+        "Based on a visual inspection, the condition of the improvements varies by component as recorded below",
+      ]),
+    );
+  }
+
+  if (byRating.size) {
+    const ratingSentences: string[] = [];
+    for (const [rating, items] of byRating) {
+      if (items.length <= 4) {
+        ratingSentences.push(
+          `${joinProseList(items)} assessed as ${rating.toLowerCase()}`,
+        );
+      } else {
+        ratingSentences.push(
+          `a number of components (including ${items.slice(0, 3).join(", ")}) assessed as ${rating.toLowerCase()}`,
+        );
+      }
+    }
+    if (ratingSentences.length) {
+      parts.push(sentence([ratingSentences.join("; ")]));
+    }
+  }
+
+  if (site) {
+    parts.push(sentence(["The site is assessed as being in", site.toLowerCase(), "condition"]));
+  }
+
+  for (const note of [kitNotes, bathNotes, defects, other]) {
+    if (note) parts.push(sentence([note]));
+  }
+
+  return parts.filter(Boolean).join(" ");
+}
+
 export function generateNarrative(values: InspectionValues): ReportNarrative {
   return {
     brief: buildBrief(values) ||
@@ -239,6 +313,7 @@ export function generateNarrative(values: InspectionValues): ReportNarrative {
     servicesAmenities: buildServicesAmenities(values),
     improvements: buildImprovements(values),
     accommodation: buildAccommodation(values),
+    conditionImprovements: buildConditionImprovements(values),
     remarks: buildRemarks(values),
   };
 }

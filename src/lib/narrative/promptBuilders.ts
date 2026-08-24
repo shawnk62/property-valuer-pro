@@ -89,6 +89,65 @@ function siteServicesAnswers(values: InspectionValues): string {
   return lines.length ? lines.join("\n") : "No specific details recorded.";
 }
 
+/**
+ * Component condition ratings + notes for §9.2 Condition of Improvements.
+ * Prefer keys ending in _cond / _notes and overall/defects fields.
+ */
+function conditionOfImprovementsAnswers(values: InspectionValues): string {
+  const sectionIds = ["3", "special_design", "3A", "4", "4A", "5", "6"];
+  const relevant = sections.filter((s) => sectionIds.includes(s.id));
+  const conditionLines: string[] = [];
+  const noteLines: string[] = [];
+  const otherLines: string[] = [];
+
+  for (const section of relevant) {
+    for (const field of section.fields as InspectionField[]) {
+      for (const key of fieldKeys(field)) {
+        const label =
+          field.type === "single_row"
+            ? labelForField(key)
+            : key === field.name
+              ? field.label
+              : labelForField(key);
+        const line = formatValueLine(label, values[key]);
+        if (!line) continue;
+        if (/_cond$/i.test(key) || /condition/i.test(label)) {
+          conditionLines.push(line);
+        } else if (
+          /_notes$/i.test(key) ||
+          /notes/i.test(label) ||
+          key === "defects_notes" ||
+          key === "other_notes" ||
+          key === "kit_overall_notes" ||
+          key === "bath_overall_notes" ||
+          key === "design_features_notes"
+        ) {
+          noteLines.push(line);
+        } else if (
+          key === "overall_cond" ||
+          key === "overall_site_cond" ||
+          key === "imp_quality" ||
+          key === "imp_effage"
+        ) {
+          otherLines.push(line);
+        }
+      }
+    }
+  }
+
+  const blocks: string[] = [];
+  if (otherLines.length) {
+    blocks.push("Overall ratings:\n" + otherLines.join("\n"));
+  }
+  if (conditionLines.length) {
+    blocks.push("Component condition ratings:\n" + conditionLines.join("\n"));
+  }
+  if (noteLines.length) {
+    blocks.push("Section notes / defects:\n" + noteLines.join("\n"));
+  }
+  return blocks.length ? blocks.join("\n\n") : "No specific details recorded.";
+}
+
 const BASE_RULES = `
 You are writing formal valuation narrative for a Queensland Registered Valuer's report.
 Write in plain, professional English suitable for inclusion in a valuation report.
@@ -244,6 +303,23 @@ Inspection data:
 ${sectionAnswers(values, ["3", "3A", "5"])}
 
 Cover rooms/layout as recorded, floor coverings, climate control, kitchen/bathroom notes if present, car accommodation, and ancillary items. Do not treat verandahs or outdoor areas as primary rooms. Omit empty topics.`,
+      };
+    case "conditionImprovements":
+      return {
+        system: BASE_RULES + brevityHint(type),
+        prompt: `Write section 9.2 "Condition of Improvements" for a ${type} valuation report (QLD residential / Peterson style).
+
+Inspection data (overall ratings, component condition dropdowns, and section notes):
+${conditionOfImprovementsAnswers(values)}
+
+Requirements:
+- One or two short professional paragraphs (Stamp Duty: prefer one tight paragraph).
+- Synthesize the recorded condition ratings across improvement components (external walls, roof, foundations, flooring, internal linings, kitchen, bathrooms, services, parking, ancillary, etc.) into a coherent overall condition description.
+- Weave in any section notes and significant defects notes where recorded; do not invent defects.
+- If an overall condition of improvements is recorded, reflect it; do not contradict component ratings without cause.
+- Do not list every component mechanically if many share the same rating — group them (e.g. "generally in good condition with …").
+- Do not invent engineering conclusions or structural soundness beyond visual inspection language already implied by the data.
+- Plain valuation English; no marketing language.`,
       };
     case "remarks":
       return {

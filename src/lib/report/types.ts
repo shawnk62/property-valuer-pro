@@ -119,6 +119,8 @@ export interface ReportNarrative {
   servicesAmenities: string;
   improvements: string;
   accommodation: string;
+  /** §9.2 Condition of Improvements (AI or template from component conditions + notes). */
+  conditionImprovements: string;
   remarks: string;
 }
 

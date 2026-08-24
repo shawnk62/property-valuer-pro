@@ -33,6 +33,11 @@ const BLOCKS: { key: keyof ReportNarrative; label: string; hint: string }[] = [
     label: "Accommodation narrative",
     hint: "Section 8 — accommodation, car accommodation and general.",
   },
+  {
+    key: "conditionImprovements",
+    label: "Condition of improvements (9.2)",
+    hint: "Built from component condition dropdowns and section notes. Saved or edited text is not overwritten by AI.",
+  },
   { key: "remarks", label: "Remarks", hint: "Section 13." },
 ];
 
