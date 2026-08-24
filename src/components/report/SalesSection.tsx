@@ -648,15 +648,21 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       const heuristicExtracts = parseCmaTextHeuristic(trimmed);
       let extracts: CmaSaleExtract[] = heuristicExtracts;
 
-      // Only call AI when heuristic found nothing. Partial results are preferred
-      // over AI merges that previously created duplicate / mangled addresses.
-      const needsAiEnrichment = isAiConfigured() && heuristicExtracts.length === 0;
+      // Cotality cards are numbered "N Sold Price $…". If the heuristic recovered
+      // fewer sales than Sold Price markers, ask AI to fill the gaps (no hard cap).
+      const soldPriceMarkers = [
+        ...trimmed.matchAll(/\bSold\s*Price\b/gi),
+      ].length;
+      const needsAiEnrichment =
+        isAiConfigured() &&
+        (heuristicExtracts.length === 0 ||
+          (soldPriceMarkers > 0 && heuristicExtracts.length < soldPriceMarkers));
 
       if (needsAiEnrichment) {
         setStatus(
           heuristicExtracts.length === 0
             ? "Heuristic found no sales — trying AI on text…"
-            : `Heuristic found ${heuristicExtracts.length} — enriching with AI for missing comps…`,
+            : `Heuristic found ${heuristicExtracts.length} of ~${soldPriceMarkers || "?"} — enriching with AI for missing comps…`,
         );
         const settings = loadAiSettings();
         const result = await extractComparableSales({

@@ -23,7 +23,7 @@ export interface CmaSaleExtract {
   comparisonNotes?: string | null;
 }
 
-/** Soft guidance only — grid and import accept more. */
+/** Soft UI guidance only — import and grid accept an unlimited number of sales. */
 export const RECOMMENDED_MAX_GRID_SALES = 12;
 
 const STREET =
@@ -155,7 +155,11 @@ function streetKey(addr: string): string {
     ),
   );
   if (!m) return addressKey(a);
-  return `${m[1]}${m[2].replace(/[^A-Z0-9]/g, "")}${m[3]}`.replace(/\s+/g, "");
+  const post = a.match(/\b(QLD|QUEENSLAND|NSW|VIC|SA|WA|TAS|NT|ACT)\s*(\d{4})\b/);
+  const base = `${m[1]}${m[2].replace(/[^A-Z0-9]/g, "")}${m[3]}`.replace(/\s+/g, "");
+  // Include postcode when present so two different suburbs with the same
+  // street number/name are not collapsed into one comparable.
+  return post ? `${base}|${post[2]}` : base;
 }
 
 export function cmaExtractsToSales(rows: CmaSaleExtract[]): ComparableSale[] {
@@ -341,6 +345,68 @@ export function parseCmaTextHeuristic(text: string): CmaSaleExtract[] {
           };
     byKey.set(key, winner);
   };
+
+
+  // ---- Pass 0: Cotality numbered cards ("1 Sold Price $…") — unlimited count ----
+  // Detail pages list every sale as "N Sold Price $X" then the address block.
+  // This is the most reliable way to recover 6, 9, 12+ comps without a hard cap.
+  {
+    const numberedRe =
+      /(?:^|\n)\s*(\d{1,3})\s+Sold\s*Price\s*[:\s]*(\$\s*[\d,]+(?:\.\d{2})?)/gi;
+    const starts: Array<{ index: number; price: string }> = [];
+    for (const m of cleaned.matchAll(numberedRe)) {
+      starts.push({
+        index: m.index ?? 0,
+        price: m[2]!.replace(/\s+/g, ""),
+      });
+    }
+    for (let i = 0; i < starts.length; i++) {
+      const start = starts[i]!.index;
+      const end =
+        i + 1 < starts.length ? starts[i + 1]!.index : cleaned.length;
+      // Generous block so long comment paragraphs are included; next "N Sold Price"
+      // still bounds the slice.
+      const block = cleaned.slice(start, end);
+      const price = starts[i]!.price;
+
+      // Prefer a full QLD address inside the card
+      const addrMatch = block.match(
+        /((?:UNIT\s+\d+[A-Z]?\s*[\/,]?\s*)?(?:LOT\s+\d+\s+)?(?:\d+[A-Z]?\s*\/\s*)?\d+[A-Z]?\s+[A-Z][A-Za-z0-9'./\s-]+?\b(?:STREET|ST|ROAD|RD|CRESCENT|CRES|CR|COURT|CT|AVENUE|AVE|DRIVE|DR|PLACE|PL|WAY|CLOSE|CL|TERRACE|TCE|PARADE|PDE|BOULEVARD|BLVD|LANE|LN|CIRCUIT|CCT|HIGHWAY|HWY|ESPLANADE|ESP|GROVE|GR)\b\s+[A-Z][A-Za-z0-9'\s-]+?\s+(?:QLD|QUEENSLAND)\s*\d{4})/i,
+      );
+      let address = addrMatch ? normaliseAddress(addrMatch[1]!) : "";
+      if (!address) {
+        // Fallback: first line after Sold Price that looks like "12 SOME STREET …"
+        const lines = block.split(/\n/).map((l) => l.trim()).filter(Boolean);
+        for (const line of lines) {
+          if (/sold\s*price/i.test(line)) continue;
+          if (
+            /\d+[A-Z]?\s+[A-Z].+\b(?:STREET|ST|ROAD|RD|CRESCENT|CRES|CR|COURT|CT|AVENUE|AVE|DRIVE|DR|PLACE|PL|WAY|CLOSE|CL|TERRACE|TCE)\b/i.test(
+              line,
+            )
+          ) {
+            address = normaliseAddress(line);
+            break;
+          }
+        }
+      }
+      if (!address) {
+        // Still keep the sale by price so it is not silently dropped
+        merge({
+          address: `Comparable (Sold Price ${price})`,
+          salePrice: price,
+        });
+        const facts = extractFactsFromBlock(`Comparable (Sold Price ${price})`, block);
+        merge({ ...facts, salePrice: facts.salePrice || price });
+        continue;
+      }
+      const facts = extractFactsFromBlock(address, block);
+      merge({
+        ...facts,
+        address,
+        salePrice: facts.salePrice || price,
+      });
+    }
+  }
 
   const NAME = String.raw`[A-Z][A-Za-z0-9'./-]*(?:\s+[A-Z][A-Za-z0-9'./-]*){0,5}?`;
   const SUBURB = String.raw`[A-Z][A-Za-z0-9'-]*(?:\s+[A-Z][A-Za-z0-9'-]*){0,3}?`;
