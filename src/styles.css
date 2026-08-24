@@ -255,6 +255,8 @@
 .cover-photo-frame {
   margin-left: auto;
   margin-right: auto;
+  /* Lift photo only (~5 lines); title block spacing unchanged */
+  margin-bottom: 5em;
   padding: 0.85rem;
   background: #000;
   width: 100%;
@@ -429,7 +431,11 @@
     padding-bottom: 0 !important;
   }
   .cover-photo-frame {
-    margin: 0 auto !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    margin-top: 0 !important;
+    /* Lift photo only by ~5 lines of title text; do not move title */
+    margin-bottom: 5em !important;
     padding: 10pt !important;
     background: #000 !important;
     width: 100% !important;
