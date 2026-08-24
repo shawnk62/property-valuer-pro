@@ -15,6 +15,7 @@ import { EditLockBanner } from "@/components/EditLockBanner";
 import { useEditLock } from "@/hooks/useEditLock";
 import { useReportDraft } from "@/hooks/useReportDraft";
 import { inspectionStore } from "@/lib/inspection/storage";
+import { isAppliedSignature, SignaturePad } from "@/components/SignaturePad";
 import { get } from "@/lib/report/schema";
 
 const TABS = [
@@ -22,6 +23,7 @@ const TABS = [
   { id: "narrative", label: "Narrative" },
   { id: "photos", label: "Photos" },
   { id: "sales", label: "Comparable sales" },
+  { id: "signature", label: "Signature" },
   { id: "preview", label: "Preview" },
 ] as const;
 
@@ -31,7 +33,9 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
   const navigate = useNavigate();
   const lock = useEditLock(inspectionId);
   const controller = useReportDraft(inspectionId, { readOnly: !lock.canEdit });
-  const { draft, dirty, savedAt, save, loaded, loadError } = controller;
+  const { draft, dirty, savedAt, save, loaded, loadError, setValue } = controller;
+  const reportSigned = isAppliedSignature(draft.values["sign_sig"]);
+  const editsLocked = !lock.canEdit || reportSigned;
   const [tab, setTab] = useState<TabId>("subject");
   const [downloading, setDownloading] = useState(false);
   const [printing, setPrinting] = useState(false);
@@ -262,7 +266,9 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
 
       <main
         className={`${tab === "preview" ? "bg-muted/50 py-8" : "py-8"}${
-          !lock.canEdit ? " pointer-events-none select-none opacity-70" : ""
+          !lock.canEdit || (reportSigned && tab !== "signature" && tab !== "preview")
+            ? " pointer-events-none select-none opacity-70"
+            : ""
         }`}
       >
         <div
@@ -274,6 +280,30 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
           {tab === "narrative" ? <NarrativeSection controller={controller} /> : null}
           {tab === "photos" ? <PhotosSection controller={controller} /> : null}
           {tab === "sales" ? <SalesSection controller={controller} /> : null}
+          {tab === "signature" ? (
+            <div className="mx-auto max-w-xl space-y-4 rounded-lg border border-border bg-card p-5">
+              <h2 className="text-lg font-semibold text-foreground">Final signature</h2>
+              <p className="text-sm text-muted-foreground">
+                Apply your signature to lock this report. Remove the signature to unlock and
+                edit again. Same signature is used on the inspection form sign-off.
+              </p>
+              <SignaturePad
+                value={
+                  typeof draft.values["sign_sig"] === "string"
+                    ? draft.values["sign_sig"]
+                    : ""
+                }
+                onChange={(v) => {
+                  setValue("sign_sig", v);
+                  if (v) {
+                    toast.success("Signature applied — report locked");
+                  } else {
+                    toast.success("Signature removed — report unlocked");
+                  }
+                }}
+              />
+            </div>
+          ) : null}
           {tab === "preview" ? <ReportPreview draft={draft} /> : null}
         </div>
       </main>

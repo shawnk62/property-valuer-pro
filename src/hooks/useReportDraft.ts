@@ -364,8 +364,24 @@ export function useReportDraft(
         return next;
       });
       setDirty(true);
+      // Signature lives on the inspection form — persist form_values so lock
+      // state is shared between form and report across devices.
+      if (name === "sign_sig") {
+        void (async () => {
+          try {
+            const rec = await inspectionStore.get(inspectionId);
+            const base = rec?.values ?? {};
+            await inspectionStore.save(inspectionId, {
+              ...base,
+              sign_sig: typeof value === "string" ? value : "",
+            });
+          } catch (err) {
+            console.error("sign_sig form save failed", err);
+          }
+        })();
+      }
     },
-    [scheduleCloudSave],
+    [scheduleCloudSave, inspectionId],
   );
 
   const setMeta = useCallback(

@@ -13,6 +13,7 @@ import { isFilled } from "@/lib/inspection/validation";
 import type { InspectionField, InspectionValues } from "@/lib/inspection/types";
 import { cn } from "@/lib/utils";
 import { PROP_ASSIGNMENT_OPTIONS } from "@/lib/inspection/schema";
+import { isAppliedSignature, SignaturePad } from "@/components/SignaturePad";
 
 interface Props {
   field: InspectionField;
@@ -32,6 +33,27 @@ function asArray(v: InspectionValues[string]): string[] {
 export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
   const required = REQUIRED_SET.has(field.name);
   const invalid = showErrors && required && !isFilled(values[field.name]);
+
+  // Signature pad — end-of-form sign-off; locks the report when applied
+  if (field.name === "sign_sig") {
+    const sig = asString(values[field.name]);
+    return (
+      <div className="space-y-2">
+        <FieldLabel htmlFor={field.name} required={required}>
+          {field.label}
+        </FieldLabel>
+        <SignaturePad
+          value={sig}
+          onChange={(v) => onChange(field.name, v)}
+        />
+        {isAppliedSignature(sig) ? (
+          <p className="text-xs font-medium text-primary">
+            Report locked while this signature is applied.
+          </p>
+        ) : null}
+      </div>
+    );
+  }
 
   // text + textarea (long notes / place-based plans)
   if (field.type === "text" || field.type === "textarea") {

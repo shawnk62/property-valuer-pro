@@ -1369,7 +1369,15 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           </>
         )}
         <div className="mt-8">
-          <div className="h-14 w-56 border-b border-[var(--page-foreground)]/70" />
+          {typeof v["sign_sig"] === "string" && v["sign_sig"].startsWith("data:image") ? (
+            <img
+              src={v["sign_sig"]}
+              alt="Valuer signature"
+              className="mb-2 h-16 w-auto max-w-xs object-contain"
+            />
+          ) : (
+            <div className="h-14 w-56 border-b border-[var(--page-foreground)]/70" />
+          )}
           <p className="mt-2 font-semibold">{m.valuerName || get(v, "insp_valuer")}</p>
           {get(v, "sign_member") ? (
             <p className="text-sm">{get(v, "sign_member")}</p>

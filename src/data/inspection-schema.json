@@ -3961,7 +3961,7 @@
         },
         {
           "name": "sign_sig",
-          "label": "Signature",
+          "label": "Signature (locks report when applied)",
           "type": "text",
           "multiline": false
         },
