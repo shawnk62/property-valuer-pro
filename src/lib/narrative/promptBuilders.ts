@@ -167,7 +167,9 @@ ${sectionAnswers(values, ["2"])}
 
 Requirements:
 - One short professional paragraph (typically 1–3 sentences).
-- State which usual urban services are connected or available from the recorded answers only (water, sewerage, electricity, gas, stormwater, telephone, internet as recorded).
+- State which services are connected using the recorded TYPE values as plain phrases (e.g. "town water", "sewer", "mains power only", "natural gas").
+- Do NOT write category labels with the type in parentheses (never "water (town water)" or "electricity (mains power only)"). Prefer "connected to town water, sewer, and mains power only".
+- Omit services marked Nil or Not applicable.
 - Do not invent connections, capacities, or providers not in the data.
 - If little is recorded, say that the property is understood to be connected to usual urban services insofar as disclosed, without fabricating detail.
 - Plain valuation English; no marketing language.`,

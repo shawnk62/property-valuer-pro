@@ -189,38 +189,46 @@ function buildLocation(values: InspectionValues): string {
   return parts.filter(Boolean).join(" ");
 }
 
-function buildServicesAmenities(values: InspectionValues): string {
-  const parts: string[] = [];
-  const water = v(values, "svc_water_type");
-  const sewer = v(values, "svc_sewer_type");
-  const elec = v(values, "svc_elec_type");
-  const gas = v(values, "svc_gas_type");
-  const storm = v(values, "svc_storm_type");
-  const tel = v(values, "svc_tel_type");
-  const net = v(values, "svc_internet_type");
-
-  const listed = [
-    water && `water (${water.toLowerCase()})`,
-    sewer && `sewerage (${sewer.toLowerCase()})`,
-    elec && `electricity (${elec.toLowerCase()})`,
-    gas && `gas (${gas.toLowerCase()})`,
-    storm && `stormwater drainage (${storm.toLowerCase()})`,
-    tel && `telephone (${tel.toLowerCase()})`,
-    net && `internet (${net.toLowerCase()})`,
-  ].filter(Boolean);
-
-  if (listed.length) {
-    parts.push(
-      sentence([
-        "The property is understood to be connected to",
-        listed.slice(0, -1).join(", ") +
-          (listed.length > 1 ? ` and ${listed[listed.length - 1]}` : listed[0]),
-        "as recorded at inspection",
-      ]),
-    );
+/** Service type as plain prose; skip empty / N/A / Nil. No parenthetical labels. */
+function serviceTypePhrase(raw: string, kind?: "storm" | "tel"): string | false {
+  const t = raw.trim();
+  if (!t) return false;
+  if (/^not applicable$/i.test(t) || /^nil$/i.test(t)) return false;
+  const lower = t.toLowerCase();
+  if (kind === "storm") {
+    if (/appears adequate/i.test(t)) return "stormwater drainage that appears adequate";
+    if (/appears inadequate/i.test(t)) return "stormwater drainage that appears inadequate";
+    return `stormwater drainage that ${lower}`;
   }
+  if (kind === "tel" && /^landline$/i.test(t)) return "landline telephone";
+  return lower;
+}
 
-  return parts.filter(Boolean).join(" ");
+function joinProseList(items: string[]): string {
+  if (items.length === 0) return "";
+  if (items.length === 1) return items[0]!;
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+}
+
+function buildServicesAmenities(values: InspectionValues): string {
+  const listed = [
+    serviceTypePhrase(v(values, "svc_water_type")),
+    serviceTypePhrase(v(values, "svc_sewer_type")),
+    serviceTypePhrase(v(values, "svc_elec_type")),
+    serviceTypePhrase(v(values, "svc_gas_type")),
+    serviceTypePhrase(v(values, "svc_storm_type"), "storm"),
+    serviceTypePhrase(v(values, "svc_tel_type"), "tel"),
+    serviceTypePhrase(v(values, "svc_internet_type")),
+  ].filter((x): x is string => Boolean(x));
+
+  if (!listed.length) return "";
+
+  return sentence([
+    "The property is understood to be connected to",
+    joinProseList(listed),
+    "as recorded at inspection",
+  ]);
 }
 
 export function generateNarrative(values: InspectionValues): ReportNarrative {
