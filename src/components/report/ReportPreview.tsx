@@ -543,11 +543,11 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               VALUATION STATEMENT
             </p>
             {reportType.valuationDisplay === "see-remarks" ? (
-              <p className="mt-3 font-serif text-xl font-bold uppercase tracking-wide">
+              <p className="mt-3 text-xl font-bold uppercase tracking-wide">
                 See remarks in this report
               </p>
             ) : (
-              <p className="mt-3 font-serif text-2xl font-bold">
+              <p className="mt-3 text-2xl font-bold">
                 {m.valueAmount ? `$${formatCurrencyDisplay(m.valueAmount)}` : "—"}
               </p>
             )}
@@ -593,14 +593,14 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
           <div className="mt-8 border-y-2 border-[var(--page-foreground)]/80 py-6 text-center">
             {addressLine ? (
-              <p className="font-serif text-xl font-bold uppercase tracking-wide">
+              <p className="text-xl font-bold uppercase tracking-wide">
                 {addressLine}
               </p>
             ) : null}
             {get(v, "prop_lotplan") ? (
               <p className="mt-1 text-sm">{get(v, "prop_lotplan")}</p>
             ) : null}
-            <p className="mt-5 font-serif text-2xl font-bold">
+            <p className="mt-5 text-2xl font-bold">
               Market Value: {m.valueAmount ? `$${formatCurrencyDisplay(m.valueAmount)}` : "—"}
             </p>
             {m.valueDate ? (
@@ -1287,7 +1287,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               {m.valueDate || "the date of valuation"} are set out in the Remarks section of
               this report.
             </Para>
-            <p className="py-3 text-center font-serif text-lg font-bold uppercase tracking-wide">
+            <p className="py-3 text-center text-lg font-bold uppercase tracking-wide">
               See remarks in this report
             </p>
           </>
@@ -1300,7 +1300,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               {m.valueDate || "the date of valuation"} is:
             </Para>
             {m.valueAmount ? (
-              <p className="py-3 text-center font-serif text-xl font-bold">
+              <p className="py-3 text-center text-xl font-bold">
                 ${formatCurrencyDisplay(m.valueAmount)}
               </p>
             ) : null}
