@@ -1,5 +1,5 @@
-import { sections } from "@/lib/inspection/schema";
-import type { InspectionValues } from "@/lib/inspection/types";
+import { fieldKeys, labelForField, sections } from "@/lib/inspection/schema";
+import type { InspectionField, InspectionValues } from "@/lib/inspection/types";
 
 export interface BlockPrompt {
   system: string;
@@ -23,17 +23,67 @@ function brevityHint(type: string): string {
   return "";
 }
 
+function formatValueLine(label: string, raw: unknown): string | null {
+  if (raw === undefined || raw === null) return null;
+  if (Array.isArray(raw)) {
+    if (raw.length === 0) return null;
+    return `${label}: ${raw.map(String).join(", ")}`;
+  }
+  if (typeof raw === "boolean") {
+    return raw ? `${label}: Yes` : null;
+  }
+  const s = String(raw).trim();
+  if (!s || s === "Select" || s === "—") return null;
+  return `${label}: ${s}`;
+}
+
+/**
+ * Collect filled answers for the given schema sections.
+ * Walks single_row children and checkbox_group keys (not only the parent name),
+ * so values like svc_water_type are included for AI prompts.
+ */
 function sectionAnswers(values: InspectionValues, sectionIds: string[]): string {
   const relevant = sections.filter((s) => sectionIds.includes(s.id));
   const lines: string[] = [];
   for (const section of relevant) {
-    for (const field of section.fields) {
-      const v = values[field.name];
-      if (v === undefined || v === null) continue;
-      if (Array.isArray(v) && v.length === 0) continue;
-      if (typeof v === "string" && v.trim() === "") continue;
-      const display = Array.isArray(v) ? v.join(", ") : String(v);
-      lines.push(`${field.label}: ${display}`);
+    for (const field of section.fields as InspectionField[]) {
+      for (const key of fieldKeys(field)) {
+        const label =
+          field.type === "single_row"
+            ? labelForField(key)
+            : key === field.name
+              ? field.label
+              : labelForField(key);
+        const line = formatValueLine(label, values[key]);
+        if (line) lines.push(line);
+      }
+    }
+  }
+  return lines.length ? lines.join("\n") : "No specific details recorded.";
+}
+
+/** Explicit site-services lines for §6.2 (always prefers *_type values). */
+function siteServicesAnswers(values: InspectionValues): string {
+  const keys = [
+    "svc_water_type",
+    "svc_sewer_type",
+    "svc_elec_type",
+    "svc_elec_3phase",
+    "svc_gas_type",
+    "svc_storm_type",
+    "svc_tel_type",
+    "svc_internet_type",
+  ] as const;
+  const lines: string[] = [];
+  for (const key of keys) {
+    const line = formatValueLine(labelForField(key), values[key]);
+    if (line) lines.push(line);
+  }
+  // Also include any other filled section-2 answers (topography, access, etc.)
+  const rest = sectionAnswers(values, ["2"]);
+  if (rest !== "No specific details recorded.") {
+    for (const line of rest.split("\n")) {
+      if (!lines.includes(line)) lines.push(line);
     }
   }
   return lines.length ? lines.join("\n") : "No specific details recorded.";
@@ -162,16 +212,17 @@ Requirements:
         system: BASE_RULES + brevityHint(type),
         prompt: `Write section 6.2 "Services/Amenities" for a ${type} valuation report (QLD residential).
 
-Inspection data (site services):
-${sectionAnswers(values, ["2"])}
+Inspection data (site services — use these TYPE values verbatim as the service names):
+${siteServicesAnswers(values)}
 
 Requirements:
 - One short professional paragraph (typically 1–3 sentences).
-- State which services are connected using the recorded TYPE values as plain phrases (e.g. "town water", "sewer", "mains power only", "natural gas").
-- Do NOT write category labels with the type in parentheses (never "water (town water)" or "electricity (mains power only)"). Prefer "connected to town water, sewer, and mains power only".
+- You MUST list each recorded service TYPE that is not Nil / Not applicable (e.g. if Water Supply — Type is "Town water", write "town water"; if Sewerage — Type is "Sewer", write "sewer"; if Electricity — Type is "Mains power only", write "mains power only").
+- Do NOT write category labels with the type in parentheses (never "water (town water)"). Prefer "The property is connected to town water, sewer, and mains power only".
+- Do NOT use generic wording such as "usual urban services" when any specific TYPE is recorded above.
 - Omit services marked Nil or Not applicable.
 - Do not invent connections, capacities, or providers not in the data.
-- If little is recorded, say that the property is understood to be connected to usual urban services insofar as disclosed, without fabricating detail.
+- Only if the inspection data section above is exactly "No specific details recorded." may you use a single generic sentence about usual urban services.
 - Plain valuation English; no marketing language.`,
       };
     case "improvements":
