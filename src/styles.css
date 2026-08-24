@@ -299,6 +299,10 @@
   margin: 0.2rem 0;
 }
 
+.report-print-page-footer {
+  display: none;
+}
+
 @media print {
   /* Report body: Arial for all report types */
   .report-sheet,
@@ -306,12 +310,16 @@
     font-family: Arial, Helvetica, sans-serif !important;
   }
 
+  /*
+   * Page numbers are drawn by the report (CSS), not by the browser print
+   * "Headers and footers" option. Turn that option OFF so the browser does
+   * not add URL / date / title. Our footer still shows the page number.
+   */
   @page {
     size: A4 portrait;
-    /* Room for page number only — no address / URL / firm strip */
-    margin: 12mm 12mm 16mm 12mm;
-
-    /* Suppress default margin-box text where the engine supports it */
+    margin: 12mm 12mm 18mm 12mm;
+  }
+  @page {
     @top-left { content: none; }
     @top-center { content: none; }
     @top-right { content: none; }
@@ -323,6 +331,29 @@
       font-size: 9pt;
       color: #333;
     }
+  }
+
+  /* Document-level page number — repeats on every printed page; independent of browser headers */
+  .report-print-page-footer {
+    display: block !important;
+    position: fixed !important;
+    bottom: 5mm !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 10mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: center !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 9pt !important;
+    line-height: 10mm !important;
+    color: #333 !important;
+    background: transparent !important;
+    border: none !important;
+    z-index: 10000 !important;
+  }
+  .report-print-page-footer::after {
+    content: counter(page) !important;
   }
 
   html,

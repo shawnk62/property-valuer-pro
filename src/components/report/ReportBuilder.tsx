@@ -104,6 +104,12 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
     const previousTitle = document.title;
     document.title = "\u00A0";
 
+    toast.message("Save as PDF", {
+      description:
+        "Turn OFF “Headers and footers” in the print dialog (that removes URL/date). Page numbers still print from the report footer.",
+      duration: 12000,
+    });
+
     const restore = () => {
       document.title = previousTitle;
       window.removeEventListener("afterprint", restore);
