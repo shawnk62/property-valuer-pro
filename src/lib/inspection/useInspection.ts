@@ -12,6 +12,8 @@ import type { InspectionRecord, InspectionValues } from "@/lib/inspection/types"
 const MIRRORED_FIELDS: Record<string, string> = {
   insp_valuer: "sign_name",
   insp_date: "sign_date",
+  /** Default instructing party to registered owner; user may overwrite. */
+  prop_owner: "instr_from_name",
 };
 
 function asText(v: InspectionValues[string]): string {
