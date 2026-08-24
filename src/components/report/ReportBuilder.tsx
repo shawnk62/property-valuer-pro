@@ -104,14 +104,33 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
     const previousTitle = document.title;
     document.title = "\u00A0";
 
+    // Inject a dedicated @page rule at print time (margin-box page numbers).
+    // Do not use position:fixed + counter(page) — that prints "0" in Chrome.
+    const pageStyle = document.createElement("style");
+    pageStyle.setAttribute("data-ppv-page-numbers", "1");
+    pageStyle.textContent = `
+      @page {
+        size: A4 portrait;
+        margin: 14mm 12mm 18mm 12mm;
+        @bottom-center {
+          content: counter(page);
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 10pt;
+          color: #000;
+        }
+      }
+    `;
+    document.head.appendChild(pageStyle);
+
     toast.message("Save as PDF", {
       description:
-        "Turn OFF “Headers and footers” in the print dialog (that removes URL/date). Page numbers still print from the report footer.",
+        "Turn OFF “Headers and footers” (removes URL/date). Page numbers are from the report @page footer, not that checkbox.",
       duration: 12000,
     });
 
     const restore = () => {
       document.title = previousTitle;
+      pageStyle.remove();
       window.removeEventListener("afterprint", restore);
       setPrinting(false);
     };

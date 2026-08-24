@@ -1495,8 +1495,6 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           />
         </section>
       ) : null}
-          {/* Page number only — print footer; hidden on screen */}
-      <div className="report-print-page-footer" aria-hidden="true" />
-</article>
+    </article>
   );
 }
