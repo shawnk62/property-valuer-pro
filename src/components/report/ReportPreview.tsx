@@ -74,6 +74,8 @@ const TOC_ENTRIES: TocEntry[] = [
     title: "Statutory Information",
     fields: [
       "prop_lga",
+      "prop_site_value",
+      "prop_sv_date",
       "prop_offered",
       "prop_offer_details",
       "prop_contract_price",
@@ -797,7 +799,12 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             </Sub>
             <Sub title="3.2  Statutory Valuation">
               <Para>
-                {[get(v, "prop_site_value"), get(v, "prop_sv_date")]
+                {[
+                  get(v, "prop_site_value")
+                    ? `$${formatCurrencyDisplay(get(v, "prop_site_value"))}`
+                    : "",
+                  get(v, "prop_sv_date"),
+                ]
                   .filter(Boolean)
                   .join(" — ") || "Site value as assessed by the local authority."}
               </Para>
@@ -808,6 +815,8 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             values={v}
             fields={[
               "prop_lga",
+              "prop_site_value",
+              "prop_sv_date",
               "prop_offered",
               "prop_offer_details",
               "prop_contract_price",

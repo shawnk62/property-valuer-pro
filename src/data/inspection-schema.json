@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "22",
+  "version": "23",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -149,6 +149,18 @@
           "label": "Local Government Area",
           "type": "text",
           "multiline": false
+        },
+        {
+          "name": "prop_site_value",
+          "label": "Statutory Valuation (Site Value) $",
+          "type": "text",
+          "multiline": false,
+          "placeholder": "e.g. 485000"
+        },
+        {
+          "name": "prop_sv_date",
+          "label": "Statutory Valuation Date",
+          "type": "date"
         },
         {
           "name": "prop_parish",

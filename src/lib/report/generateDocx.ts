@@ -175,7 +175,7 @@ type TocEntry = {
 const TOC_ENTRIES: TocEntry[] = [
   { id: "sec-instructions", number: "1.", title: "Instructions and Purpose", fields: ["prop_assignment", "prop_rights", "insp_date"] },
   { id: "sec-property", number: "2.", title: "Property Details", fields: ["prop_address", "prop_suburb", "prop_state", "prop_postcode", "prop_lotplan", "prop_legal", "prop_title", "prop_parish", "prop_lga", "prop_owner", "prop_occupant"] },
-  { id: "sec-statutory", number: "3.", title: "Statutory Information", fields: ["prop_lga", "prop_offered", "prop_offer_details", "prop_contract_price", "prop_contract_date", "prop_seller_owner", "prop_assistance", "prop_assistance_details"] },
+  { id: "sec-statutory", number: "3.", title: "Statutory Information", fields: ["prop_lga", "prop_site_value", "prop_sv_date", "prop_offered", "prop_offer_details", "prop_contract_price", "prop_contract_date", "prop_seller_owner", "prop_assistance", "prop_assistance_details"] },
   { id: "sec-planning", number: "4.", title: "Town Planning", fields: ["prop_zoning", "prop_zoning_desc", "prop_zoning_comp", "prop_hbu"] },
   { id: "sec-location", number: "5.", title: "Location", fields: ["nbhd_description", "nbhd_market_conditions", "nbhd_location", "nbhd_builtup", "nbhd_growth", "nbhd_values", "nbhd_demand", "nbhd_marketing", "nbhd_price_range", "nbhd_age", "offsite_road_type", "offsite_road_surface", "offsite_carriageway", "offsite_kerb", "offsite_footpaths"] },
   { id: "sec-site", number: "6.", title: "Site Details", fields: ["prop_sitearea", "prop_areaunit", "prop_dimensions", "prop_shape", "topo", "land", "va", "fence", "exc", "prop_view", "svc_water_type", "svc_sewer_type", "svc_elec_type", "svc_storm_type", "svc_tel_type", "prop_flood"] },
@@ -441,6 +441,8 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     children,
     factsTable(draft, [
       "prop_lga",
+      "prop_site_value",
+      "prop_sv_date",
       "prop_offered",
       "prop_offer_details",
       "prop_contract_price",
