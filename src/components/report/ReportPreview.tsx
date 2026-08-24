@@ -529,7 +529,20 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 },
                 { label: "LAND AREA", value: siteArea },
                 { label: "ZONING", value: get(v, "prop_zoning") },
-                { label: "INSTRUCTIONS", value: get(v, "prop_owner") },
+                { label: "INSTRUCTIONS", value: get(v, "instr_from_name") },
+                {
+                  label: "CONTACT DETAILS",
+                  value: [
+                    get(v, "instr_from_email")
+                      ? `Email: ${get(v, "instr_from_email")}`
+                      : "",
+                    get(v, "instr_from_mobile")
+                      ? `Mobile: ${get(v, "instr_from_mobile")}`
+                      : "",
+                  ]
+                    .filter(Boolean)
+                    .join("  ·  "),
+                },
                 {
                   label: "PURPOSE OF VALUATION",
                   value: reportType.defaultPurpose,
@@ -613,6 +626,20 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               values={v}
               fields={["prop_assignment", "prop_owner", "prop_rights"]}
               extra={[
+                { label: "Instructions", value: get(v, "instr_from_name") },
+                {
+                  label: "Contact details",
+                  value: [
+                    get(v, "instr_from_email")
+                      ? `Email: ${get(v, "instr_from_email")}`
+                      : "",
+                    get(v, "instr_from_mobile")
+                      ? `Mobile: ${get(v, "instr_from_mobile")}`
+                      : "",
+                  ]
+                    .filter(Boolean)
+                    .join("  ·  "),
+                },
                 { label: "Date of inspection", value: m.inspectionDate },
                 { label: "Date of valuation", value: m.valueDate },
                 { label: "Valuer", value: m.valuerName },
@@ -649,7 +676,21 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       {isPhilReportType(reportType.id) ? (
         <Section id="sec-instructions" number="1." title="Instructions and Purpose">
           <Sub title="1.1  Instructions">
-            <Para>{get(v, "prop_owner") || "As instructed."}</Para>
+            <Para>
+              {[
+                get(v, "instr_from_name")
+                  ? `This report prepared as per instructions from ${get(v, "instr_from_name")}.`
+                  : "",
+                get(v, "instr_from_email")
+                  ? `Email: ${get(v, "instr_from_email")}`
+                  : "",
+                get(v, "instr_from_mobile")
+                  ? `Mobile: ${get(v, "instr_from_mobile")}`
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" ") || "As instructed."}
+            </Para>
           </Sub>
           <Sub title="1.2  Purpose of Valuation">
             <Prose text={reportType.defaultPurpose} />
@@ -701,7 +742,21 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               <Para>{siteArea || "—"}</Para>
             </Sub>
             <Sub title="2.3  Registered Owner">
-              <Para>{get(v, "prop_owner") || "—"}</Para>
+              <Para>
+                {[
+                  get(v, "instr_from_name")
+                    ? `This report prepared as per instructions from ${get(v, "instr_from_name")}.`
+                    : "",
+                  get(v, "instr_from_email")
+                    ? `Email: ${get(v, "instr_from_email")}`
+                    : "",
+                  get(v, "instr_from_mobile")
+                    ? `Mobile: ${get(v, "instr_from_mobile")}`
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ") || "—"}
+              </Para>
             </Sub>
           </>
         ) : (

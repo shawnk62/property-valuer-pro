@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "21",
+  "version": "22",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -80,6 +80,27 @@
             "Partnership dissolution",
             "Partnership buy-out"
           ]
+        },
+        {
+          "name": "instr_from_name",
+          "label": "This report prepared as per instructions from (name)",
+          "type": "text",
+          "multiline": false,
+          "placeholder": "Client / instructing party full name"
+        },
+        {
+          "name": "instr_from_email",
+          "label": "Instructing party email",
+          "type": "text",
+          "multiline": false,
+          "placeholder": "name@example.com"
+        },
+        {
+          "name": "instr_from_mobile",
+          "label": "Instructing party mobile",
+          "type": "text",
+          "multiline": false,
+          "placeholder": "04xx xxx xxx"
         },
         {
           "name": "prop_address",

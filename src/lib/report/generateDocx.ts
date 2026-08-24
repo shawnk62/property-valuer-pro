@@ -341,6 +341,16 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
       draft,
       ["prop_assignment", "prop_owner", "prop_rights"],
       [
+        { label: "Instructions", value: get(v, "instr_from_name") },
+        {
+          label: "Contact details",
+          value: [
+            get(v, "instr_from_email") ? `Email: ${get(v, "instr_from_email")}` : "",
+            get(v, "instr_from_mobile") ? `Mobile: ${get(v, "instr_from_mobile")}` : "",
+          ]
+            .filter(Boolean)
+            .join("  ·  "),
+        },
         { label: "Date of inspection", value: m.inspectionDate },
         { label: "Date of valuation", value: m.valueDate },
         { label: "Valuer", value: m.valuerName },
