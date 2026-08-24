@@ -203,6 +203,83 @@
   color: var(--phil-green, #0a6b3c);
 }
 
+
+/* ---- Photo cover page (all report types) ---- */
+.cover-photo-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.cover-letterhead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  text-align: left;
+}
+.cover-logo {
+  height: 5.5rem;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.cover-firm-block {
+  text-align: right;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  color: #0a6b3c;
+}
+.cover-firm-title {
+  font-weight: 700;
+  font-size: 0.8rem;
+  margin-bottom: 0.15rem;
+}
+.cover-firm-email {
+  font-weight: 600;
+}
+.cover-firm-gap {
+  margin-top: 0.35rem;
+}
+.cover-photo-frame {
+  margin-top: 1.25rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0.65rem;
+  background: #000;
+  width: 100%;
+  max-width: 34rem;
+  box-sizing: border-box;
+}
+.cover-front-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 22rem;
+  object-fit: contain;
+  background: #000;
+}
+.cover-photo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 14rem;
+  color: #999;
+  background: #111;
+  font-size: 0.875rem;
+}
+.cover-title-block {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1.35;
+  text-transform: none;
+}
+.cover-title-block p {
+  margin: 0.15rem 0;
+}
+
 @media print {
   @page {
     size: A4 portrait;
@@ -256,6 +333,80 @@
     break-after: page !important;
     page-break-after: always !important;
   }
+
+
+  /* Unified photo cover — all report types */
+  #report-cover.cover-photo-page {
+    break-after: page !important;
+    page-break-after: always !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 250mm !important;
+  }
+  .cover-letterhead {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 8pt !important;
+  }
+  .cover-logo {
+    height: 72px !important;
+    max-height: 72px !important;
+    width: auto !important;
+  }
+  .cover-firm-block {
+    text-align: right !important;
+    font-size: 8pt !important;
+    line-height: 1.3 !important;
+    color: #0a6b3c !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  .cover-firm-title {
+    font-weight: 700 !important;
+    font-size: 9.5pt !important;
+  }
+  .cover-firm-email {
+    font-weight: 600 !important;
+  }
+  .cover-photo-frame {
+    margin-top: 14pt !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 8pt !important;
+    background: #000 !important;
+    width: 100% !important;
+    max-width: 155mm !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  .cover-front-photo {
+    display: block !important;
+    width: 100% !important;
+    max-height: 115mm !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+  .cover-photo-placeholder {
+    min-height: 80mm !important;
+    color: #ccc !important;
+  }
+  .cover-title-block {
+    margin-top: 16pt !important;
+    text-align: center !important;
+    font-family: "Times New Roman", Times, serif !important;
+    font-weight: 700 !important;
+    font-size: 14pt !important;
+    line-height: 1.35 !important;
+  }
+  .cover-title-block p {
+    margin: 2pt 0 !important;
+  }
+  .report-cover-summary {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
 
 
   /* Stamp Duty – Phil only: summary page is a sibling after #report-cover */

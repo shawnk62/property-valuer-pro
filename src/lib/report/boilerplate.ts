@@ -5,6 +5,21 @@
  */
 
 export const BOILERPLATE = {
+  /** Letterhead on the photo cover page (matches issued PDF covers). */
+  firmLetterhead: {
+    tradingAs: "Real Estate Valuers",
+    company: "Peterson Property Valuations Pty Ltd",
+    acn: "603 599 604",
+    abn: "78 603 599 604",
+    defaultValuer: "Murray Peterson, AVI, Certified Practicing Valuer",
+    defaultRegistration: "Registered Valuer No. 3799",
+    postal: "Postal Address: PO Box 353, Wilston, QLD, 4051",
+    phone: "Phone: 07 3355 1311",
+    mobile: "Mobile: 0403 344 425",
+    web: "www.petersonpropertyvaluations.com.au",
+    email: "Email: petersonpropertyvaluers@gmail.com",
+  },
+
   summaryDisclaimer:
     "This valuation summary should be read in conjunction with our detailed valuation report and should not be relied upon in isolation for finance or investment purposes. This valuation is for the use of the party to whom it is addressed and for no other purpose. No responsibility is accepted to any third party who may use or rely on the whole or any part of the content of this valuation.",
 

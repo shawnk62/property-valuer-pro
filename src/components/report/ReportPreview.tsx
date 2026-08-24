@@ -346,6 +346,43 @@ function InlineMap({
   );
 }
 
+
+/** Cover title date: "6th of AUGUST 2026" */
+function formatCoverDate(raw: string | undefined | null): string {
+  const s = String(raw ?? "").trim();
+  if (!s) return "";
+  if (/\d{1,2}(st|nd|rd|th)\s+of\s+/i.test(s)) {
+    return s.replace(/\bof\b/i, "of");
+  }
+  const ord = (n: number) => {
+    const j = n % 10;
+    const k = n % 100;
+    if (j === 1 && k !== 11) return `${n}st`;
+    if (j === 2 && k !== 12) return `${n}nd`;
+    if (j === 3 && k !== 13) return `${n}rd`;
+    return `${n}th`;
+  };
+  const months = [
+    "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+    "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER",
+  ];
+  const dmy = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if (dmy) {
+    const day = parseInt(dmy[1]!, 10);
+    const month = parseInt(dmy[2]!, 10) - 1;
+    let year = parseInt(dmy[3]!, 10);
+    if (year < 100) year += 2000;
+    if (month >= 0 && month < 12 && day >= 1 && day <= 31) {
+      return `${ord(day)} of ${months[month]} ${year}`;
+    }
+  }
+  const parsed = new Date(s);
+  if (!Number.isNaN(parsed.getTime()) && /\d{4}/.test(s)) {
+    return `${ord(parsed.getDate())} of ${months[parsed.getMonth()]} ${parsed.getFullYear()}`;
+  }
+  return s;
+}
+
 export function ReportPreview({ draft }: { draft: ReportDraft }) {
   const v = draft.values;
   const m = draft.reportMeta;
@@ -387,7 +424,21 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
     ...draft.photos.filter((p) => p.slot === null && p.kind === "map" && p.url),
   ] as typeof draft.photos;
 
+
   const frontPhoto = draft.photos.find((p) => p.slot === "front" && p.url);
+  const lh = BOILERPLATE.firmLetterhead;
+  const coverValuerName = (m.valuerName || get(v, "insp_valuer") || "").trim();
+  const coverMember = (get(v, "sign_member") || "").trim();
+  const coverValuerLine = coverValuerName
+    ? coverMember && !/registered\s*valuer/i.test(coverMember)
+      ? `${coverValuerName}, ${coverMember}`
+      : coverValuerName
+    : lh.defaultValuer;
+  const coverRegLine =
+    coverMember && /registered\s*valuer/i.test(coverMember)
+      ? coverMember
+      : lh.defaultRegistration;
+
 
   return (
     <article
@@ -397,153 +448,144 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         (isPhilReportType(reportType.id) ? " report-type-phil" : "")
       }
     >
-      {/* ---- Cover ---- */}
-      {isPhilReportType(reportType.id) ? (
-        /* Sample: page 1 photo, page 2 summary — separate top-level blocks so print breaks work */
-        <>
-          <div id="report-cover" className="report-cover phil-photo-page">
-            <header className="flex items-start justify-between gap-4 text-left">
-              <img
-                src="/ppv-logo.jpeg"
-                alt="Peterson Property Valuations"
-                className="h-20 w-auto object-contain"
-              />
-              <div className="text-right text-[10px] leading-snug text-[var(--phil-green)]">
-                <p className="font-semibold">Real Estate Valuers</p>
-                <p>Phillip R Peterson, AVI, Certified Practicing Valuer</p>
-                <p>Registered Valuer No. 1083</p>
-              </div>
-            </header>
-
-            {frontPhoto ? (
-              <div className="phil-front-photo mt-3 flex justify-center">
-                <img
-                  src={frontPhoto.url}
-                  alt="Subject property"
-                  className="phil-front-photo-img w-full max-w-[24rem] object-contain"
-                />
-              </div>
-            ) : (
-              <div className="phil-front-photo mt-3 flex h-36 items-center justify-center border border-dashed border-[var(--rule)] text-sm text-[var(--page-foreground)]/50">
-                Front photo not set
-              </div>
-            )}
-
-            <div className="phil-cover-title mt-4 text-center">
-              <p className="font-serif text-lg font-bold uppercase leading-snug tracking-wide">
-                Report and Valuation
-              </p>
-              {m.valueDate ? (
-                <p className="font-serif text-lg font-bold uppercase leading-snug">
-                  Dated {m.valueDate}
-                </p>
-              ) : null}
-              <p className="font-serif text-lg font-bold uppercase leading-snug">
-                Residential Dwelling
-              </p>
-              <p className="font-serif text-lg font-bold uppercase leading-snug">
-                Situated at
-              </p>
-              {addressLine ? (
-                <p className="font-serif text-lg font-bold uppercase leading-snug">
-                  {addressLine}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="phil-gold-rule mt-4" />
+      {/* ---- Cover: photo letterhead page (all report types) ---- */}
+      <div id="report-cover" className="report-cover cover-photo-page">
+        <header className="cover-letterhead">
+          <img
+            src="/ppv-logo.jpeg"
+            alt="Peterson Property Valuations"
+            className="cover-logo"
+          />
+          <div className="cover-firm-block">
+            <p className="cover-firm-title">{lh.tradingAs}</p>
+            <p>
+              {lh.company}
+              {"  "}
+              ACN {lh.acn}
+              {"  "}
+              ABN {lh.abn}
+            </p>
+            <p>{coverValuerLine}</p>
+            <p>{coverRegLine}</p>
+            <p className="cover-firm-gap">{lh.postal}</p>
+            <p>
+              {lh.phone}
+              {"    "}
+              {lh.mobile}
+            </p>
+            <p>{lh.web}</p>
+            <p className="cover-firm-email">{lh.email}</p>
           </div>
+        </header>
 
-          <div className="phil-summary-page report-cover">
-            <h1 className="report-h1 text-center text-xl text-[var(--phil-green)]">
-              Valuation Summary
-            </h1>
-
-            <div className="mt-6">
-              <Facts
-                values={v}
-                fields={[]}
-                extra={[
-                  { label: "PROPERTY ADDRESS", value: addressLine },
-                  {
-                    label: "BRIEF DESCRIPTION",
-                    value: [
-                      get(v, "imp_design") || "A residential dwelling",
-                      siteArea ? `on a ${siteArea} lot.` : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" "),
-                  },
-                  { label: "REGISTERED OWNER", value: get(v, "prop_owner") },
-                  {
-                    label: "REAL PROPERTY DESCRIPTION",
-                    value: get(v, "prop_lotplan"),
-                  },
-                  { label: "LAND AREA", value: siteArea },
-                  { label: "ZONING", value: get(v, "prop_zoning") },
-                  { label: "INSTRUCTIONS", value: get(v, "prop_owner") },
-                  {
-                    label: "PURPOSE OF VALUATION",
-                    value: reportType.defaultPurpose,
-                  },
-                ].filter((r) => r.value && String(r.value).trim())}
-              />
-            </div>
-
-            <div className="mt-8 border-y-2 border-[var(--page-foreground)]/80 py-6 text-center">
-              <p className="text-sm uppercase tracking-wide text-[var(--page-foreground)]/70">
-                VALUATION STATEMENT
-              </p>
-              {reportType.valuationDisplay === "see-remarks" ? (
-                <p className="mt-3 font-serif text-xl font-bold uppercase tracking-wide">
-                  See remarks in this report
-                </p>
-              ) : (
-                <p className="mt-3 font-serif text-2xl font-bold">
-                  {m.valueAmount ? `$${formatCurrencyDisplay(m.valueAmount)}` : "—"}
-                </p>
-              )}
-              {m.valueDate ? (
-                <p className="mt-1 text-sm">as at {m.valueDate}</p>
-              ) : null}
-            </div>
-
-            <div className="mt-6 text-center">
-              <p className="font-semibold text-[var(--phil-green)]">
-                {m.firmName ||
-                  get(v, "insp_firm") ||
-                  "Peterson Property Valuations Pty Ltd"}
-              </p>
-              <p className="text-sm text-[var(--phil-green)]">Real Estate Valuers</p>
-            </div>
-
-            <div className="report-signature mt-8">
-              <div className="h-14 w-56 border-b border-[var(--page-foreground)]/70" />
-              <p className="mt-2 font-semibold">
-                {m.valuerName || get(v, "insp_valuer")}
-              </p>
-              {get(v, "sign_member") ? (
-                <p className="text-sm">{get(v, "sign_member")}</p>
-              ) : null}
-              {m.valueDate ? <p className="mt-1 text-sm">{m.valueDate}</p> : null}
-            </div>
-
-            <div className="mt-8 border-t border-[var(--rule)] pt-4">
-              <p className="text-sm italic text-[var(--page-foreground)]/75">
-                {BOILERPLATE.summaryDisclaimer}
-              </p>
-            </div>
-          </div>
-        </>
-      ) : (
-        <div id="report-cover" className="report-cover">
-          <header className="text-center">
+        <div className="cover-photo-frame">
+          {frontPhoto ? (
             <img
-              src="/ppv-logo.jpeg"
-              alt="Peterson Property Valuations"
-              className="mx-auto h-24 w-auto object-contain"
+              src={frontPhoto.url}
+              alt="Subject property"
+              className="cover-front-photo"
             />
-            <h1 className="report-h1 mt-6 text-2xl">Valuation Summary</h1>
+          ) : (
+            <div className="cover-photo-placeholder">Front photo not set</div>
+          )}
+        </div>
+
+        <div className="cover-title-block">
+          <p>REPORT AND VALUATION</p>
+          {m.valueDate || m.inspectionDate ? (
+            <p>DATED {formatCoverDate(m.valueDate || m.inspectionDate)}</p>
+          ) : null}
+          <p>RESIDENTIAL PROPERTY SITUATED AT</p>
+          {addressLine ? <p>{addressLine}</p> : null}
+        </div>
+      </div>
+
+      {/* ---- Page 2: valuation summary (Phil and non-Phil) ---- */}
+      {isPhilReportType(reportType.id) ? (
+        <div className="phil-summary-page report-cover-summary">
+          <h1 className="report-h1 text-center text-xl text-[var(--phil-green)]">
+            Valuation Summary
+          </h1>
+
+          <div className="mt-6">
+            <Facts
+              values={v}
+              fields={[]}
+              extra={[
+                { label: "PROPERTY ADDRESS", value: addressLine },
+                {
+                  label: "BRIEF DESCRIPTION",
+                  value: [
+                    get(v, "imp_design") || "A residential dwelling",
+                    siteArea ? `on a ${siteArea} lot.` : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" "),
+                },
+                { label: "REGISTERED OWNER", value: get(v, "prop_owner") },
+                {
+                  label: "REAL PROPERTY DESCRIPTION",
+                  value: get(v, "prop_lotplan"),
+                },
+                { label: "LAND AREA", value: siteArea },
+                { label: "ZONING", value: get(v, "prop_zoning") },
+                { label: "INSTRUCTIONS", value: get(v, "prop_owner") },
+                {
+                  label: "PURPOSE OF VALUATION",
+                  value: reportType.defaultPurpose,
+                },
+              ].filter((r) => r.value && String(r.value).trim())}
+            />
+          </div>
+
+          <div className="mt-8 border-y-2 border-[var(--page-foreground)]/80 py-6 text-center">
+            <p className="text-sm uppercase tracking-wide text-[var(--page-foreground)]/70">
+              VALUATION STATEMENT
+            </p>
+            {reportType.valuationDisplay === "see-remarks" ? (
+              <p className="mt-3 font-serif text-xl font-bold uppercase tracking-wide">
+                See remarks in this report
+              </p>
+            ) : (
+              <p className="mt-3 font-serif text-2xl font-bold">
+                {m.valueAmount ? `$${formatCurrencyDisplay(m.valueAmount)}` : "—"}
+              </p>
+            )}
+            {m.valueDate ? (
+              <p className="mt-1 text-sm">as at {m.valueDate}</p>
+            ) : null}
+          </div>
+
+          <div className="mt-6 text-center">
+            <p className="font-semibold text-[var(--phil-green)]">
+              {m.firmName ||
+                get(v, "insp_firm") ||
+                "Peterson Property Valuations Pty Ltd"}
+            </p>
+            <p className="text-sm text-[var(--phil-green)]">Real Estate Valuers</p>
+          </div>
+
+          <div className="report-signature mt-8">
+            <div className="h-14 w-56 border-b border-[var(--page-foreground)]/70" />
+            <p className="mt-2 font-semibold">
+              {m.valuerName || get(v, "insp_valuer")}
+            </p>
+            {get(v, "sign_member") ? (
+              <p className="text-sm">{get(v, "sign_member")}</p>
+            ) : null}
+            {m.valueDate ? <p className="mt-1 text-sm">{m.valueDate}</p> : null}
+          </div>
+
+          <div className="mt-8 border-t border-[var(--rule)] pt-4">
+            <p className="text-sm italic text-[var(--page-foreground)]/75">
+              {BOILERPLATE.summaryDisclaimer}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="report-cover-summary">
+          <header className="text-center">
+            <h1 className="report-h1 mt-2 text-2xl">Valuation Summary</h1>
             <p className="mt-1 text-sm uppercase tracking-[0.18em] text-[var(--page-foreground)]/70">
               {reportType.coverSubtitle}
             </p>
@@ -600,6 +642,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           </div>
         </div>
       )}
+
       <TableOfContents draft={draft} />
 
       {/* ---- 1. Instructions & purpose ---- */}
