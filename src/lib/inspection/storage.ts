@@ -135,7 +135,78 @@ export const inspectionStore = {
     return record;
   },
 
-  async save(id: string, values: InspectionValues): Promise<void> {
+  
+  /**
+   * Save-as / duplicate: new inspection + report draft for multi-unit complexes
+   * or multiple new homes in one development. Copies form answers and report
+   * extras (narrative, sales, meta, photo URLs). Does not copy edit locks or
+   * submitted snapshots. Photo storage paths are shared (deleting a photo on
+   * one job can affect the other if the same path is removed — prefer replace
+   * unit-specific photos after opening the copy).
+   */
+  async duplicate(sourceId: string): Promise<InspectionRecord> {
+    await ensureFreshSession();
+    const userId = await requireUserId();
+    const source = await this.get(sourceId);
+    if (!source) throw new Error("Inspection not found");
+
+    let extras: ReportExtras | null = null;
+    try {
+      extras = await this.getReportExtras(sourceId);
+    } catch {
+      extras = null;
+    }
+
+    // Strip locks if they were ever stored inside extras by mistake; column locks stay on source only.
+    const cleanExtras: ReportExtras | null = extras
+      ? {
+          ...extras,
+          // Keep sales, narrative, photos, reportMeta as-is for the new job
+        }
+      : null;
+
+    const { data, error } = await supabase
+      .from("inspections")
+      .insert({
+        user_id: userId,
+        status: "draft",
+        form_values: source.values ?? {},
+        schema_version: schema.version,
+        report_extras: cleanExtras,
+        // Do not set submitted_* — new job starts as draft even if source was submitted
+      })
+      .select("*")
+      .single();
+
+    if (error) {
+      // Older DBs without report_extras on insert: create then update
+      if (/report_extras|column/i.test(error.message)) {
+        const { data: row2, error: err2 } = await supabase
+          .from("inspections")
+          .insert({
+            user_id: userId,
+            status: "draft",
+            form_values: source.values ?? {},
+            schema_version: schema.version,
+          })
+          .select("*")
+          .single();
+        if (err2) throw err2;
+        const record = rowToRecord(row2 as DbRow);
+        if (cleanExtras) {
+          await this.saveReportExtras(record.id, cleanExtras);
+        }
+        emit();
+        return record;
+      }
+      throw error;
+    }
+
+    emit();
+    return rowToRecord(data as DbRow);
+  },
+
+async save(id: string, values: InspectionValues): Promise<void> {
     // Live form_values stay editable after submit so answers can be corrected.
     // submitted_form_values (first-submit snapshot) is left unchanged.
     await ensureFreshSession();

@@ -4,7 +4,7 @@ import {
   generateValuationDocx,
   suggestedDocxFilename,
 } from "@/lib/report/generateDocx";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { NarrativeSection } from "@/components/report/NarrativeSection";
 import { PhotosSection } from "@/components/report/PhotosSection";
@@ -14,6 +14,7 @@ import { SubjectSection } from "@/components/report/SubjectSection";
 import { EditLockBanner } from "@/components/EditLockBanner";
 import { useEditLock } from "@/hooks/useEditLock";
 import { useReportDraft } from "@/hooks/useReportDraft";
+import { inspectionStore } from "@/lib/inspection/storage";
 import { get } from "@/lib/report/schema";
 
 const TABS = [
@@ -167,6 +168,40 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
               className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
             >
               Save draft
+            </button>
+            <button
+              type="button"
+              disabled={duplicating}
+              title="Create a full copy for another unit or house in the same complex"
+              onClick={() => {
+                void (async () => {
+                  setDuplicating(true);
+                  try {
+                    try {
+                      await save();
+                    } catch {
+                      /* still duplicate current cloud+local state best-effort */
+                    }
+                    const copy = await inspectionStore.duplicate(inspectionId);
+                    toast.success("Saved as new job", {
+                      description: "Update the unit/address on the new inspection, then continue the report.",
+                    });
+                    void navigate({
+                      to: "/report/$inspectionId",
+                      params: { inspectionId: copy.id },
+                    });
+                  } catch (err) {
+                    toast.error(
+                      err instanceof Error ? err.message : "Could not save as new job",
+                    );
+                  } finally {
+                    setDuplicating(false);
+                  }
+                })();
+              }}
+              className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+            >
+              {duplicating ? "Copying…" : "Save as new job"}
             </button>
             <button
               type="button"

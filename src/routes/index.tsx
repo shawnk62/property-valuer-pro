@@ -211,6 +211,30 @@ function InspectionsIndex() {
                       Report
                     </Button>
                     <Button
+                      variant="outline"
+                      size="sm"
+                      title="Save as a new inspection + report (for another unit or house)"
+                      onClick={() => {
+                        void (async () => {
+                          try {
+                            const copy = await inspectionStore.duplicate(record.id);
+                            void navigate({
+                              to: "/inspect/$id",
+                              params: { id: copy.id },
+                            });
+                          } catch (err) {
+                            alert(
+                              err instanceof Error
+                                ? err.message
+                                : "Could not duplicate inspection",
+                            );
+                          }
+                        })();
+                      }}
+                    >
+                      Save as
+                    </Button>
+                    <Button
                       variant="ghost"
                       size="icon"
                       aria-label="Delete inspection"

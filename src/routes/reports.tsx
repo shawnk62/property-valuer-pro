@@ -1,9 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { FileText } from "lucide-react";
-import { SCHEMA_VERSION } from "@/lib/report/schema";
-import { useInspectionList } from "@/lib/inspection/useInspection";
+import { useState } from "react";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
-import { useNavigate } from "@tanstack/react-router";
+import { inspectionStore } from "@/lib/inspection/storage";
+import { useInspectionList } from "@/lib/inspection/useInspection";
+import { SCHEMA_VERSION } from "@/lib/report/schema";
 
 export const Route = createFileRoute("/reports")({
   head: () => ({
@@ -115,21 +117,63 @@ function WorkspaceHome() {
             {records.map((r) => {
               const label = addressFromValues(r.values);
               return (
-                <li key={r.id}>
-                  <Link
-                    to="/report/$inspectionId"
-                    params={{ inspectionId: r.id }}
-                    className="flex items-center justify-between gap-4 px-4 py-4 transition-colors hover:bg-muted/50 sm:px-5"
+                <li
+                  key={r.id}
+                  className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5"
+                >
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 text-left"
+                    onClick={() =>
+                      void navigate({
+                        to: "/report/$inspectionId",
+                        params: { inspectionId: r.id },
+                      })
+                    }
                   >
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-foreground">{label}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {r.status === "submitted" ? "Submitted" : "Draft"} · Updated{" "}
-                        {formatDate(r.updatedAt)}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-sm font-medium text-primary">Open report →</span>
-                  </Link>
+                    <p className="truncate font-medium text-foreground">{label}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {r.status === "submitted" ? "Submitted" : "Draft"} · Updated{" "}
+                      {formatDate(r.updatedAt)}
+                    </p>
+                  </button>
+                  <div className="flex shrink-0 flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      className="rounded-md border border-input bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent"
+                      title="Copy form + report as a new job (another unit or house)"
+                      onClick={() => {
+                        void (async () => {
+                          try {
+                            const copy = await inspectionStore.duplicate(r.id);
+                            toast.success("Saved as new job — update the unit address");
+                            void navigate({
+                              to: "/report/$inspectionId",
+                              params: { inspectionId: copy.id },
+                            });
+                          } catch (err) {
+                            toast.error(
+                              err instanceof Error ? err.message : "Could not save as new job",
+                            );
+                          }
+                        })();
+                      }}
+                    >
+                      Save as new
+                    </button>
+                    <button
+                      type="button"
+                      className="text-sm font-medium text-primary"
+                      onClick={() =>
+                        void navigate({
+                          to: "/report/$inspectionId",
+                          params: { inspectionId: r.id },
+                        })
+                      }
+                    >
+                      Open report →
+                    </button>
+                  </div>
                 </li>
               );
             })}
