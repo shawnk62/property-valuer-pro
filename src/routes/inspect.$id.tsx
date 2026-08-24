@@ -60,7 +60,8 @@ function InspectionWizard() {
   const navigate = useNavigate();
   const lock = useEditLock(id);
   const { record, values, setValue, saveNow, loaded } = useInspection(id, {
-    readOnly: !lock.canEdit || lock.checking,
+    // Submitted inspections stay editable. Only block saves when another device holds the lock.
+    readOnly: !lock.canEdit,
   });
   const [step, setStep] = useState(Math.min(initialStep ?? 0, sections.length - 1));
   const [showErrors, setShowErrors] = useState(false);
@@ -189,7 +190,7 @@ function InspectionWizard() {
         </div>
       </header>
 
-      <main className={`mx-auto max-w-4xl px-4 py-6 sm:px-6${!lock.canEdit || lock.checking ? " pointer-events-none opacity-70" : ""}`}>
+      <main className={`mx-auto max-w-4xl px-4 py-6 sm:px-6${!lock.canEdit ? " pointer-events-none opacity-70" : ""}`}>
         {photosOpen ? (
           <InspectionPhotosPanel
             inspectionId={id}

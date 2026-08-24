@@ -60,7 +60,7 @@ function ReviewScreen() {
   const navigate = useNavigate();
   const lock = useEditLock(id);
   const { record, values, loaded } = useInspection(id, {
-    readOnly: !lock.canEdit || lock.checking,
+    readOnly: !lock.canEdit,
   });
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -381,24 +381,35 @@ function ReviewScreen() {
         })}
       </main>
 
-      {!isSubmitted ? (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card/95 backdrop-blur">
-          <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3 sm:px-6">
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => void navigate({ to: "/inspect/$id", params: { id }, search: { step: 0 } })}
-              className="flex-1 sm:flex-none"
-            >
-              Continue editing
-            </Button>
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card/95 backdrop-blur">
+        <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3 sm:px-6">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => void navigate({ to: "/inspect/$id", params: { id }, search: { step: 0 } })}
+            className="flex-1 sm:flex-none"
+          >
+            {isSubmitted ? "Edit inspection form" : "Continue editing"}
+          </Button>
+          {!isSubmitted ? (
             <Button size="lg" onClick={() => void submit()} className="flex-1" disabled={submitting}>
               <Send className="size-4" />
               {submitting ? "Submitting…" : "Submit inspection"}
             </Button>
-          </div>
+          ) : (
+            <Button
+              size="lg"
+              className="flex-1"
+              onClick={() =>
+                void navigate({ to: "/report/$inspectionId", params: { inspectionId: id } })
+              }
+            >
+              <FileText className="size-4" />
+              Open report
+            </Button>
+          )}
         </div>
-      ) : null}
+      </div>
 
       {photoGaps && photoGaps.length > 0 ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/80 p-4 sm:items-center">

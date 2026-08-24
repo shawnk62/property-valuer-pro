@@ -171,7 +171,8 @@ function InspectionsIndex() {
                       type="button"
                       onClick={() =>
                         void navigate({
-                          to: record.status === "submitted" ? "/inspect/$id/review" : "/inspect/$id",
+                          // Always open the live form (submitted jobs stay editable)
+                          to: "/inspect/$id",
                           params: { id: record.id },
                         })
                       }

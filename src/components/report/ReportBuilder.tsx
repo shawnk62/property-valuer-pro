@@ -30,7 +30,7 @@ type TabId = (typeof TABS)[number]["id"];
 export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
   const navigate = useNavigate();
   const lock = useEditLock(inspectionId);
-  const controller = useReportDraft(inspectionId, { readOnly: !lock.canEdit || lock.checking });
+  const controller = useReportDraft(inspectionId, { readOnly: !lock.canEdit });
   const { draft, dirty, savedAt, save, loaded, loadError } = controller;
   const [tab, setTab] = useState<TabId>("subject");
   const [downloading, setDownloading] = useState(false);
@@ -253,7 +253,7 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
 
       <main
         className={`${tab === "preview" ? "bg-muted/50 py-8" : "py-8"}${
-          !lock.canEdit || lock.checking ? " pointer-events-none select-none opacity-70" : ""
+          !lock.canEdit ? " pointer-events-none select-none opacity-70" : ""
         }`}
       >
         <div
