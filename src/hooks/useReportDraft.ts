@@ -18,7 +18,14 @@ import type {
 const storageKey = (id: string) => `report-draft:${id}`;
 
 function emptyNarrative(): ReportNarrative {
-  return { brief: "", location: "", improvements: "", accommodation: "", remarks: "" };
+  return {
+    brief: "",
+    location: "",
+    servicesAmenities: "",
+    improvements: "",
+    accommodation: "",
+    remarks: "",
+  };
 }
 
 function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): ReportNarrative {
@@ -27,6 +34,8 @@ function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): R
   return {
     brief: typeof raw.brief === "string" ? raw.brief : "",
     location: typeof raw.location === "string" ? raw.location : "",
+    servicesAmenities:
+      typeof raw.servicesAmenities === "string" ? raw.servicesAmenities : "",
     improvements: typeof raw.improvements === "string" ? raw.improvements : "",
     accommodation: typeof raw.accommodation === "string" ? raw.accommodation : "",
     remarks: typeof raw.remarks === "string" ? raw.remarks : "",

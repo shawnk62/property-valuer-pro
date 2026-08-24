@@ -963,16 +963,24 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               />
             </Sub>
             <Sub title="6.2  Services/Amenities">
-              <Para>
-                {[
-                  get(v, "svc_water_type") && `Water: ${get(v, "svc_water_type")}`,
-                  get(v, "svc_sewer_type") && `Sewerage: ${get(v, "svc_sewer_type")}`,
-                  get(v, "svc_elec_type") && `Electricity: ${get(v, "svc_elec_type")}`,
-                  get(v, "svc_tel_type") && `Telephone: ${get(v, "svc_tel_type")}`,
-                ]
-                  .filter(Boolean)
-                  .join(". ") || "—"}
-              </Para>
+              {draft.narrative.servicesAmenities?.trim() ? (
+                <Prose text={draft.narrative.servicesAmenities} />
+              ) : (
+                <Para>
+                  {[
+                    get(v, "svc_water_type") && `Water: ${get(v, "svc_water_type")}`,
+                    get(v, "svc_sewer_type") && `Sewerage: ${get(v, "svc_sewer_type")}`,
+                    get(v, "svc_elec_type") && `Electricity: ${get(v, "svc_elec_type")}`,
+                    get(v, "svc_gas_type") && `Gas: ${get(v, "svc_gas_type")}`,
+                    get(v, "svc_storm_type") && `Stormwater: ${get(v, "svc_storm_type")}`,
+                    get(v, "svc_tel_type") && `Telephone: ${get(v, "svc_tel_type")}`,
+                    get(v, "svc_internet_type") &&
+                      `Internet: ${get(v, "svc_internet_type")}`,
+                  ]
+                    .filter(Boolean)
+                    .join(". ") || "—"}
+                </Para>
+              )}
             </Sub>
             <Sub title="6.3  Flood Inquiry">
               <Para>

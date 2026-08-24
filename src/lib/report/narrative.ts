@@ -189,11 +189,46 @@ function buildLocation(values: InspectionValues): string {
   return parts.filter(Boolean).join(" ");
 }
 
+function buildServicesAmenities(values: InspectionValues): string {
+  const parts: string[] = [];
+  const water = v(values, "svc_water_type");
+  const sewer = v(values, "svc_sewer_type");
+  const elec = v(values, "svc_elec_type");
+  const gas = v(values, "svc_gas_type");
+  const storm = v(values, "svc_storm_type");
+  const tel = v(values, "svc_tel_type");
+  const net = v(values, "svc_internet_type");
+
+  const listed = [
+    water && `water (${water.toLowerCase()})`,
+    sewer && `sewerage (${sewer.toLowerCase()})`,
+    elec && `electricity (${elec.toLowerCase()})`,
+    gas && `gas (${gas.toLowerCase()})`,
+    storm && `stormwater drainage (${storm.toLowerCase()})`,
+    tel && `telephone (${tel.toLowerCase()})`,
+    net && `internet (${net.toLowerCase()})`,
+  ].filter(Boolean);
+
+  if (listed.length) {
+    parts.push(
+      sentence([
+        "The property is understood to be connected to",
+        listed.slice(0, -1).join(", ") +
+          (listed.length > 1 ? ` and ${listed[listed.length - 1]}` : listed[0]),
+        "as recorded at inspection",
+      ]),
+    );
+  }
+
+  return parts.filter(Boolean).join(" ");
+}
+
 export function generateNarrative(values: InspectionValues): ReportNarrative {
   return {
     brief: buildBrief(values) ||
       sentence(["The subject property is located at", fullAddress(values)]),
     location: buildLocation(values),
+    servicesAmenities: buildServicesAmenities(values),
     improvements: buildImprovements(values),
     accommodation: buildAccommodation(values),
     remarks: buildRemarks(values),

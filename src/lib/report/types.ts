@@ -115,6 +115,8 @@ export interface ReportNarrative {
   brief: string;
   /** §5.1 Description of Neighbourhood (AI or template). */
   location: string;
+  /** §6.2 Services/Amenities (AI or template). */
+  servicesAmenities: string;
   improvements: string;
   accommodation: string;
   remarks: string;

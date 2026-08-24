@@ -157,6 +157,21 @@ Requirements:
 - Do not write a full improvements essay.
 - Suitable to appear under "BRIEF DESCRIPTION" on a valuation summary.`,
       };
+    case "servicesAmenities":
+      return {
+        system: BASE_RULES + brevityHint(type),
+        prompt: `Write section 6.2 "Services/Amenities" for a ${type} valuation report (QLD residential).
+
+Inspection data (site services):
+${sectionAnswers(values, ["2"])}
+
+Requirements:
+- One short professional paragraph (typically 1–3 sentences).
+- State which usual urban services are connected or available from the recorded answers only (water, sewerage, electricity, gas, stormwater, telephone, internet as recorded).
+- Do not invent connections, capacities, or providers not in the data.
+- If little is recorded, say that the property is understood to be connected to usual urban services insofar as disclosed, without fabricating detail.
+- Plain valuation English; no marketing language.`,
+      };
     case "improvements":
       return {
         system: BASE_RULES + brevityHint(type),

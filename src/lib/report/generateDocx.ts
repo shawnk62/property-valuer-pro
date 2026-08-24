@@ -517,18 +517,25 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   });
   await pushInlineMap(children, draft, "map_site_dimensions", "Site dimensions");
 
-  const services = factsTable(draft, [
-    "svc_water_type",
-    "svc_sewer_type",
-    "svc_elec_type",
-    "svc_storm_type",
-    "svc_tel_type",
-    "svc_internet_type",
-    "svc_gas_type",
-  ]);
   children.push(subHeading("6.2  Services/Amenities"));
-  if (services) children.push(services);
-  else children.push(p("—"));
+  {
+    const servicesText = (draft.narrative.servicesAmenities || "").trim();
+    if (servicesText) {
+      children.push(p(servicesText));
+    } else {
+      const services = factsTable(draft, [
+        "svc_water_type",
+        "svc_sewer_type",
+        "svc_elec_type",
+        "svc_storm_type",
+        "svc_tel_type",
+        "svc_internet_type",
+        "svc_gas_type",
+      ]);
+      if (services) children.push(services);
+      else children.push(p("—"));
+    }
+  }
 
   children.push(subHeading("6.3  Flood Inquiry"));
   {
