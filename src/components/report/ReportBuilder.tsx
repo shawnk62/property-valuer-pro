@@ -60,22 +60,29 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
     }
   }
 
-  /** PDF via browser print of the live Preview sheet (matches on-screen report). */
+  /**
+   * PDF via a clean print window that contains only the report sheet.
+   * Avoids the app chrome URL/title that browsers inject into headers/footers.
+   * Page numbers come from @page CSS; user must still turn off the browser's
+   * "Headers and footers" checkbox if date/URL still appear.
+   */
   async function handleDownloadPdf() {
     setPrinting(true);
-    save();
+    try {
+      await save();
+    } catch {
+      /* still print current draft */
+    }
     const previousTab = tab;
     if (tab !== "preview") {
       setTab("preview");
     }
-    // Wait for Preview to paint with current draft, then open the system print dialog.
     await new Promise<void>((resolve) => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => resolve());
       });
     });
-    // Extra tick for images
-    await new Promise((r) => setTimeout(r, 150));
+    await new Promise((r) => setTimeout(r, 200));
 
     const sheet = document.getElementById("report-preview-sheet");
     if (!sheet) {
@@ -85,26 +92,95 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
       return;
     }
 
-    // Browser print headers often show document.title + URL + date.
-    // Clear the title for the print job; restore afterwards. User should also
-    // disable "Headers and footers" in the print dialog when that option exists.
-    const previousTitle = document.title;
-    document.title = " ";
+    // Collect stylesheets so the print window matches Preview
+    const styleText: string[] = [];
+    for (const node of Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))) {
+      if (node instanceof HTMLStyleElement) {
+        styleText.push(node.textContent || "");
+      } else if (node instanceof HTMLLinkElement && node.href) {
+        try {
+          const res = await fetch(node.href);
+          if (res.ok) styleText.push(await res.text());
+        } catch {
+          // Cross-origin sheet — link it instead
+          styleText.push(`@import url("${node.href}");`);
+        }
+      }
+    }
 
-    toast.message("Print / Save as PDF", {
+    const printWin = window.open("", "_blank", "noopener,noreferrer,width=900,height=1200");
+    if (!printWin) {
+      toast.error("Pop-up blocked — allow pop-ups for this site to download PDF.");
+      setPrinting(false);
+      return;
+    }
+
+    // Empty <title> reduces browser header text. No app chrome in the body.
+    printWin.document.open();
+    printWin.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title></title>
+  <style>
+${styleText.join("\n")}
+  @page {
+    size: A4 portrait;
+    margin: 12mm 12mm 16mm 12mm;
+    @top-left { content: none; }
+    @top-center { content: none; }
+    @top-right { content: none; }
+    @bottom-left { content: none; }
+    @bottom-right { content: none; }
+    @bottom-center {
+      content: counter(page);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9pt;
+      color: #333;
+    }
+  }
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+  .no-print { display: none !important; }
+  </style>
+</head>
+<body>
+${sheet.outerHTML}
+</body>
+</html>`);
+    printWin.document.close();
+
+    toast.message("Save as PDF", {
       description:
-        "Choose A4. Turn off Headers and footers in the print dialog if address, URL or date still appear — keep page numbers only.",
-      duration: 8000,
+        "In the print dialog: A4, and turn OFF “Headers and footers”. Only the page number should remain in the footer.",
+      duration: 10000,
     });
 
-    const restore = () => {
-      document.title = previousTitle;
-      window.removeEventListener("afterprint", restore);
+    const finish = () => {
       setPrinting(false);
+      try {
+        printWin.close();
+      } catch {
+        /* ignore */
+      }
     };
-    window.addEventListener("afterprint", restore);
-    window.print();
-    window.setTimeout(restore, 1500);
+
+    // Wait for images in the print document, then print
+    const runPrint = () => {
+      try {
+        printWin.focus();
+        printWin.print();
+      } finally {
+        // Close shortly after print dialog is dismissed (best-effort)
+        window.setTimeout(finish, 500);
+      }
+    };
+
+    // Allow layout + images to settle
+    window.setTimeout(runPrint, 400);
   }
 
   const heading =
