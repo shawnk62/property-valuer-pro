@@ -94,12 +94,43 @@ function PhotoCard({
         }}
         onPaste={(e) => {
           if (uploading) return;
-          const file = imageFileFromClipboardEvent(e);
-          if (!file) return;
+          const sync = imageFileFromClipboardEvent(e);
+          if (sync) {
+            e.preventDefault();
+            e.stopPropagation();
+            onFile(sync);
+            return;
+          }
+          // Async Clipboard API fallback (some screenshot pastes omit clipboardData)
           e.preventDefault();
           e.stopPropagation();
-          onFile(file);
+          void (async () => {
+            try {
+              if (!navigator.clipboard || !("read" in navigator.clipboard)) {
+                toast.error("Paste not available — click the tile and try ⌘V, or choose a file.");
+                return;
+              }
+              const items = await navigator.clipboard.read();
+              for (const item of items) {
+                const type = item.types.find((x) => x.startsWith("image/"));
+                if (!type) continue;
+                const blob = await item.getType(type);
+                if (!blob || blob.size <= 0) continue;
+                const ext = type.split("/")[1] || "png";
+                onFile(new File([blob], `screenshot.${ext}`, { type }));
+                return;
+              }
+              toast.error("No image on the clipboard", {
+                description: "Copy a screenshot, click this tile, then press ⌘V.",
+              });
+            } catch {
+              toast.error("Could not read clipboard", {
+                description: "Click the tile and press ⌘V, or tap to choose a file.",
+              });
+            }
+          })();
         }}
+        onMouseEnter={(e) => (e.currentTarget as HTMLElement).focus?.()}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
           e.preventDefault();

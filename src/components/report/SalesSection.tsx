@@ -346,7 +346,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     const file = await imageFileFromNavigatorClipboard();
     if (!file) {
       toast.error("No image on the clipboard", {
-        description: "Copy a photo from the CMA PDF first, then right-click → Paste image.",
+        description:
+          "Copy a screenshot (⌘⇧4 / screenshot tool), then use ⌘V on the slot or right-click → Paste image. If the browser blocks clipboard access, use ⌘V after clicking the slot.",
       });
       return;
     }
@@ -364,11 +365,27 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   }
 
   function onSalePhotoPaste(saleId: string, e: React.ClipboardEvent) {
-    const file = imageFileFromClipboard(e);
-    if (!file) return;
+    // Prefer synchronous clipboardData (⌘V); fall back to Clipboard API for
+    // right-click / some screenshot paths that leave clipboardData empty.
+    const sync = imageFileFromClipboard(e);
+    if (sync) {
+      e.preventDefault();
+      e.stopPropagation();
+      void onSalePhotoFile(saleId, sync);
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
-    void onSalePhotoFile(saleId, file);
+    void (async () => {
+      const file = await imageFileFromNavigatorClipboard();
+      if (file) {
+        void onSalePhotoFile(saleId, file);
+        return;
+      }
+      toast.error("No image on the clipboard", {
+        description: "Copy a screenshot first, click the photo slot, then ⌘V — or right-click → Paste image.",
+      });
+    })();
   }
 
   function onSalePhotoDrop(saleId: string, e: React.DragEvent) {
@@ -379,11 +396,25 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   }
 
   function onSalesMapPaste(e: React.ClipboardEvent) {
-    const file = imageFileFromClipboard(e);
-    if (!file) return;
+    const sync = imageFileFromClipboard(e);
+    if (sync) {
+      e.preventDefault();
+      e.stopPropagation();
+      void onSalesMapFile(sync);
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
-    void onSalesMapFile(file);
+    void (async () => {
+      const file = await imageFileFromNavigatorClipboard();
+      if (file) {
+        void onSalesMapFile(file);
+        return;
+      }
+      toast.error("No image on the clipboard", {
+        description: "Copy a screenshot first, click the map slot, then ⌘V — or right-click → Paste image.",
+      });
+    })();
   }
 
   function onSalesMapDrop(e: React.DragEvent) {
@@ -999,6 +1030,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                 tabIndex={0}
                 onPaste={onSalesMapPaste}
                 onContextMenu={(e) => openPhotoMenu(e, "map")}
+                onMouseEnter={(e) => (e.currentTarget as HTMLElement).focus?.()}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={onSalesMapDrop}
                 className="flex h-28 w-44 cursor-pointer flex-col items-center justify-center rounded border border-dashed border-border bg-muted/30 text-center text-xs text-muted-foreground hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
@@ -1068,10 +1100,11 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                     tabIndex={0}
                     onPaste={(e) => onSalePhotoPaste(sale.id, e)}
                     onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
+                    onMouseEnter={(e) => (e.currentTarget as HTMLElement).focus?.()}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => onSalePhotoDrop(sale.id, e)}
                     className="flex h-20 cursor-pointer flex-col items-center justify-center gap-0.5 rounded border border-dashed border-border text-xs text-muted-foreground hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    title="Tap to open camera, or paste / drop an image"
+                    title="Click or hover, then ⌘V to paste — or right-click → Paste image"
                   >
                     <span>Tap to photograph</span>
                     <span className="text-[0.65rem] opacity-80">or paste / drop / library</span>
@@ -1207,6 +1240,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                         tabIndex={0}
                                         onPaste={(e) => onSalePhotoPaste(sale.id, e)}
                                         onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
+                                        onMouseEnter={(e) => (e.currentTarget as HTMLElement).focus?.()}
                                         onDragOver={(e) => e.preventDefault()}
                                         onDrop={(e) => onSalePhotoDrop(sale.id, e)}
                                         className="mt-1 flex cursor-pointer flex-col items-center justify-center rounded border border-dashed border-border px-1 py-2 text-[0.6rem] font-normal text-muted-foreground hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
