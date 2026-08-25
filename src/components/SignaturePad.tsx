@@ -1,4 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  deleteSavedSignature,
+  listSavedSignatures,
+  saveSignature,
+  type SavedSignature,
+} from "@/lib/signatures/savedSignatures";
 
 type Props = {
   value?: string;
@@ -24,7 +30,7 @@ function isImageFile(f: File | null | undefined): f is File {
 }
 
 /**
- * Signature capture: draw, upload PNG/JPEG, or paste.
+ * Signature capture: draw, upload PNG/JPEG, paste, or select a saved signature.
  * value is a data:image URL when signed, or empty when cleared.
  */
 export function SignaturePad({ value, disabled, onChange, height = 160 }: Props) {
@@ -33,6 +39,23 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
   const drawing = useRef(false);
   const [hasInk, setHasInk] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState<SavedSignature[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [busySave, setBusySave] = useState(false);
+  const [saveLabel, setSaveLabel] = useState("My signature");
+
+  async function refreshSaved() {
+    try {
+      const list = await listSavedSignatures();
+      setSaved(list);
+    } catch {
+      setSaved([]);
+    }
+  }
+
+  useEffect(() => {
+    void refreshSaved();
+  }, []);
 
   // Paint existing signature onto canvas for redraw path
   useEffect(() => {
@@ -55,7 +78,6 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
     if (value && value.startsWith("data:image")) {
       const img = new Image();
       img.onload = () => {
-        // Fit image within canvas preserving aspect ratio
         const scale = Math.min(rect.width / img.width, height / img.height, 1);
         const w = img.width * scale;
         const h = img.height * scale;
@@ -162,6 +184,43 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
     }
   }
 
+  function applySaved(sig: SavedSignature) {
+    onChange(sig.dataUrl);
+    setPickerOpen(false);
+    setError(null);
+  }
+
+  async function handleSaveCurrent() {
+    const dataUrl =
+      value && value.startsWith("data:image")
+        ? value
+        : canvasRef.current && hasInk
+          ? canvasRef.current.toDataURL("image/png")
+          : "";
+    if (!dataUrl.startsWith("data:image")) {
+      setError("Draw or upload a signature first, then save it.");
+      return;
+    }
+    setBusySave(true);
+    setError(null);
+    try {
+      await saveSignature(dataUrl, saveLabel);
+      if (!value?.startsWith("data:image")) {
+        onChange(dataUrl);
+      }
+      await refreshSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save signature");
+    } finally {
+      setBusySave(false);
+    }
+  }
+
+  async function handleDeleteSaved(id: string) {
+    await deleteSavedSignature(id);
+    await refreshSaved();
+  }
+
   const signed = Boolean(value && value.startsWith("data:image"));
 
   return (
@@ -195,17 +254,29 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
             <button
               type="button"
               onClick={applyDrawn}
-              disabled={!hasInk}
+              disabled={!hasInk || disabled}
               className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
             >
               Apply drawn signature
             </button>
             <button
               type="button"
+              disabled={disabled}
               onClick={() => fileRef.current?.click()}
-              className="rounded-md border border-input bg-card px-3 py-2 text-sm font-semibold text-foreground"
+              className="rounded-md border border-input bg-card px-3 py-2 text-sm font-semibold text-foreground disabled:opacity-50"
             >
               Upload PNG / JPEG
+            </button>
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => {
+                setPickerOpen((o) => !o);
+                void refreshSaved();
+              }}
+              className="rounded-md border border-input bg-card px-3 py-2 text-sm font-semibold text-foreground disabled:opacity-50"
+            >
+              Select saved signature
             </button>
             <input
               ref={fileRef}
@@ -223,22 +294,100 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
         <button
           type="button"
           onClick={clear}
-          className="rounded-md border border-input bg-card px-3 py-2 text-sm font-semibold text-foreground"
+          disabled={disabled}
+          className="rounded-md border border-input bg-card px-3 py-2 text-sm font-semibold text-foreground disabled:opacity-50"
         >
           {signed ? "Remove signature (unlock report)" : "Clear"}
         </button>
       </div>
+
+      {/* Save current ink / applied signature for reuse */}
+      {!disabled ? (
+        <div className="flex flex-wrap items-end gap-2 rounded-md border border-border bg-muted/40 p-2">
+          <label className="min-w-[10rem] flex-1 text-xs text-muted-foreground">
+            Save for reuse
+            <input
+              type="text"
+              value={saveLabel}
+              onChange={(e) => setSaveLabel(e.target.value)}
+              placeholder="Label (e.g. Phil — usual)"
+              className="mt-1 w-full rounded-md border border-input bg-card px-2 py-1.5 text-sm text-foreground"
+            />
+          </label>
+          <button
+            type="button"
+            disabled={busySave || (!signed && !hasInk)}
+            onClick={() => void handleSaveCurrent()}
+            className="rounded-md border border-input bg-card px-3 py-2 text-sm font-semibold text-foreground disabled:opacity-50"
+          >
+            {busySave ? "Saving…" : "Save signature to app"}
+          </button>
+        </div>
+      ) : null}
+
+      {pickerOpen && !signed ? (
+        <div className="space-y-2 rounded-md border border-border bg-card p-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium text-foreground">Saved signatures</p>
+            <button
+              type="button"
+              className="text-xs text-muted-foreground underline"
+              onClick={() => setPickerOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+          {saved.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              None saved yet. Draw or upload a signature, then use “Save signature to app”.
+            </p>
+          ) : (
+            <ul className="max-h-56 space-y-2 overflow-y-auto">
+              {saved.map((sig) => (
+                <li
+                  key={sig.id}
+                  className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-white p-2"
+                >
+                  <img
+                    src={sig.dataUrl}
+                    alt={sig.label}
+                    className="h-10 w-auto max-w-[8rem] object-contain"
+                  />
+                  <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                    {sig.label}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => applySaved(sig)}
+                    className="rounded-md bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-foreground"
+                  >
+                    Apply
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleDeleteSaved(sig.id)}
+                    className="rounded-md border border-input px-2.5 py-1.5 text-xs font-medium text-foreground"
+                  >
+                    Delete
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : null}
 
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
 
       {signed ? (
         <p className="text-xs text-muted-foreground">
           Signature applied — report is locked for editing until the signature is removed.
+          It appears on the valuation summary and closing signature blocks in the report.
         </p>
       ) : (
         <p className="text-xs text-muted-foreground">
-          Draw and apply, upload a PNG/JPEG, or paste an image. Applying locks the valuation
-          report until cleared.
+          Draw and apply, upload a PNG/JPEG, paste an image, or select a saved signature.
+          Applying locks the valuation report until cleared.
         </p>
       )}
     </div>
