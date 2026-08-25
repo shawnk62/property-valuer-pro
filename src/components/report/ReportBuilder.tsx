@@ -60,53 +60,36 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
     }
   }
 
-  /** PDF via browser print of the live Preview sheet (always mounted in DOM). */
-  async function handleDownloadPdf() {
+  /**
+   * PDF via browser print of the live Preview sheet (always mounted in DOM).
+   * Must call window.print() synchronously in the click handler — any await
+   * before print() loses the user-gesture token and Safari shows
+   * “This webpage is trying to print…” instead of the normal print dialog.
+   */
+  function handleDownloadPdf() {
     setPrinting(true);
-    try {
-      await save();
-    } catch {
-      /* still print current draft */
-    }
 
-    // Switch UI to Preview so the user sees what will print (Preview is always mounted).
+    // Persist in the background; do not block print on network.
+    void save().catch(() => {});
+
+    // Preview sheet is always mounted (may be CSS-hidden); print CSS forces it visible.
+    // Switching tab is optional UX only — not required for a successful print.
     if (tab !== "preview") {
       setTab("preview");
     }
 
-    // Wait until the sheet is in the DOM and has layout (not a fixed 200ms guess).
-    const sheet = await new Promise<HTMLElement | null>((resolve) => {
-      const started = Date.now();
-      const tick = () => {
-        const el = document.getElementById("report-preview-sheet");
-        if (el && el.offsetHeight > 0) {
-          resolve(el);
-          return;
-        }
-        if (Date.now() - started > 3000) {
-          resolve(el);
-          return;
-        }
-        requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-    });
-
+    const sheet = document.getElementById("report-preview-sheet");
     if (!sheet) {
       toast.error("Report preview is not ready. Open the Preview tab and try again.");
       setPrinting(false);
       return;
     }
 
-    // Give images a moment to decode after the sheet is present
-    await new Promise((r) => setTimeout(r, 150));
-
     const previousTitle = document.title;
     document.title = "\u00A0";
 
     // Inject a dedicated @page rule at print time (margin-box page numbers).
     // Do not use position:fixed + counter(page) — that prints "0" in Chrome.
-    // Position bottom-left to match the preferred footer placement.
     const pageStyle = document.createElement("style");
     pageStyle.setAttribute("data-ppv-page-numbers", "1");
     pageStyle.textContent = `
@@ -137,6 +120,7 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
     };
     window.addEventListener("afterprint", restore);
 
+    // Synchronous — same user-gesture stack as the button click (Safari-safe).
     window.print();
     window.setTimeout(restore, 2000);
   }
