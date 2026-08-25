@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "29",
+  "version": "30",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -1542,7 +1542,6 @@
           "label": "Design / Style",
           "type": "select",
           "options": [
-            "Acreage or Rural",
             "Art Deco",
             "Ashgrovian",
             "Brick and Tile",
