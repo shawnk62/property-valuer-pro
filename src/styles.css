@@ -274,29 +274,32 @@
   color: #0a6b3c;
 }
 
-/* Middle third — subject photo */
+/* Middle — landscape mobile photo slot (4:3, typical phone landscape) */
 .cover-photo-band {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0.75rem 0;
-  min-height: 14rem;
+  margin: 1.25rem 0;
   transform: none;
 }
 .cover-photo-frame {
   margin: 0 auto;
-  padding: 0.85rem;
+  padding: 0.65rem;
   background: #000;
   width: 100%;
-  max-width: 38rem;
+  max-width: 36rem;
+  aspect-ratio: 4 / 3;
   box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .cover-front-photo {
   display: block;
   width: 100%;
-  height: auto;
-  max-height: 22rem;
+  height: 100%;
+  max-height: 100%;
   object-fit: contain;
   background: #000;
 }
@@ -304,7 +307,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 12rem;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
   color: #999;
   background: #111;
   font-size: 0.875rem;
@@ -383,72 +388,6 @@
   margin-top: 0.2rem;
 }
 
-
-/*
- * Screen-only Preview: approximate PDF page breaks as separate "sheets".
- * These rules MUST NOT change print behaviour — everything is reset inside
- * @media print below.
- */
-@media screen {
-  .report-print-host {
-    background: #e8e8e8;
-  }
-
-  #report-preview-sheet.report-sheet {
-    background: transparent;
-    box-shadow: none;
-    max-width: 210mm;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 0;
-  }
-
-  /* Major forced breaks (same elements that get break-after:page in print) */
-  #report-preview-sheet #report-cover,
-  #report-preview-sheet .report-cover-summary,
-  #report-preview-sheet .phil-summary-page,
-  #report-preview-sheet .report-toc,
-  #report-preview-sheet .report-annexure {
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.08);
-    border: 1px solid #d4d4d4;
-    border-radius: 2px;
-    margin: 0 auto 1.25rem;
-    padding: 14mm 12mm 16mm;
-    box-sizing: border-box;
-    width: 100%;
-    max-width: 210mm;
-  }
-
-  /* Cover already has internal padding from layout — keep tight top */
-  #report-preview-sheet #report-cover {
-    padding-top: 10mm;
-    padding-bottom: 12mm;
-  }
-
-  /* Subtle label so valuers can see where PDF pages start */
-  #report-preview-sheet #report-cover::before,
-  #report-preview-sheet .report-cover-summary::before,
-  #report-preview-sheet .phil-summary-page::before,
-  #report-preview-sheet .report-toc::before,
-  #report-preview-sheet .report-annexure::before {
-    display: block;
-    content: "PDF page break ↓";
-    font-family: system-ui, sans-serif;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: #888;
-    margin: -6mm 0 8mm;
-    padding-bottom: 4px;
-    border-bottom: 1px dashed #ccc;
-  }
-
-  #report-preview-sheet #report-cover::before {
-    content: "Cover (PDF page 1)";
-  }
-}
 
 @media print {
   /* Report body: Arial for all report types */
@@ -531,35 +470,13 @@
     line-height: 1.35 !important;
   }
 
-  /* Undo screen-only page-break chrome — print layout unchanged */
-  #report-preview-sheet #report-cover,
-  #report-preview-sheet .report-cover-summary,
-  #report-preview-sheet .phil-summary-page,
-  #report-preview-sheet .report-toc,
-  #report-preview-sheet .report-annexure {
-    box-shadow: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-    /* padding left to cover/print rules; do not force zero on cover flex layout */
-  }
-  #report-preview-sheet #report-cover::before,
-  #report-preview-sheet .report-cover-summary::before,
-  #report-preview-sheet .phil-summary-page::before,
-  #report-preview-sheet .report-toc::before,
-  #report-preview-sheet .report-annexure::before {
-    display: none !important;
-    content: none !important;
-  }
-
-
 
   #report-preview-sheet a {
     text-decoration: none !important;
     color: inherit !important;
   }
 
-  /* Page 1: cover — three equal bands; no transforms (avoids blank page) */
+  /* Page 1: cover only. height:auto avoids blank second page from fixed 250mm. */
   #report-cover {
     break-after: page !important;
     page-break-after: always !important;
@@ -574,9 +491,8 @@
     page-break-inside: avoid !important;
     display: flex !important;
     flex-direction: column !important;
-    /* ~265mm printable; stay under to avoid extra blank page */
-    height: 250mm !important;
-    max-height: 250mm !important;
+    height: auto !important;
+    max-height: 245mm !important;
     min-height: 0 !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
@@ -584,19 +500,19 @@
     margin: 0 !important;
   }
 
-  /* Top ~1/3: logo left + firm block right */
+  /* Top: logo left + firm block right (content height only) */
   .cover-letterhead {
     display: flex !important;
     align-items: flex-start !important;
     justify-content: space-between !important;
     gap: 8pt !important;
-    flex: 0 0 32% !important;
+    flex: 0 0 auto !important;
     width: 100% !important;
-    max-height: 80mm !important;
+    max-height: none !important;
     margin: 0 !important;
-    padding: 0 0 2mm 0 !important;
+    padding: 0 0 4mm 0 !important;
     box-sizing: border-box !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
   .cover-logo {
     display: block !important;
@@ -658,50 +574,52 @@
     color: #0a6b3c !important;
   }
 
-  /* Middle ~1/3: photo centred */
+  /* Middle: landscape mobile photo (4:3) */
   .cover-photo-band {
-    flex: 1 1 36% !important;
+    flex: 0 0 auto !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    margin: 0 !important;
+    margin: 6mm 0 !important;
     min-height: 0 !important;
-    padding: 2mm 0 !important;
+    padding: 0 !important;
     transform: none !important;
     overflow: hidden !important;
   }
   .cover-photo-frame {
     margin: 0 auto !important;
-    margin-bottom: 0 !important;
-    margin-top: 0 !important;
-    padding: 8pt !important;
+    padding: 6pt !important;
     background: #000 !important;
     width: 100% !important;
-    max-width: 155mm !important;
+    max-width: 160mm !important;
+    aspect-ratio: 4 / 3 !important;
     box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     print-color-adjust: exact !important;
     -webkit-print-color-adjust: exact !important;
   }
   .cover-front-photo {
     display: block !important;
     width: 100% !important;
-    max-height: 85mm !important;
-    height: auto !important;
+    height: 100% !important;
+    max-height: 100% !important;
     object-fit: contain !important;
   }
   .cover-photo-placeholder {
-    min-height: 60mm !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
     color: #ccc !important;
   }
 
-  /* Bottom ~1/3: REPORT AND VALUATION copy */
+  /* Bottom: REPORT AND VALUATION — sits under photo, not forced empty third */
   .cover-title-block {
-    flex: 0 0 28% !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    margin: 0 !important;
-    padding: 2mm 0 0 0 !important;
+    flex: 0 0 auto !important;
+    display: block !important;
+    margin: 4mm 0 0 0 !important;
+    padding: 0 !important;
     text-align: center !important;
     font-family: Arial, Helvetica, sans-serif !important;
     font-weight: 700 !important;
