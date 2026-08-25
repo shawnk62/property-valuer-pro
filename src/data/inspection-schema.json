@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "32",
+  "version": "33",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -2599,6 +2599,22 @@
           "type": "checkbox_group",
           "items": [
             {
+              "id": "sd_cornice",
+              "label": "Cornice mouldings"
+            },
+            {
+              "id": "sd_ornate_cornice",
+              "label": "Ornate cornice mouldings"
+            },
+            {
+              "id": "sd_skirting",
+              "label": "Skirting boards"
+            },
+            {
+              "id": "sd_ornate_skirting",
+              "label": "Ornate skirting boards"
+            },
+            {
               "id": "sd_architectural_glass",
               "label": "Architectural glass"
             },
@@ -2621,10 +2637,6 @@
             {
               "id": "sd_climate_storage",
               "label": "Climate-controlled storage"
-            },
-            {
-              "id": "sd_cornice",
-              "label": "Cornice mouldings"
             },
             {
               "id": "sd_crimsafe_doors",
@@ -2739,14 +2751,6 @@
               "label": "Operable shading"
             },
             {
-              "id": "sd_ornate_cornice",
-              "label": "Ornate cornice mouldings"
-            },
-            {
-              "id": "sd_ornate_skirting",
-              "label": "Ornate skirting boards"
-            },
-            {
               "id": "sd_plantation_shutters",
               "label": "Plantation shutters"
             },
@@ -2773,10 +2777,6 @@
             {
               "id": "sd_security_screens_windows",
               "label": "Security screens on windows"
-            },
-            {
-              "id": "sd_skirting",
-              "label": "Skirting boards"
             },
             {
               "id": "sd_smart_av",
