@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "31",
+  "version": "32",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -2347,6 +2347,14 @@
           "type": "checkbox_group",
           "items": [
             {
+              "id": "ceil_plasterboard",
+              "label": "Plasterboard"
+            },
+            {
+              "id": "ceil_vj_timber",
+              "label": "VJ timber"
+            },
+            {
               "id": "ceil_exposed_beams",
               "label": "Exposed beams"
             },
@@ -2367,20 +2375,12 @@
               "label": "Mixed ceiling types"
             },
             {
-              "id": "ceil_plasterboard",
-              "label": "Plasterboard"
-            },
-            {
               "id": "ceil_suspended",
               "label": "Suspended acoustic tiles"
             },
             {
               "id": "ceil_timber",
               "label": "Timber lining"
-            },
-            {
-              "id": "ceil_vj_timber",
-              "label": "VJ timber"
             },
             {
               "id": "ceil_other",
