@@ -4,6 +4,10 @@ import { MAP_SLOTS, PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
 import { getReportTypeConfig, isPhilReportType } from "@/lib/report/reportTypes";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { parseOverlayList } from "@/lib/report/overlays";
+import {
+  letterheadFromProfile,
+  resolveValuerProfile,
+} from "@/lib/report/valuerProfiles";
 
 /* ---------- primitives ---------- */
 
@@ -325,7 +329,17 @@ function SignatureBlock({
         <p className="text-sm">{get(values, "sign_member")}</p>
       ) : null}
       {showFirm ? (
-        <p className="text-sm">{meta.firmName || get(values, "insp_firm")}</p>
+        <p className="text-sm">
+          {(() => {
+            const profile = resolveValuerProfile(
+              typeof values["prop_assignment"] === "string"
+                ? values["prop_assignment"]
+                : "",
+            );
+            if (profile.id === "phil" || profile.id === "murray") return profile.firm;
+            return meta.firmName || get(values, "insp_firm") || profile.firm;
+          })()}
+        </p>
       ) : null}
       {meta.valueDate ? <p className="mt-1 text-sm">{meta.valueDate}</p> : null}
     </div>
@@ -496,18 +510,26 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
 
   const frontPhoto = draft.photos.find((p) => p.slot === "front" && p.url);
-  const lh = BOILERPLATE.firmLetterhead;
+  // Letterhead + credentials follow Report Type (Phil vs Murray)
+  const valuerProfile = resolveValuerProfile(get(v, "prop_assignment"));
+  const lh = letterheadFromProfile(valuerProfile);
   const coverValuerName = (m.valuerName || get(v, "insp_valuer") || "").trim();
   const coverMember = (get(v, "sign_member") || "").trim();
-  const coverValuerLine = coverValuerName
-    ? coverMember && !/registered\s*valuer/i.test(coverMember)
-      ? `${coverValuerName}, ${coverMember}`
+  // Prefer profile credentials for Phil/Murray so letterhead stays correct even if meta is thin
+  const coverValuerLine =
+    valuerProfile.id === "phil" || valuerProfile.id === "murray"
+      ? lh.defaultValuer
       : coverValuerName
-    : lh.defaultValuer;
+        ? coverMember && !/registered\s*valuer/i.test(coverMember)
+          ? `${coverValuerName}, ${coverMember}`
+          : coverValuerName
+        : lh.defaultValuer;
   const coverRegLine =
-    coverMember && /registered\s*valuer/i.test(coverMember)
-      ? coverMember
-      : lh.defaultRegistration;
+    valuerProfile.id === "phil" || valuerProfile.id === "murray"
+      ? lh.defaultRegistration
+      : coverMember && /registered\s*valuer/i.test(coverMember)
+        ? coverMember
+        : lh.defaultRegistration;
 
 
   return (
@@ -536,13 +558,13 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               ABN {lh.abn}
             </p>
             <p>{coverValuerLine}</p>
-            <p>{coverRegLine}</p>
-            <p className="cover-firm-gap">{lh.postal}</p>
-            <p>
-              {lh.phone}
-              {"    "}
-              {lh.mobile}
-            </p>
+            {coverRegLine ? <p>{coverRegLine}</p> : null}
+            {lh.postal ? <p className="cover-firm-gap">{lh.postal}</p> : null}
+            {(lh.phone || lh.mobile) ? (
+              <p className={lh.postal ? undefined : "cover-firm-gap"}>
+                {[lh.phone, lh.mobile].filter(Boolean).join("    ")}
+              </p>
+            ) : null}
             <p>{lh.web}</p>
             <p className="cover-firm-email">{lh.email}</p>
           </div>
@@ -637,9 +659,11 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
           <div className="mt-6 text-center">
             <p className="font-semibold text-[var(--phil-green)]">
-              {m.firmName ||
-                get(v, "insp_firm") ||
-                "Peterson Property Valuations Pty Ltd"}
+              {valuerProfile.id === "phil" || valuerProfile.id === "murray"
+                ? valuerProfile.firm
+                : m.firmName ||
+                  get(v, "insp_firm") ||
+                  "PETERSON PROPERTY VALUATIONS PTY LTD"}
             </p>
             <p className="text-sm text-[var(--phil-green)]">Real Estate Valuers</p>
           </div>

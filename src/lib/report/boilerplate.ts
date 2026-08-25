@@ -8,7 +8,7 @@ export const BOILERPLATE = {
   /** Letterhead on the photo cover page (matches issued PDF covers). */
   firmLetterhead: {
     tradingAs: "Real Estate Valuers",
-    company: "Peterson Property Valuations Pty Ltd",
+    company: "PETERSON PROPERTY VALUATIONS PTY LTD",
     acn: "603 599 604",
     abn: "78 603 599 604",
     defaultValuer: "Murray Peterson, AVI, Certified Practicing Valuer",

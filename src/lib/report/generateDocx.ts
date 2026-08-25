@@ -373,7 +373,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   // Signature block (preview)
   children.push(p(m.valuerName || get(v, "insp_valuer") || "", { bold: true, after: 40, before: 200 }));
   if (get(v, "sign_member")) children.push(p(get(v, "sign_member"), { size: 18, after: 40 }));
-  children.push(p(m.firmName || get(v, "insp_firm") || "Peterson Property Valuations Pty Ltd", { size: 18, after: 40 }));
+  children.push(p(m.firmName || get(v, "insp_firm") || "PETERSON PROPERTY VALUATIONS PTY LTD", { size: 18, after: 40 }));
   if (m.valueDate) children.push(p(m.valueDate, { size: 18, after: 200 }));
 
   // ---- TOC (same visibility rules as Preview) ----
@@ -838,7 +838,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   }
   children.push(p(m.valuerName || get(v, "insp_valuer") || "", { bold: true, after: 40, before: 200 }));
   if (get(v, "sign_member")) children.push(p(get(v, "sign_member"), { size: 18, after: 40 }));
-  children.push(p(m.firmName || get(v, "insp_firm") || "Peterson Property Valuations Pty Ltd", { size: 18, after: 40 }));
+  children.push(p(m.firmName || get(v, "insp_firm") || "PETERSON PROPERTY VALUATIONS PTY LTD", { size: 18, after: 40 }));
   for (const a of BOILERPLATE.annexures) {
     children.push(p(a, { size: 18, after: 40 }));
   }

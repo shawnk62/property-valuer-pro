@@ -4,6 +4,7 @@ import { applyDesignPreset, DESIGN_PRESETS } from "@/lib/inspection/design-prese
 import { applyLocationPreset, LOCATION_PRESETS } from "@/lib/inspection/location-presets";
 import { inspectionStore } from "@/lib/inspection/storage";
 import type { InspectionRecord, InspectionValues } from "@/lib/inspection/types";
+import { resolveValuerProfile } from "@/lib/report/valuerProfiles";
 
 /**
  * Sign-off fields that mirror an earlier answer until the valuer edits them
@@ -107,6 +108,20 @@ export function useInspection(id: string, opts?: { readOnly?: boolean }) {
           next = applyLocationPreset(next, value);
           if (next !== before) {
             toast.success(`Typical ${value.toLowerCase()} neighbourhood and site features pre-selected. Adjust any that do not apply.`);
+          }
+        }
+
+        // Report type Phil / Murray → valuer, firm, membership for letterhead & sign-off
+        if (key === "prop_assignment" && typeof value === "string" && value) {
+          const profile = resolveValuerProfile(value);
+          if (profile.id === "phil" || profile.id === "murray") {
+            next = {
+              ...next,
+              insp_valuer: profile.displayName,
+              insp_firm: profile.firm,
+              sign_member: profile.membershipLine,
+              sign_name: profile.displayName,
+            };
           }
         }
 

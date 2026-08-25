@@ -9,6 +9,7 @@ import type {
   ReportNarrative,
   ReportPhoto,
 } from "@/lib/report/types";
+import { resolveValuerProfile } from "@/lib/report/valuerProfiles";
 
 /**
  * Report draft: subject values from Supabase inspection;
@@ -47,11 +48,21 @@ function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): R
 
 function emptyMeta(values: Record<string, FieldValue>): ReportMeta {
   const inspDate = typeof values.insp_date === "string" ? values.insp_date : "";
-  const valuer = typeof values.insp_valuer === "string" ? values.insp_valuer : "";
+  const assignment =
+    typeof values.prop_assignment === "string" ? values.prop_assignment : "";
+  const profile = resolveValuerProfile(assignment);
+  const valuerFromForm =
+    typeof values.insp_valuer === "string" ? values.insp_valuer.trim() : "";
+  const firmFromForm =
+    typeof values.insp_firm === "string" ? values.insp_firm.trim() : "";
+  const valuer =
+    valuerFromForm ||
+    (profile.id === "phil" || profile.id === "murray" ? profile.displayName : "");
   const firm =
-    typeof values.insp_firm === "string"
-      ? values.insp_firm
-      : "Peterson Property Valuations Pty Ltd";
+    firmFromForm ||
+    (profile.id === "phil" || profile.id === "murray"
+      ? profile.firm
+      : "PETERSON PROPERTY VALUATIONS PTY LTD");
   return {
     valueAmount: "",
     valueDate: inspDate,

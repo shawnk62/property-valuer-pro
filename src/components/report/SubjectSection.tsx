@@ -1,6 +1,7 @@
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import { formatCurrencyInput } from "@/lib/report/salesRelativity";
 import { pick } from "@/lib/report/schema";
+import { resolveValuerProfile } from "@/lib/report/valuerProfiles";
 
 /** Options kept in sync with inspection-schema.json prop_assignment */
 const REPORT_TYPE_OPTIONS = [
@@ -145,7 +146,20 @@ export function SubjectSection({ controller }: { controller: ReportDraftControll
             </span>
             <select
               value={currentReportType}
-              onChange={(e) => setValue("prop_assignment", e.target.value)}
+              onChange={(e) => {
+                const nextType = e.target.value;
+                setValue("prop_assignment", nextType);
+                const profile = resolveValuerProfile(nextType);
+                if (profile.id === "phil" || profile.id === "murray") {
+                  setValue("insp_valuer", profile.displayName);
+                  setValue("insp_firm", profile.firm);
+                  setValue("sign_member", profile.membershipLine);
+                  setMeta({
+                    valuerName: profile.displayName,
+                    firmName: profile.firm,
+                  });
+                }
+              }}
               className="w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Select…</option>
