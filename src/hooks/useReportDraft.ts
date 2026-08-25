@@ -255,10 +255,24 @@ export function useReportDraft(
           else if (l) narrative[key] = l;
         }
 
-        const reportMeta =
+        const storedMeta =
           (cloud?.reportMeta as ReportMeta | undefined) ||
           local?.reportMeta ||
-          emptyMeta(values);
+          undefined;
+        // emptyMeta supplies Phil/Murray defaults; stored empty strings must not wipe them
+        const defaults = emptyMeta(values);
+        const reportMeta: ReportMeta = {
+          ...defaults,
+          ...(storedMeta || {}),
+          valuerName:
+            (storedMeta?.valuerName || "").trim() ||
+            defaults.valuerName ||
+            "",
+          firmName:
+            (storedMeta?.firmName || "").trim() ||
+            defaults.firmName ||
+            "",
+        };
 
         const cloudSales = Array.isArray(cloud?.sales) ? (cloud!.sales as ComparableSale[]) : null;
         const localSales = Array.isArray(local?.sales) ? (local!.sales as ComparableSale[]) : null;
@@ -285,13 +299,42 @@ export function useReportDraft(
           sales = cloudSales?.length ? cloudSales : localSales || [];
         }
 
+        // Ensure form values also carry Phil/Murray identity when still blank
+        const profile = resolveValuerProfile(
+          typeof values.prop_assignment === "string" ? values.prop_assignment : "",
+        );
+        let nextValues = values;
+        if (profile.id === "phil" || profile.id === "murray") {
+          const patch: Record<string, FieldValue> = {};
+          if (!(typeof values.insp_valuer === "string" && values.insp_valuer.trim())) {
+            patch.insp_valuer = profile.displayName;
+          }
+          if (!(typeof values.insp_firm === "string" && values.insp_firm.trim())) {
+            patch.insp_firm = profile.firm;
+          }
+          if (!(typeof values.sign_member === "string" && values.sign_member.trim())) {
+            patch.sign_member = profile.membershipLine;
+          }
+          if (Object.keys(patch).length) {
+            nextValues = { ...values, ...patch };
+            // Persist identity onto the inspection so future opens stay filled
+            void inspectionStore
+              .save(inspectionId, nextValues as import("@/lib/inspection/types").InspectionValues)
+              .catch(() => {});
+          }
+        }
+
         const next: ReportDraft = {
           ...base,
-          values,
+          values: nextValues,
           narrative,
           photos,
           sales,
-          reportMeta: { ...emptyMeta(values), ...reportMeta },
+          reportMeta: {
+            ...reportMeta,
+            valuerName: reportMeta.valuerName || profile.displayName || "",
+            firmName: reportMeta.firmName || profile.firm || "",
+          },
         };
         setDraft(next);
         writeLocalCache(next);
@@ -382,7 +425,26 @@ export function useReportDraft(
   const setValue = useCallback(
     (name: string, value: FieldValue) => {
       setDraft((prev) => {
-        const next = { ...prev, values: { ...prev.values, [name]: value } };
+        let values = { ...prev.values, [name]: value };
+        let reportMeta = prev.reportMeta;
+        // Report type Phil/Murray → fill Valuer + Firm (and membership) when chosen
+        if (name === "prop_assignment" && typeof value === "string") {
+          const profile = resolveValuerProfile(value);
+          if (profile.id === "phil" || profile.id === "murray") {
+            values = {
+              ...values,
+              insp_valuer: profile.displayName,
+              insp_firm: profile.firm,
+              sign_member: profile.membershipLine,
+            };
+            reportMeta = {
+              ...reportMeta,
+              valuerName: profile.displayName,
+              firmName: profile.firm,
+            };
+          }
+        }
+        const next = { ...prev, values, reportMeta };
         scheduleCloudSave(next);
         return next;
       });
@@ -402,6 +464,27 @@ export function useReportDraft(
             console.error("sign_sig form save failed", err);
           }
         })();
+      }
+      // Persist Phil/Murray identity onto the inspection form values
+      if (name === "prop_assignment" && typeof value === "string") {
+        const profile = resolveValuerProfile(value);
+        if (profile.id === "phil" || profile.id === "murray") {
+          void (async () => {
+            try {
+              const rec = await inspectionStore.get(inspectionId);
+              const base = rec?.values ?? {};
+              await inspectionStore.save(inspectionId, {
+                ...base,
+                prop_assignment: value,
+                insp_valuer: profile.displayName,
+                insp_firm: profile.firm,
+                sign_member: profile.membershipLine,
+              });
+            } catch (err) {
+              console.error("valuer identity form save failed", err);
+            }
+          })();
+        }
       }
     },
     [scheduleCloudSave, inspectionId],
