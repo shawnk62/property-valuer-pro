@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "33",
+  "version": "34",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -3434,6 +3434,14 @@
           "type": "checkbox_group",
           "items": [
             {
+              "id": "sec_intercom",
+              "label": "Intercom"
+            },
+            {
+              "id": "sec_doorbell_camera",
+              "label": "Doorbell camera"
+            },
+            {
               "id": "sec_biometric",
               "label": "Biometric access control"
             },
@@ -3448,10 +3456,6 @@
             {
               "id": "sec_integrated",
               "label": "Integrated security system"
-            },
-            {
-              "id": "sec_intercom",
-              "label": "Intercom"
             },
             {
               "id": "sec_ip_cameras",
@@ -3470,12 +3474,12 @@
               "label": "Monitored alarm system"
             },
             {
-              "id": "sec_none",
-              "label": "None"
-            },
-            {
               "id": "sec_video_intercom",
               "label": "Video intercom"
+            },
+            {
+              "id": "sec_none",
+              "label": "None"
             },
             {
               "id": "sec_other",
@@ -3491,8 +3495,12 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "aux_auto_transfer",
-              "label": "Automatic transfer switch"
+              "id": "aux_solar_power",
+              "label": "Solar power"
+            },
+            {
+              "id": "aux_petrol",
+              "label": "Petrol generator"
             },
             {
               "id": "aux_diesel",
@@ -3501,6 +3509,14 @@
             {
               "id": "aux_gas",
               "label": "Gas generator"
+            },
+            {
+              "id": "aux_battery_backup",
+              "label": "Battery Backup"
+            },
+            {
+              "id": "aux_auto_transfer",
+              "label": "Automatic transfer switch"
             },
             {
               "id": "aux_interlock_backfeed",
@@ -3519,28 +3535,16 @@
               "label": "Non-maintained emergency lighting"
             },
             {
-              "id": "aux_none",
-              "label": "None"
-            },
-            {
-              "id": "aux_petrol",
-              "label": "Petrol generator"
-            },
-            {
               "id": "aux_solar_hot_water",
               "label": "Solar hot water"
             },
             {
-              "id": "aux_solar_power",
-              "label": "Solar power"
-            },
-            {
-              "id": "aux_solar_battery",
-              "label": "Solar with battery backup"
-            },
-            {
               "id": "aux_ups",
               "label": "UPS battery backup"
+            },
+            {
+              "id": "aux_none",
+              "label": "None"
             },
             {
               "id": "aux_other",
@@ -3633,6 +3637,10 @@
             {
               "id": "pool_covered",
               "label": "Pool cover"
+            },
+            {
+              "id": "pool_fencing",
+              "label": "Pool fencing"
             },
             {
               "id": "pool_fencing_compliant",
