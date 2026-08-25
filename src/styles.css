@@ -280,7 +280,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 1.25rem 0;
+  /* ~4 lines lower than letterhead; title stays under photo */
+  margin: 3.75rem 0 1.25rem;
   transform: none;
 }
 .cover-photo-frame {
@@ -580,7 +581,8 @@
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    margin: 6mm 0 !important;
+    /* ~4 lines (~10mm) lower; keep height:auto on cover to avoid blank page */
+    margin: 16mm 0 6mm 0 !important;
     min-height: 0 !important;
     padding: 0 !important;
     transform: none !important;
