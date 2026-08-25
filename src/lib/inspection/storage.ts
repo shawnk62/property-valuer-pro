@@ -157,49 +157,128 @@ export const inspectionStore = {
       extras = null;
     }
 
-    // Strip locks if they were ever stored inside extras by mistake; column locks stay on source only.
-    const cleanExtras: ReportExtras | null = extras
-      ? {
-          ...extras,
-          // Keep sales, narrative, photos, reportMeta as-is for the new job
-        }
-      : null;
+    /** Drop data: URLs (often megabytes) so insert/update stays under PostgREST limits. */
+    const slimExtras = (raw: ReportExtras | null): ReportExtras | null => {
+      if (!raw) return null;
+      const photos = Array.isArray(raw.photos)
+        ? raw.photos
+            .map((p) => {
+              const url = typeof p.url === "string" ? p.url : "";
+              if (url.startsWith("data:")) {
+                // Keep slot/caption metadata; user re-attaches the image on the copy
+                return { ...p, url: "", storagePath: p.storagePath };
+              }
+              return p;
+            })
+            .filter((p) => p.url || p.storagePath || p.slot || p.caption)
+        : undefined;
+      const sales = Array.isArray(raw.sales)
+        ? raw.sales.map((s) => {
+            if (!s || typeof s !== "object") return s;
+            const sale = { ...(s as Record<string, unknown>) };
+            const photoUrl = sale.photoUrl;
+            if (typeof photoUrl === "string" && photoUrl.startsWith("data:")) {
+              sale.photoUrl = "";
+            }
+            return sale;
+          })
+        : undefined;
+      return {
+        ...raw,
+        ...(photos ? { photos } : {}),
+        ...(sales ? { sales } : {}),
+      };
+    };
 
-    const { data, error } = await supabase
-      .from("inspections")
-      .insert({
-        user_id: userId,
-        status: "draft",
-        form_values: source.values ?? {},
-        schema_version: schema.version,
-        report_extras: cleanExtras,
-        // Do not set submitted_* — new job starts as draft even if source was submitted
-      })
-      .select("*")
-      .single();
+    const formatDbError = (err: {
+      message?: string;
+      code?: string;
+      details?: string;
+      hint?: string;
+    }): string => {
+      const parts = [
+        err.message,
+        err.code ? `code ${err.code}` : "",
+        err.details,
+        err.hint,
+      ].filter(Boolean);
+      return parts.join(" — ") || "Database error while saving as new job";
+    };
+
+    const insertBase = {
+      user_id: userId,
+      status: "draft" as const,
+      form_values: source.values ?? {},
+      schema_version: schema.version,
+      // Do not set submitted_* — new job starts as draft even if source was submitted
+    };
+
+    const tryInsert = async (withExtras: ReportExtras | null) => {
+      const payload =
+        withExtras != null
+          ? { ...insertBase, report_extras: withExtras }
+          : { ...insertBase };
+      return supabase.from("inspections").insert(payload).select("*").single();
+    };
+
+    const cleanExtras = slimExtras(extras);
+
+    // 1) Preferred: single insert including report_extras
+    let { data, error } = await tryInsert(cleanExtras);
+
+    // 2) Column missing or RLS/schema issues around report_extras → insert bare row, then update
+    if (error && /report_extras|column|schema cache|Could not find/i.test(error.message || "")) {
+      const bare = await tryInsert(null);
+      if (bare.error) {
+        throw new Error(formatDbError(bare.error));
+      }
+      const record = rowToRecord(bare.data as DbRow);
+      if (cleanExtras) {
+        try {
+          await this.saveReportExtras(record.id, cleanExtras);
+        } catch (extrasErr) {
+          // Row exists; report draft may need re-save from the UI
+          console.warn("[duplicate] form copied; report_extras update failed", extrasErr);
+        }
+      }
+      emit();
+      return record;
+    }
+
+    // 3) Payload too large (common with embedded photo data URLs) → retry without extras, then slim update
+    if (
+      error &&
+      /too large|payload|value too long|json|413|54000|22001/i.test(
+        `${error.message || ""} ${error.code || ""} ${error.details || ""}`,
+      )
+    ) {
+      const bare = await tryInsert(null);
+      if (bare.error) {
+        throw new Error(formatDbError(bare.error));
+      }
+      const record = rowToRecord(bare.data as DbRow);
+      if (cleanExtras) {
+        try {
+          await this.saveReportExtras(record.id, cleanExtras);
+        } catch {
+          // Still return the new job; narrative/sales can be re-saved from source workflow
+        }
+      }
+      emit();
+      return record;
+    }
 
     if (error) {
-      // Older DBs without report_extras on insert: create then update
-      if (/report_extras|column/i.test(error.message)) {
-        const { data: row2, error: err2 } = await supabase
-          .from("inspections")
-          .insert({
-            user_id: userId,
-            status: "draft",
-            form_values: source.values ?? {},
-            schema_version: schema.version,
-          })
-          .select("*")
-          .single();
-        if (err2) throw err2;
-        const record = rowToRecord(row2 as DbRow);
-        if (cleanExtras) {
-          await this.saveReportExtras(record.id, cleanExtras);
-        }
-        emit();
-        return record;
+      const msg = formatDbError(error);
+      if (/row-level security|RLS|42501|permission|not authorized|401|403/i.test(msg)) {
+        throw new Error(
+          "Save as blocked by database security (RLS). In Supabase, ensure INSERT on public.inspections is allowed for authenticated users where user_id = auth.uid().",
+        );
       }
-      throw error;
+      if (/jwt|expired|session/i.test(msg)) {
+        throw new Error("Session expired. Sign in again, then use Save as.");
+      }
+      throw new Error(msg);
     }
 
     emit();
