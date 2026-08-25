@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "27",
+  "version": "28",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -1201,14 +1201,6 @@
               "label": "Falls steeply from the road"
             },
             {
-              "id": "topo_level",
-              "label": "Level"
-            },
-            {
-              "id": "topo_poorly_drained",
-              "label": "Poorly drained"
-            },
-            {
               "id": "topo_slope_front",
               "label": "Slopes to front"
             },
@@ -1239,6 +1231,14 @@
             {
               "id": "topo_slope_west",
               "label": "Slopes to west"
+            },
+            {
+              "id": "topo_level",
+              "label": "Level"
+            },
+            {
+              "id": "topo_poorly_drained",
+              "label": "Poorly drained"
             },
             {
               "id": "topo_undulating",
