@@ -252,12 +252,12 @@
   min-height: 18rem;
   padding-bottom: 0;
   /* Photo + title move up together; gap via frame margin-bottom stays */
-  transform: translateY(-3em);
+  transform: translateY(-5em); /* was -3em; two lines higher */
 }
 .cover-photo-frame {
   margin-left: auto;
   margin-right: auto;
-  /* Lift photo only (~5 lines); title block spacing unchanged */
+  /* Space between photo and REPORT AND VALUATION title */
   margin-bottom: 5em;
   padding: 0.85rem;
   background: #000;
@@ -293,7 +293,7 @@
   line-height: 1.35;
   text-transform: none;
   /* Match photo-band shift so spacing between photo and wording is unchanged */
-  transform: translateY(-3em);
+  transform: translateY(-5em); /* was -3em; +2 lines higher with photo */
 }
 .cover-title-block p {
   margin: 0.2rem 0;
@@ -467,14 +467,14 @@
     margin-bottom: 0 !important;
     min-height: 0 !important;
     padding-bottom: 0 !important;
-    /* Photo + title up 3 lines together; gap unchanged */
-    transform: translateY(-3em) !important;
+    /* Photo + title up together; gap unchanged */
+    transform: translateY(-5em) !important; /* was -3em; two lines higher */
   }
   .cover-photo-frame {
     margin-left: auto !important;
     margin-right: auto !important;
     margin-top: 0 !important;
-    /* Lift photo only by ~5 lines of title text; do not move title */
+    /* Space between photo and title */
     margin-bottom: 5em !important;
     padding: 10pt !important;
     background: #000 !important;
@@ -507,7 +507,7 @@
     font-size: 15pt !important;
     line-height: 1.3 !important;
     /* Same shift as photo-band — spacing between photo and wording unchanged */
-    transform: translateY(-3em) !important;
+    transform: translateY(-5em) !important; /* was -3em; two lines higher */
   }
   .cover-title-block p {
     margin: 1.5pt 0 !important;
