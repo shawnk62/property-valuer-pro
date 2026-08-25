@@ -440,26 +440,28 @@
     color: inherit !important;
   }
 
-  /* Page 1: cover only */
+  /* Page 1: cover only — single forced break after cover.
+   * Avoid tall fixed heights + translateY (those re-introduce a blank page). */
   #report-cover {
     break-after: page !important;
     page-break-after: always !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
-
-  /* Unified photo cover — fill first A4 page like the sample PDF.
-   * Printable content height ≈ 297mm − 14mm top − 18mm bottom = 265mm.
-   * 268mm previously overflowed by a few mm and created a blank page after
-   * the cover. Use a safe max and clip any transform overflow so the
-   * forced break-after does not leave an empty intermediate page. */
+  /* Unified photo cover on first A4 page.
+   * Content box ≈ 265mm; keep well under that. No transforms in print —
+   * translateY reserved layout space and overflowed, creating a blank page. */
   #report-cover.cover-photo-page {
     break-after: page !important;
     page-break-after: always !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
     display: flex !important;
     flex-direction: column !important;
-    min-height: 250mm !important;
-    height: 255mm !important;
-    max-height: 255mm !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: 250mm !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
     padding: 0 !important;
@@ -509,15 +511,16 @@
     margin-bottom: 0 !important;
     min-height: 0 !important;
     padding-bottom: 0 !important;
-    /* Photo + title up together; gap unchanged */
-    transform: translateY(-5em) !important; /* was -3em; two lines higher */
+    /* No transform — negative margin lifts content without print overflow */
+    transform: none !important;
+    margin-top: -8mm !important;
   }
   .cover-photo-frame {
     margin-left: auto !important;
     margin-right: auto !important;
     margin-top: 0 !important;
     /* Space between photo and title */
-    margin-bottom: 5em !important;
+    margin-bottom: 10mm !important;
     padding: 10pt !important;
     background: #000 !important;
     width: 100% !important;
@@ -529,12 +532,12 @@
     display: block !important;
     width: 100% !important;
     /* Large photo — sample is roughly half the page */
-    max-height: 145mm !important;
+    max-height: 125mm !important;
     height: auto !important;
     object-fit: contain !important;
   }
   .cover-photo-placeholder {
-    min-height: 100mm !important;
+    min-height: 80mm !important;
     color: #ccc !important;
   }
   .cover-title-block {
@@ -548,13 +551,15 @@
     font-weight: 700 !important;
     font-size: 15pt !important;
     line-height: 1.3 !important;
-    /* Same shift as photo-band — spacing between photo and wording unchanged */
-    transform: translateY(-5em) !important; /* was -3em; two lines higher */
+    transform: none !important;
+    margin-top: -4mm !important;
   }
   .cover-title-block p {
     margin: 1.5pt 0 !important;
   }
   .report-cover-summary {
+    break-before: auto !important;
+    page-break-before: auto !important;
     break-after: page !important;
     page-break-after: always !important;
   }
