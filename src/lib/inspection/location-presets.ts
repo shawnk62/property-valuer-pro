@@ -34,7 +34,7 @@ export const LOCATION_PRESETS: Record<string, InspectionValues> = {
     // On-site services (reticulated)
     svc_water_type: "Town water",
     svc_sewer_type: "Sewer",
-    svc_elec_type: "Mains power only",
+    svc_elec_type: "Mains power",
     svc_gas_type: "Natural gas",
     svc_storm_type: "Appears adequate",
     svc_internet_type: "Fibre to the Node (FTTN)",
@@ -61,7 +61,7 @@ export const LOCATION_PRESETS: Record<string, InspectionValues> = {
 
     svc_water_type: "Town water",
     svc_sewer_type: "Sewer",
-    svc_elec_type: "Mains power only",
+    svc_elec_type: "Mains power",
     svc_gas_type: "Natural gas",
     svc_storm_type: "Appears adequate",
     svc_internet_type: "Fibre to the Node (FTTN)",
@@ -88,7 +88,7 @@ export const LOCATION_PRESETS: Record<string, InspectionValues> = {
     // On-site / non-reticulated typical for rural residential
     svc_water_type: "Rooftop / Tank",
     svc_sewer_type: "Septic",
-    svc_elec_type: "Mains power only",
+    svc_elec_type: "Mains power",
     svc_gas_type: "LPG",
     svc_storm_type: "Appears adequate",
     svc_internet_type: "Fixed Wireless NBN",

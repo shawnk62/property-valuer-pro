@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "24",
+  "version": "25",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -900,7 +900,7 @@
               "label": "Type",
               "type": "select",
               "options": [
-                "Mains power only",
+                "Mains power",
                 "Solar photovoltaic panels only",
                 "Wind generation only",
                 "Mains power with solar PV",

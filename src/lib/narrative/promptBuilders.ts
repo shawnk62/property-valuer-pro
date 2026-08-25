@@ -276,8 +276,8 @@ ${siteServicesAnswers(values)}
 
 Requirements:
 - One short professional paragraph (typically 1–3 sentences).
-- You MUST list each recorded service TYPE that is not Nil / Not applicable (e.g. if Water Supply — Type is "Town water", write "town water"; if Sewerage — Type is "Sewer", write "sewer"; if Electricity — Type is "Mains power only", write "mains power only").
-- Do NOT write category labels with the type in parentheses (never "water (town water)"). Prefer "The property is connected to town water, sewer, and mains power only".
+- You MUST list each recorded service TYPE that is not Nil / Not applicable (e.g. if Water Supply — Type is "Town water", write "town water"; if Sewerage — Type is "Sewer", write "sewer"; if Electricity — Type is "Mains power", write "mains power").
+- Do NOT write category labels with the type in parentheses (never "water (town water)"). Prefer "The property is connected to town water, sewer, and mains power".
 - Do NOT use generic wording such as "usual urban services" when any specific TYPE is recorded above.
 - Omit services marked Nil or Not applicable.
 - Do not invent connections, capacities, or providers not in the data.
