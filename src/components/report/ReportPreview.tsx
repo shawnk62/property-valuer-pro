@@ -283,6 +283,50 @@ function Prose({ text }: { text: string }) {
   );
 }
 
+/** Shared signature + name block for summary pages and closing statement. */
+function SignatureBlock({
+  values,
+  meta,
+  className = "report-signature mt-8",
+  showFirm = false,
+}: {
+  values: ReportDraft["values"];
+  meta: ReportDraft["reportMeta"];
+  className?: string;
+  showFirm?: boolean;
+}) {
+  const sig =
+    typeof values["sign_sig"] === "string" && values["sign_sig"].startsWith("data:image")
+      ? values["sign_sig"]
+      : "";
+  return (
+    <div className={className}>
+      {sig ? (
+        <div className="report-sig-image-wrap">
+          <img
+            src={sig}
+            alt="Valuer signature"
+            className="report-sig-image mb-0 h-16 w-auto max-w-xs object-contain object-left"
+          />
+          <div className="h-px w-56 border-b border-[var(--page-foreground)]/70" />
+        </div>
+      ) : (
+        <div className="h-14 w-56 border-b border-[var(--page-foreground)]/70" />
+      )}
+      <p className="mt-2 font-semibold">
+        {meta.valuerName || get(values, "insp_valuer")}
+      </p>
+      {get(values, "sign_member") ? (
+        <p className="text-sm">{get(values, "sign_member")}</p>
+      ) : null}
+      {showFirm ? (
+        <p className="text-sm">{meta.firmName || get(values, "insp_firm")}</p>
+      ) : null}
+      {meta.valueDate ? <p className="mt-1 text-sm">{meta.valueDate}</p> : null}
+    </div>
+  );
+}
+
 /** Two-column fact rows. Empty fields are dropped entirely. */
 function Facts({
   values,
@@ -595,16 +639,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             <p className="text-sm text-[var(--phil-green)]">Real Estate Valuers</p>
           </div>
 
-          <div className="report-signature mt-8">
-            <div className="h-14 w-56 border-b border-[var(--page-foreground)]/70" />
-            <p className="mt-2 font-semibold">
-              {m.valuerName || get(v, "insp_valuer")}
-            </p>
-            {get(v, "sign_member") ? (
-              <p className="text-sm">{get(v, "sign_member")}</p>
-            ) : null}
-            {m.valueDate ? <p className="mt-1 text-sm">{m.valueDate}</p> : null}
-          </div>
+          <SignatureBlock values={v} meta={m} className="report-signature mt-8" />
 
           <div className="mt-8 border-t border-[var(--rule)] pt-4">
             <p className="text-sm italic text-[var(--page-foreground)]/75">
@@ -667,17 +702,12 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             </p>
           </div>
 
-          <div className="report-signature mt-10">
-            <div className="h-14 w-56 border-b border-[var(--page-foreground)]/70" />
-            <p className="mt-2 font-semibold">
-              {m.valuerName || get(v, "insp_valuer")}
-            </p>
-            {get(v, "sign_member") ? (
-              <p className="text-sm">{get(v, "sign_member")}</p>
-            ) : null}
-            <p className="text-sm">{m.firmName || get(v, "insp_firm")}</p>
-            {m.valueDate ? <p className="mt-1 text-sm">{m.valueDate}</p> : null}
-          </div>
+          <SignatureBlock
+            values={v}
+            meta={m}
+            className="report-signature mt-10"
+            showFirm
+          />
         </div>
       )}
 
@@ -1391,22 +1421,12 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             ) : null}
           </>
         )}
-        <div className="mt-8">
-          {typeof v["sign_sig"] === "string" && v["sign_sig"].startsWith("data:image") ? (
-            <img
-              src={v["sign_sig"]}
-              alt="Valuer signature"
-              className="mb-2 h-16 w-auto max-w-xs object-contain"
-            />
-          ) : (
-            <div className="h-14 w-56 border-b border-[var(--page-foreground)]/70" />
-          )}
-          <p className="mt-2 font-semibold">{m.valuerName || get(v, "insp_valuer")}</p>
-          {get(v, "sign_member") ? (
-            <p className="text-sm">{get(v, "sign_member")}</p>
-          ) : null}
-          <p className="text-sm">{m.firmName || get(v, "insp_firm")}</p>
-        </div>
+        <SignatureBlock
+          values={v}
+          meta={m}
+          className="report-signature mt-8"
+          showFirm
+        />
         <div className="mt-6">
           {BOILERPLATE.annexures.map((a) => (
             <p key={a} className="text-sm">

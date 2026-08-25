@@ -607,6 +607,24 @@
     height: 28px !important;
   }
 
+  /* Lift signature image ~10% so it sits higher on the signature line */
+  .report-sig-image-wrap {
+    display: block !important;
+    width: max-content !important;
+    max-width: 100% !important;
+  }
+
+  .report-sig-image {
+    display: block !important;
+    height: 48px !important;
+    width: auto !important;
+    max-width: 220px !important;
+    object-fit: contain !important;
+    object-position: left bottom !important;
+    transform: translateY(-10%) !important;
+    margin-bottom: -4pt !important;
+  }
+
   /* TOC after cover; then body flows */
   .report-toc {
     break-after: page !important;
