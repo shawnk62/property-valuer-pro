@@ -605,6 +605,9 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       {/* ---- Page 2: valuation summary (Phil and non-Phil) ---- */}
       {isPhilReportType(reportType.id) ? (
         <div className="phil-summary-page report-cover-summary">
+          {get(v, "insp_file_no") ? (
+            <p className="report-file-no">{get(v, "insp_file_no")}</p>
+          ) : null}
           <h1 className="report-h1 text-center text-xl text-[var(--phil-green)]">
             Valuation Summary
           </h1>
@@ -686,6 +689,9 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         </div>
       ) : (
         <div className="report-cover-summary">
+          {get(v, "insp_file_no") ? (
+            <p className="report-file-no">{get(v, "insp_file_no")}</p>
+          ) : null}
           <header className="text-center">
             <h1 className="report-h1 mt-2 text-2xl">Valuation Summary</h1>
             <p className="mt-1 text-sm uppercase tracking-[0.18em] text-[var(--page-foreground)]/70">

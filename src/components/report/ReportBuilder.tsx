@@ -85,8 +85,16 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
       return;
     }
 
+    // Browser "Save as PDF" often uses document.title as the suggested filename.
     const previousTitle = document.title;
-    document.title = "\u00A0";
+    const fileNo =
+      typeof draft.values.insp_file_no === "string"
+        ? draft.values.insp_file_no.trim()
+        : "";
+    const safeFileName = fileNo
+      ? fileNo.replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim()
+      : "";
+    document.title = safeFileName || "\u00A0";
 
     // Inject a dedicated @page rule at print time (margin-box page numbers).
     // Do not use position:fixed + counter(page) — that prints "0" in Chrome.

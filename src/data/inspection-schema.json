@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "34",
+  "version": "35",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -15,6 +15,12 @@
       "id": "1",
       "title": "Property Identification & Inspection Details",
       "fields": [
+        {
+          "name": "insp_file_no",
+          "label": "File number",
+          "type": "text",
+          "placeholder": "e.g. 2026-0142"
+        },
         {
           "name": "prop_assignment",
           "label": "Report Type",

@@ -335,6 +335,17 @@
 }
 
 
+
+/* File number — top left of valuation summary (PDF page 2) */
+.report-file-no {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  text-align: left;
+  margin: 0 0 0.75rem;
+  color: var(--page-foreground, #111);
+}
+
 /* global @page page numbers — applied when printing */
 @page {
   size: A4 portrait;
@@ -632,6 +643,16 @@
   }
   .cover-title-block p {
     margin: 1.5pt 0 !important;
+  }
+
+
+  .report-file-no {
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 9.5pt !important;
+    line-height: 1.35 !important;
+    text-align: left !important;
+    margin: 0 0 6pt 0 !important;
+    color: #000 !important;
   }
 
   .report-cover-summary {
