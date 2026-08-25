@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "25",
+  "version": "26",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -1091,12 +1091,32 @@
           "type": "checkbox_group",
           "items": [
             {
+              "id": "exc_block",
+              "label": "Block retaining walls"
+            },
+            {
+              "id": "exc_concrete_sleeper",
+              "label": "Concrete sleeper retaining walls"
+            },
+            {
               "id": "exc_cut_fill",
               "label": "Cut and fill"
             },
             {
+              "id": "exc_drainage",
+              "label": "Drainage associated with excavation"
+            },
+            {
+              "id": "exc_engineered",
+              "label": "Engineered retaining walls"
+            },
+            {
               "id": "exc_levelled",
               "label": "Levelled site"
+            },
+            {
+              "id": "exc_retaining_present",
+              "label": "Retaining walls present"
             },
             {
               "id": "exc_significant_cut",
@@ -1107,40 +1127,20 @@
               "label": "Significant fill"
             },
             {
-              "id": "exc_retaining_present",
-              "label": "Retaining walls present"
-            },
-            {
-              "id": "exc_timber_sleeper",
-              "label": "Timber sleeper retaining walls"
-            },
-            {
-              "id": "exc_concrete_sleeper",
-              "label": "Concrete sleeper retaining walls"
-            },
-            {
-              "id": "exc_block",
-              "label": "Block retaining walls"
-            },
-            {
-              "id": "exc_stone",
-              "label": "Stone retaining walls"
-            },
-            {
-              "id": "exc_engineered",
-              "label": "Engineered retaining walls"
+              "id": "exc_slope_concern",
+              "label": "Slope stability concerns noted"
             },
             {
               "id": "exc_terracing",
               "label": "Stepped terracing"
             },
             {
-              "id": "exc_slope_concern",
-              "label": "Slope stability concerns noted"
+              "id": "exc_stone",
+              "label": "Stone retaining walls"
             },
             {
-              "id": "exc_drainage",
-              "label": "Drainage associated with excavation"
+              "id": "exc_timber_sleeper",
+              "label": "Timber sleeper retaining walls"
             },
             {
               "id": "exc_other",
@@ -1156,42 +1156,6 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "topo_level",
-              "label": "Level"
-            },
-            {
-              "id": "topo_slope_front",
-              "label": "Slopes to front"
-            },
-            {
-              "id": "topo_slope_rear",
-              "label": "Slopes to rear"
-            },
-            {
-              "id": "topo_slope_right",
-              "label": "Slopes to right"
-            },
-            {
-              "id": "topo_slope_left",
-              "label": "Slopes to left"
-            },
-            {
-              "id": "topo_slope_north",
-              "label": "Slopes to north"
-            },
-            {
-              "id": "topo_slope_south",
-              "label": "Slopes to south"
-            },
-            {
-              "id": "topo_slope_east",
-              "label": "Slopes to east"
-            },
-            {
-              "id": "topo_slope_west",
-              "label": "Slopes to west"
-            },
-            {
               "id": "topo_gentle",
               "label": "Gentle fall"
             },
@@ -1202,14 +1166,6 @@
             {
               "id": "topo_steep",
               "label": "Steep fall"
-            },
-            {
-              "id": "topo_undulating",
-              "label": "Undulating"
-            },
-            {
-              "id": "topo_other",
-              "label": "Other"
             },
             {
               "id": "topo_fall_to_road",
@@ -1244,12 +1200,56 @@
               "label": "Falls steeply from the road"
             },
             {
-              "id": "topo_well_drained",
-              "label": "Well drained"
+              "id": "topo_level",
+              "label": "Level"
             },
             {
               "id": "topo_poorly_drained",
               "label": "Poorly drained"
+            },
+            {
+              "id": "topo_slope_front",
+              "label": "Slopes to front"
+            },
+            {
+              "id": "topo_slope_rear",
+              "label": "Slopes to rear"
+            },
+            {
+              "id": "topo_slope_right",
+              "label": "Slopes to right"
+            },
+            {
+              "id": "topo_slope_left",
+              "label": "Slopes to left"
+            },
+            {
+              "id": "topo_slope_north",
+              "label": "Slopes to north"
+            },
+            {
+              "id": "topo_slope_south",
+              "label": "Slopes to south"
+            },
+            {
+              "id": "topo_slope_east",
+              "label": "Slopes to east"
+            },
+            {
+              "id": "topo_slope_west",
+              "label": "Slopes to west"
+            },
+            {
+              "id": "topo_undulating",
+              "label": "Undulating"
+            },
+            {
+              "id": "topo_well_drained",
+              "label": "Well drained"
+            },
+            {
+              "id": "topo_other",
+              "label": "Other"
             }
           ],
           "condition_field": "topo_cond",
@@ -1261,88 +1261,88 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "land_soft",
-              "label": "Soft landscaping present"
-            },
-            {
-              "id": "land_hard",
-              "label": "Hard landscaping present"
-            },
-            {
               "id": "land_mature_trees",
               "label": "Established mature trees"
-            },
-            {
-              "id": "land_native",
-              "label": "Native planting"
-            },
-            {
-              "id": "land_turf",
-              "label": "Turf"
-            },
-            {
-              "id": "land_lawn",
-              "label": "Lawn areas"
-            },
-            {
-              "id": "land_garden_beds",
-              "label": "Garden beds"
-            },
-            {
-              "id": "land_irrigation",
-              "label": "Irrigation system"
-            },
-            {
-              "id": "land_lighting",
-              "label": "Outdoor lighting"
-            },
-            {
-              "id": "land_paving",
-              "label": "Paving"
-            },
-            {
-              "id": "land_pathways",
-              "label": "Pathways"
             },
             {
               "id": "land_feature_walls",
               "label": "Feature walls"
             },
             {
-              "id": "land_water_feature",
-              "label": "Water feature"
+              "id": "land_garden_beds",
+              "label": "Garden beds"
             },
             {
-              "id": "land_outdoor_living",
-              "label": "Outdoor living areas"
-            },
-            {
-              "id": "land_entertaining",
-              "label": "Outdoor entertaining areas"
-            },
-            {
-              "id": "land_pool",
-              "label": "Pool landscaping"
-            },
-            {
-              "id": "land_spa",
-              "label": "Spa landscaping"
-            },
-            {
-              "id": "land_neglected",
-              "label": "Neglected"
-            },
-            {
-              "id": "land_overgrown",
-              "label": "Overgrown"
+              "id": "land_hard",
+              "label": "Hard landscaping present"
             },
             {
               "id": "land_high_quality",
               "label": "High quality"
             },
             {
+              "id": "land_irrigation",
+              "label": "Irrigation system"
+            },
+            {
+              "id": "land_lawn",
+              "label": "Lawn areas"
+            },
+            {
               "id": "land_manicured",
               "label": "Manicured"
+            },
+            {
+              "id": "land_native",
+              "label": "Native planting"
+            },
+            {
+              "id": "land_neglected",
+              "label": "Neglected"
+            },
+            {
+              "id": "land_entertaining",
+              "label": "Outdoor entertaining areas"
+            },
+            {
+              "id": "land_lighting",
+              "label": "Outdoor lighting"
+            },
+            {
+              "id": "land_outdoor_living",
+              "label": "Outdoor living areas"
+            },
+            {
+              "id": "land_overgrown",
+              "label": "Overgrown"
+            },
+            {
+              "id": "land_pathways",
+              "label": "Pathways"
+            },
+            {
+              "id": "land_paving",
+              "label": "Paving"
+            },
+            {
+              "id": "land_pool",
+              "label": "Pool landscaping"
+            },
+            {
+              "id": "land_soft",
+              "label": "Soft landscaping present"
+            },
+            {
+              "id": "land_spa",
+              "label": "Spa landscaping"
+            },
+            {
+              "id": "land_turf",
+              "label": "Turf"
+            },
+            {
+              "id": "land_water_feature",
+              "label": "Water feature"
             },
             {
               "id": "land_other",
@@ -1431,52 +1431,52 @@
               "label": "Rear boundary fencing"
             },
             {
-              "id": "fence_colorbond",
-              "label": "Colourbond fencing"
-            },
-            {
-              "id": "fence_timber",
-              "label": "Timber fencing"
-            },
-            {
               "id": "fence_aluminium_slat",
               "label": "Aluminium slat fencing"
-            },
-            {
-              "id": "fence_glass",
-              "label": "Glass fencing"
-            },
-            {
-              "id": "fence_pool_compliant",
-              "label": "Pool compliant fencing"
             },
             {
               "id": "fence_brick",
               "label": "Brick fencing"
             },
             {
+              "id": "fence_chainwire",
+              "label": "Chainwire fencing"
+            },
+            {
+              "id": "fence_colorbond",
+              "label": "Colourbond fencing"
+            },
+            {
+              "id": "fence_glass",
+              "label": "Glass fencing"
+            },
+            {
               "id": "fence_masonry",
               "label": "Masonry fencing"
             },
             {
-              "id": "fence_rendered",
-              "label": "Rendered fencing"
+              "id": "fence_picket",
+              "label": "Picket fencing"
             },
             {
               "id": "fence_pvc",
               "label": "PVC fencing"
             },
             {
+              "id": "fence_rendered",
+              "label": "Rendered fencing"
+            },
+            {
+              "id": "fence_timber",
+              "label": "Timber fencing"
+            },
+            {
               "id": "fence_vinyl",
               "label": "Vinyl fencing"
             },
             {
-              "id": "fence_chainwire",
-              "label": "Chainwire fencing"
-            },
-            {
-              "id": "fence_picket",
-              "label": "Picket fencing"
+              "id": "fence_pool_compliant",
+              "label": "Pool compliant fencing"
             },
             {
               "id": "fence_two_wire",
@@ -1541,25 +1541,25 @@
           "label": "Design / Style",
           "type": "select",
           "options": [
-            "Queenslander",
-            "Ashgrovian",
-            "Workers Cottage",
-            "Colonial",
-            "Victorian",
-            "Federation",
-            "Federation Filigree",
-            "Federation Bungalow",
-            "Interwar",
-            "Art Deco",
-            "Post-war Timber",
-            "Post-war Brick",
-            "Mid-century Modern",
-            "Contemporary",
-            "Brick and Tile",
-            "Hamptons",
-            "Coastal",
             "Acreage or Rural",
+            "Art Deco",
+            "Ashgrovian",
+            "Brick and Tile",
+            "Coastal",
+            "Colonial",
+            "Contemporary",
+            "Federation",
+            "Federation Bungalow",
+            "Federation Filigree",
+            "Hamptons",
+            "Interwar",
+            "Mid-century Modern",
+            "Post-war Brick",
+            "Post-war Timber",
+            "Queenslander",
             "Townhouse or Terrace",
+            "Victorian",
+            "Workers Cottage",
             "Other"
           ]
         },
@@ -1681,56 +1681,56 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "ext_brick",
-              "label": "Brick"
-            },
-            {
-              "id": "ext_rendered_brick",
-              "label": "Rendered brick"
-            },
-            {
-              "id": "ext_rendered",
-              "label": "Rendered"
+              "id": "ext_aluminium",
+              "label": "Aluminium panels"
             },
             {
               "id": "ext_bag_washed_brick",
               "label": "Bag washed brick"
             },
             {
-              "id": "ext_solid_masonry",
-              "label": "Solid masonry"
+              "id": "ext_brick",
+              "label": "Brick"
             },
             {
-              "id": "ext_timber_weatherboard",
-              "label": "Timber weatherboard"
-            },
-            {
-              "id": "ext_plank",
-              "label": "Plank"
-            },
-            {
-              "id": "ext_flatsheet",
-              "label": "Flatsheet"
-            },
-            {
-              "id": "ext_timber_chamferboard",
-              "label": "Timber chamferboard"
-            },
-            {
-              "id": "ext_timber_vj",
-              "label": "Timber VJ"
-            },
-            {
-              "id": "ext_fc_weatherboard",
-              "label": "Fibre cement weatherboard"
+              "id": "ext_composite",
+              "label": "Composite panels"
             },
             {
               "id": "ext_fc_sheet",
               "label": "Fibre cement sheet"
             },
             {
+              "id": "ext_fc_weatherboard",
+              "label": "Fibre cement weatherboard"
+            },
+            {
+              "id": "ext_flatsheet",
+              "label": "Flatsheet"
+            },
+            {
               "id": "ext_metal_colorbond",
               "label": "Metal Colourbond cladding"
+            },
+            {
+              "id": "ext_mixed",
+              "label": "Mixed cladding types"
+            },
+            {
+              "id": "ext_plank",
+              "label": "Plank"
+            },
+            {
+              "id": "ext_rendered",
+              "label": "Rendered"
+            },
+            {
+              "id": "ext_rendered_brick",
+              "label": "Rendered brick"
+            },
+            {
+              "id": "ext_solid_masonry",
+              "label": "Solid masonry"
             },
             {
               "id": "ext_stone",
@@ -1741,20 +1741,20 @@
               "label": "Stone veneer"
             },
             {
-              "id": "ext_composite",
-              "label": "Composite panels"
+              "id": "ext_timber_chamferboard",
+              "label": "Timber chamferboard"
             },
             {
-              "id": "ext_aluminium",
-              "label": "Aluminium panels"
+              "id": "ext_timber_vj",
+              "label": "Timber VJ"
+            },
+            {
+              "id": "ext_timber_weatherboard",
+              "label": "Timber weatherboard"
             },
             {
               "id": "ext_other",
               "label": "Other"
-            },
-            {
-              "id": "ext_mixed",
-              "label": "Mixed cladding types"
             }
           ],
           "condition_field": "ext_cond",
@@ -1766,40 +1766,20 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "rc_metal",
-              "label": "Metal"
+              "id": "rc_clay",
+              "label": "Clay tiles"
             },
             {
               "id": "rc_colorbond",
               "label": "Colourbond metal sheet"
             },
             {
-              "id": "rc_corrugated",
-              "label": "Corrugated metal"
-            },
-            {
-              "id": "rc_trimdek",
-              "label": "Trimdek"
-            },
-            {
-              "id": "rc_standing_seam",
-              "label": "Standing seam metal"
-            },
-            {
               "id": "rc_concrete_tiles",
               "label": "Concrete tiles"
             },
             {
-              "id": "rc_terracotta",
-              "label": "Terracotta tiles"
-            },
-            {
-              "id": "rc_clay",
-              "label": "Clay tiles"
-            },
-            {
-              "id": "rc_slate",
-              "label": "Slate"
+              "id": "rc_corrugated",
+              "label": "Corrugated metal"
             },
             {
               "id": "rc_membrane_flat",
@@ -1810,12 +1790,32 @@
               "label": "Membrane low pitch"
             },
             {
-              "id": "rc_other",
-              "label": "Other"
+              "id": "rc_metal",
+              "label": "Metal"
             },
             {
               "id": "rc_mixed",
               "label": "Mixed roof covering types"
+            },
+            {
+              "id": "rc_slate",
+              "label": "Slate"
+            },
+            {
+              "id": "rc_standing_seam",
+              "label": "Standing seam metal"
+            },
+            {
+              "id": "rc_terracotta",
+              "label": "Terracotta tiles"
+            },
+            {
+              "id": "rc_trimdek",
+              "label": "Trimdek"
+            },
+            {
+              "id": "rc_other",
+              "label": "Other"
             }
           ],
           "condition_field": "rc_cond",
@@ -1871,31 +1871,31 @@
             },
             {
               "id": "rd_metal",
-              "label": "Metal gutters"
-            },
-            {
-              "id": "rd_pvc",
-              "label": "PVC gutters and downpipes"
-            },
-            {
-              "id": "rd_copper",
-              "label": "Copper gutters and downpipes"
+              "label": "Metal gutters and downpipes"
             },
             {
               "id": "rd_box",
               "label": "Box gutters"
             },
             {
+              "id": "rd_copper",
+              "label": "Copper gutters and downpipes"
+            },
+            {
               "id": "rd_internal",
               "label": "Internal drainage"
             },
             {
-              "id": "rd_other",
-              "label": "Other"
-            },
-            {
               "id": "rd_mixed",
               "label": "Mixed drainage systems"
+            },
+            {
+              "id": "rd_pvc",
+              "label": "PVC gutters and downpipes"
+            },
+            {
+              "id": "rd_other",
+              "label": "Other"
             }
           ],
           "condition_field": "rd_cond",
@@ -1907,20 +1907,20 @@
           "type": "checkbox_group",
           "items": [
             {
+              "id": "found_combined",
+              "label": "Combined foundation types"
+            },
+            {
+              "id": "found_concrete_undercroft",
+              "label": "Concrete floor to the undercroft"
+            },
+            {
               "id": "found_concrete_slab",
               "label": "Concrete slab"
             },
             {
               "id": "found_concrete_strip",
               "label": "Concrete strip footings"
-            },
-            {
-              "id": "found_steel_posts",
-              "label": "Steel posts"
-            },
-            {
-              "id": "found_timber_stumps",
-              "label": "Timber stumps"
             },
             {
               "id": "found_concrete_stumps",
@@ -1931,12 +1931,12 @@
               "label": "Piers"
             },
             {
-              "id": "found_concrete_undercroft",
-              "label": "Concrete floor to the undercroft"
+              "id": "found_steel_posts",
+              "label": "Steel posts"
             },
             {
-              "id": "found_combined",
-              "label": "Combined foundation types"
+              "id": "found_timber_stumps",
+              "label": "Timber stumps"
             },
             {
               "id": "found_other",
@@ -2097,38 +2097,6 @@
               "label": "Open plan lounge / dining / kitchen"
             },
             {
-              "id": "accom_separate_kitchen",
-              "label": "Separate kitchen"
-            },
-            {
-              "id": "accom_lounge_dining",
-              "label": "Lounge / dining"
-            },
-            {
-              "id": "accom_bir_bedrooms",
-              "label": "Built-in bedrooms"
-            },
-            {
-              "id": "accom_main_wir_ensuite",
-              "label": "Main bedroom with walk-in wardrobe and ensuite"
-            },
-            {
-              "id": "accom_office",
-              "label": "Office"
-            },
-            {
-              "id": "accom_media",
-              "label": "Media room"
-            },
-            {
-              "id": "accom_rumpus",
-              "label": "Rumpus"
-            },
-            {
-              "id": "accom_powder",
-              "label": "Powder room"
-            },
-            {
               "id": "accom_bathroom",
               "label": "Bathroom"
             },
@@ -2137,20 +2105,60 @@
               "label": "Bathroom / toilet"
             },
             {
-              "id": "accom_separate_toilet",
-              "label": "Separate toilet"
+              "id": "accom_downstairs",
+              "label": "Downstairs accommodation"
             },
             {
               "id": "accom_laundry",
               "label": "Laundry"
             },
             {
-              "id": "accom_sleepout",
-              "label": "Sleepout"
+              "id": "accom_lounge_dining",
+              "label": "Lounge / dining"
             },
             {
-              "id": "accom_downstairs",
-              "label": "Downstairs accommodation"
+              "id": "accom_main_ensuite",
+              "label": "Main bedroom with ensuite"
+            },
+            {
+              "id": "accom_main_wir",
+              "label": "Main bedroom with walk in wardrobe"
+            },
+            {
+              "id": "accom_main_wir_ensuite",
+              "label": "Main bedroom with walk-in wardrobe and ensuite"
+            },
+            {
+              "id": "accom_media",
+              "label": "Media room"
+            },
+            {
+              "id": "accom_office",
+              "label": "Office"
+            },
+            {
+              "id": "accom_powder",
+              "label": "Powder room"
+            },
+            {
+              "id": "accom_rumpus",
+              "label": "Rumpus"
+            },
+            {
+              "id": "accom_separate_kitchen",
+              "label": "Separate kitchen"
+            },
+            {
+              "id": "accom_separate_toilet",
+              "label": "Separate toilet"
+            },
+            {
+              "id": "accom_shared_living",
+              "label": "Shared living"
+            },
+            {
+              "id": "accom_sleepout",
+              "label": "Sleepout"
             },
             {
               "id": "accom_upstairs",
@@ -2213,8 +2221,36 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "flr_solid_timber",
-              "label": "Solid timber hardwood"
+              "id": "flr_carpet",
+              "label": "Carpet"
+            },
+            {
+              "id": "flr_ceramic",
+              "label": "Ceramic tiles"
+            },
+            {
+              "id": "flr_engineered",
+              "label": "Engineered timber"
+            },
+            {
+              "id": "flr_hybrid_spc",
+              "label": "Hybrid SPC"
+            },
+            {
+              "id": "flr_laminate",
+              "label": "Laminate"
+            },
+            {
+              "id": "flr_mixed",
+              "label": "Mixed flooring types"
+            },
+            {
+              "id": "flr_natural_stone",
+              "label": "Natural stone"
+            },
+            {
+              "id": "flr_particleboard",
+              "label": "Particleboard structural sheet"
             },
             {
               "id": "flr_pine",
@@ -2225,60 +2261,32 @@
               "label": "Polished"
             },
             {
-              "id": "flr_engineered",
-              "label": "Engineered timber"
-            },
-            {
-              "id": "flr_laminate",
-              "label": "Laminate"
-            },
-            {
-              "id": "flr_hybrid_spc",
-              "label": "Hybrid SPC"
-            },
-            {
-              "id": "flr_vinyl_plank",
-              "label": "Vinyl plank"
-            },
-            {
-              "id": "flr_vinyl",
-              "label": "Vinyl"
+              "id": "flr_polished_concrete",
+              "label": "Polished concrete"
             },
             {
               "id": "flr_porcelain",
               "label": "Porcelain tiles"
             },
             {
-              "id": "flr_ceramic",
-              "label": "Ceramic tiles"
-            },
-            {
-              "id": "flr_natural_stone",
-              "label": "Natural stone"
-            },
-            {
               "id": "flr_slate",
               "label": "Slate"
             },
             {
-              "id": "flr_carpet",
-              "label": "Carpet"
+              "id": "flr_solid_timber",
+              "label": "Solid timber hardwood"
             },
             {
-              "id": "flr_polished_concrete",
-              "label": "Polished concrete"
+              "id": "flr_vinyl",
+              "label": "Vinyl"
             },
             {
-              "id": "flr_particleboard",
-              "label": "Particleboard structural sheet"
+              "id": "flr_vinyl_plank",
+              "label": "Vinyl plank"
             },
             {
               "id": "flr_other",
               "label": "Other"
-            },
-            {
-              "id": "flr_mixed",
-              "label": "Mixed flooring types"
             }
           ],
           "condition_field": "flr_cond",
@@ -2290,12 +2298,24 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "il_plasterboard",
-              "label": "Plasterboard"
-            },
-            {
               "id": "il_fibre_cement",
               "label": "Fibre cement sheet"
+            },
+            {
+              "id": "il_flatsheet",
+              "label": "Flatsheet"
+            },
+            {
+              "id": "il_likely_asbestos",
+              "label": "Likely asbestos"
+            },
+            {
+              "id": "il_mixed",
+              "label": "Mixed internal linings"
+            },
+            {
+              "id": "il_plasterboard",
+              "label": "Plasterboard"
             },
             {
               "id": "il_rendered",
@@ -2310,24 +2330,12 @@
               "label": "VJ boards"
             },
             {
-              "id": "il_likely_asbestos",
-              "label": "Likely asbestos"
+              "id": "il_vj_timber",
+              "label": "VJ timber"
             },
             {
               "id": "il_other",
               "label": "Other"
-            },
-            {
-              "id": "il_mixed",
-              "label": "Mixed internal linings"
-            },
-            {
-              "id": "il_flatsheet",
-              "label": "Flatsheet"
-            },
-            {
-              "id": "il_vj_timber",
-              "label": "VJ timber"
             }
           ],
           "condition_field": "il_cond",
@@ -2339,44 +2347,44 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "ceil_plasterboard",
-              "label": "Plasterboard"
-            },
-            {
-              "id": "ceil_timber",
-              "label": "Timber lining"
-            },
-            {
-              "id": "ceil_suspended",
-              "label": "Suspended acoustic tiles"
+              "id": "ceil_exposed_beams",
+              "label": "Exposed beams"
             },
             {
               "id": "ceil_exposed_structure",
               "label": "Exposed structure"
             },
             {
-              "id": "ceil_exposed_beams",
-              "label": "Exposed beams"
+              "id": "ceil_flatsheet",
+              "label": "Flatsheet"
             },
             {
               "id": "ceil_likely_asbestos",
               "label": "Likely asbestos"
             },
             {
-              "id": "ceil_other",
-              "label": "Other"
-            },
-            {
               "id": "ceil_mixed",
               "label": "Mixed ceiling types"
             },
             {
-              "id": "ceil_flatsheet",
-              "label": "Flatsheet"
+              "id": "ceil_plasterboard",
+              "label": "Plasterboard"
+            },
+            {
+              "id": "ceil_suspended",
+              "label": "Suspended acoustic tiles"
+            },
+            {
+              "id": "ceil_timber",
+              "label": "Timber lining"
             },
             {
               "id": "ceil_vj_timber",
               "label": "VJ timber"
+            },
+            {
+              "id": "ceil_other",
+              "label": "Other"
             }
           ],
           "condition_field": "ceil_cond",
@@ -2388,28 +2396,20 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "am_bir",
-              "label": "Built-in wardrobe"
-            },
-            {
-              "id": "am_wir",
-              "label": "Walk-in wardrobe"
-            },
-            {
-              "id": "am_storage",
-              "label": "Storage rooms"
+              "id": "am_limited",
+              "label": "Limited"
             },
             {
               "id": "am_mixed",
               "label": "Mixed amenities"
             },
             {
-              "id": "am_limited",
-              "label": "Limited"
-            },
-            {
               "id": "am_none",
               "label": "None"
+            },
+            {
+              "id": "am_storage",
+              "label": "Storage rooms"
             },
             {
               "id": "am_other",
@@ -2449,36 +2449,36 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "light_natural",
-              "label": "Natural lighting"
-            },
-            {
-              "id": "light_led",
-              "label": "LED artificial lighting"
-            },
-            {
-              "id": "light_fluorescent",
-              "label": "Fluorescent artificial lighting"
-            },
-            {
               "id": "light_mixed",
               "label": "Mixed natural and artificial lighting"
-            },
-            {
-              "id": "light_task",
-              "label": "Task lighting"
-            },
-            {
-              "id": "light_specialised",
-              "label": "Specialised lighting"
             },
             {
               "id": "light_custom",
               "label": "Custom light fixtures"
             },
             {
+              "id": "light_fluorescent",
+              "label": "Fluorescent artificial lighting"
+            },
+            {
               "id": "light_high_quality",
               "label": "High quality light fixtures"
+            },
+            {
+              "id": "light_led",
+              "label": "LED artificial lighting"
+            },
+            {
+              "id": "light_natural",
+              "label": "Natural lighting"
+            },
+            {
+              "id": "light_specialised",
+              "label": "Specialised lighting"
+            },
+            {
+              "id": "light_task",
+              "label": "Task lighting"
             },
             {
               "id": "light_other",
@@ -2510,12 +2510,60 @@
               "label": "Ducted heating"
             },
             {
+              "id": "hvac_chilled_water",
+              "label": "Chilled water central plant"
+            },
+            {
               "id": "hvac_ducted_heating_ac",
               "label": "Ducted heating and air conditioning"
             },
             {
               "id": "hvac_evaporative",
               "label": "Evaporative cooling"
+            },
+            {
+              "id": "vent_hrv",
+              "label": "Heat recovery ventilation"
+            },
+            {
+              "id": "vent_mechanical_exhaust",
+              "label": "Mechanical exhaust"
+            },
+            {
+              "id": "hvac_mechanical_only",
+              "label": "Mechanical ventilation only"
+            },
+            {
+              "id": "vent_mixed",
+              "label": "Mixed ventilation systems"
+            },
+            {
+              "id": "vent_natural",
+              "label": "Natural ventilation"
+            },
+            {
+              "id": "hvac_natural_only",
+              "label": "Natural ventilation only"
+            },
+            {
+              "id": "hvac_none",
+              "label": "None"
+            },
+            {
+              "id": "hvac_other",
+              "label": "Other"
+            },
+            {
+              "id": "hvac_packaged",
+              "label": "Packaged rooftop units"
+            },
+            {
+              "id": "vent_roof_space",
+              "label": "Roof space ventilation"
+            },
+            {
+              "id": "vent_subfloor",
+              "label": "Sub-floor ventilation"
             },
             {
               "id": "hvac_vrf",
@@ -2526,55 +2574,7 @@
               "label": "VRV"
             },
             {
-              "id": "hvac_packaged",
-              "label": "Packaged rooftop units"
-            },
-            {
-              "id": "hvac_chilled_water",
-              "label": "Chilled water central plant"
-            },
-            {
-              "id": "vent_natural",
-              "label": "Natural ventilation"
-            },
-            {
-              "id": "vent_mechanical_exhaust",
-              "label": "Mechanical exhaust"
-            },
-            {
-              "id": "vent_hrv",
-              "label": "Heat recovery ventilation"
-            },
-            {
-              "id": "vent_subfloor",
-              "label": "Sub-floor ventilation"
-            },
-            {
-              "id": "vent_roof_space",
-              "label": "Roof space ventilation"
-            },
-            {
-              "id": "hvac_mechanical_only",
-              "label": "Mechanical ventilation only"
-            },
-            {
-              "id": "hvac_natural_only",
-              "label": "Natural ventilation only"
-            },
-            {
-              "id": "vent_mixed",
-              "label": "Mixed ventilation systems"
-            },
-            {
-              "id": "hvac_none",
-              "label": "None"
-            },
-            {
               "id": "vent_other",
-              "label": "Other"
-            },
-            {
-              "id": "hvac_other",
               "label": "Other"
             }
           ],
@@ -2599,136 +2599,44 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "sd_ensuite",
-              "label": "Ensuite"
-            },
-            {
-              "id": "sd_climate_responsive",
-              "label": "Climate-responsive design"
-            },
-            {
-              "id": "sd_site_responsive",
-              "label": "Site-responsive design"
-            },
-            {
-              "id": "sd_passive",
-              "label": "Passive design"
-            },
-            {
-              "id": "sd_sustainability",
-              "label": "Sustainability features"
-            },
-            {
-              "id": "sd_heritage",
-              "label": "Heritage features"
-            },
-            {
-              "id": "sd_character",
-              "label": "Character features"
-            },
-            {
-              "id": "sd_vaulted_ceiling",
-              "label": "Vaulted ceiling"
-            },
-            {
-              "id": "sd_double_height",
-              "label": "Double-height voids"
-            },
-            {
-              "id": "sd_high_volume",
-              "label": "High volume spaces"
+              "id": "sd_architectural_glass",
+              "label": "Architectural glass"
             },
             {
               "id": "sd_atrium",
               "label": "Atrium"
             },
             {
-              "id": "sd_courtyard",
-              "label": "Internal courtyard"
-            },
-            {
-              "id": "sd_staircase",
-              "label": "Feature staircase"
-            },
-            {
-              "id": "sd_deep_eaves",
-              "label": "Deep eaves"
-            },
-            {
-              "id": "sd_wide_overhang",
-              "label": "Wide overhang"
-            },
-            {
-              "id": "sd_operable_shading",
-              "label": "Operable shading"
-            },
-            {
-              "id": "sd_cross_vent",
-              "label": "Cross-ventilation"
-            },
-            {
-              "id": "sd_floor_ceiling_glass",
-              "label": "Floor-to-ceiling glass"
-            },
-            {
-              "id": "sd_large_glazed",
-              "label": "Large glazed opening"
-            },
-            {
-              "id": "sd_large_openings",
-              "label": "Large openings"
+              "id": "sd_bespoke_cabinetry",
+              "label": "Bespoke cabinetry"
             },
             {
               "id": "sd_bifolds",
               "label": "Bifold doors"
             },
             {
-              "id": "sd_high_perf_glazing",
-              "label": "High-performance glazing"
+              "id": "sd_character",
+              "label": "Character features"
             },
             {
-              "id": "sd_indoor_outdoor",
-              "label": "Indoor-outdoor connection"
+              "id": "sd_climate_storage",
+              "label": "Climate-controlled storage"
             },
             {
-              "id": "sd_seamless_flow",
-              "label": "Seamless indoor-outdoor flow"
+              "id": "sd_cornice",
+              "label": "Cornice mouldings"
             },
             {
-              "id": "sd_multi_gen",
-              "label": "Multi-generational layout"
+              "id": "sd_crimsafe_doors",
+              "label": "Crimsafe-type screens on doors"
             },
             {
-              "id": "sd_flexible",
-              "label": "Flexible living layout"
+              "id": "sd_crimsafe_windows",
+              "label": "Crimsafe-type screens on windows"
             },
             {
-              "id": "sd_landscaped_garden",
-              "label": "Integrated landscaped garden"
-            },
-            {
-              "id": "sd_insulation",
-              "label": "Insulation"
-            },
-            {
-              "id": "sd_energy_efficient",
-              "label": "Energy-efficient feature"
-            },
-            {
-              "id": "sd_materials",
-              "label": "Premium materials"
-            },
-            {
-              "id": "sd_natural_stone",
-              "label": "Natural stone"
-            },
-            {
-              "id": "sd_high_grade_timber",
-              "label": "High-grade timber"
-            },
-            {
-              "id": "sd_architectural_glass",
-              "label": "Architectural glass"
+              "id": "sd_cross_vent",
+              "label": "Cross-ventilation"
             },
             {
               "id": "sd_joinery",
@@ -2739,20 +2647,100 @@
               "label": "Custom millwork"
             },
             {
-              "id": "sd_bespoke_cabinetry",
-              "label": "Bespoke cabinetry"
+              "id": "sd_deep_eaves",
+              "label": "Deep eaves"
             },
             {
-              "id": "sd_cornice",
-              "label": "Cornice mouldings"
+              "id": "sd_double_height",
+              "label": "Double-height voids"
+            },
+            {
+              "id": "sd_energy_efficient",
+              "label": "Energy-efficient feature"
+            },
+            {
+              "id": "sd_ensuite",
+              "label": "Ensuite"
+            },
+            {
+              "id": "sd_staircase",
+              "label": "Feature staircase"
+            },
+            {
+              "id": "sd_flexible",
+              "label": "Flexible living layout"
+            },
+            {
+              "id": "sd_floor_ceiling_glass",
+              "label": "Floor-to-ceiling glass"
+            },
+            {
+              "id": "sd_gym",
+              "label": "Gym"
+            },
+            {
+              "id": "sd_heritage",
+              "label": "Heritage features"
+            },
+            {
+              "id": "sd_high_volume",
+              "label": "High volume spaces"
+            },
+            {
+              "id": "sd_high_grade_timber",
+              "label": "High-grade timber"
+            },
+            {
+              "id": "sd_high_perf_glazing",
+              "label": "High-performance glazing"
+            },
+            {
+              "id": "sd_theatre",
+              "label": "Home theatre"
+            },
+            {
+              "id": "sd_indoor_outdoor",
+              "label": "Indoor-outdoor connection"
+            },
+            {
+              "id": "sd_insulation",
+              "label": "Insulation"
+            },
+            {
+              "id": "sd_landscaped_garden",
+              "label": "Integrated landscaped garden"
+            },
+            {
+              "id": "sd_smart",
+              "label": "Integrated smart home technology"
+            },
+            {
+              "id": "sd_courtyard",
+              "label": "Internal courtyard"
+            },
+            {
+              "id": "sd_large_glazed",
+              "label": "Large glazed opening"
+            },
+            {
+              "id": "sd_large_openings",
+              "label": "Large openings"
+            },
+            {
+              "id": "sd_multi_gen",
+              "label": "Multi-generational layout"
+            },
+            {
+              "id": "sd_natural_stone",
+              "label": "Natural stone"
+            },
+            {
+              "id": "sd_operable_shading",
+              "label": "Operable shading"
             },
             {
               "id": "sd_ornate_cornice",
               "label": "Ornate cornice mouldings"
-            },
-            {
-              "id": "sd_skirting",
-              "label": "Skirting boards"
             },
             {
               "id": "sd_ornate_skirting",
@@ -2763,20 +2751,52 @@
               "label": "Plantation shutters"
             },
             {
-              "id": "sd_crimsafe_windows",
-              "label": "Crimsafe-type screens on windows"
+              "id": "sd_premium_fitting",
+              "label": "Premium fitting"
             },
             {
-              "id": "sd_crimsafe_doors",
-              "label": "Crimsafe-type screens on doors"
+              "id": "sd_materials",
+              "label": "Premium materials"
+            },
+            {
+              "id": "sd_sauna",
+              "label": "Sauna"
+            },
+            {
+              "id": "sd_seamless_flow",
+              "label": "Seamless indoor-outdoor flow"
+            },
+            {
+              "id": "sd_security_screens_doors",
+              "label": "Security screens on doors"
             },
             {
               "id": "sd_security_screens_windows",
               "label": "Security screens on windows"
             },
             {
-              "id": "sd_security_screens_doors",
-              "label": "Security screens on doors"
+              "id": "sd_skirting",
+              "label": "Skirting boards"
+            },
+            {
+              "id": "sd_smart_av",
+              "label": "Smart audiovisual system"
+            },
+            {
+              "id": "sd_smart_climate",
+              "label": "Smart climate system"
+            },
+            {
+              "id": "sd_smart_lighting",
+              "label": "Smart lighting system"
+            },
+            {
+              "id": "sd_smart_security",
+              "label": "Smart security system"
+            },
+            {
+              "id": "sd_sustainability",
+              "label": "Sustainability features"
             },
             {
               "id": "sd_thoughtful_storage",
@@ -2787,48 +2807,16 @@
               "label": "Utility planning"
             },
             {
-              "id": "sd_premium_fitting",
-              "label": "Premium fitting"
+              "id": "sd_vaulted_ceiling",
+              "label": "Vaulted ceiling"
             },
             {
-              "id": "sd_smart",
-              "label": "Integrated smart home technology"
-            },
-            {
-              "id": "sd_smart_lighting",
-              "label": "Smart lighting system"
-            },
-            {
-              "id": "sd_smart_climate",
-              "label": "Smart climate system"
-            },
-            {
-              "id": "sd_smart_security",
-              "label": "Smart security system"
-            },
-            {
-              "id": "sd_smart_av",
-              "label": "Smart audiovisual system"
-            },
-            {
-              "id": "sd_gym",
-              "label": "Gym"
-            },
-            {
-              "id": "sd_sauna",
-              "label": "Sauna"
+              "id": "sd_wide_overhang",
+              "label": "Wide overhang"
             },
             {
               "id": "sd_wine",
               "label": "Wine cellar"
-            },
-            {
-              "id": "sd_climate_storage",
-              "label": "Climate-controlled storage"
-            },
-            {
-              "id": "sd_theatre",
-              "label": "Home theatre"
             },
             {
               "id": "sd_other",
@@ -2867,28 +2855,12 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "kit_island",
-              "label": "Island bench"
+              "id": "kit_boiling",
+              "label": "Boiling water tap"
             },
             {
               "id": "kit_butler",
               "label": "Butlers pantry"
-            },
-            {
-              "id": "kit_walkin",
-              "label": "Walk-in pantry"
-            },
-            {
-              "id": "kit_integrated",
-              "label": "Integrated appliances"
-            },
-            {
-              "id": "kit_induction",
-              "label": "Induction cooktop"
-            },
-            {
-              "id": "kit_gas",
-              "label": "Gas cooktop"
             },
             {
               "id": "kit_double_oven",
@@ -2899,16 +2871,32 @@
               "label": "Feature rangehood"
             },
             {
-              "id": "kit_boiling",
-              "label": "Boiling water tap"
-            },
-            {
               "id": "kit_filtered",
               "label": "Filtered water tap"
             },
             {
+              "id": "kit_gas",
+              "label": "Gas cooktop"
+            },
+            {
+              "id": "kit_induction",
+              "label": "Induction cooktop"
+            },
+            {
+              "id": "kit_integrated",
+              "label": "Integrated appliances"
+            },
+            {
+              "id": "kit_island",
+              "label": "Island bench"
+            },
+            {
               "id": "kit_softclose",
               "label": "Soft-close cabinetry"
+            },
+            {
+              "id": "kit_walkin",
+              "label": "Walk-in pantry"
             }
           ],
           "condition_field": "kit_feat_cond",
@@ -2968,10 +2956,11 @@
               "type": "select",
               "options": [
                 "Custom joinery",
+                "Metal",
                 "Soft close",
                 "Standard melamine",
-                "Two-pack painted",
                 "Timber",
+                "Two-pack painted",
                 "Other"
               ]
             },
@@ -3177,48 +3166,48 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "bath_freestanding",
-              "label": "Freestanding bath"
-            },
-            {
-              "id": "bath_frameless",
-              "label": "Frameless shower screen"
-            },
-            {
-              "id": "bath_double_vanity",
-              "label": "Double vanity"
-            },
-            {
-              "id": "bath_underfloor",
-              "label": "Underfloor heating"
-            },
-            {
-              "id": "bath_rainfall",
-              "label": "Rainfall shower"
-            },
-            {
-              "id": "bath_feature_shower",
-              "label": "Feature shower"
-            },
-            {
-              "id": "bath_separate",
-              "label": "Separate WC"
-            },
-            {
-              "id": "bath_heated_towels",
-              "label": "Heated towel rail"
-            },
-            {
-              "id": "bath_niche",
-              "label": "Shower niche"
-            },
-            {
               "id": "bath_bidet",
               "label": "Bidet"
             },
             {
               "id": "bath_bidet_seat",
               "label": "Bidet seat"
+            },
+            {
+              "id": "bath_double_vanity",
+              "label": "Double vanity"
+            },
+            {
+              "id": "bath_feature_shower",
+              "label": "Feature shower"
+            },
+            {
+              "id": "bath_frameless",
+              "label": "Frameless shower screen"
+            },
+            {
+              "id": "bath_freestanding",
+              "label": "Freestanding bath"
+            },
+            {
+              "id": "bath_heated_towels",
+              "label": "Heated towel rail"
+            },
+            {
+              "id": "bath_rainfall",
+              "label": "Rainfall shower"
+            },
+            {
+              "id": "bath_separate",
+              "label": "Separate WC"
+            },
+            {
+              "id": "bath_niche",
+              "label": "Shower niche"
+            },
+            {
+              "id": "bath_underfloor",
+              "label": "Underfloor heating"
             },
             {
               "id": "bath_other",
@@ -3396,20 +3385,20 @@
               "label": "Addressable fire detection and alarm"
             },
             {
-              "id": "fire_wet_sprinklers",
-              "label": "Automatic wet sprinklers"
-            },
-            {
               "id": "fire_dry_sprinklers",
               "label": "Automatic dry sprinklers"
             },
             {
-              "id": "fire_deluge",
-              "label": "Deluge sprinklers"
+              "id": "fire_wet_sprinklers",
+              "label": "Automatic wet sprinklers"
             },
             {
-              "id": "fire_internal_hydrants",
-              "label": "Internal fire hydrants"
+              "id": "fire_combined",
+              "label": "Combined sprinkler and hydrant system"
+            },
+            {
+              "id": "fire_deluge",
+              "label": "Deluge sprinklers"
             },
             {
               "id": "fire_external_hydrants",
@@ -3420,16 +3409,16 @@
               "label": "Hose reels"
             },
             {
-              "id": "fire_combined",
-              "label": "Combined sprinkler and hydrant system"
-            },
-            {
-              "id": "fire_extinguishers",
-              "label": "Portable extinguishers only"
+              "id": "fire_internal_hydrants",
+              "label": "Internal fire hydrants"
             },
             {
               "id": "fire_none",
               "label": "None"
+            },
+            {
+              "id": "fire_extinguishers",
+              "label": "Portable extinguishers only"
             },
             {
               "id": "fire_other",
@@ -3445,8 +3434,20 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "sec_video_intercom",
-              "label": "Video intercom"
+              "id": "sec_biometric",
+              "label": "Biometric access control"
+            },
+            {
+              "id": "sec_card_access",
+              "label": "Card access control"
+            },
+            {
+              "id": "sec_cctv",
+              "label": "CCTV cameras"
+            },
+            {
+              "id": "sec_integrated",
+              "label": "Integrated security system"
             },
             {
               "id": "sec_intercom",
@@ -3461,32 +3462,20 @@
               "label": "Keypad access control"
             },
             {
-              "id": "sec_card_access",
-              "label": "Card access control"
-            },
-            {
-              "id": "sec_cctv",
-              "label": "CCTV cameras"
+              "id": "sec_local_alarm",
+              "label": "Local alarm system"
             },
             {
               "id": "sec_monitored_alarm",
               "label": "Monitored alarm system"
             },
             {
-              "id": "sec_local_alarm",
-              "label": "Local alarm system"
-            },
-            {
-              "id": "sec_biometric",
-              "label": "Biometric access control"
-            },
-            {
-              "id": "sec_integrated",
-              "label": "Integrated security system"
-            },
-            {
               "id": "sec_none",
               "label": "None"
+            },
+            {
+              "id": "sec_video_intercom",
+              "label": "Video intercom"
             },
             {
               "id": "sec_other",
@@ -3502,56 +3491,56 @@
           "type": "checkbox_group",
           "items": [
             {
-              "id": "aux_diesel",
-              "label": "Diesel generator"
+              "id": "aux_auto_transfer",
+              "label": "Automatic transfer switch"
             },
             {
-              "id": "aux_petrol",
-              "label": "Petrol generator"
+              "id": "aux_diesel",
+              "label": "Diesel generator"
             },
             {
               "id": "aux_gas",
               "label": "Gas generator"
             },
             {
-              "id": "aux_manual_transfer",
-              "label": "Manual transfer switch"
-            },
-            {
-              "id": "aux_auto_transfer",
-              "label": "Automatic transfer switch"
-            },
-            {
               "id": "aux_interlock_backfeed",
               "label": "Interlock kit with a backfeed breaker"
-            },
-            {
-              "id": "aux_ups",
-              "label": "UPS battery backup"
             },
             {
               "id": "aux_maintained_lighting",
               "label": "Maintained emergency lighting"
             },
             {
+              "id": "aux_manual_transfer",
+              "label": "Manual transfer switch"
+            },
+            {
               "id": "aux_nonmaintained_lighting",
               "label": "Non-maintained emergency lighting"
             },
             {
-              "id": "aux_solar_power",
-              "label": "Solar power"
+              "id": "aux_none",
+              "label": "None"
+            },
+            {
+              "id": "aux_petrol",
+              "label": "Petrol generator"
             },
             {
               "id": "aux_solar_hot_water",
               "label": "Solar hot water"
             },
             {
+              "id": "aux_solar_power",
+              "label": "Solar power"
+            },
+            {
               "id": "aux_solar_battery",
               "label": "Solar with battery backup"
             },
             {
-              "id": "aux_none",
-              "label": "None"
+              "id": "aux_ups",
+              "label": "UPS battery backup"
             },
             {
               "id": "aux_other",
@@ -3575,28 +3564,28 @@
               "label": "Dumbwaiter"
             },
             {
-              "id": "lift_passenger",
-              "label": "Passenger lift"
+              "id": "lift_escalator",
+              "label": "Escalator"
             },
             {
               "id": "lift_goods",
               "label": "Goods lift"
             },
             {
-              "id": "lift_service",
-              "label": "Service lift"
+              "id": "lift_none",
+              "label": "None"
             },
             {
-              "id": "lift_escalator",
-              "label": "Escalator"
+              "id": "lift_passenger",
+              "label": "Passenger lift"
             },
             {
               "id": "lift_platform",
               "label": "Platform lift"
             },
             {
-              "id": "lift_none",
-              "label": "None"
+              "id": "lift_service",
+              "label": "Service lift"
             },
             {
               "id": "lift_other",
@@ -3626,24 +3615,20 @@
               "label": "Above ground pool"
             },
             {
-              "id": "pool_infinity",
-              "label": "Infinity edge pool"
-            },
-            {
               "id": "pool_heated",
-              "label": "Heated pool"
+              "label": "Heated"
             },
             {
               "id": "pool_auto_cleaner",
               "label": "Automatic cleaner"
             },
             {
-              "id": "pool_salt",
-              "label": "Salt water system"
-            },
-            {
               "id": "pool_chlorine",
               "label": "Chlorine system"
+            },
+            {
+              "id": "pool_infinity",
+              "label": "Infinity edge pool"
             },
             {
               "id": "pool_covered",
@@ -3652,6 +3637,10 @@
             {
               "id": "pool_fencing_compliant",
               "label": "Pool fencing appears compliant"
+            },
+            {
+              "id": "pool_salt",
+              "label": "Salt water system"
             },
             {
               "id": "pool_other",
@@ -3717,48 +3706,48 @@
               "label": "Five car carport"
             },
             {
-              "id": "park_undercover",
-              "label": "Undercover parking"
-            },
-            {
-              "id": "park_open",
-              "label": "Open hardstand parking"
-            },
-            {
-              "id": "park_tandem",
-              "label": "Tandem parking"
-            },
-            {
-              "id": "park_stacked",
-              "label": "Stacked parking"
-            },
-            {
-              "id": "park_mechanical",
-              "label": "Mechanical parking"
-            },
-            {
-              "id": "park_visitor",
-              "label": "Visitor parking"
-            },
-            {
               "id": "park_disabled",
               "label": "Accessible parking bay"
+            },
+            {
+              "id": "park_basement",
+              "label": "Basement parking"
             },
             {
               "id": "park_ev",
               "label": "EV charging provision"
             },
             {
-              "id": "park_secure",
-              "label": "Secure parking"
-            },
-            {
               "id": "park_gated",
               "label": "Gated parking"
             },
             {
-              "id": "park_basement",
-              "label": "Basement parking"
+              "id": "park_mechanical",
+              "label": "Mechanical parking"
+            },
+            {
+              "id": "park_open",
+              "label": "Open hardstand parking"
+            },
+            {
+              "id": "park_secure",
+              "label": "Secure parking"
+            },
+            {
+              "id": "park_stacked",
+              "label": "Stacked parking"
+            },
+            {
+              "id": "park_tandem",
+              "label": "Tandem parking"
+            },
+            {
+              "id": "park_undercover",
+              "label": "Undercover parking"
+            },
+            {
+              "id": "park_visitor",
+              "label": "Visitor parking"
             },
             {
               "id": "park_other",
@@ -3774,6 +3763,10 @@
           "type": "checkbox_group",
           "items": [
             {
+              "id": "load_courier_friendly",
+              "label": "Courier friendly access"
+            },
+            {
               "id": "load_dedicated_bay",
               "label": "Dedicated loading bay"
             },
@@ -3782,28 +3775,24 @@
               "label": "Dedicated loading dock"
             },
             {
-              "id": "load_shared",
-              "label": "Shared loading area"
-            },
-            {
-              "id": "load_street",
-              "label": "Street loading only"
-            },
-            {
-              "id": "load_courier_friendly",
-              "label": "Courier friendly access"
-            },
-            {
-              "id": "load_restricted",
-              "label": "Restricted access"
-            },
-            {
               "id": "load_difficult",
               "label": "Difficult access"
             },
             {
               "id": "load_none",
               "label": "No dedicated loading facilities"
+            },
+            {
+              "id": "load_restricted",
+              "label": "Restricted access"
+            },
+            {
+              "id": "load_shared",
+              "label": "Shared loading area"
+            },
+            {
+              "id": "load_street",
+              "label": "Street loading only"
             },
             {
               "id": "load_other",
@@ -3835,16 +3824,12 @@
               "label": "Granny flat"
             },
             {
-              "id": "anc_pool_house",
-              "label": "Pool house"
+              "id": "anc_retaining",
+              "label": "Additional retaining structures"
             },
             {
               "id": "anc_cabana",
               "label": "Cabana"
-            },
-            {
-              "id": "anc_pergola",
-              "label": "Pergola"
             },
             {
               "id": "anc_covered_outdoor",
@@ -3859,8 +3844,12 @@
               "label": "Patio"
             },
             {
-              "id": "anc_retaining",
-              "label": "Additional retaining structures"
+              "id": "anc_pergola",
+              "label": "Pergola"
+            },
+            {
+              "id": "anc_pool_house",
+              "label": "Pool house"
             },
             {
               "id": "anc_water_tank",
