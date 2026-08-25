@@ -607,21 +607,67 @@
     height: 28px !important;
   }
 
-  /* Signature image: original vertical position; ~10% larger than prior h-16 */
+  /*
+   * Signature sits ON the line (pen-on-paper), not floating above it.
+   * Image bottom overlaps the rule; descenders can cross slightly.
+   */
   .report-sig-image-wrap {
     display: block !important;
+    position: relative !important;
     width: max-content !important;
     max-width: 100% !important;
+    padding-bottom: 0 !important;
   }
 
   .report-sig-image {
     display: block !important;
+    position: relative !important;
+    z-index: 1 !important;
     height: 70px !important;
     width: auto !important;
     max-width: 242px !important;
     object-fit: contain !important;
     object-position: left bottom !important;
-    margin-bottom: 2pt !important;
+    /* Pull image down so ink rests on the signature line */
+    margin-bottom: -14px !important;
+  }
+
+  .report-sig-line {
+    display: block !important;
+    position: relative !important;
+    z-index: 0 !important;
+    width: 14rem !important; /* ~w-56 */
+    height: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.7) !important;
+    margin: 0 !important;
+  }
+
+  /* Screen preview (same behaviour outside @media print) */
+}
+.report-sig-image-wrap {
+  position: relative;
+  width: max-content;
+  max-width: 100%;
+}
+.report-sig-image {
+  display: block;
+  position: relative;
+  z-index: 1;
+  object-fit: contain;
+  object-position: left bottom;
+  margin-bottom: -14px;
+}
+.report-sig-line {
+  display: block;
+  width: 14rem;
+  height: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.7);
+}
+@media print {
+  /* re-open print block continuation — keep selector validity */
+  .report-sheet {
+    /* no-op anchor if previous block closed early */
   }
 
   /* TOC after cover; then body flows */
