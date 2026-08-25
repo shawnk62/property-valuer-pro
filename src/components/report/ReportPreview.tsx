@@ -542,8 +542,13 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
     >
       {/* ---- Cover: photo letterhead page (all report types) ---- */}
       <div id="report-cover" className="report-cover cover-photo-page">
-        {/* Letterhead matches issued sample: centred stacked lines, green title + email */}
+        {/* Top third: logo (left) + letterhead text (right), sample wording/colours */}
         <header className="cover-letterhead">
+          <img
+            src="/ppv-logo.png"
+            alt="Peterson Property Valuations"
+            className="cover-logo"
+          />
           <div className="cover-firm-block">
             <p className="cover-firm-title">{lh.tradingAs}</p>
             <p className="cover-firm-company">
