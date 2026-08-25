@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "30",
+  "version": "31",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -2298,6 +2298,14 @@
           "type": "checkbox_group",
           "items": [
             {
+              "id": "il_plasterboard",
+              "label": "Plasterboard"
+            },
+            {
+              "id": "il_vj_timber",
+              "label": "VJ timber"
+            },
+            {
               "id": "il_fibre_cement",
               "label": "Fibre cement sheet"
             },
@@ -2314,10 +2322,6 @@
               "label": "Mixed internal linings"
             },
             {
-              "id": "il_plasterboard",
-              "label": "Plasterboard"
-            },
-            {
               "id": "il_rendered",
               "label": "Rendered masonry"
             },
@@ -2328,10 +2332,6 @@
             {
               "id": "il_vj",
               "label": "VJ boards"
-            },
-            {
-              "id": "il_vj_timber",
-              "label": "VJ timber"
             },
             {
               "id": "il_other",
