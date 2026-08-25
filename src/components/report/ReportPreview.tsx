@@ -283,7 +283,14 @@ function Prose({ text }: { text: string }) {
   );
 }
 
-/** Shared signature + name block for summary pages and closing statement. */
+/**
+ * Shared signature + name block for summary pages and closing statement.
+ *
+ * Layout matches a handwritten signature on a rule:
+ * - Fixed-height stage; image bottom-aligned so trimmed ink sits on the line
+ * - Rule drawn through the lower edge of the stage (pen-on-paper)
+ * - Name tight under the rule
+ */
 function SignatureBlock({
   values,
   meta,
@@ -302,18 +309,16 @@ function SignatureBlock({
   return (
     <div className={className}>
       {sig ? (
-        <div className="report-sig-image-wrap">
-          <img
-            src={sig}
-            alt="Valuer signature"
-            className="report-sig-image h-[4.4rem] w-auto max-w-[17rem] object-contain object-left"
-          />
+        <div className="report-sig-stage">
+          <img src={sig} alt="Valuer signature" className="report-sig-image" />
           <div className="report-sig-line" aria-hidden />
         </div>
       ) : (
-        <div className="h-14 w-56 border-b border-[var(--page-foreground)]/70" />
+        <div className="report-sig-stage report-sig-stage--empty">
+          <div className="report-sig-line" aria-hidden />
+        </div>
       )}
-      <p className="mt-2 font-semibold">
+      <p className="report-sig-name font-semibold">
         {meta.valuerName || get(values, "insp_valuer")}
       </p>
       {get(values, "sign_member") ? (

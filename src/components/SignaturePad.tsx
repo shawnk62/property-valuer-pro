@@ -5,6 +5,7 @@ import {
   saveSignature,
   type SavedSignature,
 } from "@/lib/signatures/savedSignatures";
+import { trimSignatureDataUrl } from "@/lib/signatures/trimSignature";
 
 type Props = {
   value?: string;
@@ -129,11 +130,18 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
     drawing.current = false;
   }
 
-  function applyDrawn() {
+  async function applyDrawn() {
     const canvas = canvasRef.current;
     if (!canvas || !hasInk) return;
-    onChange(canvas.toDataURL("image/png"));
-    setError(null);
+    try {
+      const raw = canvas.toDataURL("image/png");
+      const trimmed = await trimSignatureDataUrl(raw);
+      onChange(trimmed);
+      setError(null);
+    } catch {
+      onChange(canvas.toDataURL("image/png"));
+      setError(null);
+    }
   }
 
   async function applyFile(file: File | null) {
@@ -147,7 +155,8 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
         setError("Could not read that image.");
         return;
       }
-      onChange(dataUrl);
+      const trimmed = await trimSignatureDataUrl(dataUrl);
+      onChange(trimmed);
       setError(null);
     } catch {
       setError("Could not read that image.");
@@ -185,13 +194,20 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
   }
 
   function applySaved(sig: SavedSignature) {
-    onChange(sig.dataUrl);
-    setPickerOpen(false);
-    setError(null);
+    void (async () => {
+      try {
+        const trimmed = await trimSignatureDataUrl(sig.dataUrl);
+        onChange(trimmed);
+      } catch {
+        onChange(sig.dataUrl);
+      }
+      setPickerOpen(false);
+      setError(null);
+    })();
   }
 
   async function handleSaveCurrent() {
-    const dataUrl =
+    let dataUrl =
       value && value.startsWith("data:image")
         ? value
         : canvasRef.current && hasInk
@@ -204,6 +220,7 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
     setBusySave(true);
     setError(null);
     try {
+      dataUrl = await trimSignatureDataUrl(dataUrl);
       await saveSignature(dataUrl, saveLabel);
       if (!value?.startsWith("data:image")) {
         onChange(dataUrl);
