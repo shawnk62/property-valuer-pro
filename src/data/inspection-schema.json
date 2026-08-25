@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "28",
+  "version": "29",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -1262,6 +1262,10 @@
           "type": "checkbox_group",
           "items": [
             {
+              "id": "land_lawn",
+              "label": "Lawn areas"
+            },
+            {
               "id": "land_mature_trees",
               "label": "Established mature trees"
             },
@@ -1284,10 +1288,6 @@
             {
               "id": "land_irrigation",
               "label": "Irrigation system"
-            },
-            {
-              "id": "land_lawn",
-              "label": "Lawn areas"
             },
             {
               "id": "land_manicured",
