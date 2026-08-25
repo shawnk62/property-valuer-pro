@@ -134,6 +134,22 @@ export function applyLocationPreset(
       continue;
     }
 
+    // Electricity: always default to Mains power for every location type when
+    // unset, or migrate the former "Mains power only" label.
+    if (key === "svc_elec_type") {
+      const cur = current[key];
+      const needsDefault =
+        isUnset(cur) ||
+        (typeof cur === "string" && cur.trim().toLowerCase() === "mains power only");
+      if (!needsDefault) continue;
+      if (!changed) {
+        next = { ...current };
+        changed = true;
+      }
+      next[key] = "Mains power";
+      continue;
+    }
+
     if (!isUnset(current[key])) continue;
     if (!changed) {
       next = { ...current };
