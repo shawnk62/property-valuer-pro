@@ -306,7 +306,7 @@ function SignatureBlock({
           <img
             src={sig}
             alt="Valuer signature"
-            className="report-sig-image mb-0 h-16 w-auto max-w-xs object-contain object-left"
+            className="report-sig-image mb-1 h-[4.4rem] w-auto max-w-[17rem] object-contain object-left"
           />
           <div className="h-px w-56 border-b border-[var(--page-foreground)]/70" />
         </div>
