@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "26",
+  "version": "27",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -1062,7 +1062,8 @@
                 "Mobile Broadband 4G",
                 "Mobile Broadband 5G",
                 "Starlink",
-                "ADSL"
+                "ADSL",
+                "Unknown"
               ]
             },
             {
