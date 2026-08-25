@@ -383,6 +383,73 @@
   margin-top: 0.2rem;
 }
 
+
+/*
+ * Screen-only Preview: approximate PDF page breaks as separate "sheets".
+ * These rules MUST NOT change print behaviour — everything is reset inside
+ * @media print below.
+ */
+@media screen {
+  .report-print-host {
+    background: #e8e8e8;
+  }
+
+  #report-preview-sheet.report-sheet {
+    background: transparent;
+    box-shadow: none;
+    max-width: 210mm;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0;
+  }
+
+  /* Major forced breaks (same elements that get break-after:page in print) */
+  #report-preview-sheet #report-cover,
+  #report-preview-sheet .report-cover-summary,
+  #report-preview-sheet .phil-summary-page,
+  #report-preview-sheet .report-toc,
+  #report-preview-sheet .report-annexure {
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.08);
+    border: 1px solid #d4d4d4;
+    border-radius: 2px;
+    margin: 0 auto 1.25rem;
+    padding: 14mm 12mm 16mm;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 210mm;
+  }
+
+  /* Cover already has internal padding from layout — keep tight top */
+  #report-preview-sheet #report-cover {
+    padding-top: 10mm;
+    padding-bottom: 12mm;
+  }
+
+  /* Subtle label so valuers can see where PDF pages start */
+  #report-preview-sheet #report-cover::before,
+  #report-preview-sheet .report-cover-summary::before,
+  #report-preview-sheet .phil-summary-page::before,
+  #report-preview-sheet .report-toc::before,
+  #report-preview-sheet .report-annexure::before {
+    display: block;
+    content: "PDF page break ↓";
+    font-family: system-ui, sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #888;
+    margin: -6mm 0 8mm;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed #ccc;
+  }
+
+  #report-preview-sheet #report-cover::before {
+    content: "Cover (PDF page 1)";
+  }
+}
+
 @media print {
   /* Report body: Arial for all report types */
   .report-sheet,
@@ -463,6 +530,29 @@
     font-size: 9.5pt !important;
     line-height: 1.35 !important;
   }
+
+  /* Undo screen-only page-break chrome — print layout unchanged */
+  #report-preview-sheet #report-cover,
+  #report-preview-sheet .report-cover-summary,
+  #report-preview-sheet .phil-summary-page,
+  #report-preview-sheet .report-toc,
+  #report-preview-sheet .report-annexure {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    /* padding left to cover/print rules; do not force zero on cover flex layout */
+  }
+  #report-preview-sheet #report-cover::before,
+  #report-preview-sheet .report-cover-summary::before,
+  #report-preview-sheet .phil-summary-page::before,
+  #report-preview-sheet .report-toc::before,
+  #report-preview-sheet .report-annexure::before {
+    display: none !important;
+    content: none !important;
+  }
+
+
 
   #report-preview-sheet a {
     text-decoration: none !important;
