@@ -542,31 +542,34 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
     >
       {/* ---- Cover: photo letterhead page (all report types) ---- */}
       <div id="report-cover" className="report-cover cover-photo-page">
+        {/* Letterhead matches issued sample: centred stacked lines, green title + email */}
         <header className="cover-letterhead">
-          <img
-            src="/ppv-logo.jpeg"
-            alt="Peterson Property Valuations"
-            className="cover-logo"
-          />
           <div className="cover-firm-block">
             <p className="cover-firm-title">{lh.tradingAs}</p>
-            <p>
+            <p className="cover-firm-company">
               {lh.company}
-              {"  "}
+              {"   "}
               ACN {lh.acn}
-              {"  "}
+              {"   "}
               ABN {lh.abn}
             </p>
-            <p>{coverValuerLine}</p>
-            {coverRegLine ? <p>{coverRegLine}</p> : null}
-            {lh.postal ? <p className="cover-firm-gap">{lh.postal}</p> : null}
-            {(lh.phone || lh.mobile) ? (
-              <p className={lh.postal ? undefined : "cover-firm-gap"}>
+            <p className="cover-firm-valuer">{coverValuerLine}</p>
+            {coverRegLine ? (
+              <p className="cover-firm-reg">{coverRegLine}</p>
+            ) : null}
+            {lh.postal ? (
+              <p className="cover-firm-gap cover-firm-postal">{lh.postal}</p>
+            ) : null}
+            {lh.phone || lh.mobile ? (
+              <p className="cover-firm-phones">
                 {[lh.phone, lh.mobile].filter(Boolean).join("    ")}
               </p>
             ) : null}
-            <p>{lh.web}</p>
-            <p className="cover-firm-email">{lh.email}</p>
+            <p className="cover-firm-web">{lh.web}</p>
+            <p className="cover-firm-email">
+              Email:{" "}
+              <span className="cover-firm-email-addr">{lh.emailAddress}</span>
+            </p>
           </div>
         </header>
 

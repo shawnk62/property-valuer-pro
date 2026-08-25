@@ -1,6 +1,9 @@
 /**
  * Valuer identity for report letterhead and signature blocks.
  * Selected from prop_assignment when the label contains "Phil" or "Murray".
+ *
+ * Cover letterhead layout matches the issued sample: centred stacked lines,
+ * green title + email, grey body text. Same structure for Phil and Murray.
  */
 
 export type ValuerId = "phil" | "murray" | "default";
@@ -11,19 +14,17 @@ export type ValuerProfile = {
   displayName: string;
   /**
    * Primary credentials line under company on the cover
-   * e.g. "Phil Peterson, AAVI, Certified Practicing Valuer No. 1083"
+   * e.g. "Phillip R Peterson, AVI, Certified Practicing Valuer"
    */
   credentialsLine: string;
-  /**
-   * Optional second line (Murray registration). Empty for Phil.
-   */
+  /** Second line: Registered Valuer No. … */
   registrationLine: string;
-  /**
-   * Membership / designation stored in sign_member when auto-filled.
-   */
+  /** Membership / designation stored in sign_member when auto-filled */
   membershipLine: string;
-  /** Firm name for Firm field and letterhead company line */
+  /** Firm name for Firm field (report meta) */
   firm: string;
+  /** Company line on letterhead (title case, as on sample) */
+  companyLine: string;
   tradingAs: string;
   acn: string;
   abn: string;
@@ -31,42 +32,46 @@ export type ValuerProfile = {
   phone: string;
   mobile: string;
   web: string;
-  email: string;
+  /** Address part only (no "Email:" prefix) — letterhead adds the label */
+  emailAddress: string;
 };
 
-const FIRM = "PETERSON PROPERTY VALUATIONS PTY LTD";
+const FIRM_META = "PETERSON PROPERTY VALUATIONS PTY LTD";
+const COMPANY_LINE = "Peterson Property Valuations Pty Ltd";
 const WEB = "www.petersonpropertyvaluations.com.au";
 const EMAIL = "petersonpropertyvaluers@gmail.com";
 const ACN = "603 599 604";
 const ABN = "78 603 599 604";
 const TRADING = "Real Estate Valuers";
 
-/** Phillip (Phil) Peterson — Phil report types */
+/** Phillip (Phil) Peterson — details from issued letterhead sample */
 export const PHIL_PROFILE: ValuerProfile = {
   id: "phil",
-  displayName: "Phil Peterson",
-  credentialsLine: "Phil Peterson, AAVI, Certified Practicing Valuer No. 1083",
-  registrationLine: "",
-  membershipLine: "AAVI, Certified Practicing Valuer No. 1083",
-  firm: FIRM,
+  displayName: "Phillip R Peterson",
+  credentialsLine: "Phillip R Peterson, AVI, Certified Practicing Valuer",
+  registrationLine: "Registered Valuer No. 1083",
+  membershipLine: "AVI, Certified Practicing Valuer — Registered Valuer No. 1083",
+  firm: FIRM_META,
+  companyLine: COMPANY_LINE,
   tradingAs: TRADING,
   acn: ACN,
   abn: ABN,
-  postal: "",
-  phone: "",
+  postal: "Postal Address: PO Box 3770 CALOUNDRA WEST QLD 4551",
+  phone: "Phone: 07 5357 9196",
   mobile: "Mobile: 0411 514 228",
   web: WEB,
-  email: `Email: ${EMAIL}`,
+  emailAddress: EMAIL,
 };
 
-/** Murray Peterson — Murray report types (also legacy default letterhead) */
+/** Murray Peterson — same letterhead structure, Murray contact details */
 export const MURRAY_PROFILE: ValuerProfile = {
   id: "murray",
   displayName: "Murray Peterson",
   credentialsLine: "Murray Peterson, AVI, Certified Practicing Valuer",
   registrationLine: "Registered Valuer No. 3799",
   membershipLine: "AVI, Certified Practicing Valuer — Registered Valuer No. 3799",
-  firm: FIRM,
+  firm: FIRM_META,
+  companyLine: COMPANY_LINE,
   tradingAs: TRADING,
   acn: ACN,
   abn: ABN,
@@ -74,7 +79,7 @@ export const MURRAY_PROFILE: ValuerProfile = {
   phone: "Phone: 07 3355 1311",
   mobile: "Mobile: 0403 344 425",
   web: WEB,
-  email: `Email: ${EMAIL}`,
+  emailAddress: EMAIL,
 };
 
 /** Fallback when assignment is neither Phil nor Murray */
@@ -93,16 +98,16 @@ export function resolveValuerProfile(
   propAssignment: string | null | undefined,
 ): ValuerProfile {
   const t = (propAssignment || "").toLowerCase();
-  if (/\bphil\b/i.test(t) || t.includes("phil")) return PHIL_PROFILE;
-  if (/\bmurray\b/i.test(t) || t.includes("murray")) return MURRAY_PROFILE;
+  if (t.includes("phil")) return PHIL_PROFILE;
+  if (t.includes("murray")) return MURRAY_PROFILE;
   return DEFAULT_VALUER_PROFILE;
 }
 
-/** Letterhead fields for the photo cover page */
+/** Letterhead fields for the photo cover page (sample layout). */
 export function letterheadFromProfile(profile: ValuerProfile) {
   return {
     tradingAs: profile.tradingAs,
-    company: profile.firm,
+    company: profile.companyLine,
     acn: profile.acn,
     abn: profile.abn,
     defaultValuer: profile.credentialsLine,
@@ -111,7 +116,7 @@ export function letterheadFromProfile(profile: ValuerProfile) {
     phone: profile.phone,
     mobile: profile.mobile,
     web: profile.web,
-    email: profile.email,
+    emailAddress: profile.emailAddress,
   };
 }
 

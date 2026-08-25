@@ -210,36 +210,58 @@
   flex-direction: column;
   min-height: 36rem;
 }
+/* Cover letterhead — centred stack matching issued sample PDF */
 .cover-letterhead {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  text-align: left;
+  display: block;
+  text-align: center;
   flex-shrink: 0;
+  width: 100%;
 }
 .cover-logo {
-  height: 5.75rem;
-  width: auto;
-  object-fit: contain;
-  flex-shrink: 0;
+  display: none;
 }
 .cover-firm-block {
-  text-align: right;
-  font-size: 0.7rem;
-  line-height: 1.35;
-  color: #0a6b3c;
+  text-align: center;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: #5a5a5a;
+  max-width: 36rem;
+  margin-left: auto;
+  margin-right: auto;
 }
 .cover-firm-title {
   font-weight: 700;
-  font-size: 0.85rem;
-  margin-bottom: 0.15rem;
+  font-size: 1.05rem;
+  color: #0a6b3c;
+  margin: 0 0 0.2rem;
 }
-.cover-firm-email {
-  font-weight: 600;
+.cover-firm-company {
+  color: #6b6b6b;
+  margin: 0 0 0.55rem;
+}
+.cover-firm-valuer,
+.cover-firm-reg {
+  color: #6b6b6b;
+  margin: 0;
 }
 .cover-firm-gap {
-  margin-top: 0.35rem;
+  margin-top: 0.55rem;
+}
+.cover-firm-postal,
+.cover-firm-phones,
+.cover-firm-web {
+  color: #6b6b6b;
+  margin: 0;
+}
+.cover-firm-email {
+  font-weight: 700;
+  color: #0a6b3c;
+  margin: 0.15rem 0 0;
+}
+.cover-firm-email-addr {
+  font-weight: 700;
+  color: #0a6b3c;
 }
 /* Photo sits in a flexible band so it fills the middle of the page */
 .cover-photo-band {
@@ -468,38 +490,61 @@
     margin: 0 !important;
   }
   .cover-letterhead {
-    display: flex !important;
-    align-items: flex-start !important;
-    justify-content: space-between !important;
-    gap: 8pt !important;
+    display: block !important;
+    text-align: center !important;
+    width: 100% !important;
     flex-shrink: 0 !important;
+    margin: 0 0 4mm 0 !important;
+    padding: 0 !important;
   }
   .cover-logo {
-    height: 78px !important;
-    max-height: 78px !important;
-    width: auto !important;
+    display: none !important;
   }
-  /* Override generic #report-cover header img { 56px } for logo */
   #report-cover.cover-photo-page .cover-logo,
   #report-cover.cover-photo-page > header img {
-    height: 78px !important;
-    max-height: 78px !important;
-    width: auto !important;
+    display: none !important;
   }
   .cover-firm-block {
-    text-align: right !important;
-    font-size: 8pt !important;
-    line-height: 1.3 !important;
-    color: #0a6b3c !important;
+    text-align: center !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 8.5pt !important;
+    line-height: 1.4 !important;
+    color: #5a5a5a !important;
+    max-width: 170mm !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
     print-color-adjust: exact !important;
     -webkit-print-color-adjust: exact !important;
   }
   .cover-firm-title {
     font-weight: 700 !important;
-    font-size: 9.5pt !important;
+    font-size: 12pt !important;
+    color: #0a6b3c !important;
+    margin: 0 0 2pt 0 !important;
+  }
+  .cover-firm-company {
+    color: #6b6b6b !important;
+    margin: 0 0 6pt 0 !important;
+  }
+  .cover-firm-valuer,
+  .cover-firm-reg,
+  .cover-firm-postal,
+  .cover-firm-phones,
+  .cover-firm-web {
+    color: #6b6b6b !important;
+    margin: 0 !important;
+  }
+  .cover-firm-gap {
+    margin-top: 6pt !important;
   }
   .cover-firm-email {
-    font-weight: 600 !important;
+    font-weight: 700 !important;
+    color: #0a6b3c !important;
+    margin: 2pt 0 0 0 !important;
+  }
+  .cover-firm-email-addr {
+    font-weight: 700 !important;
+    color: #0a6b3c !important;
   }
   /* Flexible middle band centres a large photo (sample proportion) */
   .cover-photo-band {
