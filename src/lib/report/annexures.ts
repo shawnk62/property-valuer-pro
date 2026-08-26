@@ -1,5 +1,4 @@
-import { MAP_SLOTS, PHOTO_SLOTS } from "@/lib/report/photo-data";
-import type { ReportDraft } from "@/lib/report/types";
+import { MAP_SLOTS, PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
 
 export type AnnexureId = "photos" | "maps" | "placeBased";
 
