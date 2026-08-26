@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "38",
+  "version": "39",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -39,7 +39,9 @@
             "Stamp Duty - Murray",
             "CGT - Murray",
             "CGT - Murray Retrospective",
-            "CGT - Murray Apportionment"
+            "CGT - Murray Apportionment",
+            "Family Law - Murray",
+            "Singly Appointed Family Law - Murray"
           ]
         },
         {

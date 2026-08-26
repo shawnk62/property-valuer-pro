@@ -15,7 +15,8 @@ export type ReportTypeId =
   | "stamp-duty-murray"
   | "cgt-murray"
   | "cgt-murray-retrospective"
-  | "cgt-murray-apportionment";
+  | "cgt-murray-apportionment"
+  | "family-law-murray";
 
 export interface ReportTypeConfig {
   id: ReportTypeId;
@@ -139,6 +140,22 @@ export const REPORT_TYPE_CONFIGS: ReportTypeConfig[] = [
     saleNarrativeStyle: "detailed",
     valuationDisplay: "see-remarks",
   },
+
+  {
+    id: "family-law-murray",
+    match: [
+      "Family Law - Murray",
+      "Family Law Murray",
+      "Singly Appointed Family Law - Murray",
+      "Singly Appointed Family Law Murray",
+    ],
+    coverSubtitle: "Family Law Valuation Report",
+    defaultPurpose:
+      "Determine the market value of the property for use in a Singly Appointed Family Law Matter.",
+    instructionsTitle: "Instructions and Purpose of Valuation",
+    saleNarrativeStyle: "detailed",
+    valuationDisplay: "amount",
+  },
 ];
 
 /** Exact current Purchase / generic behaviour */
@@ -178,7 +195,8 @@ export function isPhilReportType(id: ReportTypeId | string): boolean {
     id === "stamp-duty-murray" ||
     id === "cgt-murray" ||
     id === "cgt-murray-retrospective" ||
-    id === "cgt-murray-apportionment"
+    id === "cgt-murray-apportionment" ||
+    id === "family-law-murray"
   );
 }
 
@@ -187,7 +205,8 @@ export function isMurrayReportType(id: ReportTypeId | string): boolean {
     id === "stamp-duty-murray" ||
     id === "cgt-murray" ||
     id === "cgt-murray-retrospective" ||
-    id === "cgt-murray-apportionment"
+    id === "cgt-murray-apportionment" ||
+    id === "family-law-murray"
   );
 }
 

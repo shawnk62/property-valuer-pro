@@ -19,6 +19,8 @@ const REPORT_TYPE_OPTIONS = [
   "CGT - Murray",
   "CGT - Murray Retrospective",
   "CGT - Murray Apportionment",
+  "Family Law - Murray",
+  "Singly Appointed Family Law - Murray",
 ] as const;
 
 const IDENTITY_FIELDS = [
