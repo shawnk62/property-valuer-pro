@@ -2,6 +2,7 @@ import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { get, hasValue, joinValues, labelFor, pick } from "@/lib/report/schema";
 import { MAP_SLOTS, PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
 import { getReportTypeConfig, isPhilReportType } from "@/lib/report/reportTypes";
+import { buildPhilRemarks } from "@/lib/report/narrative";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { parseOverlayList } from "@/lib/report/overlays";
 import {
@@ -1410,7 +1411,18 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
       {/* ---- 13. Remarks ---- */}
       <Section id="sec-remarks" number="13." title="Remarks">
-        <Prose text={draft.narrative.remarks || BOILERPLATE.remarksDefault} />
+        <Prose
+          text={
+            (draft.narrative.remarks && draft.narrative.remarks.trim()) ||
+            (isPhilReportType(reportType.id)
+              ? buildPhilRemarks(v, {
+                  salesCount: Array.isArray(draft.sales) ? draft.sales.length : 0,
+                  valueAmount: m.valueAmount,
+                  brief: draft.narrative.brief,
+                })
+              : BOILERPLATE.remarksDefault)
+          }
+        />
       </Section>
 
       {/* ---- 14. Limitations ---- */}

@@ -303,7 +303,9 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
           }
         >
           {tab === "subject" ? <SubjectSection controller={controller} /> : null}
-          {tab === "narrative" ? <NarrativeSection controller={controller} /> : null}
+          <div className={tab === "narrative" ? "" : "hidden"} aria-hidden={tab !== "narrative"}>
+            <NarrativeSection controller={controller} />
+          </div>
           {tab === "photos" ? <PhotosSection controller={controller} /> : null}
           {tab === "sales" ? <SalesSection controller={controller} /> : null}
           {tab === "signature" ? (

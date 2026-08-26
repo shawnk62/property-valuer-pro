@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
@@ -71,6 +72,13 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   const [source, setSource] = useState<"template" | "ai" | null>(null);
   const [busy, setBusy] = useState<"template" | "ai" | keyof ReportNarrative | null>(null);
   const [lastStatus, setLastStatus] = useState<string | null>(null);
+  // Local mirror so the Remarks textarea always updates even if a parent re-render races
+  const [localRemarks, setLocalRemarks] = useState(() =>
+    String(draft.narrative.remarks ?? ""),
+  );
+  useEffect(() => {
+    setLocalRemarks(String(draft.narrative.remarks ?? ""));
+  }, [draft.narrative.remarks, draft.inspectionId]);
   const autoStarted = useRef(false);
   const narrativeRef = useRef(draft.narrative);
   narrativeRef.current = draft.narrative;
@@ -156,11 +164,15 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         toast.error("Remarks could not be generated");
         return false;
       }
-      if (!overwrite && String(narrativeRef.current.remarks ?? "").trim()) {
+      if (!overwrite && String(localRemarks || narrativeRef.current.remarks || "").trim()) {
         setLastStatus("Remarks already has text — not overwritten.");
         return false;
       }
-      setNarrative({ remarks: text });
+      // Synchronous write: local textarea + draft narrative in one paint
+      flushSync(() => {
+        setLocalRemarks(text);
+        setNarrative({ remarks: text });
+      });
       narrativeRef.current = { ...narrativeRef.current, remarks: text };
       setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
       setSource("template");
@@ -390,9 +402,17 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
           </div>
           <span className="mb-2 block text-sm text-muted-foreground">{block.hint}</span>
           <textarea
-            value={String(draft.narrative[block.key] ?? "")}
-            onChange={(e) => setNarrative({ [block.key]: e.target.value })}
-            rows={7}
+            value={
+              block.key === "remarks"
+                ? localRemarks
+                : String(draft.narrative[block.key] ?? "")
+            }
+            onChange={(e) => {
+              const val = e.target.value;
+              if (block.key === "remarks") setLocalRemarks(val);
+              setNarrative({ [block.key]: val });
+            }}
+            rows={block.key === "remarks" ? 12 : 7}
             className="w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm leading-relaxed text-foreground outline-none focus:ring-2 focus:ring-ring"
           />
         </label>
