@@ -18,7 +18,7 @@ import {
   WidthType,
 } from "docx";
 import { BOILERPLATE } from "@/lib/report/boilerplate";
-import { buildPhilRemarks } from "@/lib/report/narrative";
+import { buildPhilRemarks, buildMurrayRemarks } from "@/lib/report/narrative";
 import { parseOverlayList } from "@/lib/report/overlays";
 import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
 import { get, hasValue, joinValues, labelFor } from "@/lib/report/schema";
@@ -830,14 +830,25 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
 
   // ---- 13 ----
   children.push(sectionHeading("13.", "Remarks"));
-  children.push(...prose((draft.narrative.remarks && draft.narrative.remarks.trim())
-    || (String(get(v, "prop_assignment") || "").toLowerCase().includes("phil")
-      ? buildPhilRemarks(v, {
-          salesCount: Array.isArray(draft.sales) ? draft.sales.length : 0,
-          valueAmount: m.valueAmount,
-          brief: draft.narrative.brief,
-        })
-      : BOILERPLATE.remarksDefault)));
+  {
+    const assignment = String(get(v, "prop_assignment") || "").toLowerCase();
+    const remarksText =
+      (draft.narrative.remarks && draft.narrative.remarks.trim()) ||
+      (assignment.includes("murray")
+        ? buildMurrayRemarks(v, {
+            salesCount: Array.isArray(draft.sales) ? draft.sales.length : 0,
+            valueAmount: m.valueAmount,
+            brief: draft.narrative.brief,
+          })
+        : assignment.includes("phil")
+          ? buildPhilRemarks(v, {
+              salesCount: Array.isArray(draft.sales) ? draft.sales.length : 0,
+              valueAmount: m.valueAmount,
+              brief: draft.narrative.brief,
+            })
+          : BOILERPLATE.remarksDefault);
+    children.push(...prose(remarksText));
+  }
 
   // ---- 14 ----
   children.push(sectionHeading("14.", "Limitations"));

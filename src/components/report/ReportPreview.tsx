@@ -2,7 +2,7 @@ import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { get, hasValue, joinValues, labelFor, pick } from "@/lib/report/schema";
 import { MAP_SLOTS, PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
 import { getReportTypeConfig, isPhilReportType } from "@/lib/report/reportTypes";
-import { buildPhilRemarks } from "@/lib/report/narrative";
+import { buildPhilRemarks, buildMurrayRemarks, isMurrayAssignment } from "@/lib/report/narrative";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { parseOverlayList } from "@/lib/report/overlays";
 import {
@@ -1471,13 +1471,19 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         <Prose
           text={
             (draft.narrative.remarks && draft.narrative.remarks.trim()) ||
-            (isPhilReportType(reportType.id)
-              ? buildPhilRemarks(v, {
+            (isMurrayAssignment(v)
+              ? buildMurrayRemarks(v, {
                   salesCount: Array.isArray(draft.sales) ? draft.sales.length : 0,
                   valueAmount: m.valueAmount,
                   brief: draft.narrative.brief,
                 })
-              : BOILERPLATE.remarksDefault)
+              : isPhilReportType(reportType.id)
+                ? buildPhilRemarks(v, {
+                    salesCount: Array.isArray(draft.sales) ? draft.sales.length : 0,
+                    valueAmount: m.valueAmount,
+                    brief: draft.narrative.brief,
+                  })
+                : BOILERPLATE.remarksDefault)
           }
         />
       </Section>

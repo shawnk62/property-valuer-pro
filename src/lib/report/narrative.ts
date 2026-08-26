@@ -330,12 +330,92 @@ function buildPhilRemarks(
     .join(" ");
 }
 
+
+/**
+ * Murray §13 Remarks — fixed order required by the practice:
+ * 1. Structural + pest recommendation
+ * 2. Brief description (from narrative / template)
+ * 3. Editable sales-evidence commentary (default template; valuer may rewrite)
+ * 4. Assessed value
+ * 5. Auction / private tender closing
+ */
+function buildMurraySalesCommentary(
+  values: InspectionValues,
+  opts?: { salesCount?: number },
+): string {
+  const suburb = v(values, "prop_suburb") || "the subject suburb";
+  const lga = v(values, "prop_lga") || "the local government area";
+  const count = typeof opts?.salesCount === "number" ? opts.salesCount : 0;
+  const salesRange =
+    count <= 0 ? "[insert sale numbers]" : count === 1 ? "1" : `1-${count}`;
+  const assignment = v(values, "prop_assignment").toLowerCase();
+  const valueKind = assignment.includes("retrospective")
+    ? "retrospective market value"
+    : "current market value";
+
+  // Default template — intended to be edited by the valuer (nearby suburbs list, etc.)
+  const p1 = `This lack of comparable sales in ${suburb} has led me to rely on sales taken from the nearby and surrounding suburbs. These out of subject suburb sales are considered appropriate for comparative analysis via the Direct Comparison Approach due to those localities being considered to be within the same ${lga} regional real estate market – i.e. prospective buyers would likely be interested in similarly sized and zoned improved listed properties across all suburbs.`;
+
+  const p2 = `There is some variation between the subject property and the sales evidence properties considering (yet not limited to) attributes such as accommodation layout (namely number of bedrooms and bathrooms), locational factors including suburb, total internal floor area, outdoor area, style of dwelling (lowset, highset etcetera), aspect and outlook, age of construction, fit-out specification (type and quality of finishes including renovation/refurbishment status), presentation (internal and external), ancillary (ground) improvements, car accommodation (number of spaces and configuration), dual living status, flood status (including type of flood and extent), etcetera. The Valuer has made allowance for these variations whilst undertaking sales analysis via the Direct Comparison Approach.`;
+
+  const p3 = `Sales ${salesRange} in Section 9 above all recorded 'normal arm's length' transactions and were sold inside of 6 months previous to the date of valuation. They are appropriate for comparative analysis in order to ascertain the ${valueKind} of the subject property.`;
+
+  return [p1, p2, p3].join("\n\n");
+}
+
+function buildMurrayRemarks(
+  values: InspectionValues,
+  opts?: {
+    salesCount?: number;
+    valueAmount?: string;
+    brief?: string;
+  },
+): string {
+  const brief =
+    (opts?.brief && opts.brief.trim()) ||
+    buildBrief(values) ||
+    sentence([
+      "The property comprises a residential dwelling",
+      hasValue(values["prop_sitearea"]) &&
+        `on a ${v(values, "prop_sitearea")}${
+          v(values, "prop_areaunit") === "m2" ? "m²" : ` ${v(values, "prop_areaunit")}`
+        } allotment`,
+    ]);
+
+  const commentary = buildMurraySalesCommentary(values, {
+    salesCount: opts?.salesCount,
+  });
+
+  const valueFmt = formatAssessedValue(opts?.valueAmount);
+  const assignment = v(values, "prop_assignment").toLowerCase();
+  const valueLine = valueFmt
+    ? sentence([
+        assignment.includes("retrospective")
+          ? `I assess the retrospective market value at ${valueFmt}`
+          : `I assess the current value at ${valueFmt}`,
+      ])
+    : sentence(["I assess the current value at $[insert assessed value]"]);
+
+  return [
+    PHIL_STRUCTURAL,
+    brief,
+    commentary,
+    valueLine,
+    PHIL_SALE_METHOD,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
 function buildRemarks(
   values: InspectionValues,
   opts?: { salesCount?: number; valueAmount?: string; brief?: string },
 ): string {
   if (isPhilAssignment(values)) {
     return buildPhilRemarks(values, opts);
+  }
+  if (isMurrayAssignment(values)) {
+    return buildMurrayRemarks(values, opts);
   }
   return [
     sentence([v(values, "other_notes")]),
@@ -617,4 +697,4 @@ export function generateNarrative(
   };
 }
 
-export { fullAddress, buildPhilRemarks, isPhilAssignment };
+export { fullAddress, buildPhilRemarks, buildMurrayRemarks, isPhilAssignment, isMurrayAssignment };

@@ -48,7 +48,7 @@ const BLOCKS: { key: keyof ReportNarrative; label: string; hint: string }[] = [
     label: "Condition of improvements (9.2)",
     hint: "Built from component condition dropdowns and section notes. Saved or edited text is not overwritten by AI.",
   },
-  { key: "remarks", label: "Remarks", hint: "Section 13." },
+  { key: "remarks", label: "Remarks", hint: "Section 13. Murray: structural/pest → brief → sales commentary (editable) → assessed value → auction close. Phil: fixed Phil sequence." },
 ];
 
 /** Make inspection values safe for the server function (JSON-serializable, no proxies). */
