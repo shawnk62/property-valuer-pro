@@ -202,7 +202,7 @@ function buildPhilRemarks(
       hasValue(values["prop_sitearea"]) &&
         `on a ${v(values, "prop_sitearea")}${
           v(values, "prop_areaunit") === "m2" ? "m²" : ` ${v(values, "prop_areaunit")}`
-        } lot`,
+        } allotment`,
     ]);
 
   const ground = buildGroundImprovementsLine(values);

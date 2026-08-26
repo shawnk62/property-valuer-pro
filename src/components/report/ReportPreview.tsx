@@ -624,7 +624,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                   label: "BRIEF DESCRIPTION",
                   value: [
                     get(v, "imp_design") || "A residential dwelling",
-                    siteArea ? `on a ${siteArea} lot.` : "",
+                    siteArea ? `on a ${siteArea} allotment.` : "",
                   ]
                     .filter(Boolean)
                     .join(" "),
