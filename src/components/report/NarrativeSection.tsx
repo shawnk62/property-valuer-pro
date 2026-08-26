@@ -177,7 +177,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
       setSource("template");
       setLastStatus(`Remarks (${text.length} chars): ${text.slice(0, 160)}${text.length > 160 ? "…" : ""}`);
-      toast.success("Generated Remarks");
+      toast.success("Remarks filled (local builder v36)");
       return true;
     } catch (err) {
       console.error("[remarks]", err);
@@ -336,7 +336,12 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-4">
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-foreground">Narrative</h3>
+          <h3 className="text-sm font-semibold text-foreground">
+            Narrative{" "}
+            <span className="ml-1 text-[10px] font-normal text-muted-foreground">
+              build 9ade12e+
+            </span>
+          </h3>
           <p className="mt-1 text-sm text-muted-foreground">
             Empty sections generate with AI once after the draft loads (Settings required). Saved text is never overwritten on reopen — use Regenerate to replace a block.
             Edit any block before exporting the report.
