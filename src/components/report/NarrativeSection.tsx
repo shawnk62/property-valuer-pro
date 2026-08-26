@@ -126,7 +126,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   useEffect(() => {
     if (!loaded) return;
     if (autoStarted.current) return;
-    const keys = emptyNarrativeKeys(draft.narrative);
+    let keys = emptyNarrativeKeys(draft.narrative);
     if (keys.length === 0) {
       autoStarted.current = true; // mark done so we don't fire later if user clears a block
       return;
