@@ -19,6 +19,7 @@ import {
 } from "docx";
 import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { buildPhilRemarks, buildMurrayRemarks } from "@/lib/report/narrative";
+import { annexureById, resolveAnnexures } from "@/lib/report/annexures";
 import { parseOverlayList } from "@/lib/report/overlays";
 import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
 import { get, hasValue, joinValues, labelFor } from "@/lib/report/schema";
@@ -584,8 +585,10 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     const hasOverlayAnnexMaps = draft.photos.some(
       (ph) => (ph.slot === "map_overlays" || ph.slot === "map_landslide") && ph.url,
     );
-    const annexRef =
-      "Refer to Annexure 3 — Maps & planning layers for the associated mapping.";
+    const mapsAnnexEarly = annexureById(resolveAnnexures(draft), "maps");
+    const annexRef = mapsAnnexEarly
+      ? `Refer to ${mapsAnnexEarly.heading} for the associated mapping.`
+      : "";
     children.push(subHeading("6.5  Overlays"));
     if (overlays.length === 0) {
       children.push(p("No planning overlays recorded for the subject."));
@@ -599,7 +602,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
         );
       }
     }
-    if (hasOverlayAnnexMaps) {
+    if (hasOverlayAnnexMaps && annexRef) {
       children.push(p(annexRef));
     }
   }
@@ -876,8 +879,12 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   children.push(p(m.valuerName || get(v, "insp_valuer") || "", { bold: true, after: 40, before: 200 }));
   if (get(v, "sign_member")) children.push(p(get(v, "sign_member"), { size: 18, after: 40 }));
   children.push(p(m.firmName || get(v, "insp_firm") || "PETERSON PROPERTY VALUATIONS PTY LTD", { size: 18, after: 40 }));
-  for (const a of BOILERPLATE.annexures) {
-    children.push(p(a, { size: 18, after: 40 }));
+  const annexures = resolveAnnexures(draft);
+  const photosAnnex = annexureById(annexures, "photos");
+  const mapsAnnex = annexureById(annexures, "maps");
+  const placeAnnex = annexureById(annexures, "placeBased");
+  for (const a of annexures) {
+    children.push(p(a.listLine, { size: 18, after: 40 }));
   }
 
   // ---- Annexures: subject photos, maps, comparable photos (omit empty) ----
@@ -941,7 +948,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
 
   if (subjectPhotos.length > 0 || salesWithPhotos.length > 0) {
     children.push(new Paragraph({ children: [new PageBreak()] }));
-    children.push(p("Annexure 2 — Photographs", { center: true, bold: true, size: 26, after: 240 }));
+    children.push(p(photosAnnex?.heading ?? "Annexure — Photographs", { center: true, bold: true, size: 26, after: 240 }));
     for (const photo of subjectPhotos) {
       await pushImageAnnex(photo, { width: 420, height: 315 });
     }
@@ -973,7 +980,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   if (mapPhotos.length > 0) {
     children.push(new Paragraph({ children: [new PageBreak()] }));
     children.push(
-      p("Annexure 3 — Maps & planning layers", { center: true, bold: true, size: 26, after: 240 }),
+      p(mapsAnnex?.heading ?? "Annexure — Maps & planning layers", { center: true, bold: true, size: 26, after: 240 }),
     );
     for (const photo of mapPhotos) {
       await pushImageAnnex(photo, { width: 500, height: 375 });
@@ -984,7 +991,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   if (placeBased) {
     children.push(new Paragraph({ children: [new PageBreak()] }));
     children.push(
-      p("Annexure 4 — Place-based plans", { center: true, bold: true, size: 26, after: 240 }),
+      p(placeAnnex?.heading ?? "Annexure — Place-based plans", { center: true, bold: true, size: 26, after: 240 }),
     );
     for (const para of placeBased.split(/\n+/).map((s) => s.trim()).filter(Boolean)) {
       children.push(p(para, { size: 18, after: 120 }));

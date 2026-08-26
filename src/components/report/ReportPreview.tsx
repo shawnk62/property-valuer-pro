@@ -6,6 +6,7 @@ import {
   isMurrayReportType,
   isPhilReportType,
 } from "@/lib/report/reportTypes";
+import { annexureById, resolveAnnexures } from "@/lib/report/annexures";
 import { buildPhilRemarks, buildMurrayRemarks, isMurrayAssignment } from "@/lib/report/narrative";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { parseOverlayList } from "@/lib/report/overlays";
@@ -672,6 +673,10 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
     ...draft.photos.filter((p) => p.slot === null && p.kind === "map" && p.url),
   ] as typeof draft.photos;
 
+  const annexures = resolveAnnexures(draft);
+  const photosAnnex = annexureById(annexures, "photos");
+  const mapsAnnex = annexureById(annexures, "maps");
+  const placeAnnex = annexureById(annexures, "placeBased");
 
   const frontPhoto = draft.photos.find((p) => p.slot === "front" && p.url);
   // Letterhead + credentials follow Report Type (Phil vs Murray)
@@ -1292,8 +1297,9 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 (p) =>
                   (p.slot === "map_overlays" || p.slot === "map_landslide") && p.url,
               );
-              const annexRef =
-                "Refer to Annexure 3 — Maps & planning layers for the associated mapping.";
+              const annexRef = mapsAnnex
+                ? `Refer to ${mapsAnnex.heading} for the associated mapping.`
+                : "";
               return (
                 <Sub title="6.5  Overlays">
                   {overlays.length > 0 ? (
@@ -1305,7 +1311,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                   ) : (
                     <Para>No planning overlays recorded for the subject.</Para>
                   )}
-                  {hasOverlayAnnexMaps ? <Para>{annexRef}</Para> : null}
+                  {hasOverlayAnnexMaps && annexRef ? <Para>{annexRef}</Para> : null}
                 </Sub>
               );
             })()}
@@ -1387,8 +1393,9 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 (p) =>
                   (p.slot === "map_overlays" || p.slot === "map_landslide") && p.url,
               );
-              const annexRef =
-                "Refer to Annexure 3 — Maps & planning layers for the associated mapping.";
+              const annexRef = mapsAnnex
+                ? `Refer to ${mapsAnnex.heading} for the associated mapping.`
+                : "";
               return (
                 <Sub title="Overlays">
                   {overlays.length > 0 ? (
@@ -1400,7 +1407,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                   ) : (
                     <Para>—</Para>
                   )}
-                  {hasOverlayAnnexMaps ? <Para>{annexRef}</Para> : null}
+                  {hasOverlayAnnexMaps && annexRef ? <Para>{annexRef}</Para> : null}
                 </Sub>
               );
             })()}
@@ -1762,19 +1769,21 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           className="report-signature mt-8"
           showFirm
         />
-        <div className="mt-6">
-          {BOILERPLATE.annexures.map((a) => (
-            <p key={a} className="text-sm">
-              {a}
-            </p>
-          ))}
-        </div>
+        {annexures.length > 0 ? (
+          <div className="mt-6">
+            {annexures.map((a) => (
+              <p key={a.id} className="text-sm">
+                {a.listLine}
+              </p>
+            ))}
+          </div>
+        ) : null}
       </Section>
 
       {/* ---- Photo annexure (only when images exist) ---- */}
       {annexurePhotos.length > 0 || draft.sales.some((s) => s.photoUrl) ? (
         <section id="report-annexure-photos" className="report-annexure mt-12">
-          <h2 className="report-h1 text-center">Annexure 2 — Photographs</h2>
+          <h2 className="report-h1 text-center">{photosAnnex?.heading ?? "Annexure — Photographs"}</h2>
           <div className="mt-6 space-y-8">
             {annexurePhotos.length > 0 ? (
               <div className="grid gap-6 sm:grid-cols-2">
@@ -1832,7 +1841,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       {/* ---- Maps annexure (only filled map slots) ---- */}
       {mapPhotos.length > 0 ? (
         <section id="report-annexure-maps" className="report-annexure mt-12">
-          <h2 className="report-h1 text-center">Annexure 3 — Maps &amp; planning layers</h2>
+          <h2 className="report-h1 text-center">{mapsAnnex?.heading ?? "Annexure — Maps & planning layers"}</h2>
           <div className="mt-6 grid gap-6 sm:grid-cols-1">
             {mapPhotos.map((photo) => (
               <figure key={photo.id} className="report-photo-figure break-inside-avoid">
@@ -1854,7 +1863,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
       {get(v, "prop_place_based")?.trim() ? (
         <section id="report-annexure-place-based" className="report-annexure mt-12">
-          <h2 className="report-h1 text-center">Annexure 4 — Place-based plans</h2>
+          <h2 className="report-h1 text-center">{placeAnnex?.heading ?? "Annexure — Place-based plans"}</h2>
           <div className="mt-6 space-y-3 text-sm leading-relaxed">
             {get(v, "prop_place_based")!
               .split(/\n+/)
