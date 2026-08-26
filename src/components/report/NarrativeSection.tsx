@@ -339,7 +339,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
           <h3 className="text-sm font-semibold text-foreground">
             Narrative{" "}
             <span className="ml-1 text-[10px] font-normal text-muted-foreground">
-              build 9ade12e+
+              build 10dd1f6
             </span>
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">
