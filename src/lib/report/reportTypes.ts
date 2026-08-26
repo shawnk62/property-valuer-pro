@@ -121,7 +121,7 @@ export const REPORT_TYPE_CONFIGS: ReportTypeConfig[] = [
     ],
     coverSubtitle: "Retrospective Capital Gains Tax Valuation Report",
     defaultPurpose:
-      "Determine the market value of the property for retrospective capital gains tax purposes.",
+      "Determine a retrospective market value of the property for Capital Gains Tax purposes.",
     instructionsTitle: "Instructions and Purpose of Valuation",
     saleNarrativeStyle: "detailed",
     valuationDisplay: "amount",

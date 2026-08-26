@@ -50,9 +50,46 @@ function buildBrief(values: InspectionValues): string {
   const fence = v(values, "fence");
   const year = v(values, "imp_yearbuilt");
 
-  // Murray Stamp Duty sample: multi-paragraph DESCRIPTION on the summary page
+  // Murray samples: CGT (Gower St) = 2 short paras; Stamp Duty / Family Law may be longer
   if (isMurrayAssignment(values)) {
-    const materials = [walls, roof && `${roof}`].filter(Boolean).join("/");
+    const materials = [walls, roof && `${roof}`].filter(Boolean).join(" ");
+    const assignment = v(values, "prop_assignment").toLowerCase();
+    const isCgtMurray = assignment.includes("cgt");
+    const shapePhrase = shape
+      ? shape.toLowerCase().includes("shaped")
+        ? shape.toLowerCase()
+        : `${shape.toLowerCase()} shaped`
+      : "";
+
+    if (isCgtMurray) {
+      const para1 = [
+        sentence([
+          "The subject property is a",
+          level,
+          materials,
+          "dwelling",
+          beds && `with ${beds} bedrooms`,
+          baths && `and ${baths} bathrooms`,
+        ]),
+        year ? sentence([`The dwelling was constructed circa ${year}`]) : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+      const para2 = [
+        sentence([
+          "The subject allotment is",
+          area && `a ${area}`,
+          shapePhrase,
+          lotPos && lotPos.toLowerCase(),
+          orient && `which faces ${orient.toLowerCase()}`,
+        ]),
+        topo ? sentence(["Topography is described as", topo.toLowerCase()]) : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+      return [para1, para2].filter(Boolean).join(" ");
+    }
+
     const para1 = sentence([
       "The subject property improvements consist of a",
       level,
@@ -65,16 +102,17 @@ function buildBrief(values: InspectionValues): string {
       ? sentence([`The improvements were constructed circa ${year}`])
       : "";
     const para1c = pool
-      ? sentence([`There is ${pool.toLowerCase().startsWith("a") || pool.toLowerCase().startsWith("an") ? pool.toLowerCase() : `a ${pool.toLowerCase()}`}`])
+      ? sentence([
+          `There is ${
+            pool.toLowerCase().startsWith("a") || pool.toLowerCase().startsWith("an")
+              ? pool.toLowerCase()
+              : `a ${pool.toLowerCase()}`
+          }`,
+        ])
       : "";
     const ancillaryBits = [land, fence].filter(Boolean);
     const para2 = ancillaryBits.length
       ? sentence(["Ancillary improvements include", ancillaryBits.join("; ").toLowerCase()])
-      : "";
-    const shapePhrase = shape
-      ? shape.toLowerCase().includes("shaped")
-        ? shape.toLowerCase()
-        : `${shape.toLowerCase()} shaped`
       : "";
     const para3 = sentence([
       "The subject allotment is",

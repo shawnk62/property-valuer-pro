@@ -40,10 +40,21 @@ This is a Family Law – Murray valuation (Singly Appointed Family Law Matter). 
 - Neighbourhood: short (1–3 sentences). Services: one compact sentence.
 - Prefer "allotment" / "parent allotment" for site. Plain Australian valuation English. No marketing language. Do not invent facts.`;
   }
+  if (t.includes("murray") && t.includes("cgt")) {
+    return `
+This is a CGT – Murray valuation (including retrospective). Match Murray Peterson CGT sample style (e.g. Gower Street Holland Park West):
+- Summary DESCRIPTION: typically TWO short paragraphs only —
+  (1) "The subject property is a [set] [materials] dwelling with X bedrooms and Y bathrooms. The dwelling was constructed circa [year]."
+  (2) "The subject allotment is a [area] [shape] [inside/corner] allotment which faces [orientation]. [Topography / retaining / crossfall if recorded]."
+- Neighbourhood: 1–3 short sentences. Site physical: same density as paragraph 2 above.
+- Services: one compact sentence. Condition: 1–2 short sentences.
+- Sales comments: detailed comparison paragraphs (3–6 sentences) as for CGT.
+- Prefer "The subject property…" / "The subject allotment…". Use "allotment" for the site. Plain valuation English. No marketing language. Do not invent facts.`;
+  }
   if (t.includes("murray")) {
     return `
-This is a Murray Peterson valuation report. Match Murray sample tone (Bassett Road / Woodcliffe Crescent samples):
-- Factual, moderately detailed Australian valuation English (2–5 sentences per block; summary description may be 2–3 paragraphs).
+This is a Murray Peterson valuation report. Match Murray sample tone (Bassett Road / Woodcliffe Crescent / Gower Street samples):
+- Factual, moderately detailed Australian valuation English (2–5 sentences per block; summary description typically 2 short paragraphs for suburban houses, 2–3 for complex/unit).
 - Prefer "The subject property…" / "The subject allotment…" / "The subject parent allotment…" openings.
 - Use "allotment" for the subject site. Include recorded facts only. No marketing language.`;
   }
@@ -300,15 +311,13 @@ ${sectionAnswers(values, ["1", "2", "3", "5", "6"])}
 
 When type includes Murray, match Murray sample structure and density:
 
-House / rural (Stamp Duty – Murray sample):
-Paragraph 1 — improvements: "The subject property improvements consist of a [set] [materials] residence with X bedrooms and Y bathrooms." Age, secondary dwelling, pool only if recorded.
-Paragraph 2 — ancillary if recorded.
-Paragraph 3 — "The subject allotment is a [area] [shape] [lot position] which faces [orientation]…"
+CGT – Murray (Gower Street sample) — prefer TWO short paragraphs:
+Paragraph 1 — "The subject property is a [set] [materials] dwelling with X bedrooms and Y bathrooms. The dwelling was constructed circa [year]."
+Paragraph 2 — "The subject allotment is a [area] [shape] [inside/corner] allotment which faces [orientation]. [Benching / retaining / crossfall if recorded]."
 
-Unit / strata (Family Law – Murray sample):
-Paragraph 1 — "The subject property is a [beds] bedroom, [baths] bathroom unit located in '[complex]' which is a [N] storey, [unit count] unit apartment complex constructed circa [year]. The subject is on the [level]…" Complex features (pool etc.) if recorded.
-Paragraph 2 — Building construction: walls, roof, foundations, levels, car parking, lift — only as recorded.
-Paragraph 3 — "The subject parent allotment is a [area] [shape] [inside/corner] allotment which faces [orientation]…" Retaining/topography if recorded.
+House / rural Stamp Duty – Murray (Bassett Road): up to 3 paragraphs (improvements; ancillary; allotment).
+
+Unit / strata Family Law – Murray (Woodcliffe Crescent): unit in complex; building construction; parent allotment.
 
 For Phil Stamp Duty: keep to one tight paragraph.
 Use "allotment" / "parent allotment" for the site. Do not invent facts.`,

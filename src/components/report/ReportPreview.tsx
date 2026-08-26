@@ -597,7 +597,12 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         <div className="cover-title-block">
           <p>REPORT AND VALUATION</p>
           {m.valueDate || m.inspectionDate ? (
-            <p>DATED {formatCoverDate(m.valueDate || m.inspectionDate)}</p>
+            <p>
+              {/retrospective/i.test(reportType.id)
+                ? "RETROSPECTIVELY DATED"
+                : "DATED"}{" "}
+              {formatCoverDate(m.valueDate || m.inspectionDate)}
+            </p>
           ) : null}
           <p>RESIDENTIAL PROPERTY SITUATED AT</p>
           {addressLine ? <p>{addressLine}</p> : null}
@@ -621,13 +626,15 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               extra={[
                 { label: "PROPERTY ADDRESS", value: addressLine },
                 {
-                  label: "BRIEF DESCRIPTION",
-                  value: [
-                    get(v, "imp_design") || "A residential dwelling",
-                    siteArea ? `on a ${siteArea} allotment.` : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" "),
+                  label: "DESCRIPTION",
+                  value:
+                    (draft.narrative.brief && draft.narrative.brief.trim()) ||
+                    [
+                      get(v, "imp_design") || "A residential dwelling",
+                      siteArea ? `on a ${siteArea} allotment.` : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" "),
                 },
                 { label: "REGISTERED OWNER", value: get(v, "prop_owner") },
                 {
@@ -661,13 +668,35 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 See remarks in this report
               </p>
             ) : (
-              <p className="mt-3 text-2xl font-bold">
-                {m.valueAmount ? `$${formatCurrencyDisplay(m.valueAmount)}` : "—"}
-              </p>
+              <>
+                <p className="mt-3 text-sm text-justify leading-relaxed">
+                  The abovementioned land and the permanent improvements thereon were
+                  inspected
+                  {m.inspectionDate
+                    ? ` on the ${formatCoverDate(m.inspectionDate)}`
+                    : ""}
+                  , and the{" "}
+                  {/retrospective/i.test(reportType.id)
+                    ? "retrospective market value"
+                    : "market value"}{" "}
+                  of the freehold interest therein is assessed
+                  {m.valueDate
+                    ? ` as of the ${formatCoverDate(m.valueDate)}`
+                    : " as of the date of valuation"}{" "}
+                  at:
+                </p>
+                <p className="mt-3 text-2xl font-bold">
+                  {m.valueAmount
+                    ? `$${formatCurrencyDisplay(m.valueAmount)}`
+                    : "—"}
+                </p>
+                {m.valueAmount ? (
+                  <p className="mt-1 text-sm font-medium">
+                    {/* amount in words left for valuer; numeric shown above */}
+                  </p>
+                ) : null}
+              </>
             )}
-            {m.valueDate ? (
-              <p className="mt-1 text-sm">as at {m.valueDate}</p>
-            ) : null}
           </div>
 
           <div className="mt-6 text-center">
