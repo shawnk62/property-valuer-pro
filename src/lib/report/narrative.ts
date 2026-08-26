@@ -134,7 +134,115 @@ function buildAccommodation(values: InspectionValues): string {
     .join(" ");
 }
 
-function buildRemarks(values: InspectionValues): string {
+const PHIL_REMARKS_OPENING =
+  "The valuation assumes information disclosed by the client, with the overall condition of improvements recorded as good, and a full schedule of limitations applies.";
+
+const PHIL_STRUCTURAL =
+  "I recommend that a structural survey and pest inspection be obtained from suitably qualified professionals.";
+
+const PHIL_SALE_METHOD =
+  "If the property is to be sold it should be offered for sale by Auction or Private Tender.";
+
+function isPhilAssignment(values: InspectionValues): boolean {
+  const a = v(values, "prop_assignment").toLowerCase();
+  return a.includes("phil");
+}
+
+/** Ground improvements sentence from pool / landscaping / fencing checkboxes. */
+function buildGroundImprovementsLine(values: InspectionValues): string {
+  const pool = v(values, "pool");
+  const land = v(values, "land");
+  const fence = v(values, "fence");
+  const bits: string[] = [];
+  if (pool) bits.push(pool.toLowerCase());
+  if (land) bits.push(land.toLowerCase());
+  if (fence) bits.push(fence.toLowerCase());
+  if (!bits.length) return "";
+  // Join with semicolons for distinct groups; sentence() adds the full stop
+  return sentence([`The ground improvements include ${bits.join("; ")}`]);
+}
+
+function formatAssessedValue(raw: string | undefined): string {
+  if (!raw || !String(raw).trim()) return "";
+  const digits = String(raw).replace(/[^\d.]/g, "");
+  if (!digits) return "";
+  const n = Number(digits);
+  if (!Number.isFinite(n)) return String(raw).trim();
+  return `$${n.toLocaleString("en-AU", { maximumFractionDigits: 0 })}`;
+}
+
+/**
+ * Phil-family §13 Remarks — fixed order required by the practice:
+ * 1. Opening / assumptions
+ * 2. Structural + pest recommendation
+ * 3. Brief description of the property
+ * 4. Ground improvements (pool / landscaping / fencing)
+ * 5. Number of comparable sales included
+ * 6. Assessed value
+ * 7. Auction / private tender closing
+ */
+function buildPhilRemarks(
+  values: InspectionValues,
+  opts?: {
+    salesCount?: number;
+    valueAmount?: string;
+    /** Prefer existing brief narrative when regenerating */
+    brief?: string;
+  },
+): string {
+  const brief =
+    (opts?.brief && opts.brief.trim()) ||
+    buildBrief(values) ||
+    sentence([
+      "The property comprises a residential dwelling",
+      hasValue(values["prop_sitearea"]) &&
+        `on a ${v(values, "prop_sitearea")}${
+          v(values, "prop_areaunit") === "m2" ? "m²" : ` ${v(values, "prop_areaunit")}`
+        } lot`,
+    ]);
+
+  const ground = buildGroundImprovementsLine(values);
+
+  const count = typeof opts?.salesCount === "number" ? opts.salesCount : 0;
+  const salesLine =
+    count <= 0
+      ? ""
+      : count === 1
+        ? "I have included 1 comparable sale."
+        : `I have included ${count} comparable sales.`;
+
+  const valueFmt = formatAssessedValue(opts?.valueAmount);
+  const valueLine = valueFmt
+    ? sentence([`I assess the current value at ${valueFmt}`])
+    : "";
+
+  // Optional extra notes from the form, after the fixed skeleton but before closing
+  const extras = [
+    sentence([v(values, "other_notes")]),
+    sentence([v(values, "defects_notes")]),
+  ].filter(Boolean);
+
+  return [
+    PHIL_REMARKS_OPENING,
+    PHIL_STRUCTURAL,
+    brief,
+    ground,
+    salesLine,
+    valueLine,
+    ...extras,
+    PHIL_SALE_METHOD,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function buildRemarks(
+  values: InspectionValues,
+  opts?: { salesCount?: number; valueAmount?: string; brief?: string },
+): string {
+  if (isPhilAssignment(values)) {
+    return buildPhilRemarks(values, opts);
+  }
   return [
     sentence([v(values, "other_notes")]),
     sentence([v(values, "defects_notes")]),
@@ -305,17 +413,33 @@ function buildConditionImprovements(values: InspectionValues): string {
   return parts.filter(Boolean).join(" ");
 }
 
-export function generateNarrative(values: InspectionValues): ReportNarrative {
+export type NarrativeGenerateOptions = {
+  salesCount?: number;
+  valueAmount?: string;
+  /** Existing brief text to reuse in Phil remarks when regenerating */
+  brief?: string;
+};
+
+export function generateNarrative(
+  values: InspectionValues,
+  opts?: NarrativeGenerateOptions,
+): ReportNarrative {
+  const brief =
+    buildBrief(values) ||
+    sentence(["The subject property is located at", fullAddress(values)]);
   return {
-    brief: buildBrief(values) ||
-      sentence(["The subject property is located at", fullAddress(values)]),
+    brief,
     location: buildLocation(values),
     servicesAmenities: buildServicesAmenities(values),
     improvements: buildImprovements(values),
     accommodation: buildAccommodation(values),
     conditionImprovements: buildConditionImprovements(values),
-    remarks: buildRemarks(values),
+    remarks: buildRemarks(values, {
+      salesCount: opts?.salesCount,
+      valueAmount: opts?.valueAmount,
+      brief: opts?.brief || brief,
+    }),
   };
 }
 
-export { fullAddress };
+export { fullAddress, buildPhilRemarks, isPhilAssignment };

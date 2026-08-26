@@ -321,7 +321,40 @@ Requirements:
 - Do not invent engineering conclusions or structural soundness beyond visual inspection language already implied by the data.
 - Plain valuation English; no marketing language.`,
       };
-    case "remarks":
+    case "remarks": {
+      const isPhil = type.toLowerCase().includes("phil");
+      if (isPhil) {
+        const pool = formatValueLine("Pool", values["pool"]);
+        const land = formatValueLine("Landscaping", values["land"]);
+        const fence = formatValueLine("Fencing", values["fence"]);
+        const other = formatValueLine("Other notes", values["other_notes"]);
+        const defects = formatValueLine("Defects", values["defects_notes"]);
+        const overall = formatValueLine(
+          "Overall condition",
+          values["overall_cond"],
+        );
+        const groundBits = [pool, land, fence].filter(Boolean).join("\n");
+        return {
+          system: BASE_RULES + brevityHint(type),
+          prompt: `Write section 13 Remarks for a ${type} (Phil / Peterson) valuation report.
+
+You MUST produce paragraphs in this exact order (do not reorder, omit the required fixed lines, or invent facts):
+
+1. Exactly: "The valuation assumes information disclosed by the client, with the overall condition of improvements recorded as good, and a full schedule of limitations applies."
+2. Exactly: "I recommend that a structural survey and pest inspection be obtained from suitably qualified professionals."
+3. A brief property description in the same style as the valuation summary brief description (e.g. "The property comprises a lowset …"). Use only inspection facts below.
+4. "The ground improvements include …" drawing only from pool, landscaping and fencing data when present. Skip this sentence if none are recorded.
+5. "I have included N comparable sales." (Use singular "sale" if N is 1.) If sales count is unknown, omit this sentence.
+6. "I assess the current value at $X." only if an assessed value is provided below; otherwise omit.
+7. Any short notes/defects from the data (optional; do not invent).
+8. Exactly at the end: "If the property is to be sold it should be offered for sale by Auction or Private Tender."
+
+Inspection facts:
+${sectionAnswers(values, ["2", "3", "4", "5", "6"])}
+${overall ? overall + "\n" : ""}${groundBits ? groundBits + "\n" : ""}${other ? other + "\n" : ""}${defects ? defects + "\n" : ""}
+Write plain professional valuation English. No marketing language. Do not invent structural conclusions.`,
+        };
+      }
       return {
         system: BASE_RULES + brevityHint(type),
         prompt: `Write the Remarks paragraph (report section 13) for a ${type} valuation report.
@@ -331,6 +364,7 @@ ${sectionAnswers(values, ["6"])}
 
 Include only recorded notes, defects, or qualifications. If little is recorded, write one short professional sentence that the valuation assumes information disclosed by the client and that a full schedule of limitations applies. Do not invent defects.`,
       };
+    }
     default:
       return {
         system: BASE_RULES,

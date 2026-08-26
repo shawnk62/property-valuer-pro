@@ -4,7 +4,11 @@ import { toast } from "sonner";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import { generateNarrativeBlock } from "@/lib/ai/ai.functions";
 import { isAiConfigured, loadAiSettings } from "@/lib/ai/settings";
-import { generateNarrative } from "@/lib/report/narrative";
+import {
+  buildPhilRemarks,
+  generateNarrative,
+  isPhilAssignment,
+} from "@/lib/report/narrative";
 import type { ReportNarrative } from "@/lib/report/types";
 
 const BLOCKS: { key: keyof ReportNarrative; label: string; hint: string }[] = [
@@ -80,10 +84,21 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   }
 
   /** Fill only empty keys from the inspection-data template (never overwrites). */
+  function narrativeOpts() {
+    return {
+      salesCount: Array.isArray(draft.sales) ? draft.sales.length : 0,
+      valueAmount:
+        typeof draft.reportMeta?.valueAmount === "string"
+          ? draft.reportMeta.valueAmount
+          : "",
+      brief: String(narrativeRef.current.brief ?? "").trim() || undefined,
+    };
+  }
+
   function applyTemplateToEmptyKeys(
     keys: (keyof ReportNarrative)[],
   ): Partial<ReportNarrative> {
-    const full = generateNarrative(draft.values);
+    const full = generateNarrative(draft.values, narrativeOpts());
     const current = narrativeRef.current;
     const patch: Partial<ReportNarrative> = {};
     for (const key of keys) {
@@ -128,7 +143,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     setBusy("template");
     setLastStatus(null);
     try {
-      setNarrative(generateNarrative(draft.values));
+      setNarrative(generateNarrative(draft.values, narrativeOpts()));
       setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
       setSource("template");
       setLastStatus("Template applied.");
@@ -170,6 +185,14 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       for (const key of keys) {
         try {
           setLastStatus(`Generating “${key}”…`);
+          // Phil §13 Remarks is a fixed practice structure — build deterministically
+          // (sales count + assessed value + brief) rather than free-form AI.
+          if (key === "remarks" && isPhilAssignment(draft.values)) {
+            const text = buildPhilRemarks(draft.values, narrativeOpts());
+            if (text.trim()) next[key] = text.trim();
+            else errors.push(`${key}: empty remarks`);
+            continue;
+          }
           const result = await generateNarrativeBlock({
             data: {
               settings: {
