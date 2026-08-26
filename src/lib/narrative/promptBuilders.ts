@@ -36,7 +36,7 @@ This is a Family Law – Murray valuation (Singly Appointed Family Law Matter). 
 - Length: moderate detail — summary DESCRIPTION is typically 2–3 short paragraphs.
 - Unit/strata: open with "The subject property is a [beds] bedroom, [baths] bathroom unit located in '[complex]'…" including storeys, unit count, level/tower, and complex features (pool, lift, secure parking) when recorded.
 - Building construction paragraph: walls, roof, foundations, levels of accommodation, car parking, lift — only as recorded.
-- Parent allotment paragraph: "The subject parent allotment is a [area] [shape] [inside/corner] allotment which faces [orientation]…" plus retaining/topography if recorded.
+- Parent allotment paragraph: "The subject parent allotment is [area], [shape], [inside/corner], facing [orientation]…" plus retaining/topography if recorded.
 - Neighbourhood: short (1–3 sentences). Services: one compact sentence.
 - Prefer "allotment" / "parent allotment" for site. Plain Australian valuation English. No marketing language. Do not invent facts.`;
   }
@@ -45,7 +45,7 @@ This is a Family Law – Murray valuation (Singly Appointed Family Law Matter). 
 This is a CGT – Murray valuation (including retrospective). Match Murray Peterson CGT sample style (e.g. Gower Street Holland Park West):
 - Summary DESCRIPTION: typically TWO short paragraphs only —
   (1) "The subject property is a [set] [materials] dwelling with X bedrooms and Y bathrooms. The dwelling was constructed circa [year]."
-  (2) "The subject allotment is a [area] [shape] [inside/corner] allotment which faces [orientation]. [Topography / retaining / crossfall if recorded]."
+  (2) "The subject allotment is [area], [shape] and [inside/corner], facing [orientation]. [Topography / retaining / crossfall if recorded]."
 - Neighbourhood: 1–3 short sentences. Site physical: same density as paragraph 2 above.
 - Services: one compact sentence. Condition: 1–2 short sentences.
 - Sales comments: detailed comparison paragraphs (3–6 sentences) as for CGT.
@@ -207,6 +207,7 @@ Write in plain, professional Australian valuation English suitable for inclusion
 Describe only what is recorded in the inspection data. Do not invent measurements, materials, values, or conditions.
 If a detail is not recorded, omit it rather than guess.
 Use third-person, objective tone. Avoid marketing language.
+Do not repeat the same content word in a single sentence (e.g. do not write "The subject allotment is hatchet shaped and positioned as an inside allotment" — write "The subject allotment is hatchet shaped and occupies an inside position" or "The subject is a hatchet-shaped inside allotment").
 Follow any report-type style guide appended below for length and phrasing.
 `.trim();
 
@@ -313,7 +314,7 @@ When type includes Murray, match Murray sample structure and density:
 
 CGT – Murray (Gower Street sample) — prefer TWO short paragraphs:
 Paragraph 1 — "The subject property is a [set] [materials] dwelling with X bedrooms and Y bathrooms. The dwelling was constructed circa [year]."
-Paragraph 2 — "The subject allotment is a [area] [shape] [inside/corner] allotment which faces [orientation]. [Benching / retaining / crossfall if recorded]."
+Paragraph 2 — "The subject allotment is [area], [shape] and [inside/corner], facing [orientation]. [Benching / retaining / crossfall if recorded]."
 
 House / rural Stamp Duty – Murray (Bassett Road): up to 3 paragraphs (improvements; ancillary; allotment).
 

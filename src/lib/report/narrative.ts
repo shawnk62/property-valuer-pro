@@ -80,7 +80,7 @@ function buildBrief(values: InspectionValues): string {
           "The subject allotment is",
           area && `a ${area}`,
           shapePhrase,
-          lotPos && lotPos.toLowerCase(),
+          lotPos && lotPositionPhrase(lotPos),
           orient && `which faces ${orient.toLowerCase()}`,
         ]),
         topo ? sentence(["Topography is described as", topo.toLowerCase()]) : "",
@@ -118,7 +118,7 @@ function buildBrief(values: InspectionValues): string {
       "The subject allotment is",
       area && `a ${area}`,
       shapePhrase,
-      lotPos && lotPos.toLowerCase(),
+      lotPos && lotPositionPhrase(lotPos),
       orient && `which faces ${orient.toLowerCase()}`,
     ]);
     const para3b = topo
@@ -240,6 +240,15 @@ function isPhilAssignment(values: InspectionValues): boolean {
 function isMurrayAssignment(values: InspectionValues): boolean {
   const a = v(values, "prop_assignment").toLowerCase();
   return a.includes("murray");
+}
+
+/** Lot position without repeating the word "allotment". */
+function lotPositionPhrase(raw: string): string {
+  const t = raw.trim().toLowerCase();
+  if (!t) return "";
+  if (t.includes("inside")) return "inside";
+  if (t.includes("corner")) return "corner";
+  return t.replace(/\ballotment\b/gi, "").replace(/\s+/g, " ").trim();
 }
 
 /** Ground improvements sentence from pool / landscaping / fencing checkboxes. */
@@ -515,7 +524,7 @@ function buildSitePhysical(values: InspectionValues): string {
   // Opening: shape + position + area
   const openBits: string[] = [];
   if (shape) openBits.push(shape.toLowerCase().includes("shaped") ? shape.toLowerCase() : `${shape.toLowerCase()} shaped`);
-  if (lotPos) openBits.push(lotPos.toLowerCase());
+  if (lotPos) openBits.push(lotPositionPhrase(lotPos));
   if (openBits.length || siteArea) {
     // Murray sample: "The subject allotment is a 4.9ha slightly irregular shaped inside allotment which faces north."
     if (isMurrayAssignment(values)) {
