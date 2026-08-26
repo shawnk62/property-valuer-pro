@@ -15,6 +15,10 @@ const REPORT_TYPE_OPTIONS = [
   "CGT - Phil",
   "CGT - Phil Retrospective",
   "CGT - Phil Apportionment",
+  "Stamp Duty - Murray",
+  "CGT - Murray",
+  "CGT - Murray Retrospective",
+  "CGT - Murray Apportionment",
 ] as const;
 
 const IDENTITY_FIELDS = [
@@ -137,7 +141,7 @@ export function SubjectSection({ controller }: { controller: ReportDraftControll
         <h3 className="text-sm font-semibold text-foreground">Report type for this report</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           The original inspection answers stay frozen. Change the type here to generate a
-          different report product (Purchase, Stamp Duty – Phil, ATO / CGT, etc.) from the
+          different report product (Purchase, Stamp Duty – Phil/Murray, ATO / CGT, etc.) from the
           same inspection.
         </p>
         <div className="mt-4 max-w-sm">

@@ -1,7 +1,7 @@
 /**
  * Report-type configuration for multi-product support.
  *
- * Phil-family types share the Peterson cover / numbered-section layout.
+ * Phil and Murray family types share the Peterson cover / numbered-section layout.
  * Stamp Duty uses compact sale notes; CGT variants use detailed comparison narratives
  * with type-specific purpose and valuation-statement wording from the samples.
  */
@@ -11,7 +11,11 @@ export type ReportTypeId =
   | "stamp-duty-phil"
   | "cgt-phil"
   | "cgt-phil-retrospective"
-  | "cgt-phil-apportionment";
+  | "cgt-phil-apportionment"
+  | "stamp-duty-murray"
+  | "cgt-murray"
+  | "cgt-murray-retrospective"
+  | "cgt-murray-apportionment";
 
 export interface ReportTypeConfig {
   id: ReportTypeId;
@@ -87,6 +91,54 @@ export const REPORT_TYPE_CONFIGS: ReportTypeConfig[] = [
     saleNarrativeStyle: "detailed",
     valuationDisplay: "see-remarks",
   },
+  {
+    id: "stamp-duty-murray",
+    match: ["Stamp Duty - Murray", "Stamp Duty Murray"],
+    coverSubtitle: "Stamp Duty Valuation Report",
+    defaultPurpose:
+      "Determine the market value of the property for stamp duty purposes.",
+    instructionsTitle: "Instructions and Purpose of Valuation",
+    saleNarrativeStyle: "compact",
+    valuationDisplay: "amount",
+  },
+  {
+    id: "cgt-murray",
+    match: ["CGT - Murray", "CGT Murray"],
+    coverSubtitle: "Capital Gains Tax Valuation Report",
+    defaultPurpose:
+      "Determine the market value of the property for Capital Gains Tax purposes.",
+    instructionsTitle: "Instructions and Purpose of Valuation",
+    saleNarrativeStyle: "detailed",
+    valuationDisplay: "amount",
+  },
+  {
+    id: "cgt-murray-retrospective",
+    match: [
+      "CGT - Murray Retrospective",
+      "CGT Murray Retrospective",
+      "CGT - Murray (Retrospective)",
+    ],
+    coverSubtitle: "Retrospective Capital Gains Tax Valuation Report",
+    defaultPurpose:
+      "Determine the market value of the property for retrospective capital gains tax purposes.",
+    instructionsTitle: "Instructions and Purpose of Valuation",
+    saleNarrativeStyle: "detailed",
+    valuationDisplay: "amount",
+  },
+  {
+    id: "cgt-murray-apportionment",
+    match: [
+      "CGT - Murray Apportionment",
+      "CGT Murray Apportionment",
+      "CGT - Murray (Apportionment)",
+    ],
+    coverSubtitle: "Capital Gains Tax Apportionment Valuation Report",
+    defaultPurpose:
+      "Determine the market value of the property as follows:\n1. Apportion assessed value between curtilage with improvements and balance land;\n2. Apportion purchase price at the relevant acquisition date between curtilage with improvements and balance land.",
+    instructionsTitle: "Instructions and Purpose of Valuation",
+    saleNarrativeStyle: "detailed",
+    valuationDisplay: "see-remarks",
+  },
 ];
 
 /** Exact current Purchase / generic behaviour */
@@ -113,13 +165,29 @@ export function getReportTypeConfig(
   return DEFAULT_REPORT_TYPE_CONFIG;
 }
 
-/** Phil-family layout: cover photo page + numbered sections like the samples. */
+/**
+ * Peterson-family layout (Phil or Murray): cover photo page + numbered sections
+ * matching the issued samples. Function name kept for call-site compatibility.
+ */
 export function isPhilReportType(id: ReportTypeId | string): boolean {
   return (
     id === "stamp-duty-phil" ||
     id === "cgt-phil" ||
     id === "cgt-phil-retrospective" ||
-    id === "cgt-phil-apportionment"
+    id === "cgt-phil-apportionment" ||
+    id === "stamp-duty-murray" ||
+    id === "cgt-murray" ||
+    id === "cgt-murray-retrospective" ||
+    id === "cgt-murray-apportionment"
+  );
+}
+
+export function isMurrayReportType(id: ReportTypeId | string): boolean {
+  return (
+    id === "stamp-duty-murray" ||
+    id === "cgt-murray" ||
+    id === "cgt-murray-retrospective" ||
+    id === "cgt-murray-apportionment"
   );
 }
 

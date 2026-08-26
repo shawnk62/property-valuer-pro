@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "37",
+  "version": "38",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -35,7 +35,11 @@
             "Stamp Duty - Phil",
             "CGT - Phil",
             "CGT - Phil Retrospective",
-            "CGT - Phil Apportionment"
+            "CGT - Phil Apportionment",
+            "Stamp Duty - Murray",
+            "CGT - Murray",
+            "CGT - Murray Retrospective",
+            "CGT - Murray Apportionment"
           ]
         },
         {
