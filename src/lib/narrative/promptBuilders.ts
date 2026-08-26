@@ -208,6 +208,7 @@ Describe only what is recorded in the inspection data. Do not invent measurement
 If a detail is not recorded, omit it rather than guess.
 Use third-person, objective tone. Avoid marketing language.
 Do not repeat the same content word in a single sentence (e.g. do not write "The subject allotment is hatchet shaped and positioned as an inside allotment" — write "The subject allotment is hatchet shaped and occupies an inside position" or "The subject is a hatchet-shaped inside allotment").
+Paragraphing (all report types): use professional report-writing paragraph breaks. Do not dump every sentence into one long paragraph. Start a new paragraph when the topic changes (e.g. dwelling vs allotment; services vs overlays; sales commentary vs value). A short one-sentence paragraph is acceptable when that is all the section requires. Separate paragraphs with a blank line.
 Follow any report-type style guide appended below for length and phrasing.
 `.trim();
 
@@ -320,7 +321,7 @@ House / rural Stamp Duty – Murray (Bassett Road): up to 3 paragraphs (improvem
 
 Unit / strata Family Law – Murray (Woodcliffe Crescent): unit in complex; building construction; parent allotment.
 
-For Phil Stamp Duty: keep to one tight paragraph.
+For Phil Stamp Duty: keep wording concise; still use a new paragraph when the topic changes (e.g. dwelling then allotment).
 Use "allotment" / "parent allotment" for the site. Do not invent facts.`,
       };
         case "sitePhysical":

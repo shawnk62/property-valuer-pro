@@ -87,7 +87,7 @@ function buildBrief(values: InspectionValues): string {
       ]
         .filter(Boolean)
         .join(" ");
-      return [para1, para2].filter(Boolean).join(" ");
+      return [para1, para2].filter(Boolean).join("\n\n");
     }
 
     const para1 = sentence([
@@ -124,7 +124,7 @@ function buildBrief(values: InspectionValues): string {
     const para3b = topo
       ? sentence(["Topography is described as", topo.toLowerCase()])
       : "";
-    return [para1, para1b, para1c, para2, para3, para3b].filter(Boolean).join(" ");
+    return [para1, para1b, para1c, para2, para3, para3b].filter(Boolean).join("\n\n");
   }
 
   const descriptor = [level, walls, roof && `and ${roof}`, "dwelling"]
@@ -151,7 +151,7 @@ function buildBrief(values: InspectionValues): string {
     ]),
   ]
     .filter(Boolean)
-    .join(" ");
+    .join("\n\n");
 }
 
 function buildImprovements(values: InspectionValues): string {
@@ -191,7 +191,7 @@ function buildImprovements(values: InspectionValues): string {
     ]),
   ]
     .filter(Boolean)
-    .join(" ");
+    .join("\n\n");
 }
 
 function buildAccommodation(values: InspectionValues): string {
@@ -336,7 +336,7 @@ function buildPhilRemarks(
     PHIL_SALE_METHOD,
   ]
     .filter(Boolean)
-    .join(" ");
+    .join("\n\n");
 }
 
 
@@ -432,7 +432,7 @@ function buildRemarks(
     BOILERPLATE.remarksDefault,
   ]
     .filter(Boolean)
-    .join(" ");
+    .join("\n\n");
 }
 
 
@@ -477,7 +477,7 @@ function buildLocation(values: InspectionValues): string {
     parts.push(sentence([market]));
   }
 
-  return parts.filter(Boolean).join(" ");
+  return parts.filter(Boolean).join("\n\n");
 }
 
 /** Service type as plain prose; skip empty / N/A / Nil. No parenthetical labels. */
@@ -569,7 +569,7 @@ function buildSitePhysical(values: InspectionValues): string {
     parts.push(sentence(["Excavations / retaining:", exc.toLowerCase()]));
   }
 
-  return parts.filter(Boolean).join(" ");
+  return parts.filter(Boolean).join("\n\n");
 }
 
 function buildServicesAmenities(values: InspectionValues): string {
@@ -673,7 +673,7 @@ function buildConditionImprovements(values: InspectionValues): string {
     if (note) parts.push(sentence([note]));
   }
 
-  return parts.filter(Boolean).join(" ");
+  return parts.filter(Boolean).join("\n\n");
 }
 
 export type NarrativeGenerateOptions = {
