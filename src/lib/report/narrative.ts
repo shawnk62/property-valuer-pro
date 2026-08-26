@@ -323,6 +323,64 @@ function joinProseList(items: string[]): string {
   return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
 }
 
+
+function buildSitePhysical(values: InspectionValues): string {
+  const shape = v(values, "prop_shape");
+  const lotPos = v(values, "prop_lot_position");
+  const topo = v(values, "topo");
+  const dims = v(values, "prop_dimensions");
+  const orient = v(values, "prop_orientation");
+  const siteArea = hasValue(values["prop_sitearea"])
+    ? `${v(values, "prop_sitearea")}${
+        v(values, "prop_areaunit") === "m2" ? "m²" : ` ${v(values, "prop_areaunit")}`.trim()
+      }`
+    : "";
+  const view = v(values, "prop_view");
+  const land = v(values, "land");
+  const fence = v(values, "fence");
+  const exc = v(values, "exc");
+
+  const parts: string[] = [];
+
+  // Opening: shape + position + area
+  const openBits: string[] = [];
+  if (shape) openBits.push(shape.toLowerCase().includes("shaped") ? shape.toLowerCase() : `${shape.toLowerCase()} shaped`);
+  if (lotPos) openBits.push(lotPos.toLowerCase());
+  if (openBits.length || siteArea) {
+    parts.push(
+      sentence([
+        "The subject allotment is",
+        openBits.length ? openBits.join(", ") : false,
+        siteArea && `with a site area of approximately ${siteArea}`,
+      ]),
+    );
+  }
+
+  if (dims) {
+    parts.push(sentence(["Dimensions are recorded as", dims]));
+  }
+  if (orient) {
+    parts.push(sentence(["The allotment has a", orient.toLowerCase(), "orientation"]));
+  }
+  if (topo) {
+    parts.push(sentence(["Topography is described as", topo.toLowerCase()]));
+  }
+  if (view) {
+    parts.push(sentence(["Views are", view.toLowerCase()]));
+  }
+  if (land) {
+    parts.push(sentence(["Landscaping includes", land.toLowerCase()]));
+  }
+  if (fence) {
+    parts.push(sentence(["Fencing comprises", fence.toLowerCase()]));
+  }
+  if (exc) {
+    parts.push(sentence(["Excavations / retaining:", exc.toLowerCase()]));
+  }
+
+  return parts.filter(Boolean).join(" ");
+}
+
 function buildServicesAmenities(values: InspectionValues): string {
   const listed = [
     serviceTypePhrase(v(values, "svc_water_type")),
@@ -434,6 +492,7 @@ export function generateNarrative(
   return {
     brief,
     location: buildLocation(values),
+    sitePhysical: buildSitePhysical(values),
     servicesAmenities: buildServicesAmenities(values),
     improvements: buildImprovements(values),
     accommodation: buildAccommodation(values),

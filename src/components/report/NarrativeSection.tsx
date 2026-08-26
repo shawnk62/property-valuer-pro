@@ -24,6 +24,11 @@ const BLOCKS: { key: keyof ReportNarrative; label: string; hint: string }[] = [
     hint: "Locality and neighbourhood character for section 5.1. Generated from neighbourhood inspection fields.",
   },
   {
+    key: "sitePhysical",
+    label: "Physical description of the allotment (6.1)",
+    hint: "Section 6.1 — allotment shape, lot position, topography, dimensions and related site fields. Editable; not overwritten once saved.",
+  },
+  {
     key: "servicesAmenities",
     label: "Services / amenities (6.2)",
     hint: "Short paragraph for section 6.2 from site services fields. Saved or edited text is not overwritten by AI.",

@@ -504,14 +504,32 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   // ---- 6 ----
   children.push(sectionHeading("6.", "Site Details"));
   children.push(subHeading("6.1  Physical Description"));
-  push(
-    children,
-    factsTable(
-      draft,
-      ["prop_dimensions", "prop_orientation", "prop_shape", "prop_lot_position", "topo", "land", "va", "fence", "exc", "prop_view"],
-      siteArea ? [{ label: labelFor("prop_sitearea"), value: siteArea }] : [],
-    ),
-  );
+  {
+    const siteText = (draft.narrative.sitePhysical || "").trim();
+    if (siteText) {
+      children.push(...prose(siteText));
+    } else {
+      push(
+        children,
+        factsTable(
+          draft,
+          [
+            "prop_dimensions",
+            "prop_orientation",
+            "prop_shape",
+            "prop_lot_position",
+            "topo",
+            "land",
+            "va",
+            "fence",
+            "exc",
+            "prop_view",
+          ],
+          siteArea ? [{ label: labelFor("prop_sitearea"), value: siteArea }] : [],
+        ),
+      );
+    }
+  }
   await pushInlineMap(children, draft, "map_aerial", "Aerial view of subject site", {
     width: 460,
     height: 320,

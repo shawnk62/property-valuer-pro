@@ -1016,17 +1016,22 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         {isPhilReportType(reportType.id) ? (
           <>
             <Sub title="6.1  Physical Description">
-              <Para>
-                {[
-                  get(v, "prop_shape"),
-                  get(v, "prop_lot_position"),
-                  get(v, "topo"),
-                  get(v, "prop_dimensions"),
-                  get(v, "prop_orientation") && `Orientation ${get(v, "prop_orientation")}`,
-                ]
-                  .filter(Boolean)
-                  .join(". ") || "—"}
-              </Para>
+              {draft.narrative.sitePhysical?.trim() ? (
+                <Prose text={draft.narrative.sitePhysical} />
+              ) : (
+                <Para>
+                  {[
+                    get(v, "prop_shape"),
+                    get(v, "prop_lot_position"),
+                    get(v, "topo"),
+                    get(v, "prop_dimensions"),
+                    get(v, "prop_orientation") &&
+                      `Orientation ${get(v, "prop_orientation")}`,
+                  ]
+                    .filter(Boolean)
+                    .join(". ") || "—"}
+                </Para>
+              )}
               <InlineMap
                 photos={draft.photos}
                 slot="map_aerial"
@@ -1108,11 +1113,32 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           </>
         ) : (
           <>
-            <Facts
-              values={v}
-              fields={["prop_dimensions", "prop_orientation", "prop_shape", "prop_lot_position", "topo", "land", "va", "fence", "exc", "prop_view"]}
-              extra={siteArea ? [{ label: labelFor("prop_sitearea"), value: siteArea }] : []}
-            />
+            <Sub title="6.1  Physical Description">
+              {draft.narrative.sitePhysical?.trim() ? (
+                <Prose text={draft.narrative.sitePhysical} />
+              ) : (
+                <Facts
+                  values={v}
+                  fields={[
+                    "prop_dimensions",
+                    "prop_orientation",
+                    "prop_shape",
+                    "prop_lot_position",
+                    "topo",
+                    "land",
+                    "va",
+                    "fence",
+                    "exc",
+                    "prop_view",
+                  ]}
+                  extra={
+                    siteArea
+                      ? [{ label: labelFor("prop_sitearea"), value: siteArea }]
+                      : []
+                  }
+                />
+              )}
+            </Sub>
             <Sub title="Services">
               <Facts
                 values={v}

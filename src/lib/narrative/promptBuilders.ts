@@ -266,6 +266,23 @@ Requirements:
 - Do not write a full improvements essay.
 - Suitable to appear under "BRIEF DESCRIPTION" on a valuation summary.`,
       };
+    case "sitePhysical":
+      return {
+        system: BASE_RULES + brevityHint(type),
+        prompt: `Write section 6.1 "Physical Description" of the subject allotment for a ${type} valuation report (QLD residential / Peterson style).
+
+Inspection data (allotment shape, lot position, topography, dimensions, orientation, landscaping, fencing, excavations, views):
+${sectionAnswers(values, ["1", "2"])}
+
+Also include these keys when present: Allotment shape (prop_shape), Lot position (prop_lot_position), Topography, Dimensions, Orientation, Site area, View, Landscaping, Fencing, Excavations.
+
+Requirements:
+- One or two short professional paragraphs (Stamp Duty: prefer one tight paragraph).
+- Use the word "allotment" (not "lot") when referring to the subject site.
+- Incorporate allotment shape, lot position (inside/corner), topography, and dimensions/orientation when recorded. Do not invent missing facts.
+- Plain valuation English; no marketing language.
+- Do not discuss services, improvements, or value here.`,
+      };
     case "servicesAmenities":
       return {
         system: BASE_RULES + brevityHint(type),
