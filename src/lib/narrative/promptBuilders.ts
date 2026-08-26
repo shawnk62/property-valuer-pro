@@ -340,7 +340,7 @@ Requirements:
 
 You MUST produce paragraphs in this exact order (do not reorder, omit the required fixed lines, or invent facts):
 
-1. Exactly: "The valuation assumes information disclosed by the client, with the overall condition of improvements recorded as good, and a full schedule of limitations applies."
+1. Exactly this pattern, substituting the recorded overall condition of improvements (or "good" if not recorded): "The valuation assumes information disclosed by the client, with the overall condition of improvements recorded as {overall condition}, and a full schedule of limitations applies."
 2. Exactly: "I recommend that a structural survey and pest inspection be obtained from suitably qualified professionals."
 3. A brief property description in the same style as the valuation summary brief description (e.g. "The property comprises a lowset …"). Use only inspection facts below.
 4. "The ground improvements include …" drawing only from pool, landscaping and fencing data when present. Skip this sentence if none are recorded.

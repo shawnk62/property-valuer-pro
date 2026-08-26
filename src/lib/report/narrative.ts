@@ -134,14 +134,18 @@ function buildAccommodation(values: InspectionValues): string {
     .join(" ");
 }
 
-const PHIL_REMARKS_OPENING =
-  "The valuation assumes information disclosed by the client, with the overall condition of improvements recorded as good, and a full schedule of limitations applies.";
-
 const PHIL_STRUCTURAL =
   "I recommend that a structural survey and pest inspection be obtained from suitably qualified professionals.";
 
 const PHIL_SALE_METHOD =
   "If the property is to be sold it should be offered for sale by Auction or Private Tender.";
+
+/** Opening line — overall condition from overall_cond dropdown (fallback: good). */
+function philRemarksOpening(values: InspectionValues): string {
+  const cond = v(values, "overall_cond").trim();
+  const condPhrase = (cond || "good").toLowerCase();
+  return `The valuation assumes information disclosed by the client, with the overall condition of improvements recorded as ${condPhrase}, and a full schedule of limitations applies.`;
+}
 
 function isPhilAssignment(values: InspectionValues): boolean {
   const a = v(values, "prop_assignment").toLowerCase();
