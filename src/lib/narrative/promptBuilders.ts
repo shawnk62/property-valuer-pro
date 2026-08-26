@@ -11,16 +11,48 @@ function assignmentType(values: InspectionValues): string {
   return typeof v === "string" ? v : "valuation report";
 }
 
-/** Stamp Duty reports use shorter prose (match Peterson sample style). */
-function brevityHint(type: string): string {
+/**
+ * Style guide by report type — aligned to issued Peterson samples.
+ * Stamp Duty – Murray (Bassett Road sample): moderate detail, factual multi-sentence
+ * paragraphs, "subject property / subject allotment" openings, no marketing language.
+ * Stamp Duty – Phil: tighter / more compact.
+ * CGT: fuller comparison detail.
+ */
+function styleGuide(type: string): string {
   const t = type.toLowerCase();
+  if (t.includes("murray") && t.includes("stamp")) {
+    return `
+This is a Stamp Duty – Murray valuation. Match Murray Peterson sample style (e.g. Bassett Road / rural residential stamp duty reports):
+- Length: moderate — typically 2–5 sentences per block, or 2 short paragraphs when the data supports it (summary description and improvements may be longer).
+- Openings: prefer "The subject property…", "The subject allotment…", "This is predominantly…".
+- Use "allotment" for the subject site (not "lot"), except in fixed legal phrases.
+- Include concrete recorded facts (beds/baths, materials, age, ancillary counts, shape, position, topography, orientation, flood where recorded).
+- Plain Australian valuation English. Short direct sentences. No marketing language.
+- Do not invent facts. Omit unrecorded detail.`;
+  }
+  if (t.includes("murray")) {
+    return `
+This is a Murray Peterson valuation report. Match Murray sample tone:
+- Factual, moderately detailed Australian valuation English.
+- Prefer "The subject property…" / "The subject allotment…" openings.
+- Use "allotment" for the subject site. Include recorded facts only. No marketing language.`;
+  }
   if (t.includes("stamp duty")) {
-    return (
-      "\nThis is a Stamp Duty valuation: prefer concise wording. " +
-      "Avoid long marketing-style descriptions. One tight paragraph is usually enough."
-    );
+    return `
+This is a Stamp Duty – Phil valuation: prefer concise wording.
+Avoid long marketing-style descriptions. One tight paragraph is usually enough.`;
+  }
+  if (t.includes("cgt")) {
+    return `
+This is a CGT / full valuation report: allow fuller comparison detail where the data supports it.
+Plain valuation English; short sentences preferred over long compounds.`;
   }
   return "";
+}
+
+/** @deprecated use styleGuide — kept as alias for any residual calls */
+function brevityHint(type: string): string {
+  return styleGuide(type);
 }
 
 function formatValueLine(label: string, raw: unknown): string | null {
@@ -149,12 +181,12 @@ function conditionOfImprovementsAnswers(values: InspectionValues): string {
 }
 
 const BASE_RULES = `
-You are writing formal valuation narrative for a Queensland Registered Valuer's report.
-Write in plain, professional English suitable for inclusion in a valuation report.
+You are writing formal valuation narrative for a Queensland Registered Valuer's report (Peterson Property Valuations style).
+Write in plain, professional Australian valuation English suitable for inclusion in the report.
 Describe only what is recorded in the inspection data. Do not invent measurements, materials, values, or conditions.
 If a detail is not recorded, omit it rather than guess.
 Use third-person, objective tone. Avoid marketing language.
-Output a single paragraph unless the data clearly supports two short paragraphs.
+Follow any report-type style guide appended below for length and phrasing.
 `.trim();
 
 export function buildBlockPrompt(
@@ -238,105 +270,88 @@ Summarise the overall condition and any final remarks or qualifications recorded
     /* ---- Report workspace narrative blocks (Narrative tab) ---- */
     case "location":
       return {
-        system: BASE_RULES + brevityHint(type),
+        system: BASE_RULES + styleGuide(type),
         prompt: `Write section 5.1 "Description of Neighbourhood" for a ${type} valuation report (QLD / Peterson style).
 
 Inspection data (neighbourhood / location):
-${sectionAnswers(values, ["1A", "1"])}
+${sectionAnswers(values, ["1A"])}
 
-Requirements:
-- One short professional paragraph (Stamp Duty: 1–2 sentences; other types: up to 4 short sentences).
-- Describe the locality, surrounding development, and neighbourhood character from the recorded answers only.
-- If a free-text Neighbourhood Description is present, refine it into report prose without inventing facts.
-- Do not invent amenities, distances, or land uses that are not in the data.
-- Do not include the street address sentence (that belongs in 5.2 Property Location).
-- Plain valuation English; no marketing language.`,
+Murray Stamp Duty sample style: often one short sentence, e.g. "This is predominantly a rural residential precinct." Expand only with recorded neighbourhood character, built-up, growth, demand or boundaries — still keep it short (1–3 sentences).
+Phil Stamp Duty: one tight sentence or two.
+Do not invent facts.`,
       };
-    case "brief":
+        case "brief":
       return {
-        system: BASE_RULES + brevityHint(type),
-        prompt: `Write a BRIEF DESCRIPTION for the valuation summary page of a ${type} report.
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write the DESCRIPTION / brief for the valuation summary page of a ${type} report.
 
 Inspection data:
-${sectionAnswers(values, ["1", "2", "3", "6"])}
+${sectionAnswers(values, ["1", "2", "3", "5", "6"])}
 
-Requirements:
-- One or two short sentences only.
-- Include dwelling type/style, key construction if recorded, bedroom/bathroom counts if recorded, and site area if recorded.
-- Do not write a full improvements essay.
-- Suitable to appear under "BRIEF DESCRIPTION" on a valuation summary.`,
+Murray Stamp Duty sample style (when type is Stamp Duty – Murray), match this structure and density:
+Paragraph 1 — improvements: "The subject property improvements consist of a [set] [materials] residence with X bedrooms and Y bathrooms." Add layout/age/secondary dwelling/pool only if recorded.
+Paragraph 2 — ancillary (if recorded): "Ancillary improvements include …" (sheds, tanks, paddocks, fencing, etc.).
+Paragraph 3 — allotment: "The subject allotment is a [area] [shape] [lot position] which faces [orientation]. …" Include topography and material site constraints (e.g. creek/flood) only if recorded.
+
+For Phil Stamp Duty: keep to one tight paragraph.
+For other types: 1–3 short factual paragraphs as the data supports.
+Use "allotment" for the subject site. Do not invent facts.`,
       };
-    case "sitePhysical":
+        case "sitePhysical":
       return {
-        system: BASE_RULES + brevityHint(type),
-        prompt: `Write section 6.1 "Physical Description" of the subject allotment for a ${type} valuation report (QLD residential / Peterson style).
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write section 6.1 "Physical Description" of the subject allotment for a ${type} valuation report.
 
-Inspection data (allotment shape, lot position, topography, dimensions, orientation, landscaping, fencing, excavations, views):
+Inspection data:
 ${sectionAnswers(values, ["1", "2"])}
 
-Also include these keys when present: Allotment shape (prop_shape), Lot position (prop_lot_position), Topography, Dimensions, Orientation, Site area, View, Landscaping, Fencing, Excavations.
-
-Requirements:
-- One or two short professional paragraphs (Stamp Duty: prefer one tight paragraph).
-- Use the word "allotment" (not "lot") when referring to the subject site.
-- Incorporate allotment shape, lot position (inside/corner), topography, and dimensions/orientation when recorded. Do not invent missing facts.
-- Plain valuation English; no marketing language.
-- Do not discuss services, improvements, or value here.`,
+Murray sample pattern (use when type includes Murray):
+"The subject allotment is a [area] [shape] [inside/corner] allotment which faces [orientation]. [Topography sentence]. [Boundary / flood / creek only if recorded]."
+Typically 2–4 short sentences. Use "allotment" not "lot". Include allotment shape, lot position, topography, dimensions/orientation and site area when recorded. Do not invent facts.`,
       };
-    case "servicesAmenities":
+        case "servicesAmenities":
       return {
-        system: BASE_RULES + brevityHint(type),
-        prompt: `Write section 6.2 "Services/Amenities" for a ${type} valuation report (QLD residential).
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write section 6.2 "Services/Amenities" for a ${type} valuation report.
 
-Inspection data (site services — use these TYPE values verbatim as the service names):
+Site services recorded:
 ${siteServicesAnswers(values)}
 
-Requirements:
-- One short professional paragraph (typically 1–3 sentences).
-- You MUST list each recorded service TYPE that is not Nil / Not applicable (e.g. if Water Supply — Type is "Town water", write "town water"; if Sewerage — Type is "Sewer", write "sewer"; if Electricity — Type is "Mains power", write "mains power").
-- Do NOT write category labels with the type in parentheses (never "water (town water)"). Prefer "The property is connected to town water, sewer, and mains power".
-- Do NOT use generic wording such as "usual urban services" when any specific TYPE is recorded above.
-- Omit services marked Nil or Not applicable.
-- Do not invent connections, capacities, or providers not in the data.
-- Only if the inspection data section above is exactly "No specific details recorded." may you use a single generic sentence about usual urban services.
-- Plain valuation English; no marketing language.`,
+Murray sample style: one short factual sentence listing available services, e.g. "Tank water, electricity, septic sewerage and telephone are available."
+Use plain service names (town water, sewer, mains power) without parenthetical labels.
+Do not invent services.`,
       };
-    case "improvements":
+        case "improvements":
       return {
-        system: BASE_RULES + brevityHint(type),
-        prompt: `Write the "Improvements — General Description" paragraph (report section 7.1) for a ${type} valuation report.
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write the general improvements description for a ${type} valuation report.
 
 Inspection data:
-${sectionAnswers(values, ["3", "special_design", "6"])}
+${sectionAnswers(values, ["3", "4", "5"])}
 
-Describe construction, materials, roof, foundations, approximate era if recorded, and overall condition. Stay factual. Do not invent floor areas or features not in the data.`,
+Murray sample density: factual sentences covering set/level, wall/roof materials, bedroom/bathroom counts, age if recorded, secondary accommodation or pool if recorded. Then ancillary ground improvements if recorded (sheds, tanks, fencing, paddocks, etc.). Prefer "The subject property improvements consist of…".
+Do not invent facts.`,
       };
-    case "accommodation":
+        case "accommodation":
       return {
-        system: BASE_RULES + brevityHint(type),
-        prompt: `Write the "Accommodation — Fixtures and Fittings" narrative (report section 8) for a ${type} valuation report.
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write the accommodation narrative for a ${type} valuation report.
 
 Inspection data:
-${sectionAnswers(values, ["3", "3A", "5"])}
+${sectionAnswers(values, ["3", "4"])}
 
-Cover rooms/layout as recorded, floor coverings, climate control, kitchen/bathroom notes if present, car accommodation, and ancillary items. Do not treat verandahs or outdoor areas as primary rooms. Omit empty topics.`,
+Murray sample style: short factual sentences — rooms, kitchen/living layout, built-ins, HVAC, outdoor areas only as recorded. Moderate detail, not a room-by-room inventory unless data is rich.
+Do not invent facts.`,
       };
-    case "conditionImprovements":
+        case "conditionImprovements":
       return {
-        system: BASE_RULES + brevityHint(type),
-        prompt: `Write section 9.2 "Condition of Improvements" for a ${type} valuation report (QLD residential / Peterson style).
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write section 9.2 / condition of improvements for a ${type} valuation report.
 
-Inspection data (overall ratings, component condition dropdowns, and section notes):
+Inspection data:
 ${conditionOfImprovementsAnswers(values)}
 
-Requirements:
-- One or two short professional paragraphs (Stamp Duty: prefer one tight paragraph).
-- Synthesize the recorded condition ratings across improvement components (external walls, roof, foundations, flooring, internal linings, kitchen, bathrooms, services, parking, ancillary, etc.) into a coherent overall condition description.
-- Weave in any section notes and significant defects notes where recorded; do not invent defects.
-- If an overall condition of improvements is recorded, reflect it; do not contradict component ratings without cause.
-- Do not list every component mechanically if many share the same rating — group them (e.g. "generally in good condition with …").
-- Do not invent engineering conclusions or structural soundness beyond visual inspection language already implied by the data.
-- Plain valuation English; no marketing language.`,
+Murray sample style: 1–2 short sentences, e.g. "The subject property appears to be in good condition with a level of wear and tear to be expected given the age of the improvements." Reflect overall_cond and component notes only; do not invent defects or engineering conclusions.`,
       };
     case "remarks": {
       const isPhil = type.toLowerCase().includes("phil");
@@ -352,7 +367,7 @@ Requirements:
         );
         const groundBits = [pool, land, fence].filter(Boolean).join("\n");
         return {
-          system: BASE_RULES + brevityHint(type),
+          system: BASE_RULES + styleGuide(type),
           prompt: `Write section 13 Remarks for a ${type} (Phil / Peterson) valuation report.
 
 You MUST produce paragraphs in this exact order (do not reorder, omit the required fixed lines, or invent facts):
@@ -373,7 +388,7 @@ Write plain professional valuation English. No marketing language. Do not invent
         };
       }
       return {
-        system: BASE_RULES + brevityHint(type),
+        system: BASE_RULES + styleGuide(type),
         prompt: `Write the Remarks paragraph (report section 13) for a ${type} valuation report.
 
 Inspection data:

@@ -83,10 +83,25 @@ export function buildSaleNarrativePrompt(
     values["prop_assignment"] != null ? String(values["prop_assignment"]) : "",
   );
   const compact = reportType.saleNarrativeStyle === "compact";
+  const murrayStamp =
+    reportType.id === "stamp-duty-murray" ||
+    (typeof values["prop_assignment"] === "string" &&
+      /stamp\s*duty/i.test(values["prop_assignment"]) &&
+      /murray/i.test(values["prop_assignment"]));
 
-  // CGT - Phil / detailed: fuller comparison matching Peterson CGT sample comments.
-  // Stamp Duty - Phil only uses the ultra-compact note style.
-  const system = compact
+  // Stamp Duty – Phil: ultra-compact. Stamp Duty – Murray: moderate sample style.
+  // CGT / detailed: fuller comparison.
+  const system = murrayStamp
+    ? `You are writing sales evidence comments for a Stamp Duty – Murray valuation report (QLD), matching Murray Peterson sample tone.
+Write ONE professional note of 2–4 short sentences comparing this comparable to the subject.
+Rules:
+- Lead with physical facts (beds/baths/cars, land, living area, condition/age if known).
+- Combine source notes with VALUER RELATIVITY MARKS for similar / superior / inferior feature language.
+- Mention material differences only; do not list every "similar" feature.
+- Use ONLY provided facts and marks. Do not invent features, prices, or adjustments.
+- Do NOT invent overall superior/inferior — that phrase is appended outside the model.
+- Plain Australian valuation English. No bullet points or adjustment schedules.`
+    : compact
     ? `You are writing sales evidence notes for an Australian residential valuation report (QLD), matching Peterson / Phil sample style (Stamp Duty - Phil only).
 Write ONE compact note — ideally 1–2 short sentences, maximum about 45 words.
 Style examples (match this brevity):
@@ -111,7 +126,9 @@ Style (match this tone and density):
 - No bullet points, headings, or dollar adjustment schedules unless a net figure is clearly useful in one short clause.
 - Tone: formal Australian valuation English.`;
 
-  const writeInstruction = compact
+  const writeInstruction = murrayStamp
+    ? "Write the Murray Stamp Duty sales-evidence note now (2–4 short sentences). Do not end with overall superior/inferior — that is applied separately."
+    : compact
     ? "Write the compact sales-evidence note now (1–2 short sentences, ~45 words max). Do not end with overall superior/inferior — that is applied separately."
     : "Write the CGT-style sales-evidence paragraph now (3–6 sentences). Do not end with overall superior/inferior — that is applied separately.";
 

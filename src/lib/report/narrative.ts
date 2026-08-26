@@ -41,6 +41,53 @@ function buildBrief(values: InspectionValues): string {
   const area = hasValue(values["prop_sitearea"])
     ? `${v(values, "prop_sitearea")}${v(values, "prop_areaunit") === "m2" ? "m²" : ` ${v(values, "prop_areaunit")}`}`
     : "";
+  const shape = v(values, "prop_shape");
+  const lotPos = v(values, "prop_lot_position");
+  const orient = v(values, "prop_orientation");
+  const topo = v(values, "topo");
+  const pool = v(values, "pool");
+  const land = v(values, "land");
+  const fence = v(values, "fence");
+  const year = v(values, "imp_yearbuilt");
+
+  // Murray Stamp Duty sample: multi-paragraph DESCRIPTION on the summary page
+  if (isMurrayAssignment(values)) {
+    const materials = [walls, roof && `${roof}`].filter(Boolean).join("/");
+    const para1 = sentence([
+      "The subject property improvements consist of a",
+      level,
+      materials,
+      "residence",
+      beds && `with ${beds} bedrooms`,
+      baths && `and ${baths} bathrooms`,
+    ]);
+    const para1b = year
+      ? sentence([`The improvements were constructed circa ${year}`])
+      : "";
+    const para1c = pool
+      ? sentence([`There is ${pool.toLowerCase().startsWith("a") || pool.toLowerCase().startsWith("an") ? pool.toLowerCase() : `a ${pool.toLowerCase()}`}`])
+      : "";
+    const ancillaryBits = [land, fence].filter(Boolean);
+    const para2 = ancillaryBits.length
+      ? sentence(["Ancillary improvements include", ancillaryBits.join("; ").toLowerCase()])
+      : "";
+    const shapePhrase = shape
+      ? shape.toLowerCase().includes("shaped")
+        ? shape.toLowerCase()
+        : `${shape.toLowerCase()} shaped`
+      : "";
+    const para3 = sentence([
+      "The subject allotment is",
+      area && `a ${area}`,
+      shapePhrase,
+      lotPos && lotPos.toLowerCase(),
+      orient && `which faces ${orient.toLowerCase()}`,
+    ]);
+    const para3b = topo
+      ? sentence(["Topography is described as", topo.toLowerCase()])
+      : "";
+    return [para1, para1b, para1c, para2, para3, para3b].filter(Boolean).join(" ");
+  }
 
   const descriptor = [level, walls, roof && `and ${roof}`, "dwelling"]
     .filter(Boolean)
@@ -55,8 +102,8 @@ function buildBrief(values: InspectionValues): string {
       area && `situated on a ${area} allotment`,
     ]),
     sentence([
-      hasValue(values["imp_yearbuilt"]) &&
-        `The improvements are understood to have been constructed circa ${v(values, "imp_yearbuilt")}`,
+      year &&
+        `The improvements are understood to have been constructed circa ${year}`,
       hasValue(values["overall_cond"]) &&
         `and present in ${v(values, "overall_cond").toLowerCase()} order having regard to their age`,
     ]),
@@ -150,6 +197,11 @@ function philRemarksOpening(values: InspectionValues): string {
 function isPhilAssignment(values: InspectionValues): boolean {
   const a = v(values, "prop_assignment").toLowerCase();
   return a.includes("phil");
+}
+
+function isMurrayAssignment(values: InspectionValues): boolean {
+  const a = v(values, "prop_assignment").toLowerCase();
+  return a.includes("murray");
 }
 
 /** Ground improvements sentence from pool / landscaping / fencing checkboxes. */
@@ -347,19 +399,31 @@ function buildSitePhysical(values: InspectionValues): string {
   if (shape) openBits.push(shape.toLowerCase().includes("shaped") ? shape.toLowerCase() : `${shape.toLowerCase()} shaped`);
   if (lotPos) openBits.push(lotPos.toLowerCase());
   if (openBits.length || siteArea) {
-    parts.push(
-      sentence([
-        "The subject allotment is",
-        openBits.length ? openBits.join(", ") : false,
-        siteArea && `with a site area of approximately ${siteArea}`,
-      ]),
-    );
+    // Murray sample: "The subject allotment is a 4.9ha slightly irregular shaped inside allotment which faces north."
+    if (isMurrayAssignment(values)) {
+      parts.push(
+        sentence([
+          "The subject allotment is",
+          siteArea && `a ${siteArea}`,
+          openBits.length ? openBits.join(" ") : false,
+          orient && `which faces ${orient.toLowerCase()}`,
+        ]),
+      );
+    } else {
+      parts.push(
+        sentence([
+          "The subject allotment is",
+          openBits.length ? openBits.join(", ") : false,
+          siteArea && `with a site area of approximately ${siteArea}`,
+        ]),
+      );
+    }
   }
 
   if (dims) {
     parts.push(sentence(["Dimensions are recorded as", dims]));
   }
-  if (orient) {
+  if (orient && !isMurrayAssignment(values)) {
     parts.push(sentence(["The allotment has a", orient.toLowerCase(), "orientation"]));
   }
   if (topo) {
@@ -394,6 +458,10 @@ function buildServicesAmenities(values: InspectionValues): string {
 
   if (!listed.length) return "";
 
+  // Murray sample: "Tank water, electricity, septic sewerage and telephone are available."
+  if (isMurrayAssignment(values)) {
+    return sentence([joinProseList(listed), "are available"]);
+  }
   return sentence([
     "The property is understood to be connected to",
     joinProseList(listed),
@@ -432,11 +500,17 @@ function buildConditionImprovements(values: InspectionValues): string {
   const parts: string[] = [];
   if (overall) {
     parts.push(
-      sentence([
-        "The improvements are assessed to be in",
-        overall.toLowerCase(),
-        "condition overall based on a visual inspection",
-      ]),
+      isMurrayAssignment(values)
+        ? sentence([
+            "The subject property appears to be in",
+            overall.toLowerCase(),
+            "condition with a level of wear and tear to be expected given the age of the improvements",
+          ])
+        : sentence([
+            "The improvements are assessed to be in",
+            overall.toLowerCase(),
+            "condition overall based on a visual inspection",
+          ]),
     );
   } else if (byRating.size) {
     parts.push(
