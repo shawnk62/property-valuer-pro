@@ -125,14 +125,23 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     }
     autoStarted.current = true;
     if (isAiConfigured()) {
-      void generateWithAi(keys);
+      // Only fill empty blocks on load — never overwrite saved narrative
+      void generateWithAi(keys, false);
     } else {
+      // Phil remarks still need sales count / value from the draft
+      if (keys.includes("remarks") && isPhilAssignment(draft.values)) {
+        const text = buildPhilRemarks(draft.values, narrativeOpts()).trim();
+        if (text) {
+          setNarrative({ remarks: text });
+          keys = keys.filter((k) => k !== "remarks");
+        }
+      }
       const patch = applyTemplateToEmptyKeys(keys);
-      if (Object.keys(patch).length > 0) {
+      if (Object.keys(patch).length > 0 || keys.includes("remarks") === false) {
         setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
         setSource("template");
         setLastStatus(
-          `Filled empty blocks from inspection data (AI not configured): ${Object.keys(patch).join(", ")}.`,
+          `Filled empty blocks from inspection data (AI not configured).`,
         );
       }
     }
@@ -153,19 +162,56 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     }
   }
 
-  async function generateWithAi(keys: (keyof ReportNarrative)[] = BLOCKS.map((b) => b.key)) {
+  /**
+   * @param keys blocks to generate
+   * @param overwrite when true (default for single-block "AI this block"), replace
+   *   existing text for those keys. Auto-fill on load uses overwrite false.
+   */
+  async function generateWithAi(
+    keys: (keyof ReportNarrative)[] = BLOCKS.map((b) => b.key),
+    overwrite = keys.length === 1,
+  ) {
     const settings = loadAiSettings();
+    const opts = narrativeOpts();
+
+    // Phil remarks are structural boilerplate + inspection data — always local.
+    // Also used when AI is not configured so §13 still fills.
+    function fillPhilRemarksIfNeeded(
+      targetKeys: (keyof ReportNarrative)[],
+    ): Partial<ReportNarrative> {
+      if (!targetKeys.includes("remarks")) return {};
+      if (!isPhilAssignment(draft.values)) return {};
+      const text = buildPhilRemarks(draft.values, opts).trim();
+      return text ? { remarks: text } : {};
+    }
+
     if (!isAiConfigured(settings)) {
-      // Fall back to template for empty keys only so 6.2 (and others) still populate.
-      const emptyKeys = keys.filter((k) => !String(narrativeRef.current[k] ?? "").trim());
-      const patch = emptyKeys.length ? applyTemplateToEmptyKeys(emptyKeys) : {};
-      if (Object.keys(patch).length > 0) {
+      // Prefer Phil remarks builder; template for other empty keys
+      const philPatch = fillPhilRemarksIfNeeded(keys);
+      const emptyKeys = keys.filter((k) => {
+        if (k === "remarks" && philPatch.remarks) return false;
+        if (overwrite) return true;
+        return !String(narrativeRef.current[k] ?? "").trim();
+      });
+      const patch: Partial<ReportNarrative> = {
+        ...applyTemplateToEmptyKeys(emptyKeys.filter((k) => k !== "remarks" || !philPatch.remarks)),
+        ...(philPatch.remarks &&
+        (overwrite || !String(narrativeRef.current.remarks ?? "").trim())
+          ? philPatch
+          : {}),
+      };
+      // applyTemplateToEmptyKeys already setNarrative for empty keys; ensure phil overwrite
+      if (philPatch.remarks && (overwrite || !String(narrativeRef.current.remarks ?? "").trim())) {
+        setNarrative(philPatch);
+      }
+      if (Object.keys(patch).length > 0 || philPatch.remarks) {
         setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
         setSource("template");
-        const msg =
-          "AI is not configured — filled empty text from inspection data. Open Settings, add an API key, Save, then Test connection for true AI wording.";
+        const msg = philPatch.remarks
+          ? "Filled Remarks from Phil structure (and any empty blocks from inspection data)."
+          : "AI is not configured — filled empty text from inspection data.";
         setLastStatus(msg);
-        toast.message("Filled from inspection data", { description: msg, duration: 10000 });
+        toast.message("Filled from inspection data", { description: msg, duration: 8000 });
       } else {
         const msg =
           "AI is not configured. Open Settings, choose xAI (Grok) or OpenAI, add your API key, Save, then Test connection.";
@@ -176,7 +222,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     }
 
     setBusy(keys.length === 1 ? keys[0]! : "ai");
-    setLastStatus(`Calling ${settings.provider} / ${settings.model}…`);
+    setLastStatus(`Generating…`);
     const next: Partial<ReportNarrative> = {};
     const errors: string[] = [];
     const values = serializableValues(draft.values);
@@ -185,10 +231,9 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       for (const key of keys) {
         try {
           setLastStatus(`Generating “${key}”…`);
-          // Phil §13 Remarks is a fixed practice structure — build deterministically
-          // (sales count + assessed value + brief) rather than free-form AI.
+          // Phil §13 Remarks: fixed practice structure (local, not free-form AI)
           if (key === "remarks" && isPhilAssignment(draft.values)) {
-            const text = buildPhilRemarks(draft.values, narrativeOpts());
+            const text = buildPhilRemarks(draft.values, opts);
             if (text.trim()) next[key] = text.trim();
             else errors.push(`${key}: empty remarks`);
             continue;
@@ -206,7 +251,6 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             },
           });
 
-          // Support both { text } and unexpected shapes from the RPC layer
           const text =
             typeof result === "string"
               ? result
@@ -231,25 +275,32 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         }
       }
 
-      // Never overwrite blocks the user (or a prior save) already filled while AI was running
       const safe: Partial<ReportNarrative> = {};
       const current = narrativeRef.current;
       for (const [k, v] of Object.entries(next) as [keyof ReportNarrative, string][]) {
-        if (!String(current[k] ?? "").trim() && v.trim()) safe[k] = v;
+        if (!v.trim()) continue;
+        // Single-block "AI this block" overwrites; bulk/auto only fills empty
+        if (overwrite || !String(current[k] ?? "").trim()) {
+          safe[k] = v;
+        }
       }
 
       if (Object.keys(safe).length > 0) {
         setNarrative(safe);
         setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
-        setSource("ai");
+        setSource(
+          safe.remarks && isPhilAssignment(draft.values) && keys.includes("remarks")
+            ? "template"
+            : "ai",
+        );
         const preview = Object.entries(safe)
           .map(([k, v]) => `${k}: ${v.slice(0, 60)}…`)
           .join(" | ");
-        setLastStatus(`AI updated: ${Object.keys(safe).join(", ")}. ${preview}`);
+        setLastStatus(`Updated: ${Object.keys(safe).join(", ")}. ${preview}`);
       } else {
         setLastStatus(
           Object.keys(next).length && !Object.keys(safe).length
-            ? "Saved narrative kept — AI did not overwrite existing text."
+            ? "Saved narrative kept — existing text was not overwritten. Use “AI this block” on an empty field or clear the block first."
             : `No text returned. ${errors.join(" · ")}`,
         );
       }
@@ -257,17 +308,17 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       if (errors.length && Object.keys(safe).length) {
         toast.message("Some blocks failed", { description: errors.join(" · ") });
       } else if (errors.length) {
-        toast.error("AI generation failed", { description: errors.join(" · ") });
-      } else {
+        toast.error("Generation failed", { description: errors.join(" · ") });
+      } else if (Object.keys(safe).length) {
         toast.success(
-          keys.length === 1 ? `Generated “${keys[0]}” with AI` : "Narrative generated with AI",
+          keys.length === 1 ? `Generated “${keys[0]}”` : "Narrative generated",
         );
       }
     } catch (err) {
       console.error("[narrative AI]", err);
       const message = err instanceof Error ? err.message : String(err);
       setLastStatus(`Failed: ${message}`);
-      toast.error("AI generation failed", { description: message });
+      toast.error("Generation failed", { description: message });
     } finally {
       setBusy(null);
     }
