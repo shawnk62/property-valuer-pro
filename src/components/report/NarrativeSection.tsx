@@ -12,44 +12,68 @@ import {
 } from "@/lib/report/narrative";
 import type { ReportNarrative } from "@/lib/report/types";
 
-const BLOCKS: { key: keyof ReportNarrative; label: string; hint: string }[] = [
-  {
-    key: "brief",
-    label: "Brief description (valuation summary)",
-    hint: "Appears on the summary page and sets the tone of the report.",
-  },
-  {
-    key: "location",
-    label: "Description of neighbourhood (5.1)",
-    hint: "Locality and neighbourhood character for section 5.1. Generated from neighbourhood inspection fields.",
-  },
-  {
-    key: "sitePhysical",
-    label: "Physical description of the allotment (6.1)",
-    hint: "Section 6.1 — allotment shape, lot position, topography, dimensions and related site fields. Editable; not overwritten once saved.",
-  },
-  {
-    key: "servicesAmenities",
-    label: "Services / amenities (6.2)",
-    hint: "Short paragraph for section 6.2 from site services fields. Saved or edited text is not overwritten by AI.",
-  },
-  {
-    key: "improvements",
-    label: "Improvements — general description",
-    hint: "Section 7.1 of the report.",
-  },
-  {
-    key: "accommodation",
-    label: "Accommodation narrative",
-    hint: "Section 8 — accommodation, car accommodation and general.",
-  },
-  {
-    key: "conditionImprovements",
-    label: "Condition of improvements (9.2)",
-    hint: "Built from component condition dropdowns and section notes. Saved or edited text is not overwritten by AI.",
-  },
-  { key: "remarks", label: "Remarks", hint: "Section 13. Murray: structural/pest → brief → sales commentary (editable) → assessed value → auction close. Phil: fixed Phil sequence." },
-];
+function narrativeBlocks(murray: boolean): {
+  key: keyof ReportNarrative;
+  label: string;
+  hint: string;
+}[] {
+  return [
+    {
+      key: "brief",
+      label: "Brief description (valuation summary)",
+      hint: "Appears on the summary page DESCRIPTION and sets the tone of the report.",
+    },
+    {
+      key: "location",
+      label: "Description of neighbourhood (5.1)",
+      hint: "Section 5.1 — locality and neighbourhood character.",
+    },
+    {
+      key: "sitePhysical",
+      label: "Physical description of the allotment (6.1)",
+      hint: "Section 6.1 — allotment shape, lot position, topography, dimensions and related site fields.",
+    },
+    {
+      key: "servicesAmenities",
+      label: "Services / amenities (6.2)",
+      hint: "Section 6.2 — site services. Saved or edited text is not overwritten by AI.",
+    },
+    {
+      key: "improvements",
+      label: murray
+        ? "Improvements — general description (7.1)"
+        : "Improvements — general description (7.1)",
+      hint: murray
+        ? "Section 7.1 General Description under Improvements."
+        : "Section 7.1 of the report.",
+    },
+    {
+      key: "accommodation",
+      label: murray
+        ? "Accommodation details (7.3)"
+        : "Accommodation narrative (8)",
+      hint: murray
+        ? "Section 7.3 Accommodation Details under Improvements."
+        : "Section 8 — accommodation, car accommodation and general.",
+    },
+    {
+      key: "conditionImprovements",
+      label: murray
+        ? "Condition of improvements (7.5)"
+        : "Condition of improvements (9.2)",
+      hint: murray
+        ? "Section 7.5 Condition of Improvements under Improvements."
+        : "Section 9.2 — component conditions and notes.",
+    },
+    {
+      key: "remarks",
+      label: murray ? "Remarks (10)" : "Remarks (13)",
+      hint: murray
+        ? "Section 10 Remarks — structural/pest → brief → sales commentary → value → auction close."
+        : "Section 13 Remarks — Phil fixed sequence.",
+    },
+  ];
+}
 
 /** Make inspection values safe for the server function (JSON-serializable, no proxies). */
 function serializableValues(
@@ -73,6 +97,8 @@ function serializableValues(
 
 export function NarrativeSection({ controller }: { controller: ReportDraftController }) {
   const { draft, setNarrative, loaded } = controller;
+  const murray = /murray/i.test(String(draft.values["prop_assignment"] ?? ""));
+  const BLOCKS = narrativeBlocks(murray);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [source, setSource] = useState<"template" | "ai" | null>(null);
   const [busy, setBusy] = useState<"template" | "ai" | keyof ReportNarrative | null>(null);
