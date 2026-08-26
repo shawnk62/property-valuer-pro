@@ -332,7 +332,7 @@ Inspection data:
 ${sectionAnswers(values, ["1", "2"])}
 
 Murray sample pattern (use when type includes Murray):
-"The subject allotment is a [area] [shape] [inside/corner] allotment which faces [orientation]. [Topography sentence]. [Boundary / flood / creek only if recorded]."
+"The subject allotment is [area], [shape] and [inside/corner], facing [orientation]. [Topography sentence]. [Boundary / flood / creek only if recorded]."
 Typically 2–4 short sentences. Use "allotment" not "lot". Include allotment shape, lot position, topography, dimensions/orientation and site area when recorded. Do not invent facts.`,
       };
         case "servicesAmenities":
