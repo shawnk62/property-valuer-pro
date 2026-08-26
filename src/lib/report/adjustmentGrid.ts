@@ -115,7 +115,7 @@ export const ADJUSTMENT_FEATURES: AdjustmentFeature[] = [
   { id: "dateOfSale", label: "Date of Sale/Time" },
   { id: "location", label: "Location" },
   { id: "leasehold", label: "Leasehold/Fee Simple" },
-  { id: "site", label: "Site", subjectKeys: ["prop_sitearea", "prop_areaunit", "prop_shape"] },
+  { id: "site", label: "Site", subjectKeys: ["prop_sitearea", "prop_areaunit", "prop_shape", "prop_lot_position"] },
   { id: "view", label: "View" },
   { id: "design", label: "Design (Style)", subjectKeys: ["imp_design", "ext"] },
   { id: "quality", label: "Quality of Construction", subjectKeys: ["imp_quality"] },
@@ -279,12 +279,14 @@ export function subjectFeatureDisplay(
     const area = values["prop_sitearea"];
     const unit = values["prop_areaunit"];
     const shape = values["prop_shape"];
+    const lotPos = values["prop_lot_position"];
     const unitLabel = unit === "m2" || unit === "m²" ? "m²" : unit ? String(unit) : "";
     const parts = [
       area !== undefined && area !== null && String(area).trim()
         ? `${area}${unitLabel ? ` ${unitLabel}` : ""}`
         : null,
       shape ? String(shape) : null,
+      lotPos ? String(lotPos) : null,
     ].filter(Boolean);
     return parts.length ? parts.join(" · ") : "—";
   }

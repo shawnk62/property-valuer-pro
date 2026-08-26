@@ -39,6 +39,7 @@ const SITE_FIELDS = [
   "prop_areaunit",
   "prop_dimensions",
   "prop_shape",
+  "prop_lot_position",
   "prop_zoning",
   "prop_zoning_desc",
   "prop_zoning_comp",

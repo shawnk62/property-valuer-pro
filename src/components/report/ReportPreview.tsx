@@ -127,6 +127,7 @@ const TOC_ENTRIES: TocEntry[] = [
       "prop_areaunit",
       "prop_dimensions",
       "prop_shape",
+      "prop_lot_position",
       "topo",
       "land",
       "va",
@@ -1018,6 +1019,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               <Para>
                 {[
                   get(v, "prop_shape"),
+                  get(v, "prop_lot_position"),
                   get(v, "topo"),
                   get(v, "prop_dimensions"),
                   get(v, "prop_orientation") && `Orientation ${get(v, "prop_orientation")}`,
@@ -1108,7 +1110,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           <>
             <Facts
               values={v}
-              fields={["prop_dimensions", "prop_orientation", "prop_shape", "topo", "land", "va", "fence", "exc", "prop_view"]}
+              fields={["prop_dimensions", "prop_orientation", "prop_shape", "prop_lot_position", "topo", "land", "va", "fence", "exc", "prop_view"]}
               extra={siteArea ? [{ label: labelFor("prop_sitearea"), value: siteArea }] : []}
             />
             <Sub title="Services">

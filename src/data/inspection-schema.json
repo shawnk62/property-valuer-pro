@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "35",
+  "version": "36",
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -237,7 +237,18 @@
             "Rectangular",
             "Trapezoidal",
             "Triangular",
-            "Irregular"
+            "Irregular",
+            "Hatchet shaped",
+            "Fan shaped"
+          ]
+        },
+        {
+          "name": "prop_lot_position",
+          "label": "Lot position",
+          "type": "select",
+          "options": [
+            "Inside allotment",
+            "Corner allotment"
           ]
         },
         {
