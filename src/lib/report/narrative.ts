@@ -223,7 +223,7 @@ function buildPhilRemarks(
   ].filter(Boolean);
 
   return [
-    PHIL_REMARKS_OPENING,
+    philRemarksOpening(values),
     PHIL_STRUCTURAL,
     brief,
     ground,
