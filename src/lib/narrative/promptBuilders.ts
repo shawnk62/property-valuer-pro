@@ -212,6 +212,21 @@ Paragraphing (all report types): use professional report-writing paragraph break
 Follow any report-type style guide appended below for length and phrasing.
 `.trim();
 
+
+/** How to describe improvements in any narrative block, any report type. */
+const IMPROVEMENTS_PROSE_RULES = `
+Improvements prose rules (all report types):
+- One idea per paragraph. Short sentences. New paragraph when the topic changes.
+- Paragraph 1 — dwelling only: set/level (lowset/highset), style, wall materials, roof coverings. Do not attach foundations, internals, services, fencing or condition to this sentence.
+- Paragraph 2 — structure: foundations and floor structure only. Never write "roof coverings on [foundations]" (that reads as the roof sitting on the stumps). Prefer "timber stump foundations" not "timber stumps foundations".
+- Internals (floors, linings, ceilings, storage, lighting, ventilation) in their own paragraph — not glued onto the construction sentence.
+- Ground improvements (fencing, landscaping, pool, sheds) in their own paragraph. Do not put fencing in the dwelling sentence.
+- Condition in its own sentence/paragraph, or omit it here if a separate condition section exists. Never tack ", in good condition," into a feature list.
+- Services belong in the services block, not inside the improvements sentence.
+- Do not paste dropdown labels as a comma list ("featuring A, B, C, D, E, in good condition, with F").
+- Avoid form-speak where a plain phrase exists (e.g. "mixed natural and artificial lighting" only if that is what was recorded; otherwise name the recorded item once).
+`.trim();
+
 export function buildBlockPrompt(
   blockKey: string,
   values: InspectionValues,
@@ -305,7 +320,7 @@ Do not invent facts.`,
       };
         case "brief":
       return {
-        system: BASE_RULES + styleGuide(type),
+        system: BASE_RULES + styleGuide(type) + "\n\n" + IMPROVEMENTS_PROSE_RULES,
         prompt: `Write the DESCRIPTION / brief for the valuation summary page of a ${type} report.
 
 Inspection data:
@@ -322,7 +337,9 @@ House / rural Stamp Duty – Murray (Bassett Road): up to 3 paragraphs (improvem
 Unit / strata Family Law – Murray (Woodcliffe Crescent): unit in complex; building construction; parent allotment.
 
 For Phil Stamp Duty: keep wording concise; still use a new paragraph when the topic changes (e.g. dwelling then allotment).
-Use "allotment" / "parent allotment" for the site. Do not invent facts.`,
+Use "allotment" / "parent allotment" for the site.
+Do not stack construction, internals, fencing, services and condition into one sentence.
+Do not invent facts.`,
       };
         case "sitePhysical":
       return {
@@ -350,18 +367,25 @@ Do not invent services.`,
       };
         case "improvements":
       return {
-        system: BASE_RULES + styleGuide(type),
-        prompt: `Write the general improvements description for a ${type} valuation report.
+        system: BASE_RULES + styleGuide(type) + "\n\n" + IMPROVEMENTS_PROSE_RULES,
+        prompt: `Write the general improvements description (section 7.1) for a ${type} valuation report.
 
 Inspection data:
 ${sectionAnswers(values, ["3", "4", "5"])}
 
-Murray sample density: factual sentences covering set/level, wall/roof materials, bedroom/bathroom counts, age if recorded, secondary accommodation or pool if recorded. Then ancillary ground improvements if recorded (sheds, tanks, fencing, paddocks, etc.). Prefer "The subject property improvements consist of…".
+Required structure (all types):
+1. Dwelling construction only (set/style, walls, roof). Separate sentence for age/beds/baths if recorded.
+2. Foundations / floor structure as their own sentence. Do not attach roof to foundations.
+3. Internal finishes as their own paragraph if recorded.
+4. Ancillary / ground improvements as their own paragraph if recorded.
+5. Do not include services or a tacked-on condition clause.
+
+Prefer openings such as "The improvements comprise…" or "The subject property improvements consist of…".
 Do not invent facts.`,
       };
         case "accommodation":
       return {
-        system: BASE_RULES + styleGuide(type),
+        system: BASE_RULES + styleGuide(type) + "\n\n" + IMPROVEMENTS_PROSE_RULES,
         prompt: `Write the accommodation narrative for a ${type} valuation report.
 
 Inspection data:

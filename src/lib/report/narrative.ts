@@ -137,59 +137,93 @@ function buildBrief(values: InspectionValues): string {
       descriptor.trim(),
       beds && `containing ${beds} bedrooms`,
       baths && `and ${baths} bathrooms`,
-      area && `situated on a ${area} allotment`,
     ]),
-    sentence([
-      year &&
-        `The improvements are understood to have been constructed circa ${year}`,
-      hasValue(values["overall_cond"]) &&
-        `and present in ${v(values, "overall_cond").toLowerCase()} order having regard to their age`,
-    ]),
-    sentence([
-      hasValue(values["prop_zoning"]) &&
-        `The land is zoned ${v(values, "prop_zoning")} under the planning scheme administered by ${v(values, "prop_lga") || "the local authority"}`,
-    ]),
+    year
+      ? sentence([
+          `The improvements are understood to have been constructed circa ${year}`,
+        ])
+      : "",
+    area
+      ? sentence([`The subject allotment has an area of approximately ${area}`])
+      : "",
+    hasValue(values["prop_zoning"])
+      ? sentence([
+          `The land is zoned ${v(values, "prop_zoning")} under the planning scheme administered by ${v(values, "prop_lga") || "the local authority"}`,
+        ])
+      : "",
   ]
     .filter(Boolean)
     .join("\n\n");
 }
 
+function polishFoundations(raw: string): string {
+  const t = raw.trim();
+  if (!t) return "";
+  const lower = t.toLowerCase();
+  // Avoid "timber stumps foundations"
+  let out = lower.replace(/\bstumps foundations\b/g, "stump foundations");
+  if (!/foundation/.test(out)) out = `${out} foundations`;
+  return out;
+}
+
 function buildImprovements(values: InspectionValues): string {
-  return [
-    sentence([
-      "The improvements comprise a",
-      setLevel(values),
-      v(values, "imp_design").toLowerCase(),
-      "style dwelling of",
-      v(values, "ext").toLowerCase() || "conventional",
-      "construction",
-      hasValue(values["rc"]) && `beneath a ${v(values, "rc").toLowerCase()} roof`,
-    ]),
-    sentence([
-      hasValue(values["foundations"]) &&
-        `Foundations are ${v(values, "foundations").toLowerCase()}`,
-      hasValue(values["floor_structure"]) &&
-        `with ${v(values, "floor_structure").toLowerCase()} floor structure`,
-    ]),
-    sentence([
-      hasValue(values["il"]) && `Internal linings are ${v(values, "il").toLowerCase()}`,
-      hasValue(values["ceil"]) && `and ceilings are ${v(values, "ceil").toLowerCase()}`,
-    ]),
-    sentence([
-      hasValue(values["imp_gla"]) &&
-        `The dwelling provides an approximate living area of ${v(values, "imp_gla")}m²`,
-      hasValue(values["area_garage"]) &&
-        `together with a garage of approximately ${v(values, "area_garage")}m²`,
-      hasValue(values["area_covered_rear_patio"]) &&
-        `and a covered rear patio of approximately ${v(values, "area_covered_rear_patio")}m²`,
-    ]),
-    sentence([
-      hasValue(values["imp_quality"]) &&
-        `Overall quality of construction is assessed as ${v(values, "imp_quality").toLowerCase()}`,
-      hasValue(values["overall_cond"]) &&
-        `and the overall condition of the improvements is assessed as ${v(values, "overall_cond").toLowerCase()}`,
-    ]),
-  ]
+  const design = v(values, "imp_design").toLowerCase();
+  const walls = v(values, "ext").toLowerCase();
+  const roof = v(values, "rc").toLowerCase();
+  const year = v(values, "imp_yearbuilt");
+  const beds = v(values, "imp_beds");
+  const baths = v(values, "imp_baths");
+
+  const dwelling = sentence([
+    "The improvements comprise a",
+    setLevel(values),
+    design && design !== "other" ? `${design} style` : false,
+    "dwelling",
+    walls && `of ${walls} construction`,
+    roof && `with ${roof} roof coverings`,
+  ]);
+
+  const counts = sentence([
+    beds && `${beds} bedrooms`,
+    baths && `and ${baths} bathrooms`,
+    year && `constructed circa ${year}`,
+  ]);
+
+  const structure = sentence([
+    hasValue(values["foundations"]) &&
+      `Foundations are ${polishFoundations(v(values, "foundations"))}`,
+    hasValue(values["floor_structure"]) &&
+      `Floor structure is ${v(values, "floor_structure").toLowerCase()}`,
+  ]);
+
+  const internals = sentence([
+    hasValue(values["flr"]) && `Floor coverings comprise ${v(values, "flr").toLowerCase()}`,
+    hasValue(values["il"]) && `internal linings are ${v(values, "il").toLowerCase()}`,
+    hasValue(values["ceil"]) && `and ceilings are ${v(values, "ceil").toLowerCase()}`,
+  ]);
+
+  const areas = sentence([
+    hasValue(values["imp_gla"]) &&
+      `The dwelling provides an approximate living area of ${v(values, "imp_gla")}m²`,
+    hasValue(values["area_garage"]) &&
+      `together with a garage of approximately ${v(values, "area_garage")}m²`,
+    hasValue(values["area_covered_rear_patio"]) &&
+      `and a covered rear patio of approximately ${v(values, "area_covered_rear_patio")}m²`,
+  ]);
+
+  const ground = sentence([
+    hasValue(values["fence"]) && `Fencing comprises ${v(values, "fence").toLowerCase()}`,
+    hasValue(values["land"]) && `Landscaping includes ${v(values, "land").toLowerCase()}`,
+    hasValue(values["pool"]) && `Pool: ${v(values, "pool").toLowerCase()}`,
+    hasValue(values["anc"]) && `Ancillary improvements include ${v(values, "anc").toLowerCase()}`,
+  ]);
+
+  const quality = sentence([
+    hasValue(values["imp_quality"]) &&
+      `Overall quality of construction is assessed as ${v(values, "imp_quality").toLowerCase()}`,
+  ]);
+
+  return [dwelling, counts, structure, internals, areas, ground, quality]
     .filter(Boolean)
     .join("\n\n");
 }
@@ -216,7 +250,7 @@ function buildAccommodation(values: InspectionValues): string {
     sentence([v(values, "imp_add_features")]),
   ]
     .filter(Boolean)
-    .join(" ");
+    .join("\n\n");
 }
 
 const PHIL_STRUCTURAL =
