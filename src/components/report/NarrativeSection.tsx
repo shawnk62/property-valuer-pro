@@ -124,20 +124,17 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       return;
     }
     autoStarted.current = true;
+    // Remarks always from local builder when empty
+    if (keys.includes("remarks")) {
+      generateRemarksNow(false);
+      keys = keys.filter((k) => k !== "remarks");
+    }
+    if (keys.length === 0) return;
     if (isAiConfigured()) {
-      // Only fill empty blocks on load — never overwrite saved narrative
       void generateWithAi(keys, false);
     } else {
-      // Phil remarks still need sales count / value from the draft
-      if (keys.includes("remarks") && isPhilAssignment(draft.values)) {
-        const text = buildPhilRemarks(draft.values, narrativeOpts()).trim();
-        if (text) {
-          setNarrative({ remarks: text });
-          keys = keys.filter((k) => k !== "remarks");
-        }
-      }
       const patch = applyTemplateToEmptyKeys(keys);
-      if (Object.keys(patch).length > 0 || keys.includes("remarks") === false) {
+      if (Object.keys(patch).length > 0) {
         setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
         setSource("template");
         setLastStatus(
@@ -148,15 +145,53 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once after load when empty blocks exist
   }, [loaded, draft.inspectionId]);
 
+  /** Always fills Remarks from local builder (Phil structure or generic template). */
+  function generateRemarksNow(overwrite = true) {
+    const opts = narrativeOpts();
+    try {
+      const full = generateNarrative(draft.values, opts);
+      const text = String(full.remarks ?? "").trim();
+      if (!text) {
+        setLastStatus("Remarks builder returned empty text.");
+        toast.error("Remarks could not be generated");
+        return false;
+      }
+      if (!overwrite && String(narrativeRef.current.remarks ?? "").trim()) {
+        setLastStatus("Remarks already has text — not overwritten.");
+        return false;
+      }
+      setNarrative({ remarks: text });
+      narrativeRef.current = { ...narrativeRef.current, remarks: text };
+      setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
+      setSource("template");
+      setLastStatus(`Remarks (${text.length} chars): ${text.slice(0, 160)}${text.length > 160 ? "…" : ""}`);
+      toast.success("Generated Remarks");
+      return true;
+    } catch (err) {
+      console.error("[remarks]", err);
+      const message = err instanceof Error ? err.message : String(err);
+      setLastStatus(`Remarks failed: ${message}`);
+      toast.error("Remarks failed", { description: message });
+      return false;
+    }
+  }
+
   function generateFromTemplate() {
     setBusy("template");
     setLastStatus(null);
     try {
-      setNarrative(generateNarrative(draft.values, narrativeOpts()));
+      const full = generateNarrative(draft.values, narrativeOpts());
+      setNarrative(full);
+      narrativeRef.current = { ...narrativeRef.current, ...full };
       setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
       setSource("template");
-      setLastStatus("Template applied.");
+      setLastStatus(
+        `Template applied. Remarks length=${String(full.remarks ?? "").length}.`,
+      );
       toast.success("Narrative filled from inspection data");
+    } catch (err) {
+      console.error("[template]", err);
+      toast.error(err instanceof Error ? err.message : "Template failed");
     } finally {
       setBusy(null);
     }
@@ -164,46 +199,26 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
 
   /**
    * @param keys blocks to generate
-   * @param overwrite when true (default for single-block "AI this block"), replace
-   *   existing text for those keys. Auto-fill on load uses overwrite false.
+   * @param overwrite when true (default for single-block), replace existing text
    */
   async function generateWithAi(
     keys: (keyof ReportNarrative)[] = BLOCKS.map((b) => b.key),
     overwrite = keys.length === 1,
   ) {
-    const settings = loadAiSettings();
-    const opts = narrativeOpts();
-    const assignment = String(draft.values["prop_assignment"] ?? "");
-    const phil =
-      isPhilAssignment(draft.values) || /phil/i.test(assignment);
-
-    // Phil §13: build locally and write immediately so the field cannot stay blank
-    // after a success toast.
-    if (keys.includes("remarks") && phil) {
-      try {
-        const text = buildPhilRemarks(draft.values, opts).trim();
-        if (!text) {
-          toast.error("Remarks builder returned empty text");
-          if (keys.length === 1) return;
-        } else if (overwrite || !String(narrativeRef.current.remarks ?? "").trim()) {
-          setNarrative({ remarks: text });
-          narrativeRef.current = { ...narrativeRef.current, remarks: text };
-          setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
-          setSource("template");
-          setLastStatus(`Remarks: ${text.slice(0, 120)}${text.length > 120 ? "…" : ""}`);
-          toast.success("Generated Remarks");
-          if (keys.length === 1) return;
-        }
-      } catch (err) {
-        console.error("[phil remarks]", err);
-        toast.error(
-          err instanceof Error ? err.message : "Failed to build Phil remarks",
-        );
-        if (keys.length === 1) return;
-      }
+    // Remarks never go through the AI RPC — always local structured text
+    if (keys.length === 1 && keys[0] === "remarks") {
+      generateRemarksNow(overwrite);
+      return;
     }
 
-    const remaining = keys.filter((k) => !(k === "remarks" && phil));
+    const settings = loadAiSettings();
+    const opts = narrativeOpts();
+
+    // If bulk includes remarks, fill it first locally
+    if (keys.includes("remarks")) {
+      generateRemarksNow(overwrite);
+    }
+    const remaining = keys.filter((k) => k !== "remarks");
     if (remaining.length === 0) return;
 
     if (!isAiConfigured(settings)) {
@@ -211,7 +226,6 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         (k) => overwrite || !String(narrativeRef.current[k] ?? "").trim(),
       );
       const patch = emptyKeys.length ? applyTemplateToEmptyKeys(emptyKeys) : {};
-      // applyTemplateToEmptyKeys already setNarrative for empty keys
       if (Object.keys(patch).length > 0) {
         setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
         setSource("template");
@@ -219,8 +233,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         toast.message("Filled from inspection data");
       } else {
         toast.error("AI is not configured", {
-          description:
-            "Open Settings, add an API key, Save, then Test connection.",
+          description: "Open Settings, add an API key, Save, then Test connection.",
         });
       }
       return;
@@ -236,10 +249,6 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       for (const key of remaining) {
         try {
           setLastStatus(`Generating “${key}”…`);
-          // Non-Phil remarks (or other blocks) via AI
-          if (key === "remarks") {
-            // Non-Phil: still try local template first as fallback after AI
-          }
           const result = await generateNarrativeBlock({
             data: {
               settings: {
@@ -283,9 +292,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
 
       if (Object.keys(safe).length > 0) {
         setNarrative(safe);
-        for (const [k, v] of Object.entries(safe) as [keyof ReportNarrative, string][]) {
-          narrativeRef.current = { ...narrativeRef.current, [k]: v };
-        }
+        narrativeRef.current = { ...narrativeRef.current, ...safe };
         setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
         setSource("ai");
         setLastStatus(`Updated: ${Object.keys(safe).join(", ")}.`);
@@ -298,9 +305,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         setLastStatus(`No text returned. ${errors.join(" · ")}`);
         toast.error("Generation failed", { description: errors.join(" · ") });
       } else {
-        setLastStatus(
-          "Existing text was kept. Clear the block first or use AI this block to replace.",
-        );
+        setLastStatus("Existing text was kept.");
       }
     } catch (err) {
       console.error("[narrative AI]", err);
@@ -371,7 +376,13 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             <button
               type="button"
               disabled={busy !== null}
-              onClick={() => void generateWithAi([block.key])}
+              onClick={() => {
+                if (block.key === "remarks") {
+                  generateRemarksNow(true);
+                  return;
+                }
+                void generateWithAi([block.key]);
+              }}
               className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-60"
             >
               {busy === block.key ? "Generating…" : "AI this block"}
@@ -379,7 +390,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
           </div>
           <span className="mb-2 block text-sm text-muted-foreground">{block.hint}</span>
           <textarea
-            value={draft.narrative[block.key]}
+            value={String(draft.narrative[block.key] ?? "")}
             onChange={(e) => setNarrative({ [block.key]: e.target.value })}
             rows={7}
             className="w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm leading-relaxed text-foreground outline-none focus:ring-2 focus:ring-ring"
