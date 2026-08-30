@@ -11,6 +11,7 @@ import {
   isPhilAssignment,
 } from "@/lib/report/narrative";
 import type { ReportNarrative } from "@/lib/report/types";
+import { CannedCommentsBar } from "@/components/report/CannedCommentsBar";
 
 function narrativeBlocks(murray: boolean): {
   key: keyof ReportNarrative;
@@ -374,8 +375,8 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             </span>
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Empty sections generate with AI once after the draft loads (Settings required). Saved text is never overwritten on reopen — use Regenerate to replace a block.
-            Edit any block before exporting the report.
+            Empty sections generate with AI once after the draft loads (Settings required). Saved text is never overwritten on reopen — use Regenerate or AI this block to replace a block.
+            Insert canned appends a labelled paragraph; it does not replace the block. Edit any block before exporting the report.
             {generatedAt ? (
               <>
                 {" "}
@@ -417,32 +418,43 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         </div>
       </div>
 
-      {BLOCKS.map((block) => (
-        <label key={block.key} className="block">
+      {BLOCKS.map((block) => {
+        const blockText =
+          block.key === "remarks"
+            ? localRemarks
+            : String(draft.narrative[block.key] ?? "");
+        return (
+        <div key={block.key} className="block">
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
             <span className="text-sm font-medium text-foreground">{block.label}</span>
-            <button
-              type="button"
-              disabled={busy !== null}
-              onClick={() => {
-                if (block.key === "remarks") {
-                  generateRemarksNow(true);
-                  return;
-                }
-                void generateWithAi([block.key]);
-              }}
-              className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-60"
-            >
-              {busy === block.key ? "Generating…" : "AI this block"}
-            </button>
+            <div className="flex flex-wrap items-center justify-end gap-1.5">
+              <CannedCommentsBar
+                section={block.key}
+                currentText={blockText}
+                onApply={(next) => {
+                  if (block.key === "remarks") setLocalRemarks(next);
+                  setNarrative({ [block.key]: next });
+                }}
+              />
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => {
+                  if (block.key === "remarks") {
+                    generateRemarksNow(true);
+                    return;
+                  }
+                  void generateWithAi([block.key]);
+                }}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+              >
+                {busy === block.key ? "Generating…" : "AI this block"}
+              </button>
+            </div>
           </div>
           <span className="mb-2 block text-sm text-muted-foreground">{block.hint}</span>
           <textarea
-            value={
-              block.key === "remarks"
-                ? localRemarks
-                : String(draft.narrative[block.key] ?? "")
-            }
+            value={blockText}
             onChange={(e) => {
               const val = e.target.value;
               if (block.key === "remarks") setLocalRemarks(val);
@@ -451,8 +463,9 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             rows={block.key === "remarks" ? 12 : 7}
             className="w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm leading-relaxed text-foreground outline-none focus:ring-2 focus:ring-ring"
           />
-        </label>
-      ))}
+        </div>
+        );
+      })}
     </div>
   );
 }
