@@ -1681,6 +1681,31 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                             </td>
                           ))}
                         </tr>
+                        <tr className="border-b border-border print:hidden">
+                          <td className="sticky left-0 z-10 bg-card px-2 py-1.5 font-medium">
+                            Working notes
+                          </td>
+                          <td className="px-2 py-1.5 text-xs text-muted-foreground">
+                            In-house only — not in report or AI
+                          </td>
+                          {chunk.map((sale) => (
+                            <td
+                              key={sale.id}
+                              colSpan={2}
+                              className="border-l border-border px-1 py-1"
+                            >
+                              <textarea
+                                rows={3}
+                                value={sale.workingNotes ?? ""}
+                                onChange={(e) =>
+                                  patchSale(sale.id, { workingNotes: e.target.value })
+                                }
+                                placeholder="Private notes for this sale…"
+                                className="w-full resize-y rounded border border-dashed border-input/80 bg-amber-50/40 px-1.5 py-1 text-[0.7rem] outline-none focus:border-input focus:bg-accent/40"
+                              />
+                            </td>
+                          ))}
+                        </tr>
                         <tr className="border-b border-border">
                           <td className="sticky left-0 z-10 bg-card px-2 py-1.5 font-medium">
                             Source notes

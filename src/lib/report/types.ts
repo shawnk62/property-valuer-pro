@@ -104,6 +104,10 @@ export interface ComparableSale {
    */
   narrativeManual?: boolean;
   /**
+   * In-house working notes under the grid column. Not printed, not sent to AI.
+   */
+  workingNotes?: string;
+  /**
    * Front elevation photo (HTTPS preferred for cross-device; data URL local-only).
    */
   photoUrl?: string;
