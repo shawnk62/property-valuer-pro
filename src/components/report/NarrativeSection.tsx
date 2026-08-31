@@ -108,6 +108,10 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   const [localRemarks, setLocalRemarks] = useState(() =>
     String(draft.narrative.remarks ?? ""),
   );
+  /** Last non-empty highlight in each block textarea (survives Save-button blur). */
+  const [selectionByKey, setSelectionByKey] = useState<
+    Partial<Record<keyof ReportNarrative, string>>
+  >({});
   useEffect(() => {
     setLocalRemarks(String(draft.narrative.remarks ?? ""));
   }, [draft.narrative.remarks, draft.inspectionId]);
@@ -431,6 +435,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               <CannedCommentsBar
                 section={block.key}
                 currentText={blockText}
+                selectedText={selectionByKey[block.key]}
                 onApply={(next) => {
                   if (block.key === "remarks") setLocalRemarks(next);
                   setNarrative({ [block.key]: next });
@@ -459,6 +464,20 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               const val = e.target.value;
               if (block.key === "remarks") setLocalRemarks(val);
               setNarrative({ [block.key]: val });
+              const start = e.target.selectionStart ?? 0;
+              const end = e.target.selectionEnd ?? 0;
+              const sel = val.slice(start, end);
+              setSelectionByKey((prev) => ({
+                ...prev,
+                [block.key]: sel.trim() ? sel : "",
+              }));
+            }}
+            onSelect={(e) => {
+              const el = e.currentTarget;
+              const sel = el.value.slice(el.selectionStart ?? 0, el.selectionEnd ?? 0);
+              if (sel.trim()) {
+                setSelectionByKey((prev) => ({ ...prev, [block.key]: sel }));
+              }
             }}
             rows={block.key === "remarks" ? 12 : 7}
             className="w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm leading-relaxed text-foreground outline-none focus:ring-2 focus:ring-ring"

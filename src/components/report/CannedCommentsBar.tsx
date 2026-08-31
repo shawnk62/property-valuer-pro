@@ -14,10 +14,13 @@ import {
 export function CannedCommentsBar({
   section,
   currentText,
+  selectedText,
   onApply,
 }: {
   section: NarrativeSectionKey;
   currentText: string;
+  /** Highlighted text in the block textarea. Preferred source when saving. */
+  selectedText?: string;
   onApply: (nextText: string) => void;
 }) {
   const [open, setOpen] = useState<"insert" | "save" | "manage" | null>(null);
@@ -55,14 +58,21 @@ export function CannedCommentsBar({
     toast.success(`Inserted “${comment.label}”`);
   }
 
+  const snippet = (selectedText ?? "").trim() || currentText.trim();
+  const savingSelection = Boolean((selectedText ?? "").trim());
+
   async function handleSave() {
     setBusy(true);
     try {
-      await saveCannedComment(section, saveLabel, currentText);
+      await saveCannedComment(section, saveLabel, snippet);
       setSaveLabel("");
       setOpen(null);
       await refresh();
-      toast.success("Saved canned comment for this section");
+      toast.success(
+        savingSelection
+          ? "Saved highlighted text as canned comment"
+          : "Saved canned comment for this section",
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save comment");
     } finally {
@@ -151,8 +161,17 @@ export function CannedCommentsBar({
       {open === "save" ? (
         <div className="basis-full rounded-md border border-border bg-card p-2 shadow-sm">
           <p className="mb-1.5 text-xs text-muted-foreground">
-            Saves the current text in this block. Same label groups with existing comments.
+            Highlight the sentences to save, then open this panel. Same label groups
+            with existing comments.
+            {!savingSelection
+              ? " No highlight — the whole block will be saved."
+              : " Saving the highlighted excerpt only."}
           </p>
+          {snippet ? (
+            <p className="mb-2 max-h-20 overflow-y-auto rounded bg-muted/50 px-2 py-1 text-xs leading-snug text-foreground">
+              {preview(snippet)}
+            </p>
+          ) : null}
           <div className="flex flex-wrap items-end gap-2">
             <label className="min-w-[10rem] flex-1 text-xs">
               Label
@@ -166,7 +185,7 @@ export function CannedCommentsBar({
             </label>
             <button
               type="button"
-              disabled={busy || !currentText.trim()}
+              disabled={busy || !snippet}
               onClick={() => void handleSave()}
               className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-60"
             >
