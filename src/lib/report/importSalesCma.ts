@@ -523,6 +523,97 @@ export function parseCmaTextHeuristic(text: string): CmaSaleExtract[] {
   });
 }
 
+function parseNumberToken(raw: string): number | null {
+  const n = Number(String(raw).replace(/,/g, "").trim());
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return n;
+}
+
+function formatSiteM2(n: number): string {
+  const rounded = Math.abs(n - Math.round(n)) < 0.05 ? Math.round(n) : Math.round(n * 10) / 10;
+  return `${rounded}m²`;
+}
+
+/**
+ * Land / floor areas from a Cotality sale card.
+ * Handles 390m2, 4,047m², 0.40ha, labelled Land Size / Floor Area, and the
+ * standard "land then floor" pair on one line.
+ */
+export function parseCmaSiteAreas(block: string): { landArea: string; gla: string } {
+  const text = String(block ?? "")
+    .replace(/\u00ad/g, "")
+    .replace(/(\d)\s*,\s*(\d{3})\b/g, "$1,$2")
+    .replace(/(\d[\d,]*(?:\.\d+)?)\s*m\s*[²2]\b/gi, "$1m2")
+    .replace(/(\d[\d,]*(?:\.\d+)?)m\s+[²2]\b/gi, "$1m2")
+    .replace(/(\d[\d,]*(?:\.\d+)?)\s*(?:sq\.?\s*m|sqm)\b/gi, "$1m2");
+
+  let landArea = "";
+  let gla = "";
+
+  const landHa = text.match(
+    /(?:Land|Site|Lot|Allotment)\s*(?:Area|Size)?\s*[:\s]*([\d,]+(?:\.\d+)?)\s*(?:ha|hectares?)\b/i,
+  );
+  const landM = text.match(
+    /(?:Land|Site|Lot|Allotment)\s*(?:Area|Size)?\s*[:\s]*([\d,]+(?:\.\d+)?)\s*m2\b/i,
+  );
+  const floorM = text.match(
+    /(?:Floor|Living|Building|House)\s*(?:Area|Size)?\s*[:\s]*([\d,]+(?:\.\d+)?)\s*m2\b/i,
+  );
+  const glaM = text.match(
+    /\b(?:GLA|Gross\s*Living\s*Area)\s*[:\s]*([\d,]+(?:\.\d+)?)\s*m2?\b/i,
+  );
+
+  if (landHa) {
+    const ha = parseNumberToken(landHa[1]!);
+    if (ha != null && ha < 500) landArea = formatSiteM2(ha * 10000);
+  }
+  if (landM) {
+    const n = parseNumberToken(landM[1]!);
+    if (n != null && n >= 20 && n <= 500000) landArea = formatSiteM2(n);
+  }
+  const floorRaw = floorM?.[1] ?? glaM?.[1];
+  if (floorRaw) {
+    const n = parseNumberToken(floorRaw);
+    if (n != null && n >= 20 && n <= 2500) gla = formatSiteM2(n);
+  }
+
+  const pair = text.match(
+    /([\d,]+(?:\.\d+)?)\s*m2\s+([\d,]+(?:\.\d+)?)\s*m2/i,
+  );
+  if (pair) {
+    const a = parseNumberToken(pair[1]!);
+    const b = parseNumberToken(pair[2]!);
+    if (a != null && b != null) {
+      // Cotality card order is land then floor.
+      if (!landArea && a >= 20 && a <= 500000) landArea = formatSiteM2(a);
+      if (!gla && b >= 20 && b <= 2500) gla = formatSiteM2(b);
+    }
+  }
+
+  if (!landArea) {
+    const haBare = text.match(/\b([\d,]+(?:\.\d+)?)\s*(?:ha|hectares?)\b/i);
+    if (haBare) {
+      const ha = parseNumberToken(haBare[1]!);
+      if (ha != null && ha >= 0.05 && ha < 500) landArea = formatSiteM2(ha * 10000);
+    }
+  }
+
+  if (!landArea || !gla) {
+    const mTokens = [
+      ...text.matchAll(/([\d,]+(?:\.\d+)?)\s*m(?:2)?(?![a-z])/gi),
+    ]
+      .map((m) => parseNumberToken(m[1]!))
+      .filter((n): n is number => n != null && n >= 20 && n <= 500000);
+    if (!landArea && mTokens[0] != null) landArea = formatSiteM2(mTokens[0]);
+    if (!gla) {
+      const leftover = mTokens.filter((n) => formatSiteM2(n) !== landArea && n <= 2500);
+      if (leftover[0] != null) gla = formatSiteM2(leftover[0]);
+    }
+  }
+
+  return { landArea, gla };
+}
+
 function extractFactsFromBlock(address: string, block: string): CmaSaleExtract {
   const priceMatch =
     block.match(/Sold\s*Price\s*[:\s]*(\$\s*[\d,]+(?:\.\d{2})?)/i) ||
@@ -534,34 +625,7 @@ function extractFactsFromBlock(address: string, block: string): CmaSaleExtract {
     /(?:Sold\s*Date|Sale\s*Date)\s*[:\s]*([0-9]{1,2}[-/][A-Za-z]{3}[-/][0-9]{2,4}|[0-9]{1,2}[-/][0-9]{1,2}[-/][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3}\s+[0-9]{2,4})/i,
   );
 
-  // Areas: 390m2 / 390m² / 390 m2 / bare 390m (pdf.js split residue)
-  const areaMatches = [
-    ...block.matchAll(/(\d{2,5}(?:\.\d+)?)\s*m\s*(?:2|²)?\b/gi),
-  ];
-  // Prefer values in the typical residential range when multiple hits
-  const areas = areaMatches
-    .map((x) => Number(String(x[1]).replace(/,/g, "")))
-    .filter((n) => Number.isFinite(n) && n >= 40 && n <= 5000);
-
-  let landArea = "";
-  let gla = "";
-  if (areas.length >= 2) {
-    // Cotality detail row: land then floor
-    landArea = `${areas[0]}m²`;
-    gla = `${areas[1]}m²`;
-  } else if (areas.length === 1) {
-    landArea = `${areas[0]}m²`;
-  }
-
-  // Labelled overrides
-  const landLabel = block.match(
-    /(?:Land\s*(?:Area|Size)|Site\s*(?:Area|Size))\s*[:\s]*([\d,]{2,5}(?:\.\d+)?)\s*m/i,
-  );
-  const glaLabel = block.match(
-    /(?:Floor\s*(?:Area|Size)|Living\s*(?:Area|Size)|Gross\s*Living\s*Area|GLA|Building\s*(?:Area|Size))\s*[:\s]*([\d,]{2,5}(?:\.\d+)?)\s*m/i,
-  );
-  if (landLabel) landArea = `${landLabel[1]!.replace(/,/g, "")}m²`;
-  if (glaLabel) gla = `${glaLabel[1]!.replace(/,/g, "")}m²`;
+  const { landArea, gla } = parseCmaSiteAreas(block);
 
   let beds = "";
   let baths = "";

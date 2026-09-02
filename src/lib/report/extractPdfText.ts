@@ -83,9 +83,12 @@ export async function extractTextFromPdf(file: File): Promise<string> {
 
   // Cotality: pdf.js often yields "390m 2" or "390 m 2" for 390m²
   text = text
-    .replace(/(\d+)\s*m\s*[²2]\b/gi, "$1m2")
-    .replace(/(\d+m)\s+[²2]\b/gi, "$1m2")
-    .replace(/(\d+)\s*m²/gi, "$1m2");
+    .replace(/(\d)\s*,\s*(\d{3})\b/g, "$1,$2")
+    .replace(/(\d[\d,]*(?:\.\d+)?)\s*m\s*[²2]\b/gi, "$1m2")
+    .replace(/(\d[\d,]*(?:\.\d+)?m)\s+[²2]\b/gi, "$1m2")
+    .replace(/(\d[\d,]*(?:\.\d+)?)\s*m²/gi, "$1m2")
+    .replace(/(\d[\d,]*(?:\.\d+)?)\s*(?:sq\.?\s*m|sqm)\b/gi, "$1m2")
+    .replace(/(\d[\d,]*(?:\.\d+)?)\s*(?:ha|hectares?)\b/gi, "$1ha");
 
   return text;
 }
