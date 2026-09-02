@@ -169,6 +169,9 @@ function polishFoundations(raw: string): string {
 function buildImprovements(values: InspectionValues): string {
   const design = v(values, "imp_design").toLowerCase();
   const walls = v(values, "ext").toLowerCase();
+  const winMat = v(values, "win_mat").toLowerCase();
+  const winType = v(values, "win_type").toLowerCase();
+  const winGlaze = v(values, "win_glaze").toLowerCase();
   const roof = v(values, "rc").toLowerCase();
   const year = v(values, "imp_yearbuilt");
   const beds = v(values, "imp_beds");
@@ -181,6 +184,13 @@ function buildImprovements(values: InspectionValues): string {
     "dwelling",
     walls && `of ${walls} construction`,
     roof && `with ${roof} roof coverings`,
+  ]);
+
+  const windows = sentence([
+    (winMat || winType || winGlaze) && "Windows are",
+    winMat && winMat,
+    winType && `${winType} type`,
+    winGlaze && `with ${winGlaze} glazing`,
   ]);
 
   const counts = sentence([
@@ -223,7 +233,7 @@ function buildImprovements(values: InspectionValues): string {
       `Overall quality of construction is assessed as ${v(values, "imp_quality").toLowerCase()}`,
   ]);
 
-  return [dwelling, counts, structure, internals, areas, ground, quality]
+  return [dwelling, windows, counts, structure, internals, areas, ground, quality]
     .filter(Boolean)
     .join("\n\n");
 }

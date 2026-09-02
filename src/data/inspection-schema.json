@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": "39",
+  "version": 40,
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -1577,6 +1577,7 @@
             "Hamptons",
             "Interwar",
             "Mid-century Modern",
+            "Modular",
             "Post-war Brick",
             "Post-war Timber",
             "Queenslander",
@@ -1716,6 +1717,10 @@
               "label": "Brick"
             },
             {
+              "id": "ext_chamfer",
+              "label": "Chamfer cladding"
+            },
+            {
               "id": "ext_composite",
               "label": "Composite panels"
             },
@@ -1782,6 +1787,157 @@
           ],
           "condition_field": "ext_cond",
           "notes_field": "ext_notes"
+        },
+        {
+          "name": "win_mat",
+          "label": "Windows — Material",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "win_mat_aluminium",
+              "label": "Aluminium"
+            },
+            {
+              "id": "win_mat_composite",
+              "label": "Composite (aluminium / timber)"
+            },
+            {
+              "id": "win_mat_fibreglass",
+              "label": "Fibreglass"
+            },
+            {
+              "id": "win_mat_steel",
+              "label": "Steel"
+            },
+            {
+              "id": "win_mat_timber",
+              "label": "Timber"
+            },
+            {
+              "id": "win_mat_vinyl",
+              "label": "Vinyl / uPVC"
+            },
+            {
+              "id": "win_mat_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "win_mat_cond",
+          "notes_field": "win_mat_notes"
+        },
+        {
+          "name": "win_type",
+          "label": "Windows — Type",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "win_type_awning",
+              "label": "Awning"
+            },
+            {
+              "id": "win_type_bay",
+              "label": "Bay or bow"
+            },
+            {
+              "id": "win_type_bifold",
+              "label": "Bi-fold"
+            },
+            {
+              "id": "win_type_casement",
+              "label": "Casement"
+            },
+            {
+              "id": "win_type_double_hung",
+              "label": "Double hung"
+            },
+            {
+              "id": "win_type_fixed",
+              "label": "Fixed"
+            },
+            {
+              "id": "win_type_hopper",
+              "label": "Hopper"
+            },
+            {
+              "id": "win_type_louvre",
+              "label": "Louvre"
+            },
+            {
+              "id": "win_type_pivot",
+              "label": "Pivot"
+            },
+            {
+              "id": "win_type_single_hung",
+              "label": "Single hung"
+            },
+            {
+              "id": "win_type_sliding",
+              "label": "Sliding"
+            },
+            {
+              "id": "win_type_stacker",
+              "label": "Stacking / stacker"
+            },
+            {
+              "id": "win_type_tilt_turn",
+              "label": "Tilt and turn"
+            },
+            {
+              "id": "win_type_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "win_type_cond",
+          "notes_field": "win_type_notes"
+        },
+        {
+          "name": "win_glaze",
+          "label": "Windows — Glazing",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "win_glaze_acoustic",
+              "label": "Acoustic"
+            },
+            {
+              "id": "win_glaze_double",
+              "label": "Double glazed"
+            },
+            {
+              "id": "win_glaze_laminated",
+              "label": "Laminated"
+            },
+            {
+              "id": "win_glaze_lowe",
+              "label": "Low-E"
+            },
+            {
+              "id": "win_glaze_obscure",
+              "label": "Obscure / frosted"
+            },
+            {
+              "id": "win_glaze_single",
+              "label": "Single glazed"
+            },
+            {
+              "id": "win_glaze_tinted",
+              "label": "Tinted"
+            },
+            {
+              "id": "win_glaze_toughened",
+              "label": "Toughened"
+            },
+            {
+              "id": "win_glaze_triple",
+              "label": "Triple glazed"
+            },
+            {
+              "id": "win_glaze_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "win_glaze_cond",
+          "notes_field": "win_glaze_notes"
         },
         {
           "name": "rc",

@@ -6,6 +6,9 @@ import type { InspectionValues } from "./types";
  */
 export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   Queenslander: {
+    win_mat: ["win_mat_timber"],
+    win_type: ["win_type_casement", "win_type_double_hung"],
+    win_glaze: ["win_glaze_single"],
     imp_highset: true,
     imp_units: "1",
     foundations: ["found_timber_stumps"],
@@ -30,6 +33,9 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   },
 
   Ashgrovian: {
+    win_mat: ["win_mat_timber"],
+    win_type: ["win_type_casement", "win_type_double_hung"],
+    win_glaze: ["win_glaze_single"],
     imp_highset: true,
     imp_units: "1",
     foundations: ["found_timber_stumps"],
@@ -54,6 +60,9 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   },
 
   "Workers Cottage": {
+    win_mat: ["win_mat_timber"],
+    win_type: ["win_type_double_hung", "win_type_casement"],
+    win_glaze: ["win_glaze_single"],
     imp_lowset: true,
     imp_units: "1",
     foundations: ["found_timber_stumps"],
@@ -78,6 +87,9 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   },
 
   Colonial: {
+    win_mat: ["win_mat_timber"],
+    win_type: ["win_type_casement", "win_type_double_hung"],
+    win_glaze: ["win_glaze_single"],
     imp_highset: true,
     imp_units: "1",
     foundations: ["found_timber_stumps"],
@@ -101,6 +113,9 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   },
 
   Victorian: {
+    win_mat: ["win_mat_timber"],
+    win_type: ["win_type_double_hung", "win_type_casement"],
+    win_glaze: ["win_glaze_single"],
     imp_highset: true,
     imp_units: "1",
     foundations: ["found_timber_stumps"],
@@ -125,6 +140,9 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   },
 
   Federation: {
+    win_mat: ["win_mat_timber"],
+    win_type: ["win_type_double_hung", "win_type_casement"],
+    win_glaze: ["win_glaze_single"],
     imp_highset: true,
     imp_units: "1",
     foundations: ["found_timber_stumps"],
@@ -149,6 +167,9 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   },
 
   "Federation Filigree": {
+    win_mat: ["win_mat_timber"],
+    win_type: ["win_type_double_hung", "win_type_casement"],
+    win_glaze: ["win_glaze_single"],
     imp_highset: true,
     imp_units: "1",
     foundations: ["found_timber_stumps"],
@@ -173,6 +194,9 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   },
 
   "Federation Bungalow": {
+    win_mat: ["win_mat_timber"],
+    win_type: ["win_type_double_hung", "win_type_casement"],
+    win_glaze: ["win_glaze_single"],
     imp_lowset: true,
     imp_units: "1",
     foundations: ["found_timber_stumps"],
@@ -197,6 +221,9 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   },
 
   Interwar: {
+    win_mat: ["win_mat_timber"],
+    win_type: ["win_type_casement", "win_type_awning"],
+    win_glaze: ["win_glaze_single"],
     imp_lowset: true,
     imp_units: "1",
     foundations: ["found_concrete_stumps"],
@@ -220,6 +247,9 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   },
 
   "Art Deco": {
+    win_mat: ["win_mat_steel"],
+    win_type: ["win_type_casement", "win_type_fixed"],
+    win_glaze: ["win_glaze_single"],
     imp_lowset: true,
     imp_units: "1",
     foundations: ["found_concrete_stumps"],
@@ -242,6 +272,9 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   },
 
   "Post-war Timber": {
+    win_mat: ["win_mat_timber", "win_mat_aluminium"],
+    win_type: ["win_type_awning", "win_type_sliding"],
+    win_glaze: ["win_glaze_single"],
     imp_lowset: true,
     imp_units: "1",
     foundations: ["found_concrete_stumps"],
@@ -265,6 +298,9 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   },
 
   "Post-war Brick": {
+    win_mat: ["win_mat_aluminium"],
+    win_type: ["win_type_awning", "win_type_sliding"],
+    win_glaze: ["win_glaze_single"],
     imp_lowset: true,
     imp_units: "1",
     foundations: ["found_concrete_slab"],
@@ -288,6 +324,9 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   },
 
   "Mid-century Modern": {
+    win_mat: ["win_mat_aluminium"],
+    win_type: ["win_type_awning", "win_type_sliding"],
+    win_glaze: ["win_glaze_single"],
     imp_lowset: true,
     imp_units: "1",
     foundations: ["found_concrete_slab"],
@@ -310,6 +349,9 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   },
 
   "Brick and Tile": {
+    win_mat: ["win_mat_aluminium"],
+    win_type: ["win_type_awning", "win_type_sliding"],
+    win_glaze: ["win_glaze_single"],
     imp_lowset: true,
     imp_units: "1",
     foundations: ["found_concrete_slab"],
@@ -333,6 +375,9 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   },
 
   Contemporary: {
+    win_mat: ["win_mat_aluminium"],
+    win_type: ["win_type_sliding", "win_type_awning"],
+    win_glaze: ["win_glaze_double"],
     imp_lowset: true,
     imp_units: "1",
     foundations: ["found_concrete_slab"],
@@ -359,6 +404,9 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   },
 
   Hamptons: {
+    win_mat: ["win_mat_aluminium"],
+    win_type: ["win_type_awning", "win_type_double_hung"],
+    win_glaze: ["win_glaze_double"],
     imp_lowset: true,
     imp_units: "1",
     foundations: ["found_concrete_slab"],
@@ -386,6 +434,9 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   },
 
   Coastal: {
+    win_mat: ["win_mat_aluminium"],
+    win_type: ["win_type_sliding", "win_type_awning"],
+    win_glaze: ["win_glaze_single"],
     imp_lowset: true,
     imp_units: "1",
     foundations: ["found_concrete_slab"],
@@ -412,6 +463,9 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
   },
 
   "Acreage or Rural": {
+    win_mat: ["win_mat_aluminium"],
+    win_type: ["win_type_sliding", "win_type_awning"],
+    win_glaze: ["win_glaze_single"],
     imp_lowset: true,
     imp_units: "1",
     foundations: ["found_concrete_slab"],
@@ -434,7 +488,38 @@ export const DESIGN_PRESETS: Record<string, InspectionValues> = {
     bath_tapware_type: "Chrome"
   },
 
+
+  Modular: {
+    imp_lowset: true,
+    imp_units: "1",
+    foundations: ["found_steel_posts"],
+    floor_structure: ["floor_struct_timber"],
+    wall_framing_type: "Steel light gauge",
+    ext: ["ext_fc_weatherboard", "ext_metal_colorbond"],
+    win_mat: ["win_mat_aluminium"],
+    win_type: ["win_type_sliding", "win_type_awning"],
+    win_glaze: ["win_glaze_single"],
+    rc: ["rc_colorbond"],
+    rd: ["rd_colorbond"],
+    il: ["il_plasterboard"],
+    ceil: ["ceil_plasterboard"],
+    flr: ["flr_engineered"],
+    ceil_heights_type: "Typical",
+    light: ["light_mixed"],
+    vent: ["hvac_split_single"],
+    fire: ["fire_conventional_alarm"],
+    bath_tiles_type: "Ceramic tiles",
+    bath_floor: "Ceramic tiles",
+    bath_surround: "Ceramic tiles",
+    am: ["am_bir"],
+    kit_tapware_type: "Chrome",
+    bath_tapware_type: "Chrome"
+  },
+
   "Townhouse or Terrace": {
+    win_mat: ["win_mat_aluminium"],
+    win_type: ["win_type_sliding", "win_type_awning"],
+    win_glaze: ["win_glaze_double"],
     imp_lowset: true,
     imp_units: "1",
     foundations: ["found_concrete_slab"],

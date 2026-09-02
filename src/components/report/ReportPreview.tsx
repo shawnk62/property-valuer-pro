@@ -165,6 +165,9 @@ function getTocEntries(murray: boolean): TocEntry[] {
           "imp_quality",
           "imp_gla",
           "ext",
+          "win_mat",
+          "win_type",
+          "win_glaze",
           "rc",
           "rd",
           "foundations",
@@ -310,6 +313,9 @@ function getTocEntries(murray: boolean): TocEntry[] {
       "imp_quality",
       "imp_gla",
       "ext",
+      "win_mat",
+      "win_type",
+      "win_glaze",
       "rc",
       "rd",
       "foundations",
@@ -1435,7 +1441,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             <Sub title="7.3  General Construction">
               <Facts
                 values={v}
-                fields={["foundations", "floor_structure", "ext", "il", "ceil", "rc"]}
+                fields={["foundations", "floor_structure", "ext", "win_mat", "win_type", "win_glaze", "il", "ceil", "rc"]}
               />
             </Sub>
             {murray ? (
@@ -1481,6 +1487,9 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             "imp_effage",
             "imp_quality",
             "ext",
+            "win_mat",
+            "win_type",
+            "win_glaze",
             "rc",
             "rd",
             "foundations",
