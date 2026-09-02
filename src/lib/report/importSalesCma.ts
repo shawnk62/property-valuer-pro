@@ -35,7 +35,7 @@ const FEATURE_ALIASES: Record<string, string> = {
   site: "site",
   "land area": "site",
   land: "site",
-  topography: "site",
+  topography: "topography",
   view: "view",
   design: "design",
   style: "design",

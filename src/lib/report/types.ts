@@ -146,6 +146,10 @@ export interface ReportMeta {
    * Adjustment = round_to_1000(rate × (subject site − comparable site)).
    */
   siteRatePerM2?: string;
+  /** Subject-column description for the first Other adjustment row. */
+  subjectOther1?: string;
+  /** Subject-column description for the second Other adjustment row. */
+  subjectOther2?: string;
   /**
    * Sales map image (HTTPS preferred for cross-device; data URL local-only).
    */

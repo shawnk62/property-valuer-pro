@@ -116,6 +116,7 @@ export const ADJUSTMENT_FEATURES: AdjustmentFeature[] = [
   { id: "location", label: "Location" },
   { id: "leasehold", label: "Leasehold/Fee Simple" },
   { id: "site", label: "Site", subjectKeys: ["prop_sitearea", "prop_areaunit", "prop_shape", "prop_lot_position"] },
+  { id: "topography", label: "Topography", subjectKeys: ["topo"] },
   { id: "view", label: "View" },
   { id: "design", label: "Design (Style)", subjectKeys: ["imp_design", "ext"] },
   { id: "quality", label: "Quality of Construction", subjectKeys: ["imp_quality"] },
@@ -273,6 +274,15 @@ export function subjectFeatureDisplay(
       bits.push(`${baths} ba`);
     }
     return bits.length ? bits.join(" / ") : "—";
+  }
+
+  if (feature.id === "topography") {
+    const topo = values["topo"];
+    if (Array.isArray(topo) && topo.length) return topo.join(", ");
+    if (topo !== undefined && topo !== null && String(topo).trim()) {
+      return String(topo).trim();
+    }
+    return "—";
   }
 
   if (feature.id === "site") {

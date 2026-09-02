@@ -73,6 +73,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const [status, setStatus] = useState<string | null>(null);
   /** Expanded report-narrative editor (manual working mode). */
   const [expandedNarrativeId, setExpandedNarrativeId] = useState<string | null>(null);
+  const [expandedWorkingNotesId, setExpandedWorkingNotesId] = useState<string | null>(null);
   /** In-progress amount text so "-" can be typed before digits. */
   const [amountDrafts, setAmountDrafts] = useState<Record<string, string>>({});
   /** Right-click menu for paste into map / comp photo slots. */
@@ -1415,7 +1416,26 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                               {feature.label}
                             </td>
                             <td className="px-1 py-1 text-[0.7rem] text-muted-foreground align-top">
-                              <div>{subjectDisplay}</div>
+                              {feature.id === "other1" || feature.id === "other2" ? (
+                                <input
+                                  value={
+                                    feature.id === "other2"
+                                      ? (draft.reportMeta.subjectOther2 ?? "")
+                                      : (draft.reportMeta.subjectOther1 ?? "")
+                                  }
+                                  onChange={(e) =>
+                                    setMeta(
+                                      feature.id === "other2"
+                                        ? { subjectOther2: e.target.value }
+                                        : { subjectOther1: e.target.value },
+                                    )
+                                  }
+                                  placeholder="Describe other item…"
+                                  className="w-full min-w-0 rounded border border-input bg-card px-1 py-0.5 text-[0.65rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
+                                />
+                              ) : (
+                                <div>{subjectDisplay}</div>
+                              )}
                               {isAreaRateRow ? (
                                 <label className="mt-1 flex flex-col gap-0.5">
                                   <span className="text-[0.6rem] font-medium uppercase tracking-wide text-muted-foreground">
@@ -1695,14 +1715,28 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                               className="border-l border-border px-1 py-1"
                             >
                               <textarea
-                                rows={3}
+                                rows={expandedWorkingNotesId === sale.id ? 12 : 3}
                                 value={sale.workingNotes ?? ""}
+                                onFocus={() => setExpandedWorkingNotesId(sale.id)}
                                 onChange={(e) =>
                                   patchSale(sale.id, { workingNotes: e.target.value })
                                 }
                                 placeholder="Private notes for this sale…"
-                                className="w-full resize-y rounded border border-dashed border-input/80 bg-amber-50/40 px-1.5 py-1 text-[0.7rem] outline-none focus:border-input focus:bg-accent/40"
+                                className={`w-full rounded border border-dashed border-input/80 bg-amber-50/40 px-1.5 py-1 text-[0.7rem] outline-none focus:border-input focus:bg-accent/40 ${
+                                  expandedWorkingNotesId === sale.id
+                                    ? "min-h-[12rem] resize-y"
+                                    : "resize-y"
+                                }`}
                               />
+                              {expandedWorkingNotesId === sale.id ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedWorkingNotesId(null)}
+                                  className="mt-1 rounded bg-primary px-2 py-0.5 text-[0.7rem] font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
+                                >
+                                  Done
+                                </button>
+                              ) : null}
                             </td>
                           ))}
                         </tr>
