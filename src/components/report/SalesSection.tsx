@@ -132,6 +132,18 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     replaceSales([...sales, emptySale()]);
   }
 
+  function moveSale(id: string, direction: -1 | 1) {
+    const index = sales.findIndex((s) => s.id === id);
+    if (index < 0) return;
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= sales.length) return;
+    const next = [...sales];
+    const current = next[index]!;
+    next[index] = next[nextIndex]!;
+    next[nextIndex] = current;
+    replaceSales(next);
+  }
+
   function replaceSales(next: ComparableSale[]) {
     // Soft dedupe only for true address collisions. Uses unit-aware streetKey
     // (24/31 vs 68/31 North Street must remain two sales). Prefer id when
@@ -1287,16 +1299,40 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                       </label>
                                     )}
                                   </span>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      replaceSales(sales.filter((s) => s.id !== sale.id))
-                                    }
-                                    className="shrink-0 text-muted-foreground hover:text-destructive"
-                                    aria-label="Remove sale"
-                                  >
-                                    &times;
-                                  </button>
+                                  <div className="flex shrink-0 flex-col items-end gap-0.5">
+                                    <div className="flex items-center gap-0.5">
+                                      <button
+                                        type="button"
+                                        disabled={startNum + idx === 0}
+                                        onClick={() => moveSale(sale.id, -1)}
+                                        className="rounded px-1 text-[0.65rem] text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-30"
+                                        aria-label="Move sale left"
+                                        title="Move left"
+                                      >
+                                        ←
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={startNum + idx === sales.length - 1}
+                                        onClick={() => moveSale(sale.id, 1)}
+                                        className="rounded px-1 text-[0.65rem] text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-30"
+                                        aria-label="Move sale right"
+                                        title="Move right"
+                                      >
+                                        →
+                                      </button>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        replaceSales(sales.filter((s) => s.id !== sale.id))
+                                      }
+                                      className="text-muted-foreground hover:text-destructive"
+                                      aria-label="Remove sale"
+                                    >
+                                      &times;
+                                    </button>
+                                  </div>
                                 </div>
                               </th>
                             );
