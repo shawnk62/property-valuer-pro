@@ -74,13 +74,7 @@ function PhotoCard({
     <div className="rounded-md border border-border bg-card p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
         {labelEditable ? (
-          <input
-            value={slotLabel}
-            onChange={(e) => onLabelChange?.(e.target.value)}
-            placeholder="Label (e.g. Coastal hazard overlay)"
-            aria-label="Map label"
-            className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-semibold text-foreground outline-none placeholder:text-muted-foreground focus:ring-0"
-          />
+          <span className="text-sm font-semibold text-foreground">Map / overlay</span>
         ) : (
           <span className="text-sm font-semibold text-foreground">{slotLabel}</span>
         )}
@@ -196,14 +190,15 @@ function PhotoCard({
         }}
       />
 
-      {labelEditable ? null : (
-        <input
-          value={photo?.caption ?? slotLabel}
-          onChange={(e) => onCaption(e.target.value)}
-          placeholder="Caption"
-          className="mt-3 w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-        />
-      )}
+      <input
+        value={photo?.caption ?? (labelEditable ? "" : slotLabel)}
+        onChange={(e) => {
+          if (labelEditable) onLabelChange?.(e.target.value);
+          onCaption(e.target.value);
+        }}
+        placeholder={labelEditable ? "Label this map (e.g. Coastal hazard overlay)" : "Caption"}
+        className="mt-3 w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+      />
     </div>
   );
 }
@@ -529,16 +524,15 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
             uploading={uploadingIds.has(photo.id)}
             labelEditable
             onLabelChange={(label) => {
-              const caption = label.trim() || "Additional map";
               setPhotos((prev) =>
-                prev.map((p) => (p.id === photo.id ? { ...p, caption } : p)),
+                prev.map((p) => (p.id === photo.id ? { ...p, caption: label } : p)),
               );
             }}
             onFile={(file) =>
               void attachPhoto({
                 file,
                 slot: null,
-                caption: photo.caption || "Additional map",
+                caption: photo.caption.trim() || "Additional map",
                 replaceId: photo.id,
                 kind: "map",
               })
