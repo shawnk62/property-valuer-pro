@@ -71,6 +71,40 @@ function emit() {
   for (const l of listeners) l();
 }
 
+/**
+ * Postgres jsonb rejects \\u0000 and lone UTF-16 surrogates.
+ * Pasted PDF/Word text and some extracts include those and block every save.
+ */
+function sanitizeFormText(value: string): string {
+  let out = "";
+  for (const ch of value) {
+    const code = ch.codePointAt(0) ?? 0;
+    if (code === 0) continue;
+    if (code >= 0xd800 && code <= 0xdfff) continue;
+    out += ch;
+  }
+  return out;
+}
+
+export function sanitizeInspectionValues(values: InspectionValues): InspectionValues {
+  const clean: InspectionValues = {};
+  for (const [key, raw] of Object.entries(values ?? {})) {
+    if (raw === undefined || raw === null) continue;
+    if (typeof raw === "string") {
+      clean[key] = sanitizeFormText(raw);
+    } else if (Array.isArray(raw)) {
+      clean[key] = raw.map((item) =>
+        typeof item === "string" ? sanitizeFormText(item) : String(item),
+      );
+    } else if (typeof raw === "boolean") {
+      clean[key] = raw;
+    } else {
+      clean[key] = sanitizeFormText(String(raw));
+    }
+  }
+  return clean;
+}
+
 
 /** iPad/Safari often keeps an expired access token that still looks readable. */
 async function ensureFreshSession(): Promise<void> {
@@ -208,8 +242,8 @@ export const inspectionStore = {
     const insertBase = {
       user_id: userId,
       status: "draft" as const,
-      form_values: source.values ?? {},
-      schema_version: schema.version,
+      form_values: sanitizeInspectionValues(source.values ?? {}),
+      schema_version: String(schema.version),
       // Do not set submitted_* — new job starts as draft even if source was submitted
     };
 
@@ -294,7 +328,7 @@ async save(id: string, values: InspectionValues): Promise<void> {
     const { data, error } = await supabase
       .from("inspections")
       .update({
-        form_values: values,
+        form_values: sanitizeInspectionValues(values),
         schema_version: String(schema.version),
         updated_at: new Date().toISOString(),
       })
@@ -334,7 +368,7 @@ async save(id: string, values: InspectionValues): Promise<void> {
     }
 
     const now = new Date().toISOString();
-    const snapshot = existing.values ?? {};
+    const snapshot = sanitizeInspectionValues(existing.values ?? {});
 
     // Ensure latest answers are on the server before locking status
     const { error: saveError } = await supabase
