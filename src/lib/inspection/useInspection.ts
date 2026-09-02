@@ -66,14 +66,17 @@ export function useInspection(id: string, opts?: { readOnly?: boolean }) {
   }, [id]);
 
   const flush = useCallback(
-    (next: InspectionValues) => {
+    async (next: InspectionValues) => {
       if (readOnly) return;
-      void inspectionStore
-        .save(id, next)
-        .then(() => setSavedAt(new Date().toISOString()))
-        .catch((err: unknown) => {
-          setError(err instanceof Error ? err.message : "Failed to save");
-        });
+      try {
+        await inspectionStore.save(id, next);
+        setSavedAt(new Date().toISOString());
+        setError(null);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to save";
+        setError(message);
+        throw err instanceof Error ? err : new Error(message);
+      }
     },
     [id, readOnly],
   );
@@ -126,17 +129,27 @@ export function useInspection(id: string, opts?: { readOnly?: boolean }) {
         }
 
         if (timer.current) clearTimeout(timer.current);
-        timer.current = setTimeout(() => flush(next), 400);
+        timer.current = setTimeout(() => {
+          void flush(next).catch(() => {
+            /* error state set in flush */
+          });
+        }, 400);
         return next;
       });
     },
     [flush],
   );
 
-  const saveNow = useCallback(() => {
+  const saveNow = useCallback(async () => {
     if (timer.current) clearTimeout(timer.current);
-    flush(values);
-  }, [flush, values]);
+    if (readOnly) {
+      const message =
+        "This job is read-only on this device. Take over editing to save.";
+      setError(message);
+      throw new Error(message);
+    }
+    await flush(valuesRef.current);
+  }, [flush, readOnly]);
 
   useEffect(() => {
     return () => {
@@ -152,7 +165,9 @@ export function useInspection(id: string, opts?: { readOnly?: boolean }) {
         clearTimeout(timer.current);
         timer.current = null;
       }
-      flush(valuesRef.current);
+      void flush(valuesRef.current).catch(() => {
+        /* error state set in flush */
+      });
     };
     const onVis = () => {
       if (document.visibilityState === "hidden") flushNow();

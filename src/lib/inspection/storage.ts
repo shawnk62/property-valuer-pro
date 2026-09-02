@@ -125,7 +125,7 @@ export const inspectionStore = {
         user_id: userId,
         status: "draft",
         form_values: {},
-        schema_version: schema.version,
+        schema_version: String(schema.version),
       })
       .select("*")
       .single();
@@ -291,13 +291,16 @@ async save(id: string, values: InspectionValues): Promise<void> {
     await ensureFreshSession();
     const existing = await this.get(id);
     if (!existing) throw new Error("Inspection not found");
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("inspections")
       .update({
         form_values: values,
+        schema_version: String(schema.version),
         updated_at: new Date().toISOString(),
       })
-      .eq("id", id);
+      .eq("id", id)
+      .select("id")
+      .maybeSingle();
     if (error) {
       const msg = error.message || "Failed to save";
       if (/jwt|expired|session|not authorized|401|403/i.test(msg)) {
@@ -306,7 +309,12 @@ async save(id: string, values: InspectionValues): Promise<void> {
       if (/network|fetch|Failed to fetch|timeout/i.test(msg)) {
         throw new Error("Network error while saving. Check the hotspot connection and try again.");
       }
-      throw error;
+      throw new Error(msg);
+    }
+    if (!data?.id) {
+      throw new Error(
+        "Save did not update the inspection (no matching row). Sign in again, or take over editing if another device holds the lock.",
+      );
     }
     emit();
   },

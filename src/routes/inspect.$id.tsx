@@ -59,7 +59,7 @@ function InspectionWizard() {
   const initialStep = search.step;
   const navigate = useNavigate();
   const lock = useEditLock(id);
-  const { record, values, setValue, saveNow, loaded } = useInspection(id, {
+  const { record, values, setValue, saveNow, loaded, error: saveError } = useInspection(id, {
     // Submitted inspections stay editable. Only block saves when another device holds the lock.
     readOnly: !lock.canEdit,
   });
@@ -158,6 +158,11 @@ function InspectionWizard() {
         onTakeOver={() => void lock.takeOver()}
         onRefresh={() => void lock.refresh()}
       />
+      {saveError ? (
+        <div className="border-b border-destructive/40 bg-destructive/10 px-4 py-2 text-center text-sm text-destructive">
+          Could not save: {saveError}
+        </div>
+      ) : null}
       <header className="sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur">
         <div className="mx-auto max-w-4xl px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
@@ -179,8 +184,11 @@ function InspectionWizard() {
               size="icon"
               aria-label={isSubmitted ? "Save changes" : "Save draft"}
               onClick={() => {
-                saveNow();
-                toast.success(isSubmitted ? "Changes saved" : "Draft saved");
+                void saveNow()
+                  .then(() => toast.success(isSubmitted ? "Changes saved" : "Draft saved"))
+                  .catch((err: unknown) => {
+                    toast.error(err instanceof Error ? err.message : "Could not save");
+                  });
               }}
             >
               <Save className="size-4" />
