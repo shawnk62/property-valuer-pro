@@ -27,7 +27,9 @@ import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage
 import {
   cmaExtractsToSales,
   mergeCmaExtracts,
+  mergeIncomingSales,
   parseCmaTextHeuristic,
+  saleIdentityKey,
   streetKey,
   type CmaSaleExtract,
 } from "@/lib/report/importSalesCma";
@@ -70,6 +72,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const gridSales = salesOnReport(sales);
   const heldSales = salesHeldBack(sales);
   const fileRef = useRef<HTMLInputElement>(null);
+  const cmaImportModeRef = useRef<"merge" | "replace">("merge");
   const [importing, setImporting] = useState(false);
   const [cmaPaste, setCmaPaste] = useState("");
   const [autoNarratives, setAutoNarratives] = useState(true);
@@ -164,8 +167,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     const deduped: ComparableSale[] = [];
     const seen = new Set<string>();
     for (const s of next) {
+      const ident = saleIdentityKey(s);
       const addr = (s.address || "").trim();
-      const key = addr ? streetKey(addr) || addr.toUpperCase() : `id:${s.id}`;
+      const key = ident || (addr ? streetKey(addr) || addr.toUpperCase() : `id:${s.id}`);
       if (seen.has(key)) continue;
       seen.add(key);
       deduped.push(s);
@@ -755,6 +759,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     text: string,
     sourceLabel = "CMA text",
     media?: { salesMapUrl: string | null; frontPhotoUrls: string[] },
+    mode: "merge" | "replace" = "merge",
   ) {
     const trimmed = text.trim();
     if (!trimmed) {
@@ -836,20 +841,36 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           photoUrl: media.frontPhotoUrls[i] || sale.photoUrl,
         }));
       }
-      if (media?.salesMapUrl) {
+      if (media?.salesMapUrl && (mode === "replace" || !draft.reportMeta.salesMapUrl)) {
         setMeta({ salesMapUrl: media.salesMapUrl });
       }
 
-      fingerprintsRef.current = {};
-      replaceSales(mapped.map(ensureSaleAdjustments));
-      const photoNote = media?.frontPhotoUrls?.length
-        ? ` · ${media.frontPhotoUrls.length} front photo(s)`
-        : "";
-      const mapNote = media?.salesMapUrl ? " · sales map" : "";
-      toast.success(`Imported ${mapped.length} comparable sale(s)`, {
-        description: `${sourceLabel}${mapNote}${photoNote}. Qualitative marks start at Similar — AI narratives will follow.`,
-      });
-      setStatus(`Imported ${mapped.length} sale(s) from ${sourceLabel}${mapNote}${photoNote}.`);
+      const incoming = mapped.map(ensureSaleAdjustments);
+      if (mode === "replace") {
+        fingerprintsRef.current = {};
+        replaceSales(incoming);
+        toast.success(`Replaced comparables with ${incoming.length} sale(s)`, {
+          description: `${sourceLabel}. Previous sales on this job were removed.`,
+        });
+        setStatus(`Replaced grid with ${incoming.length} sale(s) from ${sourceLabel}.`);
+      } else {
+        const merged = mergeIncomingSales(salesRef.current, incoming);
+        replaceSales(merged.sales);
+        toast.success(
+          merged.added > 0
+            ? `Added ${merged.added} comparable sale(s)`
+            : "No new comparables to add",
+          {
+            description:
+              merged.matched > 0
+                ? `${merged.matched} already on the job (notes, photos and adjustments kept). CMA card numbers are ignored.`
+                : `${sourceLabel} — new sales were appended after the existing list.`,
+          },
+        );
+        setStatus(
+          `Merged ${sourceLabel}: +${merged.added} new, ${merged.matched} already on file.`,
+        );
+      }
       // Kick AI narratives after import (auto may also fire via salesNarrativeKey).
       if (autoNarratives && isAiConfigured()) {
         window.setTimeout(() => {
@@ -876,6 +897,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       name.endsWith(".csv") ||
       file.type === "application/vnd.ms-excel";
 
+    const mode = cmaImportModeRef.current;
     setImporting(true);
     try {
       if (isCsv) {
@@ -888,16 +910,32 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           setStatus("No sales in CSV.");
           return;
         }
-        fingerprintsRef.current = {};
-        replaceSales(result.sales.map(ensureSaleAdjustments));
-        toast.success(`Imported ${result.sales.length} sale(s) from CSV`);
-        setStatus(`Imported ${result.sales.length} from CSV.`);
+        const incoming = result.sales.map(ensureSaleAdjustments);
+        if (mode === "replace") {
+          fingerprintsRef.current = {};
+          replaceSales(incoming);
+          toast.success(`Replaced comparables with ${incoming.length} sale(s) from CSV`);
+          setStatus(`Replaced grid with ${incoming.length} from CSV.`);
+        } else {
+          const merged = mergeIncomingSales(salesRef.current, incoming);
+          replaceSales(merged.sales);
+          toast.success(
+            merged.added > 0
+              ? `Added ${merged.added} sale(s) from CSV`
+              : "No new CSV sales to add",
+            {
+              description:
+                merged.matched > 0
+                  ? `${merged.matched} already on the job were left as they are.`
+                  : undefined,
+            },
+          );
+          setStatus(`Merged CSV: +${merged.added} new, ${merged.matched} already on file.`);
+        }
         return;
       }
 
       if (isPdf) {
-        // Text only from CMA PDF. Map + front photos are attached manually
-        // (Cotality embeds do not crop cleanly in-browser).
         setStatus("Reading PDF text…");
         const text = await extractTextFromPdf(file);
         if (!text.trim()) {
@@ -908,13 +946,13 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           return;
         }
         setStatus("Parsing sales data…");
-        await importFromCmaText(text, "CMA PDF");
+        await importFromCmaText(text, "CMA PDF", undefined, mode);
         return;
       }
 
       // .txt or other
       const text = await file.text();
-      await importFromCmaText(text, file.name || "file");
+      await importFromCmaText(text, file.name || "file", undefined, mode);
     } catch (err) {
       console.error("[CMA file import]", err);
       const message = err instanceof Error ? err.message : "CMA import failed";
@@ -934,8 +972,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-foreground">Sales comparison grid (URAR)</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Shared across all report types. Import Cotality CMA PDF for sale data (text). Attach sales map and front photos below. Relativity
-            marks and $ adjustments feed report narratives (editable per sale).
+            Shared across all report types. Import a CMA to add sales. A later extract is
+            appended — CMA card numbers 1–4 are not used as identity. Same address + sale
+            date/price keeps the working row (photos, notes, adjustments). Use Replace all
+            only when you intend to wipe the list.
           </p>
           <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-foreground">
             <input
@@ -969,10 +1009,30 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           <button
             type="button"
             disabled={importing}
-            onClick={() => fileRef.current?.click()}
+            onClick={() => {
+              cmaImportModeRef.current = "merge";
+              fileRef.current?.click();
+            }}
             className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
           >
             {importing ? "Importing…" : "Import CMA PDF"}
+          </button>
+          <button
+            type="button"
+            disabled={importing}
+            onClick={() => {
+              if (salesRef.current.length > 0) {
+                const ok = window.confirm(
+                  "Replace all comparables on this job with the next file? Photos, notes and adjustments on the current list will be removed.",
+                );
+                if (!ok) return;
+              }
+              cmaImportModeRef.current = "replace";
+              fileRef.current?.click();
+            }}
+            className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+          >
+            Replace all from CMA
           </button>
           <button
             type="button"
@@ -1021,14 +1081,32 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           placeholder="9 ROBINSON CRESCENT RUNCORN QLD 4113&#10;Sold Price $1,050,000&#10;Sold Date 16-Jun-26&#10;…"
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-1 focus:ring-ring"
         />
-        <button
-          type="button"
-          disabled={importing || !cmaPaste.trim()}
-          onClick={() => void importFromCmaText(cmaPaste)}
-          className="rounded-md border border-input bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
-        >
-          Extract from pasted text
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={importing || !cmaPaste.trim()}
+            onClick={() => void importFromCmaText(cmaPaste, "pasted CMA text", undefined, "merge")}
+            className="rounded-md border border-input bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+          >
+            Add from pasted text
+          </button>
+          <button
+            type="button"
+            disabled={importing || !cmaPaste.trim()}
+            onClick={() => {
+              if (salesRef.current.length > 0) {
+                const ok = window.confirm(
+                  "Replace all comparables on this job with the pasted sales?",
+                );
+                if (!ok) return;
+              }
+              void importFromCmaText(cmaPaste, "pasted CMA text", undefined, "replace");
+            }}
+            className="rounded-md border border-input bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+          >
+            Replace all from paste
+          </button>
+        </div>
       </div>
 
 

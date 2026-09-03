@@ -194,6 +194,116 @@ export function streetKey(addr: string): string {
   return `${base}${postBit}`;
 }
 
+function digitsOnly(raw: string | undefined): string {
+  return String(raw ?? "").replace(/[^0-9]/g, "");
+}
+
+function dateKey(raw: string | undefined): string {
+  return String(raw ?? "").replace(/[^0-9A-Z]/gi, "").toUpperCase();
+}
+
+/**
+ * Identity for merge — unit-aware address + transaction (date and/or price).
+ * CMA card numbers (1–4 on each extract) are never part of this key.
+ */
+export function saleIdentityKey(sale: {
+  address?: string;
+  saleDate?: string;
+  salePrice?: string;
+}): string {
+  const address = (sale.address || "").trim();
+  const addr = address ? streetKey(address) || addressKey(address) : "";
+  const date = dateKey(sale.saleDate);
+  const price = digitsOnly(sale.salePrice);
+  if (addr && (date || price)) return `${addr}|${date}|${price}`;
+  if (addr) return `addr:${addr}`;
+  if (date || price) return `px:${price}|${date}`;
+  return "";
+}
+
+function pickFact(current: string | undefined, incoming: string | undefined): string {
+  const a = String(current ?? "").trim();
+  if (a) return String(current ?? "");
+  return String(incoming ?? "");
+}
+
+/** Keep working-file row; fill only blank facts from a later CMA. */
+export function fillBlankSaleFacts(
+  keep: ComparableSale,
+  incoming: ComparableSale,
+): ComparableSale {
+  return {
+    ...keep,
+    address: pickFact(keep.address, incoming.address),
+    saleDate: pickFact(keep.saleDate, incoming.saleDate),
+    salePrice: pickFact(keep.salePrice, incoming.salePrice),
+    landArea: pickFact(keep.landArea, incoming.landArea),
+    comments: pickFact(keep.comments, incoming.comments),
+    gla: pickFact(keep.gla, incoming.gla) || keep.gla,
+    beds: pickFact(keep.beds, incoming.beds) || keep.beds,
+    baths: pickFact(keep.baths, incoming.baths) || keep.baths,
+    cars: pickFact(keep.cars, incoming.cars) || keep.cars,
+    proximity: pickFact(keep.proximity, incoming.proximity) || keep.proximity,
+    dataSource: pickFact(keep.dataSource, incoming.dataSource) || keep.dataSource,
+    verificationSource:
+      pickFact(keep.verificationSource, incoming.verificationSource) ||
+      keep.verificationSource,
+    photoUrl: keep.photoUrl || incoming.photoUrl,
+    photoStoragePath: keep.photoStoragePath || incoming.photoStoragePath,
+  };
+}
+
+function addressPart(sale: { address?: string }): string {
+  const address = (sale.address || "").trim();
+  if (!address) return "";
+  return streetKey(address) || addressKey(address);
+}
+
+function isSameTransaction(
+  existing: ComparableSale,
+  incoming: ComparableSale,
+): boolean {
+  const exact = saleIdentityKey(existing);
+  const incomingKey = saleIdentityKey(incoming);
+  if (exact && incomingKey && exact === incomingKey) return true;
+
+  const addrA = addressPart(existing);
+  const addrB = addressPart(incoming);
+  if (!addrA || addrA !== addrB) return false;
+
+  const priceA = digitsOnly(existing.salePrice);
+  const priceB = digitsOnly(incoming.salePrice);
+  if (priceA && priceB && priceA === priceB) return true;
+
+  const dateA = dateKey(existing.saleDate);
+  const dateB = dateKey(incoming.saleDate);
+  if (dateA && dateB && dateA === dateB) return true;
+
+  // Manual blank row at this address — fill it rather than add a duplicate.
+  if (!priceA && !dateA) return true;
+  return false;
+}
+
+export function mergeIncomingSales(
+  existing: ComparableSale[],
+  incoming: ComparableSale[],
+): { sales: ComparableSale[]; added: number; matched: number } {
+  const next = [...existing];
+  let added = 0;
+  let matched = 0;
+  for (const sale of incoming) {
+    const existingIndex = next.findIndex((row) => isSameTransaction(row, sale));
+    if (existingIndex >= 0) {
+      matched += 1;
+      next[existingIndex] = fillBlankSaleFacts(next[existingIndex]!, sale);
+      continue;
+    }
+    next.push(sale);
+    added += 1;
+  }
+  return { sales: next, added, matched };
+}
+
 export function cmaExtractsToSales(rows: CmaSaleExtract[]): ComparableSale[] {
   const out: ComparableSale[] = [];
   const seen = new Set<string>();
