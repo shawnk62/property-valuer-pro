@@ -10,7 +10,7 @@ import { Camera, Check, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { inspectionStore } from "@/lib/inspection/storage";
-import { fileToDataUrl } from "@/lib/report/photo-data";
+import { fileToDataUrl, preparePhotoForReport } from "@/lib/report/photo-data";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import { formatPhotoTimestamp, nowPhotoTimestamp } from "@/lib/inspection/photoRequirements";
 import { PHOTO_SLOTS, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
@@ -172,20 +172,21 @@ export function InspectionPhotosPanel({
     setSaving(true);
     try {
       const id = pending.replaceId || newPhotoId();
+      const file = await preparePhotoForReport(pending.file);
       let url: string;
       let storagePath: string | undefined;
       try {
         const uploaded = await uploadReportPhoto({
           inspectionId,
           photoId: id,
-          file: pending.file,
+          file,
         });
         url = uploaded.url;
         storagePath = uploaded.storagePath;
       } catch (uploadErr) {
         // Hotspot / offline: keep a local data URL so the job is not lost
         console.warn("[inspection photos] cloud upload failed, using local data URL", uploadErr);
-        url = await fileToDataUrl(pending.file);
+        url = await fileToDataUrl(file);
         toast.message("Saved on this device only", {
           description: "Cloud upload failed — photo will sync when storage is available from the report Photos tab.",
         });

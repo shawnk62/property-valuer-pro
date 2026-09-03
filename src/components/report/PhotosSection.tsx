@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
-import { fileToDataUrl } from "@/lib/report/photo-data";
+import { fileToDataUrl, preparePhotoForReport } from "@/lib/report/photo-data";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import { nowPhotoTimestamp } from "@/lib/inspection/photoRequirements";
 import { mapSlotsForImport, PHOTO_SLOTS, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
@@ -259,7 +259,8 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     markUploading(photoId, true);
 
     try {
-      const dataUrl = await fileToDataUrl(opts.file);
+      const file = await preparePhotoForReport(opts.file);
+      const dataUrl = await fileToDataUrl(file);
 
       setPhotos((prev) => {
         const entry: ReportPhoto = {
@@ -288,7 +289,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
         const { url, storagePath } = await uploadReportPhoto({
           inspectionId,
           photoId,
-          file: opts.file,
+          file,
         });
         setPhotos((prev) =>
           prev.map((p) =>

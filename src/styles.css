@@ -164,6 +164,17 @@
   line-height: 1.6;
 }
 
+/* Keep report photos in a light colour scheme so the UA does not
+   apply dark-mode image dimming to iPhone JPEGs. */
+.report-sheet,
+#report-preview-sheet {
+  color-scheme: only light;
+}
+.report-sheet img,
+#report-preview-sheet img {
+  color-scheme: only light;
+}
+
 @utility report-h1 {
   font-family: Arial, Helvetica, sans-serif;
   font-style: italic;

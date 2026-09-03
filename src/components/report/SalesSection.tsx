@@ -22,7 +22,7 @@ import {
   type Relativity,
 } from "@/lib/report/adjustmentGrid";
 import { extractTextFromPdf } from "@/lib/report/extractPdfText";
-import { dataUrlToFile, fileToDataUrl } from "@/lib/report/photo-data";
+import { dataUrlToFile, fileToDataUrl, preparePhotoForReport } from "@/lib/report/photo-data";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import {
   cmaExtractsToSales,
@@ -267,17 +267,16 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       return;
     }
     try {
-      // Instant local preview
-      const dataUrl = await fileToDataUrl(file);
+      const prepared = await preparePhotoForReport(file);
+      const dataUrl = await fileToDataUrl(prepared);
       setMeta({ salesMapUrl: dataUrl });
-      // Cloud upgrade so other devices (iPad/phone) see the same map
       try {
         const prevPath = draft.reportMeta.salesMapStoragePath;
         if (prevPath) await deleteReportPhoto(prevPath);
         const { url, storagePath } = await uploadReportPhoto({
           inspectionId: draft.inspectionId,
           photoId: "sales-map",
-          file,
+          file: prepared,
         });
         setMeta({ salesMapUrl: url, salesMapStoragePath: storagePath });
         toast.success("Sales map attached and synced");
@@ -510,7 +509,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       return;
     }
     try {
-      const dataUrl = await fileToDataUrl(file);
+      const prepared = await preparePhotoForReport(file);
+      const dataUrl = await fileToDataUrl(prepared);
       patchSale(saleId, { photoUrl: dataUrl });
       try {
         const existing = sales.find((s) => s.id === saleId);
@@ -520,7 +520,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         const { url, storagePath } = await uploadReportPhoto({
           inspectionId: draft.inspectionId,
           photoId: `sale-${saleId}-front`,
-          file,
+          file: prepared,
         });
         patchSale(saleId, { photoUrl: url, photoStoragePath: storagePath });
         toast.success("Front photo attached and synced");
