@@ -86,8 +86,21 @@ export function useEditLock(inspectionId: string | undefined): EditLockState {
 
     const heartbeat = window.setInterval(() => {
       const id = idRef.current;
-      if (!id || !heldRef.current) return;
-      void inspectionStore.heartbeatEditLock(id);
+      if (!id) return;
+      if (heldRef.current) {
+        void (async () => {
+          await inspectionStore.heartbeatEditLock(id);
+          const current = await inspectionStore.getEditLock(id);
+          const mine = getDeviceId();
+          if (current && current.deviceId && current.deviceId !== mine) {
+            heldRef.current = false;
+            setCanEdit(false);
+            setHeldBy(current);
+          }
+        })();
+        return;
+      }
+      void acquire(false);
     }, EDIT_LOCK_HEARTBEAT_MS);
 
     // Release only when leaving the page (not on camera / app switch — visibility

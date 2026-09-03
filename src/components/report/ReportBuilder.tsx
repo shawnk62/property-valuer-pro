@@ -167,9 +167,19 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
           canEdit={lock.canEdit}
           heldBy={lock.heldBy}
           setupRequired={lock.setupRequired}
-          onTakeOver={() => void lock.takeOver()}
+          onTakeOver={() => {
+            void lock.takeOver().then(() => {
+              toast.success("This device now has editing. You can change the report.");
+            });
+          }}
           onRefresh={() => void lock.refresh()}
         />
+        {lock.canEdit && reportSigned ? (
+          <div className="border-b border-amber-500/40 bg-amber-500/10 px-4 py-2 text-center text-sm text-foreground">
+            Signature is applied, so the report tabs are locked. Open the Signature tab and
+            remove the signature to edit.
+          </div>
+        ) : null}
       </div>
       <header className="no-print sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-3 sm:px-6">
