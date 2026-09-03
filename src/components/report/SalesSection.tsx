@@ -83,6 +83,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     | { x: number; y: number; kind: "sale"; saleId: string }
   >(null);
   const photoFileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const photoMenuTargetRef = useRef<"map" | { saleId: string } | null>(null);
   const fingerprintsRef = useRef<Record<string, string>>({});
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -393,6 +394,15 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     setPhotoMenu(null);
     // Defer so the menu unmounts before the file dialog opens
     requestAnimationFrame(() => photoFileInputRef.current?.click());
+  }
+
+  /** Must run in the same tap as the button click (iOS will ignore a deferred click). */
+  function openCamera(target: "map" | { saleId: string }) {
+    photoMenuTargetRef.current = target;
+    const input = cameraInputRef.current;
+    if (!input) return;
+    input.value = "";
+    input.click();
   }
 
   function onSalePhotoPaste(saleId: string, e: React.ClipboardEvent) {
@@ -1015,7 +1025,22 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         ref={photoFileInputRef}
         type="file"
         accept="image/*"
-        className="hidden"
+        className="sr-only"
+        onChange={(e) => {
+          const file = e.target.files?.[0] ?? null;
+          e.target.value = "";
+          const target = photoMenuTargetRef.current;
+          if (!file || !target) return;
+          if (target === "map") void onSalesMapFile(file);
+          else void onSalePhotoFile(target.saleId, file);
+        }}
+      />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="sr-only"
         onChange={(e) => {
           const file = e.target.files?.[0] ?? null;
           e.target.value = "";
@@ -1057,11 +1082,12 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                 </button>
               </div>
             ) : (
-              <label
+              <button
+                type="button"
                 tabIndex={0}
+                onClick={() => openCamera("map")}
                 onPaste={onSalesMapPaste}
                 onContextMenu={(e) => openPhotoMenu(e, "map")}
-                onMouseEnter={(e) => (e.currentTarget as HTMLElement).focus?.()}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={onSalesMapDrop}
                 className="flex h-28 w-44 cursor-pointer flex-col items-center justify-center rounded border border-dashed border-border bg-muted/30 text-center text-xs text-muted-foreground hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
@@ -1069,14 +1095,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
               >
                 <span>Tap to photograph map</span>
                 <span className="mt-0.5 text-[0.65rem] opacity-80">or paste / drop / library</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  className="hidden"
-                  onChange={(e) => void onSalesMapFile(e.target.files?.[0] ?? null)}
-                />
-              </label>
+              </button>
             )}
             {draft.reportMeta.salesMapUrl ? (
               <label
@@ -1127,48 +1146,32 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                     </button>
                   </div>
                 ) : (
-                  <label
+                  <button
+                    type="button"
                     tabIndex={0}
+                    onClick={() => openCamera({ saleId: sale.id })}
                     onPaste={(e) => onSalePhotoPaste(sale.id, e)}
                     onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
-                    onMouseEnter={(e) => (e.currentTarget as HTMLElement).focus?.()}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => onSalePhotoDrop(sale.id, e)}
-                    className="flex h-20 cursor-pointer flex-col items-center justify-center gap-0.5 rounded border border-dashed border-border text-xs text-muted-foreground hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    title="Click or hover, then ⌘V to paste — or right-click → Paste image"
+                    className="flex h-20 w-full cursor-pointer flex-col items-center justify-center gap-0.5 rounded border border-dashed border-border text-xs text-muted-foreground hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    title="Tap to open the camera, or paste / drop an image"
                   >
                     <span>Tap to photograph</span>
                     <span className="text-[0.65rem] opacity-80">or paste / drop / library</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      className="hidden"
-                      onChange={(e) =>
-                        void onSalePhotoFile(sale.id, e.target.files?.[0] ?? null)
-                      }
-                    />
-                  </label>
+                  </button>
                 )}
                 {sale.photoUrl ? (
-                  <label
-                    tabIndex={0}
+                  <button
+                    type="button"
+                    onClick={() => openCamera({ saleId: sale.id })}
                     onPaste={(e) => onSalePhotoPaste(sale.id, e)}
                     onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
-                    className="text-[0.65rem] text-primary cursor-pointer hover:underline focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    className="text-left text-[0.65rem] text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary/40"
                     title="Take or choose a new photo, or paste"
                   >
                     Replace / take photo
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      className="hidden"
-                      onChange={(e) =>
-                        void onSalePhotoFile(sale.id, e.target.files?.[0] ?? null)
-                      }
-                    />
-                  </label>
+                  </button>
                 ) : null}
               </div>
             ))}
