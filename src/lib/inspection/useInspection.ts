@@ -15,6 +15,8 @@ const MIRRORED_FIELDS: Record<string, string> = {
   insp_date: "sign_date",
   /** Default instructing party to registered owner; user may overwrite. */
   prop_owner: "instr_from_name",
+  /** Usable site area defaults to Site Area until overwritten. */
+  prop_sitearea: "prop_usable_sitearea",
 };
 
 function asText(v: InspectionValues[string]): string {

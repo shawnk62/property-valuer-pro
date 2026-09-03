@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": 40,
+  "version": 41,
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -213,6 +213,13 @@
           "label": "Site Area",
           "type": "text",
           "multiline": false
+        },
+        {
+          "name": "prop_usable_sitearea",
+          "label": "Estimated usable site area",
+          "type": "text",
+          "multiline": false,
+          "help": "Defaults to Site Area. Overwrite if usable area differs (easements, battle-axe handle, flood, etc.). Used for the sales grid site figure."
         },
         {
           "name": "prop_areaunit",

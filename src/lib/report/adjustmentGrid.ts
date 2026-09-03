@@ -117,7 +117,7 @@ export const ADJUSTMENT_FEATURES: AdjustmentFeature[] = [
   { id: "dateOfSale", label: "Date of Sale/Time" },
   { id: "location", label: "Location" },
   { id: "leasehold", label: "Leasehold/Fee Simple" },
-  { id: "site", label: "Site", subjectKeys: ["prop_sitearea", "prop_areaunit", "prop_shape", "prop_lot_position"] },
+  { id: "site", label: "Site", subjectKeys: ["prop_usable_sitearea", "prop_sitearea", "prop_areaunit", "prop_shape", "prop_lot_position"] },
   { id: "topography", label: "Topography", subjectKeys: ["topo"] },
   { id: "view", label: "View" },
   { id: "design", label: "Design (Style)", subjectKeys: ["imp_design", "ext"] },
@@ -289,7 +289,8 @@ export function subjectFeatureDisplay(
   }
 
   if (feature.id === "site") {
-    const area = values["prop_sitearea"];
+    const usable = values["prop_usable_sitearea"];
+    const area = String(usable ?? "").trim() || values["prop_sitearea"];
     const unit = values["prop_areaunit"];
     const shape = values["prop_shape"];
     const lotPos = values["prop_lot_position"];
@@ -388,6 +389,21 @@ export function parseAreaNumber(raw: string | number | null | undefined): number
   if (!m) return null;
   const n = Number(m[1]);
   return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Subject site figure for the adjustment grid:
+ * grid override, then estimated usable, then title site area.
+ */
+export function subjectSiteAreaRaw(
+  values: InspectionValues,
+  override?: string | null,
+): string {
+  const fromGrid = String(override ?? "").trim();
+  if (fromGrid) return fromGrid;
+  const usable = String(values["prop_usable_sitearea"] ?? "").trim();
+  if (usable) return usable;
+  return String(values["prop_sitearea"] ?? "").trim();
 }
 
 /** Parse a rate entered as "2500" or "$2,500". */
@@ -493,9 +509,10 @@ function saleFeatureDetail(
 export function applyQuantitativeRelativity(
   sales: ComparableSale[],
   values: InspectionValues,
+  subjectSiteOverride?: string | null,
 ): ComparableSale[] {
   const subjectGla = parseAreaNumber(values["imp_gla"]);
-  const subjectSite = parseAreaNumber(values["prop_sitearea"]);
+  const subjectSite = parseAreaNumber(subjectSiteAreaRaw(values, subjectSiteOverride));
   const subjectBaths = parseCountNumber(values["imp_baths"] as string | number | null | undefined);
   const subjectCars =
     parseCountNumber(values["area_garage"] as string | number | null | undefined) ??
@@ -559,13 +576,14 @@ export function applyAreaRateAdjustments(
   values: InspectionValues,
   glaRateRaw: string | null | undefined,
   siteRateRaw: string | null | undefined,
+  subjectSiteOverride?: string | null,
 ): ComparableSale[] {
   const glaRate = parseRateInput(glaRateRaw);
   const siteRate = parseRateInput(siteRateRaw);
   if (glaRate == null && siteRate == null) return sales;
 
   const subjectGla = parseAreaNumber(values["imp_gla"]);
-  const subjectSite = parseAreaNumber(values["prop_sitearea"]);
+  const subjectSite = parseAreaNumber(subjectSiteAreaRaw(values, subjectSiteOverride));
 
   return sales.map((sale) => {
     const ensured = ensureSaleAdjustments(sale);

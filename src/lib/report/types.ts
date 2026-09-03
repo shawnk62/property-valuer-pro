@@ -163,6 +163,8 @@ export interface ReportMeta {
    * Adjustment = round_to_1000(rate × (subject site − comparable site)).
    */
   siteRatePerM2?: string;
+  /** Override of the subject site area used on the adjustment grid. */
+  subjectSiteArea?: string;
   /** Subject-column description for the first Other adjustment row. */
   subjectOther1?: string;
   /** Subject-column description for the second Other adjustment row. */

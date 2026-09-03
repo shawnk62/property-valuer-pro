@@ -18,6 +18,7 @@ import {
   relativitySelectClass,
   salePricePerGla,
   subjectFeatureDisplay,
+  subjectSiteAreaRaw,
   type Relativity,
 } from "@/lib/report/adjustmentGrid";
 import { extractTextFromPdf } from "@/lib/report/extractPdfText";
@@ -170,14 +171,35 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       deduped.push(s);
     }
     const ensured = deduped.map(ensureSaleAdjustments);
-    const withQuant = applyQuantitativeRelativity(ensured, draft.values);
+    const withQuant = applyQuantitativeRelativity(
+      ensured,
+      draft.values,
+      draft.reportMeta.subjectSiteArea,
+    );
     const withRates = applyAreaRateAdjustments(
       withQuant,
       draft.values,
       draft.reportMeta.glaRatePerM2,
       draft.reportMeta.siteRatePerM2,
+      draft.reportMeta.subjectSiteArea,
     );
     setSales(withRates);
+  }
+
+  function setSubjectSiteArea(raw: string) {
+    setMeta({ subjectSiteArea: raw });
+    const meta = { ...draft.reportMeta, subjectSiteArea: raw };
+    const ensured = sales.map(ensureSaleAdjustments);
+    const withQuant = applyQuantitativeRelativity(ensured, draft.values, raw);
+    setSales(
+      applyAreaRateAdjustments(
+        withQuant,
+        draft.values,
+        meta.glaRatePerM2,
+        meta.siteRatePerM2,
+        raw,
+      ),
+    );
   }
 
   function setAreaRate(kind: "gla" | "site", raw: string) {
@@ -186,13 +208,18 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     setMeta(patch);
     const meta = { ...draft.reportMeta, ...patch };
     const ensured = sales.map(ensureSaleAdjustments);
-    const withQuant = applyQuantitativeRelativity(ensured, draft.values);
+    const withQuant = applyQuantitativeRelativity(
+      ensured,
+      draft.values,
+      meta.subjectSiteArea,
+    );
     setSales(
       applyAreaRateAdjustments(
         withQuant,
         draft.values,
         meta.glaRatePerM2,
         meta.siteRatePerM2,
+        meta.subjectSiteArea,
       ),
     );
   }
@@ -1508,6 +1535,20 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                   placeholder="Describe other item…"
                                   className="w-full min-w-0 rounded border border-input bg-card px-1 py-0.5 text-[0.65rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
                                 />
+                              ) : isSite ? (
+                                <div className="space-y-1">
+                                  <input
+                                    value={subjectSiteAreaRaw(
+                                      draft.values,
+                                      draft.reportMeta.subjectSiteArea,
+                                    )}
+                                    onChange={(e) => setSubjectSiteArea(e.target.value)}
+                                    placeholder="Usable site area"
+                                    title="Subject site area used for $/m² adjustments. Defaults to estimated usable site area."
+                                    className="w-full min-w-0 rounded border border-input bg-card px-1 py-0.5 text-[0.65rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
+                                  />
+                                  <div>{subjectDisplay}</div>
+                                </div>
                               ) : (
                                 <div>{subjectDisplay}</div>
                               )}
