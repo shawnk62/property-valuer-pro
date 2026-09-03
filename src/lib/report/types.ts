@@ -72,6 +72,8 @@ export interface FeatureAdjustment {
   detail?: string;
   /** URAR + (-) $ Adjustment — signed dollars applied to the comparable. */
   amount: number;
+  /** When true, automatic site/GLA $ must not overwrite this amount. */
+  amountManual?: boolean;
 }
 
 export interface ComparableSale {

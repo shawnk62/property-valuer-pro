@@ -96,6 +96,8 @@ export interface FeatureAdjustment {
   detail?: string;
   /** URAR + (-) $ Adjustment — sits beside description, not below. */
   amount: number;
+  /** When true, site/GLA rate math must not overwrite amount. */
+  amountManual?: boolean;
 }
 
 export interface AdjustmentFeature {
@@ -190,6 +192,7 @@ export function ensureSaleAdjustments(sale: ComparableSale): ComparableSale {
         typeof existing?.amount === "number" && Number.isFinite(existing.amount)
           ? existing.amount
           : 0,
+      ...(existing?.amountManual ? { amountManual: true } : {}),
     };
   }
   return { ...sale, adjustments };
@@ -580,7 +583,7 @@ export function applyAreaRateAdjustments(
           adjustments.grossLivingArea = {
             ...cur,
             detail: cur.detail?.trim() ? cur.detail : detail,
-            amount: computeAreaAdjustment(glaRate, subjectGla, compGla),
+            amount: cur.amountManual ? cur.amount : computeAreaAdjustment(glaRate, subjectGla, compGla),
             relativity: keepManual ? cur.relativity : autoRel,
           };
         }
@@ -594,13 +597,14 @@ export function applyAreaRateAdjustments(
         const cur = adjustments.site ?? defaultFeatureAdjustment();
         {
           const autoRel = relativityFromQuantity(subjectSite, compSite);
-          const keepManual =
+          const keepManualRel =
             cur.relativity !== "similar" && cur.relativity !== DEFAULT_RELATIVITY;
+          const autoAmount = computeAreaAdjustment(siteRate, subjectSite, compSite);
           adjustments.site = {
             ...cur,
             detail: cur.detail?.trim() ? cur.detail : detail,
-            amount: computeAreaAdjustment(siteRate, subjectSite, compSite),
-            relativity: keepManual ? cur.relativity : autoRel,
+            amount: cur.amountManual ? cur.amount : autoAmount,
+            relativity: keepManualRel ? cur.relativity : autoRel,
           };
         }
       }

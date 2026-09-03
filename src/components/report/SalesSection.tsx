@@ -1614,6 +1614,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                         if (parsed !== null) {
                                           patchAdjustment(sale.id, feature.id, {
                                             amount: parsed,
+                                            ...(feature.id === "site" ||
+                                            feature.id === "grossLivingArea"
+                                              ? { amountManual: true }
+                                              : {}),
                                           });
                                         }
                                       }}
@@ -1629,18 +1633,40 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                         const parsed = parseAmountInput(raw);
                                         patchAdjustment(sale.id, feature.id, {
                                           amount: parsed ?? 0,
+                                          ...(feature.id === "site" ||
+                                          feature.id === "grossLivingArea"
+                                            ? { amountManual: true }
+                                            : {}),
                                         });
                                       }}
                                       title={
-                                        rateActive
-                                          ? "Auto-filled from $/m² rate when rate/area changes — you can still override (negative = inferior to subject)"
-                                          : "Dollar adjustment (use leading − for negative)"
+                                        adj.amountManual
+                                          ? "Manual override — automatic $/m² will not change this figure"
+                                          : rateActive
+                                            ? "Auto-filled from $/m² rate. Type a figure to override."
+                                            : "Dollar adjustment (use leading − for negative)"
                                       }
                                       className={adjustmentAmountClass(
                                         adj.amount,
                                         amountDrafts[`${sale.id}:${feature.id}`],
                                       )}
                                     />
+                                    {adj.amountManual &&
+                                    (feature.id === "site" ||
+                                      feature.id === "grossLivingArea") ? (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          patchAdjustment(sale.id, feature.id, {
+                                            amountManual: false,
+                                          })
+                                        }
+                                        className="mt-0.5 text-[0.6rem] font-medium text-primary hover:underline"
+                                        title="Recalculate from the $/m² rate"
+                                      >
+                                        Use auto $
+                                      </button>
+                                    ) : null}
                                   </td>
                                 </Fragment>
                               );
