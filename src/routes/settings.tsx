@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PROVIDERS, type AiProviderId } from "@/lib/ai/types";
 import { testAiConnection } from "@/lib/ai/ai.functions";
 import { defaultSettings, loadAiSettings, saveAiSettings } from "@/lib/ai/settings";
+import { loadGoogleMapsKey, saveGoogleMapsKey } from "@/lib/maps/googleSettings";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -37,6 +38,8 @@ function SettingsScreen() {
   const [baseUrl, setBaseUrl] = useState(initial.baseUrl ?? "");
   const [showKey, setShowKey] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [mapsKey, setMapsKey] = useState(() => loadGoogleMapsKey());
+  const [showMapsKey, setShowMapsKey] = useState(false);
 
   const meta = PROVIDERS.find((p) => p.id === provider)!;
   const showBaseUrl = meta.requiresBaseUrl || provider === "xai" || provider === "custom";
@@ -251,6 +254,46 @@ function SettingsScreen() {
                 Save settings
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="font-serif">Google Maps</CardTitle>
+            <CardDescription>
+              Used to geocode the subject and comparables and to build the labelled sales map.
+              Enable Maps JavaScript API, Geocoding API and Maps Static API on the key. Restrict
+              the key to this site. Stored in this browser only.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="mapsKey">API key</Label>
+              <Input
+                id="mapsKey"
+                type={showMapsKey ? "text" : "password"}
+                value={mapsKey}
+                onChange={(e) => setMapsKey(e.target.value)}
+                autoComplete="off"
+              />
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => setShowMapsKey((s) => !s)}
+              >
+                {showMapsKey ? "Hide key" : "Show key"}
+              </button>
+            </div>
+            <Button
+              type="button"
+              onClick={() => {
+                saveGoogleMapsKey(mapsKey);
+                toast.success("Google Maps key saved");
+              }}
+            >
+              <Save className="size-4" />
+              Save Maps key
+            </Button>
           </CardContent>
         </Card>
 

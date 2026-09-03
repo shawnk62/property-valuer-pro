@@ -1,6 +1,9 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
+import { SalesMapEditor } from "@/components/report/SalesMapEditor";
+import { isGoogleMapsConfigured } from "@/lib/maps/googleSettings";
+import type { SalesMapPin } from "@/lib/maps/salesMapPins";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import { extractComparableSales, generateSaleNarrative } from "@/lib/ai/ai.functions";
 import { isAiConfigured, loadAiSettings } from "@/lib/ai/settings";
@@ -439,6 +442,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   }
 
   const [photoSourceOpen, setPhotoSourceOpen] = useState(false);
+  const [mapEditorOpen, setMapEditorOpen] = useState(false);
 
   function openPhotoSource(target: "map" | { saleId: string }) {
     photoMenuTargetRef.current = target;
@@ -1165,6 +1169,19 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         onCamera={() => clickSalePhotoInput("camera")}
         onLibrary={() => clickSalePhotoInput("library")}
       />
+      <SalesMapEditor
+        open={mapEditorOpen}
+        values={draft.values}
+        sales={sales}
+        savedPins={(draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null}
+        onClose={() => setMapEditorOpen(false)}
+        onApply={async ({ file, pins }) => {
+          await onSalesMapFile(file);
+          setMeta({ salesMapPins: pins });
+          setMapEditorOpen(false);
+          toast.success("Sales map applied to the report");
+        }}
+      />
       <input
         ref={cameraInputRef}
         type="file"
@@ -1186,16 +1203,29 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         <div>
           <h4 className="text-sm font-semibold text-foreground">Sales map &amp; front photos</h4>
           <p className="mt-1 text-xs text-muted-foreground">
-            Attach the Cotality sales map and each comparable&apos;s front elevation using the
-            photo slots below. On a phone or iPad, tap a slot to open the camera; you can also
-            paste (⌘V / Ctrl+V or right-click), drop an image file, or choose from the library.
-            These appear in the adjustment grid and in §12 Sales Evidence (Preview and Word).
+            Generate a labelled Google map of the subject and comparables, or attach a Cotality
+            map by hand. Front photos use the slots below. The map appears in §12 Sales Evidence.
           </p>
         </div>
 
         <div className="flex flex-wrap items-start gap-4">
           <div className="space-y-2">
-            <p className="text-xs font-medium text-foreground">Sales map</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-xs font-medium text-foreground">Sales map</p>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isGoogleMapsConfigured()) {
+                    toast.error("Add a Google Maps API key in Settings first");
+                    return;
+                  }
+                  setMapEditorOpen(true);
+                }}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent"
+              >
+                Generate / edit map
+              </button>
+            </div>
             {draft.reportMeta.salesMapUrl ? (
               <div className="relative inline-block">
                 <img

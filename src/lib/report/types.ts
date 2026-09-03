@@ -175,6 +175,17 @@ export interface ReportMeta {
   salesMapUrl?: string;
   /** Supabase Storage path for salesMapUrl when uploaded. */
   salesMapStoragePath?: string;
+  /** Editable pin set used to rebuild the Google sales map. */
+  salesMapPins?: Array<{
+    id: string;
+    label: string;
+    shortLabel: string;
+    lat: number;
+    lng: number;
+    kind: "subject" | "sale" | "custom";
+    saleId?: string;
+    address?: string;
+  }>;
 }
 
 export interface ReportDraft {
