@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import { extractComparableSales, generateSaleNarrative } from "@/lib/ai/ai.functions";
 import { isAiConfigured, loadAiSettings } from "@/lib/ai/settings";
@@ -437,10 +438,16 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     requestAnimationFrame(() => photoFileInputRef.current?.click());
   }
 
-  /** Must run in the same tap as the button click (iOS will ignore a deferred click). */
-  function openCamera(target: "map" | { saleId: string }) {
+  const [photoSourceOpen, setPhotoSourceOpen] = useState(false);
+
+  function openPhotoSource(target: "map" | { saleId: string }) {
     photoMenuTargetRef.current = target;
-    const input = cameraInputRef.current;
+    setPhotoSourceOpen(true);
+  }
+
+  /** Must run in the same tap as the sheet button (iOS ignores a deferred click). */
+  function clickSalePhotoInput(which: "camera" | "library") {
+    const input = which === "camera" ? cameraInputRef.current : photoFileInputRef.current;
     if (!input) return;
     input.value = "";
     input.click();
@@ -1151,6 +1158,13 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           else void onSalePhotoFile(target.saleId, file);
         }}
       />
+      <PhotoSourceSheet
+        open={photoSourceOpen}
+        title="Comparable photo"
+        onClose={() => setPhotoSourceOpen(false)}
+        onCamera={() => clickSalePhotoInput("camera")}
+        onLibrary={() => clickSalePhotoInput("library")}
+      />
       <input
         ref={cameraInputRef}
         type="file"
@@ -1201,7 +1215,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
               <button
                 type="button"
                 tabIndex={0}
-                onClick={() => openCamera("map")}
+                onClick={() => openPhotoSource("map")}
                 onPaste={onSalesMapPaste}
                 onContextMenu={(e) => openPhotoMenu(e, "map")}
                 onDragOver={(e) => e.preventDefault()}
@@ -1209,8 +1223,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                 className="flex h-28 w-44 cursor-pointer flex-col items-center justify-center rounded border border-dashed border-border bg-muted/30 text-center text-xs text-muted-foreground hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
                 title="Tap to photograph map, or paste / drop"
               >
-                <span>Tap to photograph map</span>
-                <span className="mt-0.5 text-[0.65rem] opacity-80">or paste / drop / library</span>
+                <span>Tap for camera or library</span>
+                <span className="mt-0.5 text-[0.65rem] opacity-80">or paste / drop</span>
               </button>
             )}
             {draft.reportMeta.salesMapUrl ? (
@@ -1265,7 +1279,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                   <button
                     type="button"
                     tabIndex={0}
-                    onClick={() => openCamera({ saleId: sale.id })}
+                    onClick={() => openPhotoSource({ saleId: sale.id })}
                     onPaste={(e) => onSalePhotoPaste(sale.id, e)}
                     onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
                     onDragOver={(e) => e.preventDefault()}
@@ -1273,14 +1287,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                     className="flex h-20 w-full cursor-pointer flex-col items-center justify-center gap-0.5 rounded border border-dashed border-border text-xs text-muted-foreground hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
                     title="Tap to open the camera, or paste / drop an image"
                   >
-                    <span>Tap to photograph</span>
-                    <span className="text-[0.65rem] opacity-80">or paste / drop / library</span>
+                    <span>Tap for camera or library</span>
+                    <span className="text-[0.65rem] opacity-80">or paste / drop</span>
                   </button>
                 )}
                 {sale.photoUrl ? (
                   <button
                     type="button"
-                    onClick={() => openCamera({ saleId: sale.id })}
+                    onClick={() => openPhotoSource({ saleId: sale.id })}
                     onPaste={(e) => onSalePhotoPaste(sale.id, e)}
                     onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
                     className="text-left text-[0.65rem] text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary/40"

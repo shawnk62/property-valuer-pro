@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, Check, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { inspectionStore } from "@/lib/inspection/storage";
 import { fileToDataUrl, preparePhotoForReport } from "@/lib/report/photo-data";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
@@ -93,7 +94,9 @@ export function InspectionPhotosPanel({
   const [saving, setSaving] = useState(false);
   /** Empty extra slots waiting for a photo — label is editable before capture. */
   const [draftExtras, setDraftExtras] = useState<Array<{ id: string; label: string }>>([]);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const libraryInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [sourceOpen, setSourceOpen] = useState(false);
   const captureTargetRef = useRef<{
     slot: PhotoSlot | null;
     replaceId?: string;
@@ -130,14 +133,18 @@ export function InspectionPhotosPanel({
 
   const extras = photos.filter((p) => p.slot === null && p.url);
 
-  function openCamera(opts: {
+  function openSourcePicker(opts: {
     slot: PhotoSlot | null;
     replaceId?: string;
     caption: string;
     draftId?: string;
   }) {
     captureTargetRef.current = opts;
-    const input = fileRef.current;
+    setSourceOpen(true);
+  }
+
+  function clickPhotoInput(which: "camera" | "library") {
+    const input = which === "camera" ? cameraInputRef.current : libraryInputRef.current;
     if (!input) return;
     input.value = "";
     input.click();
@@ -295,7 +302,7 @@ export function InspectionPhotosPanel({
                 <button
                   type="button"
                   onClick={() =>
-                    openCamera({
+                    openSourcePicker({
                       slot,
                       replaceId: photo?.id,
                       caption: photo?.caption || label,
@@ -312,7 +319,7 @@ export function InspectionPhotosPanel({
                   ) : (
                     <span className="flex flex-col items-center gap-2 px-4 text-center">
                       <Camera className="size-6 opacity-70" />
-                      Tap to photograph
+                      Tap for camera or library
                     </span>
                   )}
                 </button>
@@ -361,7 +368,7 @@ export function InspectionPhotosPanel({
               <button
                 type="button"
                 onClick={() =>
-                  openCamera({
+                  openSourcePicker({
                     slot: null,
                     replaceId: photo.id,
                     caption: photo.caption.trim() || "Extra photo",
@@ -407,7 +414,7 @@ export function InspectionPhotosPanel({
               <button
                 type="button"
                 onClick={() =>
-                  openCamera({
+                  openSourcePicker({
                     slot: null,
                     caption: draft.label.trim() || "Extra photo",
                     draftId: draft.id,
@@ -434,18 +441,35 @@ export function InspectionPhotosPanel({
         </div>
       )}
 
-      {/* Hidden camera / file input — capture prefers rear camera on phones/tablets */}
       <input
-        ref={fileRef}
+        ref={libraryInputRef}
         type="file"
         accept="image/*"
-        capture="environment"
-        className="hidden"
+        className="sr-only"
         onChange={(e) => {
           const file = e.target.files?.[0] ?? null;
           onFileSelected(file);
           e.target.value = "";
         }}
+      />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="sr-only"
+        onChange={(e) => {
+          const file = e.target.files?.[0] ?? null;
+          onFileSelected(file);
+          e.target.value = "";
+        }}
+      />
+      <PhotoSourceSheet
+        open={sourceOpen}
+        title="Add photo"
+        onClose={() => setSourceOpen(false)}
+        onCamera={() => clickPhotoInput("camera")}
+        onLibrary={() => clickPhotoInput("library")}
       />
 
       {/* Review before save */}
