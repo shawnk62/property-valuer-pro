@@ -24,7 +24,7 @@ import { parseOverlayList } from "@/lib/report/overlays";
 import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
 import { get, hasValue, joinValues, labelFor } from "@/lib/report/schema";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
-import { MAP_SLOTS, PHOTO_SLOTS, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
+import { MAP_SLOTS, PHOTO_SLOTS, salesOnReport, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
 
 /** A4 (matches Australian report paper). */
 const PAGE_WIDTH = 11906;
@@ -196,7 +196,7 @@ const TOC_ENTRIES: TocEntry[] = [
 function sectionHasContent(entry: TocEntry, draft: ReportDraft): boolean {
   if (entry.always) return true;
   if (entry.requireSales) {
-    return draft.sales.some(
+    return salesOnReport(draft.sales).some(
       (s) => s.address.trim() || s.saleDate.trim() || s.salePrice.trim() || s.landArea.trim() || s.comments.trim(),
     );
   }
@@ -705,7 +705,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
 
   // ---- 12 ----
   children.push(sectionHeading("12.", "Sales Evidence"));
-  const sales = draft.sales.filter(
+  const sales = salesOnReport(draft.sales).filter(
     (s) => s.address.trim() || s.salePrice.trim() || s.saleDate.trim(),
   );
   if (sales.length === 0) {
@@ -842,13 +842,13 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
       (draft.narrative.remarks && draft.narrative.remarks.trim()) ||
       (assignment.includes("murray")
         ? buildMurrayRemarks(v, {
-            salesCount: Array.isArray(draft.sales) ? draft.sales.length : 0,
+            salesCount: sales.length,
             valueAmount: m.valueAmount,
             brief: draft.narrative.brief,
           })
         : assignment.includes("phil")
           ? buildPhilRemarks(v, {
-              salesCount: Array.isArray(draft.sales) ? draft.sales.length : 0,
+              salesCount: sales.length,
               valueAmount: m.valueAmount,
               brief: draft.narrative.brief,
             })
@@ -917,7 +917,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     ...draft.photos.filter((ph) => ph.slot === null && ph.kind === "map" && ph.url),
   ] as typeof draft.photos;
 
-  const salesWithPhotos = draft.sales.filter((s) => s.photoUrl);
+  const salesWithPhotos = salesOnReport(draft.sales).filter((s) => s.photoUrl);
 
   async function pushImageAnnex(
     photo: { id: string; url: string; caption?: string; slot?: string | null },
@@ -965,8 +965,8 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
           after: 160,
         }),
       );
-      for (let i = 0; i < draft.sales.length; i++) {
-        const s = draft.sales[i]!;
+      for (let i = 0; i < salesWithPhotos.length; i++) {
+        const s = salesWithPhotos[i]!;
         if (!s.photoUrl) continue;
         await pushImageAnnex(
           {

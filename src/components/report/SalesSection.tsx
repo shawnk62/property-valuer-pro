@@ -40,6 +40,7 @@ import {
 } from "@/lib/report/saleNarrative";
 import { formatCurrencyDisplay, withRelativityNarrative } from "@/lib/report/salesRelativity";
 import type { ComparableSale, FeatureAdjustment } from "@/lib/report/types";
+import { salesHeldBack, salesOnReport } from "@/lib/report/types";
 
 function emptySale(): ComparableSale {
   return ensureSaleAdjustments({
@@ -65,6 +66,8 @@ function parseAmountInput(raw: string): number | null {
 export function SalesSection({ controller }: { controller: ReportDraftController }) {
   const { draft, setSales, setMeta } = controller;
   const sales = draft.sales.map(ensureSaleAdjustments);
+  const gridSales = salesOnReport(sales);
+  const heldSales = salesHeldBack(sales);
   const fileRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
   const [cmaPaste, setCmaPaste] = useState("");
@@ -134,15 +137,23 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   }
 
   function moveSale(id: string, direction: -1 | 1) {
+    const visible = salesOnReport(sales);
+    const visibleIndex = visible.findIndex((s) => s.id === id);
+    if (visibleIndex < 0) return;
+    const swapWith = visible[visibleIndex + direction];
+    if (!swapWith) return;
     const index = sales.findIndex((s) => s.id === id);
-    if (index < 0) return;
-    const nextIndex = index + direction;
-    if (nextIndex < 0 || nextIndex >= sales.length) return;
+    const nextIndex = sales.findIndex((s) => s.id === swapWith.id);
+    if (index < 0 || nextIndex < 0) return;
     const next = [...sales];
     const current = next[index]!;
     next[index] = next[nextIndex]!;
     next[nextIndex] = current;
     replaceSales(next);
+  }
+
+  function setOmitFromReport(id: string, omit: boolean) {
+    replaceSales(sales.map((s) => (s.id === id ? { ...s, omitFromReport: omit } : s)));
   }
 
   function replaceSales(next: ComparableSale[]) {
@@ -1117,9 +1128,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           </div>
         </div>
 
-        {sales.length > 0 ? (
+        {gridSales.length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {sales.map((sale, idx) => (
+            {gridSales.map((sale, idx) => (
               <div
                 key={sale.id}
                 className="rounded border border-border bg-background p-2 space-y-1.5"
@@ -1183,9 +1194,13 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         )}
       </div>
 
-      {sales.length === 0 ? (
+      {gridSales.length === 0 ? (
         <div className="rounded-md border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
-          <p>No comparable sales yet. Import a Cotality CMA PDF or add one by hand.</p>
+          <p>
+            {heldSales.length > 0
+              ? "No comparables are on the report. Restore one from the working file below, or add a sale."
+              : "No comparable sales yet. Import a Cotality CMA PDF or add one by hand."}
+          </p>
           <button
             type="button"
             onClick={addBlankSale}
@@ -1197,9 +1212,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       ) : (
         (() => {
           const COMPS_PER_GRID = 3;
-          const chunks: (typeof sales)[] = [];
-          for (let i = 0; i < sales.length; i += COMPS_PER_GRID) {
-            chunks.push(sales.slice(i, i + COMPS_PER_GRID));
+          const chunks: (typeof gridSales)[] = [];
+          for (let i = 0; i < gridSales.length; i += COMPS_PER_GRID) {
+            chunks.push(gridSales.slice(i, i + COMPS_PER_GRID));
           }
           return (
             <div className="space-y-6">
@@ -1316,7 +1331,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                       </button>
                                       <button
                                         type="button"
-                                        disabled={startNum + idx === sales.length - 1}
+                                        disabled={startNum + idx === gridSales.length - 1}
                                         onClick={() => moveSale(sale.id, 1)}
                                         className="rounded px-1 text-[0.65rem] text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-30"
                                         aria-label="Move sale right"
@@ -1331,12 +1346,22 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                         replaceSales(sales.filter((s) => s.id !== sale.id))
                                       }
                                       className="text-muted-foreground hover:text-destructive"
-                                      aria-label="Remove sale"
+                                      aria-label="Remove sale from working file"
+                                      title="Delete from working file"
                                     >
                                       &times;
                                     </button>
                                   </div>
                                 </div>
+                                <label className="mt-1.5 flex items-start gap-1.5 text-[0.65rem] font-normal text-foreground">
+                                  <input
+                                    type="checkbox"
+                                    checked={sale.omitFromReport === true}
+                                    onChange={(e) => setOmitFromReport(sale.id, e.target.checked)}
+                                    className="mt-0.5 size-3.5 shrink-0 rounded border-input"
+                                  />
+                                  <span>Hold in working file (omit from report)</span>
+                                </label>
                               </th>
                             );
                           })}
@@ -1830,6 +1855,62 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           );
         })()
       )}
+
+      {heldSales.length > 0 ? (
+        <div className="rounded-md border border-dashed border-border bg-muted/20 p-4 space-y-3">
+          <div>
+            <h4 className="text-sm font-semibold text-foreground">
+              Working file — omitted from report
+            </h4>
+            <p className="mt-1 text-xs text-muted-foreground">
+              These comparables stay on the job with notes, photos and adjustments. They
+              are not printed and do not leave a gap in the grid. Tick Include on report
+              to put one back.
+            </p>
+          </div>
+          <ul className="space-y-2">
+            {heldSales.map((sale) => (
+              <li
+                key={sale.id}
+                className="flex flex-wrap items-start gap-3 rounded border border-border bg-card p-2"
+              >
+                {sale.photoUrl ? (
+                  <img
+                    src={sale.photoUrl}
+                    alt=""
+                    className="h-14 w-16 shrink-0 rounded border border-border object-cover"
+                  />
+                ) : null}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground">
+                    {sale.address.trim() || "Untitled comparable"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {[sale.saleDate, sale.salePrice, sale.landArea].filter(Boolean).join(" · ") ||
+                      "No sale facts entered"}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setOmitFromReport(sale.id, false)}
+                    className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                  >
+                    Include on report
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => replaceSales(sales.filter((s) => s.id !== sale.id))}
+                    className="rounded-md border border-input px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-destructive"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }

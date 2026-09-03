@@ -29,7 +29,7 @@ function hasSubjectOrSalePhotos(draft: ReportDraft): boolean {
     ),
     ...draft.photos.filter((p) => p.slot === null && p.url && p.kind !== "map"),
   ].some(Boolean);
-  const sales = draft.sales.some((s) => Boolean(s.photoUrl));
+  const sales = draft.sales.some((s) => s.omitFromReport !== true && Boolean(s.photoUrl));
   return subject || sales;
 }
 

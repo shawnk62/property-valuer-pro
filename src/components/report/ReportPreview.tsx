@@ -1,6 +1,6 @@
 import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { get, hasValue, joinValues, labelFor, pick } from "@/lib/report/schema";
-import { MAP_SLOTS, PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
+import { MAP_SLOTS, PHOTO_SLOTS, salesOnReport, type ReportDraft } from "@/lib/report/types";
 import {
   getReportTypeConfig,
   isMurrayReportType,
@@ -365,7 +365,7 @@ function sectionHasContent(
 ): boolean {
   if (entry.always) return true;
   if (entry.requireSales) {
-    return draft.sales.some(
+    return salesOnReport(draft.sales).some(
       (s) =>
         s.address.trim() ||
         s.saleDate.trim() ||
@@ -639,6 +639,7 @@ function formatCoverDate(raw: string | undefined | null): string {
 
 export function ReportPreview({ draft }: { draft: ReportDraft }) {
   const v = draft.values;
+  const printedSales = salesOnReport(draft.sales);
   const m = draft.reportMeta;
   const reportType = getReportTypeConfig(get(v, "prop_assignment"));
   const murray = isMurrayReportType(reportType.id);
@@ -1620,7 +1621,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
       {/* ---- 12. Sales evidence ---- */}
       <Section id="sec-sales" number={murray ? "9." : "12."} title="Sales Evidence">
-        {draft.sales.length === 0 ? (
+        {printedSales.length === 0 ? (
           <Para>No sales evidence has been recorded.</Para>
         ) : (
           <div className="space-y-6">
@@ -1653,7 +1654,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 </tr>
               </thead>
               <tbody>
-                {draft.sales.map((s, idx) => (
+                {printedSales.map((s, idx) => (
                   <tr key={s.id} className="align-top">
                     <td className="border border-[var(--rule)] px-2 py-1.5">
                       <div>{s.address}</div>
@@ -1692,13 +1693,13 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             (draft.narrative.remarks && draft.narrative.remarks.trim()) ||
             (isMurrayAssignment(v)
               ? buildMurrayRemarks(v, {
-                  salesCount: Array.isArray(draft.sales) ? draft.sales.length : 0,
+                  salesCount: printedSales.length,
                   valueAmount: m.valueAmount,
                   brief: draft.narrative.brief,
                 })
               : isPhilReportType(reportType.id)
                 ? buildPhilRemarks(v, {
-                    salesCount: Array.isArray(draft.sales) ? draft.sales.length : 0,
+                    salesCount: printedSales.length,
                     valueAmount: m.valueAmount,
                     brief: draft.narrative.brief,
                   })
@@ -1790,7 +1791,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       </Section>
 
       {/* ---- Photo annexure (only when images exist) ---- */}
-      {annexurePhotos.length > 0 || draft.sales.some((s) => s.photoUrl) ? (
+      {annexurePhotos.length > 0 || printedSales.some((s) => s.photoUrl) ? (
         <section id="report-annexure-photos" className="report-annexure mt-12">
           <h2 className="report-h1 text-center">{photosAnnex?.heading ?? "Annexure — Photographs"}</h2>
           <div className="mt-6 space-y-8">
@@ -1813,13 +1814,13 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               </div>
             ) : null}
 
-            {draft.sales.some((s) => s.photoUrl) ? (
+            {printedSales.some((s) => s.photoUrl) ? (
               <div className="space-y-6">
                 <h3 className="text-center text-sm font-semibold uppercase tracking-wide">
                   Comparable sales — front elevations
                 </h3>
                 <div className="grid gap-6 sm:grid-cols-2">
-                  {draft.sales.map((s, idx) =>
+                  {printedSales.map((s, idx) =>
                     s.photoUrl ? (
                       <figure key={s.id} className="report-photo-figure break-inside-avoid">
                         <img

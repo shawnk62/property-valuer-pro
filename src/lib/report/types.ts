@@ -113,6 +113,21 @@ export interface ComparableSale {
   photoUrl?: string;
   /** Supabase Storage path for photoUrl when uploaded. */
   photoStoragePath?: string;
+  /**
+   * When true, the sale stays in the working file (notes, photos, adjustments)
+   * but is omitted from the printed report and from the compact adjustment grid.
+   */
+  omitFromReport?: boolean;
+}
+
+/** Sales that print and appear in the compact grid. */
+export function salesOnReport(sales: ComparableSale[] | null | undefined): ComparableSale[] {
+  return (sales ?? []).filter((s) => s.omitFromReport !== true);
+}
+
+/** Sales held in the working file only. */
+export function salesHeldBack(sales: ComparableSale[] | null | undefined): ComparableSale[] {
+  return (sales ?? []).filter((s) => s.omitFromReport === true);
 }
 
 export interface ReportNarrative {
