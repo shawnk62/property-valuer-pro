@@ -1,6 +1,20 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+function geocodeVariants(address: string): string[] {
+  const a = address.replace(/\s+/g, " ").trim();
+  const out: string[] = [];
+  const add = (s: string) => {
+    const t = s.replace(/\s+/g, " ").trim();
+    if (t && !out.includes(t)) out.push(t);
+  };
+  add(a);
+  add(a.replace(/^(?:unit|u|apt|apartment|lot)\s*[\w]+\s*[/,-]\s*/i, ""));
+  add(a.replace(/^(\d+)\s*\/\s*/i, "$1 "));
+  if (!/australia/i.test(a)) add(`${a}, Australia`);
+  return out;
+}
+
 const Input = z.object({
   apiKey: z.string().min(8),
   size: z.string().default("640x640"),
@@ -13,7 +27,7 @@ const Input = z.object({
 
 const GeocodeInput = z.object({
   apiKey: z.string().min(8),
-  addresses: z.array(z.string().min(1)).min(1).max(40),
+  addresses: z.array(z.string().min(1)).min(1).max(80),
 });
 
 export const geocodeGoogleAddresses = createServerFn({ method: "POST" })
@@ -27,28 +41,40 @@ export const geocodeGoogleAddresses = createServerFn({ method: "POST" })
       error?: string;
     }> = [];
     for (const address of data.addresses) {
-      const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
-      url.searchParams.set("address", address);
-      url.searchParams.set("region", "au");
-      url.searchParams.set("key", data.apiKey.trim());
-      const res = await fetch(url);
-      const json = (await res.json()) as {
-        status?: string;
-        error_message?: string;
-        results?: Array<{ geometry?: { location?: { lat: number; lng: number } } }>;
-      };
-      const loc = json.results?.[0]?.geometry?.location;
-      if (json.status === "OK" && loc && Number.isFinite(loc.lat) && Number.isFinite(loc.lng)) {
-        results.push({ address, lat: loc.lat, lng: loc.lng, status: json.status });
-      } else {
-        results.push({
-          address,
-          lat: null,
-          lng: null,
+      const queries = geocodeVariants(address);
+      let placed: { lat: number; lng: number; status: string; error?: string } | null = null;
+      for (const query of queries) {
+        const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
+        url.searchParams.set("address", query);
+        url.searchParams.set("region", "au");
+        url.searchParams.set("components", "country:AU");
+        url.searchParams.set("key", data.apiKey.trim());
+        const res = await fetch(url);
+        const json = (await res.json()) as {
+          status?: string;
+          error_message?: string;
+          results?: Array<{ geometry?: { location?: { lat: number; lng: number } } }>;
+        };
+        const loc = json.results?.[0]?.geometry?.location;
+        if (json.status === "OK" && loc && Number.isFinite(loc.lat) && Number.isFinite(loc.lng)) {
+          placed = { lat: loc.lat, lng: loc.lng, status: json.status };
+          break;
+        }
+        placed = {
+          lat: NaN,
+          lng: NaN,
           status: json.status || `HTTP_${res.status}`,
           error: json.error_message,
-        });
+        };
+        if (json.status === "REQUEST_DENIED" || json.status === "OVER_QUERY_LIMIT") break;
       }
+      results.push({
+        address,
+        lat: placed && Number.isFinite(placed.lat) ? placed.lat : null,
+        lng: placed && Number.isFinite(placed.lng) ? placed.lng : null,
+        status: placed?.status || "ZERO_RESULTS",
+        error: placed?.error,
+      });
     }
     return { results };
   });

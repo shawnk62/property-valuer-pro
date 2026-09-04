@@ -15,6 +15,20 @@ export interface SalesMapPin {
   address?: string;
 }
 
+export function geocodeQueryForSale(address: string, values: InspectionValues): string {
+  let a = address.replace(/\s+/g, " ").trim();
+  if (!a) return "";
+  const hasLocality = /\b(QLD|NSW|VIC|WA|SA|TAS|NT|ACT)\b|\b\d{4}\b/i.test(a);
+  if (!hasLocality) {
+    const suburb = typeof values["prop_suburb"] === "string" ? values["prop_suburb"].trim() : "";
+    const state = typeof values["prop_state"] === "string" ? values["prop_state"].trim() : "QLD";
+    const pc = typeof values["prop_postcode"] === "string" ? values["prop_postcode"].trim() : "";
+    a = [a, suburb, state, pc].filter(Boolean).join(", ");
+  }
+  if (!/australia/i.test(a)) a = `${a}, Australia`;
+  return a;
+}
+
 export function subjectAddressLine(values: InspectionValues): string {
   const parts = [
     values["prop_address"],
@@ -55,17 +69,20 @@ export function pinsFromDraft(opts: {
     address: subjectAddr,
   });
 
-  printed.forEach((sale, i) => {
+  opts.sales.forEach((sale, i) => {
+    const addr = sale.address.trim();
+    if (!addr && sale.omitFromReport) return;
+    const printedIndex = printed.findIndex((s) => s.id === sale.id);
     const prev = bySale.get(sale.id);
     pins.push({
       id: prev?.id || `pin-sale-${sale.id}`,
-      label: `Comp ${i + 1}`,
-      shortLabel: shortSaleLabel(i),
+      label: printedIndex >= 0 ? `Comp ${printedIndex + 1}` : `Held ${i + 1}`,
+      shortLabel: printedIndex >= 0 ? shortSaleLabel(printedIndex) : "H",
       lat: prev?.lat ?? 0,
       lng: prev?.lng ?? 0,
       kind: "sale",
       saleId: sale.id,
-      address: sale.address.trim(),
+      address: addr ? geocodeQueryForSale(addr, opts.values) : "",
     });
   });
 

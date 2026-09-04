@@ -371,10 +371,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
               `Google geocoding ${denied.status}. Enable Geocoding API on this key.`,
           );
         }
-        const byAddress = new Map(geo.results.map((r) => [r.address, r]));
+        const byNeedId = new Map(need.map((p, i) => [p.id, geo.results[i]]));
         pins = pins.map((p) => {
-          if (!p.address) return p;
-          const hit = byAddress.get(p.address);
+          const hit = byNeedId.get(p.id);
           if (hit?.lat != null && hit.lng != null) {
             return { ...p, lat: hit.lat, lng: hit.lng };
           }
@@ -390,7 +389,12 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         );
       }
       const locationFile = await buildSubjectLocationMap({ apiKey: key, subject });
-      const salesPins = pins.filter((p) => !(p.lat === 0 && p.lng === 0));
+      const printedIds = new Set(gridSales.map((s) => s.id));
+      const salesPins = pins.filter(
+        (p) =>
+          !(p.lat === 0 && p.lng === 0) &&
+          (p.kind !== "sale" || (p.saleId && printedIds.has(p.saleId))),
+      );
       const salesFile = await buildComparableSalesMap({ apiKey: key, pins: salesPins });
       await attachLocationMap(locationFile);
       await onSalesMapFile(salesFile);
