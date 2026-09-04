@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import { fileToDataUrl, preparePhotoForReport } from "@/lib/report/photo-data";
+import { photoBlobKey, putPhotoBlob } from "@/lib/report/photo-idb";
+import { captureFilename, saveToDeviceGallery } from "@/lib/report/save-to-device";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import { nowPhotoTimestamp } from "@/lib/inspection/photoRequirements";
 import { mapSlotsForImport, PHOTO_SLOTS, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
@@ -259,7 +261,10 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     markUploading(photoId, true);
 
     try {
+      saveToDeviceGallery(opts.file, captureFilename(opts.slot || opts.caption || "photo"));
       const file = await preparePhotoForReport(opts.file);
+      const localKey = photoBlobKey(inspectionId, photoId);
+      await putPhotoBlob(localKey, file);
       const dataUrl = await fileToDataUrl(file);
 
       setPhotos((prev) => {
@@ -268,6 +273,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
           slot: opts.slot,
           caption: opts.caption,
           url: dataUrl,
+          localBlobKey: localKey,
           capturedAt: nowPhotoTimestamp(),
           ...(opts.kind ? { kind: opts.kind } : {}),
         };

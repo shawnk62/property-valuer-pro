@@ -35,6 +35,8 @@ import {
 } from "@/lib/report/adjustmentGrid";
 import { extractTextFromPdf } from "@/lib/report/extractPdfText";
 import { dataUrlToFile, fileToDataUrl, preparePhotoForReport } from "@/lib/report/photo-data";
+import { photoBlobKey, putPhotoBlob } from "@/lib/report/photo-idb";
+import { captureFilename, saveToDeviceGallery } from "@/lib/report/save-to-device";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import {
   cmaExtractsToSales,
@@ -633,9 +635,12 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       return;
     }
     try {
+      saveToDeviceGallery(file, captureFilename(`comp-${saleId}`));
       const prepared = await preparePhotoForReport(file);
+      const localKey = photoBlobKey(draft.inspectionId, `sale-${saleId}-front`);
+      await putPhotoBlob(localKey, prepared);
       const dataUrl = await fileToDataUrl(prepared);
-      patchSale(saleId, { photoUrl: dataUrl });
+      patchSale(saleId, { photoUrl: dataUrl, photoLocalKey: localKey });
       try {
         const existing = sales.find((s) => s.id === saleId);
         if (existing?.photoStoragePath) {

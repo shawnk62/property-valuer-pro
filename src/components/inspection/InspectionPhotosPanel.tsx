@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { inspectionStore } from "@/lib/inspection/storage";
 import { fileToDataUrl, preparePhotoForReport } from "@/lib/report/photo-data";
+import { objectUrlFromPhotoBlob, photoBlobKey, putPhotoBlob } from "@/lib/report/photo-idb";
+import { captureFilename, saveToDeviceGallery } from "@/lib/report/save-to-device";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import { formatPhotoTimestamp, nowPhotoTimestamp } from "@/lib/inspection/photoRequirements";
 import { PHOTO_SLOTS, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
@@ -23,22 +25,40 @@ function newPhotoId(): string {
 async function loadPhotos(inspectionId: string): Promise<ReportPhoto[]> {
   try {
     const extras = await inspectionStore.getReportExtras(inspectionId);
-    const list = extras?.photos;
-    if (!Array.isArray(list)) return [];
-    return list
-      .filter((p) => p && typeof p === "object" && typeof (p as ReportPhoto).url === "string")
-      .map((p) => {
-        const raw = p as ReportPhoto;
-        return {
-          id: String(raw.id || newPhotoId()),
-          slot: (raw.slot as PhotoSlot | null) ?? null,
-          caption: String(raw.caption || ""),
-          url: String(raw.url || ""),
-          ...(raw.storagePath ? { storagePath: String(raw.storagePath) } : {}),
-          ...(raw.capturedAt ? { capturedAt: String(raw.capturedAt) } : {}),
-        };
-      })
-      .filter((p) => p.url);
+    const cloud = Array.isArray(extras?.photos) ? extras!.photos : [];
+    let local: ReportPhoto[] = [];
+    try {
+      const raw = window.localStorage.getItem(`report-draft:${inspectionId}`);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { photos?: ReportPhoto[] };
+        if (Array.isArray(parsed.photos)) local = parsed.photos;
+      }
+    } catch {
+      /* ignore */
+    }
+    const byId = new Map<string, ReportPhoto>();
+    for (const raw of [...local, ...cloud]) {
+      if (!raw || typeof raw !== "object") continue;
+      const id = String(raw.id || newPhotoId());
+      byId.set(id, {
+        id,
+        slot: (raw.slot as PhotoSlot | null) ?? null,
+        caption: String(raw.caption || ""),
+        url: String(raw.url || ""),
+        ...(raw.storagePath ? { storagePath: String(raw.storagePath) } : {}),
+        ...(raw.capturedAt ? { capturedAt: String(raw.capturedAt) } : {}),
+        ...(raw.localBlobKey ? { localBlobKey: String(raw.localBlobKey) } : {}),
+      });
+    }
+    const merged = [...byId.values()];
+    return Promise.all(
+      merged.map(async (p) => {
+        if (p.url && (/^https?:\/\//i.test(p.url) || p.url.startsWith("data:image/"))) return p;
+        const key = p.localBlobKey || photoBlobKey(inspectionId, p.id);
+        const url = await objectUrlFromPhotoBlob(key);
+        return url ? { ...p, url, localBlobKey: key } : p;
+      }),
+    ).then((list) => list.filter((p) => p.url));
   } catch {
     return [];
   }
@@ -53,9 +73,10 @@ async function persistPhotos(inspectionId: string, photos: ReportPhoto[]): Promi
       id: p.id,
       slot: p.slot,
       caption: p.caption,
-      url: p.url,
+      url: /^https?:\/\//i.test(p.url) ? p.url : "",
       ...(p.storagePath ? { storagePath: p.storagePath } : {}),
       ...(p.capturedAt ? { capturedAt: p.capturedAt } : {}),
+      ...(p.localBlobKey ? { localBlobKey: p.localBlobKey } : {}),
     })),
   });
 }
@@ -158,6 +179,7 @@ export function InspectionPhotosPanel({
       toast.error("Please choose an image");
       return;
     }
+    saveToDeviceGallery(file, captureFilename(target.slot || target.caption || "photo"));
     const previewUrl = URL.createObjectURL(file);
     setPending({
       slot: target.slot,
@@ -180,6 +202,8 @@ export function InspectionPhotosPanel({
     try {
       const id = pending.replaceId || newPhotoId();
       const file = await preparePhotoForReport(pending.file);
+      const localKey = photoBlobKey(inspectionId, id);
+      await putPhotoBlob(localKey, file);
       let url: string;
       let storagePath: string | undefined;
       try {
@@ -191,11 +215,11 @@ export function InspectionPhotosPanel({
         url = uploaded.url;
         storagePath = uploaded.storagePath;
       } catch (uploadErr) {
-        // Hotspot / offline: keep a local data URL so the job is not lost
-        console.warn("[inspection photos] cloud upload failed, using local data URL", uploadErr);
+        console.warn("[inspection photos] cloud upload failed, using local copy", uploadErr);
         url = await fileToDataUrl(file);
         toast.message("Saved on this device only", {
-          description: "Cloud upload failed — photo will sync when storage is available from the report Photos tab.",
+          description:
+            "Cloud upload failed. The photo is kept in this app and a copy was sent to the device.",
         });
       }
 
@@ -204,6 +228,7 @@ export function InspectionPhotosPanel({
         slot: pending.slot,
         caption: pending.caption,
         url,
+        localBlobKey: localKey,
         ...(storagePath ? { storagePath } : {}),
         capturedAt: nowPhotoTimestamp(),
       };

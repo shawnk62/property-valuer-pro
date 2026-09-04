@@ -10,6 +10,7 @@ import type {
   ReportPhoto,
 } from "@/lib/report/types";
 import { resolveValuerProfile } from "@/lib/report/valuerProfiles";
+import { objectUrlFromPhotoBlob } from "@/lib/report/photo-idb";
 
 /**
  * Report draft: subject values from Supabase inspection;
@@ -151,6 +152,26 @@ function photosFromCloud(extras: ReportExtras | null | undefined): ReportPhoto[]
     }));
 }
 
+async function hydrateLocalBlobs(draft: ReportDraft): Promise<ReportDraft> {
+  const photos = await Promise.all(
+    draft.photos.map(async (p) => {
+      if (isDurablePhotoUrl(p.url)) return p;
+      if (!p.localBlobKey) return p;
+      const url = await objectUrlFromPhotoBlob(p.localBlobKey);
+      return url ? { ...p, url } : p;
+    }),
+  );
+  const sales = await Promise.all(
+    (draft.sales ?? []).map(async (s) => {
+      if (isDurablePhotoUrl(s.photoUrl)) return s;
+      if (!s.photoLocalKey) return s;
+      const url = await objectUrlFromPhotoBlob(s.photoLocalKey);
+      return url ? { ...s, photoUrl: url } : s;
+    }),
+  );
+  return { ...draft, photos, sales };
+}
+
 function loadLocalExtras(inspectionId: string): Partial<ReportDraft> | null {
   if (typeof window === "undefined") return null;
   try {
@@ -158,7 +179,7 @@ function loadLocalExtras(inspectionId: string): Partial<ReportDraft> | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as ReportDraft;
     const photos = Array.isArray(parsed.photos)
-      ? parsed.photos.filter((p) => isDurablePhotoUrl(p?.url))
+      ? parsed.photos.filter((p) => isDurablePhotoUrl(p?.url) || Boolean(p?.localBlobKey))
       : [];
     return {
       narrative: parsed.narrative,
@@ -176,7 +197,20 @@ function writeLocalCache(draft: ReportDraft) {
   try {
     const toStore: ReportDraft = {
       ...draft,
-      photos: draft.photos.filter((p) => isDurablePhotoUrl(p.url)),
+      photos: draft.photos.map((p) => ({
+        ...p,
+        url: isHttpUrl(p.url) ? p.url : "",
+      })),
+      sales: (draft.sales ?? []).map((s) => ({
+        ...s,
+        photoUrl: isHttpUrl(s.photoUrl) ? s.photoUrl : undefined,
+      })),
+      reportMeta: {
+        ...draft.reportMeta,
+        salesMapUrl: isHttpUrl(draft.reportMeta.salesMapUrl)
+          ? draft.reportMeta.salesMapUrl
+          : undefined,
+      },
     };
     window.localStorage.setItem(storageKey(draft.inspectionId), JSON.stringify(toStore));
   } catch {
@@ -338,8 +372,10 @@ export function useReportDraft(
             firmName: reportMeta.firmName || profile.firm || "",
           },
         };
-        setDraft(next);
-        writeLocalCache(next);
+        const hydratedDraft = await hydrateLocalBlobs(next);
+        if (cancelled) return;
+        setDraft(hydratedDraft);
+        writeLocalCache(hydratedDraft);
         setLoaded(true);
         hydrated.current = true;
         setDirty(false);

@@ -45,6 +45,8 @@ export interface ReportPhoto {
   url: string;
   /** Supabase Storage object path — used for delete. */
   storagePath?: string;
+  /** IndexedDB key for an offline copy of this photo. */
+  localBlobKey?: string;
   /** ISO timestamp when the photo was captured / approved (auto-set). */
   capturedAt?: string;
   /**
@@ -115,6 +117,8 @@ export interface ComparableSale {
   photoUrl?: string;
   /** Supabase Storage path for photoUrl when uploaded. */
   photoStoragePath?: string;
+  /** IndexedDB key for an offline copy of photoUrl. */
+  photoLocalKey?: string;
   /**
    * When true, the sale stays in the working file (notes, photos, adjustments)
    * but is omitted from the printed report and from the compact adjustment grid.
