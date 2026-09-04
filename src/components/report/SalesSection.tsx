@@ -4,7 +4,7 @@ import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { SalesMapEditor } from "@/components/report/SalesMapEditor";
 import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
 import { buildComparableSalesMap, buildSubjectLocationMap } from "@/lib/maps/generateMaps";
-import { geocodeAddress, loadGoogleMaps } from "@/lib/maps/loadGoogleMaps";
+import { geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
 import {
   pinsFromDraft,
   pinsNeedingGeocode,
@@ -351,32 +351,52 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     const key = loadGoogleMapsKey();
     setStatus("Generating maps…");
     try {
-      await loadGoogleMaps(key);
       let pins = pinsFromDraft({
         values: draft.values,
         sales,
         saved: (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null,
       });
-      for (const pin of pinsNeedingGeocode(pins)) {
-        if (!pin.address) continue;
-        const found = await geocodeAddress(pin.address);
-        if (found) {
-          pins = pins.map((p) =>
-            p.id === pin.id ? { ...p, lat: found.lat, lng: found.lng } : p,
+      const need = pinsNeedingGeocode(pins).filter((p) => p.address);
+      if (need.length > 0) {
+        const geo = await geocodeGoogleAddresses({
+          data: { apiKey: key, addresses: need.map((p) => p.address!) },
+        });
+        const denied = geo.results.find(
+          (r) => r.status === "REQUEST_DENIED" || r.status === "OVER_QUERY_LIMIT",
+        );
+        if (denied) {
+          throw new Error(
+            denied.error ||
+              `Google geocoding ${denied.status}. Enable Geocoding API on this key.`,
           );
         }
+        const byAddress = new Map(geo.results.map((r) => [r.address, r]));
+        pins = pins.map((p) => {
+          if (!p.address) return p;
+          const hit = byAddress.get(p.address);
+          if (hit?.lat != null && hit.lng != null) {
+            return { ...p, lat: hit.lat, lng: hit.lng };
+          }
+          return p;
+        });
       }
       const subject = pins.find((p) => p.kind === "subject");
       if (!subject || (subject.lat === 0 && subject.lng === 0)) {
-        throw new Error("Could not locate the subject address. Check the inspection form address.");
+        throw new Error(
+          subject?.address
+            ? `Could not locate “${subject.address}”. Check the inspection address.`
+            : "Subject address is empty on the inspection form.",
+        );
       }
       const locationFile = await buildSubjectLocationMap({ apiKey: key, subject });
-      const salesFile = await buildComparableSalesMap({ apiKey: key, pins });
+      const salesPins = pins.filter((p) => !(p.lat === 0 && p.lng === 0));
+      const salesFile = await buildComparableSalesMap({ apiKey: key, pins: salesPins });
       await attachLocationMap(locationFile);
       await onSalesMapFile(salesFile);
       setMeta({ salesMapPins: pins });
       toast.success("Maps generated", {
-        description: "Location map (~10 km) and comparable sales map are in their tiles.",
+        description:
+          "Location map is under Photos → Maps & overlays. Sales map is this Sales map tile.",
       });
       setStatus("Maps generated.");
     } catch (err) {
