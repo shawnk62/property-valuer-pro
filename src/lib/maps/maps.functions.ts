@@ -7,6 +7,8 @@ const Input = z.object({
   scale: z.string().default("2"),
   maptype: z.string().default("roadmap"),
   markers: z.array(z.string().min(1)).min(1).max(40),
+  center: z.string().optional(),
+  zoom: z.number().int().min(1).max(21).optional(),
 });
 
 export const fetchGoogleStaticMap = createServerFn({ method: "POST" })
@@ -18,6 +20,8 @@ export const fetchGoogleStaticMap = createServerFn({ method: "POST" })
       maptype: data.maptype,
       key: data.apiKey.trim(),
     });
+    if (data.center) params.set("center", data.center);
+    if (data.zoom != null) params.set("zoom", String(data.zoom));
     for (const marker of data.markers) {
       params.append("markers", marker);
     }

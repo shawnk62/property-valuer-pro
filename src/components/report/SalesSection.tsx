@@ -2,8 +2,15 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { toast } from "sonner";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { SalesMapEditor } from "@/components/report/SalesMapEditor";
-import { isGoogleMapsConfigured } from "@/lib/maps/googleSettings";
-import type { SalesMapPin } from "@/lib/maps/salesMapPins";
+import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
+import { buildComparableSalesMap, buildSubjectLocationMap } from "@/lib/maps/generateMaps";
+import { geocodeAddress, loadGoogleMaps } from "@/lib/maps/loadGoogleMaps";
+import {
+  pinsFromDraft,
+  pinsNeedingGeocode,
+  type SalesMapPin,
+} from "@/lib/maps/salesMapPins";
+import { nowPhotoTimestamp } from "@/lib/inspection/photoRequirements";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import { extractComparableSales, generateSaleNarrative } from "@/lib/ai/ai.functions";
 import { isAiConfigured, loadAiSettings } from "@/lib/ai/settings";
@@ -71,7 +78,7 @@ function parseAmountInput(raw: string): number | null {
 }
 
 export function SalesSection({ controller }: { controller: ReportDraftController }) {
-  const { draft, setSales, setMeta } = controller;
+  const { draft, setSales, setMeta, setPhotos } = controller;
   const sales = draft.sales.map(ensureSaleAdjustments);
   const gridSales = salesOnReport(sales);
   const heldSales = salesHeldBack(sales);
@@ -300,6 +307,82 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       toast.error("Could not read map image", {
         description: err instanceof Error ? err.message : "Try another file",
       });
+    }
+  }
+
+  async function attachLocationMap(file: File) {
+    const photoId =
+      draft.photos.find((p) => p.slot === "map_location")?.id || "photo-map-location";
+    const dataUrl = await fileToDataUrl(file);
+    setPhotos((prev) => {
+      const entry = {
+        id: photoId,
+        slot: "map_location" as const,
+        caption: "Property location",
+        url: dataUrl,
+        kind: "map" as const,
+        capturedAt: nowPhotoTimestamp(),
+      };
+      return [...prev.filter((p) => p.slot !== "map_location" && p.id !== photoId), entry];
+    });
+    try {
+      const existing = draft.photos.find((p) => p.slot === "map_location");
+      if (existing?.storagePath) await deleteReportPhoto(existing.storagePath);
+      const { url, storagePath } = await uploadReportPhoto({
+        inspectionId: draft.inspectionId,
+        photoId,
+        file,
+      });
+      setPhotos((prev) =>
+        prev.map((p) => (p.id === photoId ? { ...p, url, storagePath } : p)),
+      );
+    } catch (err) {
+      toast.message("Location map saved on this device only", {
+        description: err instanceof Error ? err.message : "Cloud upload failed",
+      });
+    }
+  }
+
+  async function generateGoogleMaps() {
+    if (!isGoogleMapsConfigured()) {
+      toast.error("Add a Google Maps API key in Settings first");
+      return;
+    }
+    const key = loadGoogleMapsKey();
+    setStatus("Generating maps…");
+    try {
+      await loadGoogleMaps(key);
+      let pins = pinsFromDraft({
+        values: draft.values,
+        sales,
+        saved: (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null,
+      });
+      for (const pin of pinsNeedingGeocode(pins)) {
+        if (!pin.address) continue;
+        const found = await geocodeAddress(pin.address);
+        if (found) {
+          pins = pins.map((p) =>
+            p.id === pin.id ? { ...p, lat: found.lat, lng: found.lng } : p,
+          );
+        }
+      }
+      const subject = pins.find((p) => p.kind === "subject");
+      if (!subject || (subject.lat === 0 && subject.lng === 0)) {
+        throw new Error("Could not locate the subject address. Check the inspection form address.");
+      }
+      const locationFile = await buildSubjectLocationMap({ apiKey: key, subject });
+      const salesFile = await buildComparableSalesMap({ apiKey: key, pins });
+      await attachLocationMap(locationFile);
+      await onSalesMapFile(salesFile);
+      setMeta({ salesMapPins: pins });
+      toast.success("Maps generated", {
+        description: "Location map (~10 km) and comparable sales map are in their tiles.",
+      });
+      setStatus("Maps generated.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Map generation failed";
+      toast.error("Could not generate maps", { description: message });
+      setStatus(`Maps failed: ${message}`);
     }
   }
 
@@ -1175,11 +1258,18 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         sales={sales}
         savedPins={(draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null}
         onClose={() => setMapEditorOpen(false)}
-        onApply={async ({ file, pins }) => {
-          await onSalesMapFile(file);
+        onApply={async ({ pins }) => {
+          const key = loadGoogleMapsKey();
+          const subject = pins.find((p) => p.kind === "subject");
+          if (subject && !(subject.lat === 0 && subject.lng === 0)) {
+            const locationFile = await buildSubjectLocationMap({ apiKey: key, subject });
+            await attachLocationMap(locationFile);
+          }
+          const salesFile = await buildComparableSalesMap({ apiKey: key, pins });
+          await onSalesMapFile(salesFile);
           setMeta({ salesMapPins: pins });
           setMapEditorOpen(false);
-          toast.success("Sales map applied to the report");
+          toast.success("Maps updated");
         }}
       />
       <input
@@ -1203,8 +1293,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         <div>
           <h4 className="text-sm font-semibold text-foreground">Sales map &amp; front photos</h4>
           <p className="mt-1 text-xs text-muted-foreground">
-            Generate a labelled Google map of the subject and comparables, or attach a Cotality
-            map by hand. Front photos use the slots below. The map appears in §12 Sales Evidence.
+            Generate maps fills the location tile (subject only, about 10 km) and the sales-map
+            tile (subject address + comparable numbers matching the grid). Edit pins if a marker
+            is wrong, then Apply. You can still drop a Cotality map by hand.
           </p>
         </div>
 
@@ -1212,6 +1303,13 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-xs font-medium text-foreground">Sales map</p>
+              <button
+                type="button"
+                onClick={() => void generateGoogleMaps()}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent"
+              >
+                Generate maps
+              </button>
               <button
                 type="button"
                 onClick={() => {
@@ -1223,7 +1321,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                 }}
                 className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent"
               >
-                Generate / edit map
+                Edit pins
               </button>
             </div>
             {draft.reportMeta.salesMapUrl ? (
