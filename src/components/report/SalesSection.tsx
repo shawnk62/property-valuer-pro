@@ -5,6 +5,7 @@ import { SalesMapEditor } from "@/components/report/SalesMapEditor";
 import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
 import { buildComparableSalesMap, buildSubjectLocationMap } from "@/lib/maps/generateMaps";
 import { geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
+import { proximityFromPins } from "@/lib/maps/distance";
 import {
   pinsFromDraft,
   pinsNeedingGeocode,
@@ -394,6 +395,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       await attachLocationMap(locationFile);
       await onSalesMapFile(salesFile);
       setMeta({ salesMapPins: pins });
+      replaceSales(proximityFromPins(sales, pins));
       toast.success("Maps generated", {
         description:
           "Location map is under Photos → Maps & overlays. Sales map is this Sales map tile.",
@@ -1288,6 +1290,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           const salesFile = await buildComparableSalesMap({ apiKey: key, pins });
           await onSalesMapFile(salesFile);
           setMeta({ salesMapPins: pins });
+          replaceSales(proximityFromPins(sales, pins));
           setMapEditorOpen(false);
           toast.success("Maps updated");
         }}
