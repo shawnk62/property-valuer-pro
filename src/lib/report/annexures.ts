@@ -1,4 +1,4 @@
-import { MAP_SLOTS, PHOTO_SLOTS, type ReportDraft } from "@/lib/report/types";
+import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, type ReportDraft } from "@/lib/report/types";
 
 export type AnnexureId = "photos" | "maps" | "placeBased";
 
@@ -25,9 +25,9 @@ const BODY_MAP_SLOTS = new Set([
 function hasSubjectOrSalePhotos(draft: ReportDraft): boolean {
   const subject = [
     ...PHOTO_SLOTS.map(({ slot }) =>
-      draft.photos.find((p) => p.slot === slot && p.url),
+      draft.photos.find((p) => p.slot === slot && photoIsOnReport(p)),
     ),
-    ...draft.photos.filter((p) => p.slot === null && p.url && p.kind !== "map"),
+    ...draft.photos.filter((p) => p.slot === null && p.kind !== "map" && photoIsOnReport(p)),
   ].some(Boolean);
   const sales = draft.sales.some((s) => s.omitFromReport !== true && Boolean(s.photoUrl));
   return subject || sales;
@@ -37,10 +37,10 @@ function hasAnnexMaps(draft: ReportDraft): boolean {
   const slotted = MAP_SLOTS.some(
     ({ slot }) =>
       !BODY_MAP_SLOTS.has(slot) &&
-      draft.photos.some((p) => p.slot === slot && p.url),
+      draft.photos.some((p) => p.slot === slot && photoIsOnReport(p)),
   );
   const loose = draft.photos.some(
-    (p) => p.slot === null && p.kind === "map" && p.url,
+    (p) => p.slot === null && p.kind === "map" && photoIsOnReport(p),
   );
   return slotted || loose;
 }
@@ -48,7 +48,7 @@ function hasAnnexMaps(draft: ReportDraft): boolean {
 function hasPlaceBased(draft: ReportDraft): boolean {
   const text = draft.values["prop_place_based"];
   const hasText = typeof text === "string" && text.trim().length > 0;
-  const hasMap = draft.photos.some((p) => p.slot === "map_place_based" && p.url);
+  const hasMap = draft.photos.some((p) => p.slot === "map_place_based" && photoIsOnReport(p));
   return hasText || hasMap;
 }
 

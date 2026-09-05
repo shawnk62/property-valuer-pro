@@ -1,6 +1,6 @@
 import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { get, hasValue, joinValues, labelFor, pick } from "@/lib/report/schema";
-import { MAP_SLOTS, PHOTO_SLOTS, salesOnReport, type ReportDraft } from "@/lib/report/types";
+import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, type ReportDraft } from "@/lib/report/types";
 import {
   getReportTypeConfig,
   isMurrayReportType,
@@ -561,7 +561,7 @@ function InlineMap({
   slot: string;
   caption?: string;
 }) {
-  const photo = photos.find((p) => p.slot === slot && p.url);
+  const photo = photos.find((p) => p.slot === slot && photoIsOnReport(p));
   if (!photo?.url) return null;
   return (
     <figure className="my-4 break-inside-avoid">
@@ -656,10 +656,10 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], "");
   const annexurePhotos = [
     ...PHOTO_SLOTS.map(({ slot, label }) => {
-      const found = draft.photos.find((p) => p.slot === slot && p.url);
+      const found = draft.photos.find((p) => p.slot === slot && photoIsOnReport(p));
       return found ? { ...found, caption: found.caption || label } : null;
     }).filter(Boolean),
-    ...draft.photos.filter((p) => p.slot === null && p.url && p.kind !== "map"),
+    ...draft.photos.filter((p) => p.slot === null && p.kind !== "map" && photoIsOnReport(p)),
   ] as typeof draft.photos;
 
   // Maps shown inline in the body. Overlay / landslide maps are annex-only.
@@ -674,10 +674,10 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
   const mapPhotos = [
     ...MAP_SLOTS.map(({ slot, label }) => {
       if (bodyMapSlotSet.has(slot)) return null;
-      const found = draft.photos.find((p) => p.slot === slot && p.url);
+      const found = draft.photos.find((p) => p.slot === slot && photoIsOnReport(p));
       return found ? { ...found, caption: found.caption || label } : null;
     }).filter(Boolean),
-    ...draft.photos.filter((p) => p.slot === null && p.kind === "map" && p.url),
+    ...draft.photos.filter((p) => p.slot === null && p.kind === "map" && photoIsOnReport(p)),
   ] as typeof draft.photos;
 
   const annexures = resolveAnnexures(draft);
@@ -685,7 +685,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
   const mapsAnnex = annexureById(annexures, "maps");
   const placeAnnex = annexureById(annexures, "placeBased");
 
-  const frontPhoto = draft.photos.find((p) => p.slot === "front" && p.url);
+  const frontPhoto = draft.photos.find((p) => p.slot === "front" && photoIsOnReport(p));
   // Letterhead + credentials follow Report Type (Phil vs Murray)
   const valuerProfile = resolveValuerProfile(get(v, "prop_assignment"));
   const lh = letterheadFromProfile(valuerProfile);
@@ -1302,7 +1302,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               const overlays = parseOverlayList(get(v, "prop_adverse_site"));
               const hasOverlayAnnexMaps = draft.photos.some(
                 (p) =>
-                  (p.slot === "map_overlays" || p.slot === "map_landslide") && p.url,
+                  (p.slot === "map_overlays" || p.slot === "map_landslide") && photoIsOnReport(p),
               );
               const annexRef = mapsAnnex
                 ? `Refer to ${mapsAnnex.heading} for the associated mapping.`
@@ -1398,7 +1398,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               const overlays = parseOverlayList(get(v, "prop_adverse_site"));
               const hasOverlayAnnexMaps = draft.photos.some(
                 (p) =>
-                  (p.slot === "map_overlays" || p.slot === "map_landslide") && p.url,
+                  (p.slot === "map_overlays" || p.slot === "map_landslide") && photoIsOnReport(p),
               );
               const annexRef = mapsAnnex
                 ? `Refer to ${mapsAnnex.heading} for the associated mapping.`

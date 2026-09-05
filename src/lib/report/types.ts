@@ -54,6 +54,19 @@ export interface ReportPhoto {
    * "photo" or omitted = additional subject photograph.
    */
   kind?: "map" | "photo";
+  /**
+   * When true, the image stays on the job (working file) but is omitted from
+   * the printed report, Word export, cover and annexures.
+   */
+  omitFromReport?: boolean;
+}
+
+export function photoIsOnReport(photo: ReportPhoto | null | undefined): boolean {
+  return Boolean(photo?.url) && photo?.omitFromReport !== true;
+}
+
+export function photosOnReport(photos: ReportPhoto[] | null | undefined): ReportPhoto[] {
+  return (photos ?? []).filter((p) => p.omitFromReport !== true);
 }
 
 /** Relativity mark on a comparison feature (URAR-style description). */

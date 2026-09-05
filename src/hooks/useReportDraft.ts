@@ -129,6 +129,8 @@ function toCloudExtras(draft: ReportDraft): ReportExtras {
         storagePath: p.storagePath,
         ...(p.capturedAt ? { capturedAt: p.capturedAt } : {}),
         ...(p.kind ? { kind: p.kind } : {}),
+        ...(p.omitFromReport ? { omitFromReport: true } : {}),
+        ...(p.localBlobKey ? { localBlobKey: p.localBlobKey } : {}),
       })),
   };
 }
@@ -148,6 +150,12 @@ function photosFromCloud(extras: ReportExtras | null | undefined): ReportPhoto[]
         : {}),
       ...((p as { kind?: string }).kind === "map" || (p as { kind?: string }).kind === "photo"
         ? { kind: (p as { kind?: "map" | "photo" }).kind }
+        : {}),
+      ...((p as { omitFromReport?: boolean }).omitFromReport
+        ? { omitFromReport: true }
+        : {}),
+      ...((p as { localBlobKey?: string }).localBlobKey
+        ? { localBlobKey: String((p as { localBlobKey?: string }).localBlobKey) }
         : {}),
     }));
 }

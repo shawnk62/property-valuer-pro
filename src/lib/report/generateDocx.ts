@@ -24,7 +24,7 @@ import { parseOverlayList } from "@/lib/report/overlays";
 import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
 import { get, hasValue, joinValues, labelFor } from "@/lib/report/schema";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
-import { MAP_SLOTS, PHOTO_SLOTS, salesOnReport, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
+import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
 
 /** A4 (matches Australian report paper). */
 const PAGE_WIDTH = 11906;
@@ -259,7 +259,7 @@ async function pushInlineMap(
   caption?: string,
   opts?: { width?: number; height?: number },
 ) {
-  const photo = draft.photos.find((ph) => ph.slot === slot && ph.url);
+  const photo = draft.photos.find((ph) => ph.slot === slot && photoIsOnReport(ph));
   if (!photo?.url) return;
   const img = await imageFromUrl(photo.url);
   if (!img) return;
@@ -583,7 +583,8 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   {
     const overlays = parseOverlayList(get(v, "prop_adverse_site"));
     const hasOverlayAnnexMaps = draft.photos.some(
-      (ph) => (ph.slot === "map_overlays" || ph.slot === "map_landslide") && ph.url,
+      (ph) =>
+        (ph.slot === "map_overlays" || ph.slot === "map_landslide") && photoIsOnReport(ph),
     );
     const mapsAnnexEarly = annexureById(resolveAnnexures(draft), "maps");
     const annexRef = mapsAnnexEarly
@@ -893,10 +894,10 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   // ---- Annexures: subject photos, maps, comparable photos (omit empty) ----
   const subjectPhotos = [
     ...PHOTO_SLOTS.map(({ slot, label }) => {
-      const found = draft.photos.find((ph) => ph.slot === slot && ph.url);
+      const found = draft.photos.find((ph) => ph.slot === slot && photoIsOnReport(ph));
       return found ? { ...found, caption: found.caption || label } : null;
     }).filter(Boolean),
-    ...draft.photos.filter((ph) => ph.slot === null && ph.url && ph.kind !== "map"),
+    ...draft.photos.filter((ph) => ph.slot === null && ph.kind !== "map" && photoIsOnReport(ph)),
   ] as typeof draft.photos;
 
   // Overlay / landslide maps are annex-only; zoning, flood & bushfire stay in body.
@@ -911,10 +912,10 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   const mapPhotos = [
     ...MAP_SLOTS.map(({ slot, label }) => {
       if (bodyMapSlotSet.has(slot)) return null;
-      const found = draft.photos.find((ph) => ph.slot === slot && ph.url);
+      const found = draft.photos.find((ph) => ph.slot === slot && photoIsOnReport(ph));
       return found ? { ...found, caption: found.caption || label } : null;
     }).filter(Boolean),
-    ...draft.photos.filter((ph) => ph.slot === null && ph.kind === "map" && ph.url),
+    ...draft.photos.filter((ph) => ph.slot === null && ph.kind === "map" && photoIsOnReport(ph)),
   ] as typeof draft.photos;
 
   const salesWithPhotos = salesOnReport(draft.sales).filter((s) => s.photoUrl);

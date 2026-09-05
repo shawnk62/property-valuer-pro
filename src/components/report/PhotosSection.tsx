@@ -58,6 +58,7 @@ function PhotoCard({
   labelEditable = false,
   onLabelChange,
   onOpenPasteMenu,
+  onOmitFromReport,
 }: {
   photo: ReportPhoto | undefined;
   slotLabel: string;
@@ -65,6 +66,7 @@ function PhotoCard({
   onFile: (file: File) => void;
   onCaption: (caption: string) => void;
   onRemove?: () => void;
+  onOmitFromReport?: (omit: boolean) => void;
   /** When true, the top label is an input in the same style as fixed map captions. */
   labelEditable?: boolean;
   onLabelChange?: (label: string) => void;
@@ -201,6 +203,20 @@ function PhotoCard({
         placeholder={labelEditable ? "Label this map (e.g. Coastal hazard overlay)" : "Caption"}
         className="mt-3 w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
       />
+      {photo?.url && onOmitFromReport ? (
+        <label
+          className="mt-2 flex items-start gap-1.5 text-[0.7rem] text-foreground"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input
+            type="checkbox"
+            checked={photo.omitFromReport === true}
+            onChange={(e) => onOmitFromReport(e.target.checked)}
+            className="mt-0.5 size-3.5 shrink-0 rounded border-input"
+          />
+          <span>Hold in working file (omit from report)</span>
+        </label>
+      ) : null}
     </div>
   );
 }
@@ -415,6 +431,10 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     toast.success("Image pasted");
   }
 
+  function setOmitFromReport(photoId: string, omit: boolean) {
+    setPhotos((prev) => prev.map((p) => (p.id === photoId ? { ...p, omitFromReport: omit } : p)));
+  }
+
   const extras = photos.filter((p) => p.slot === null && p.kind !== "map");
   const extraMaps = photos.filter((p) => p.slot === null && p.kind === "map");
 
@@ -423,8 +443,9 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
       <div className="rounded-md border border-border bg-card p-4">
         <h3 className="text-sm font-semibold text-foreground">Subject photographs</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Front, street, interior and other inspection photos. Empty slots are omitted from the
-          exported report. Uploads sync via Storage when available.
+          Front, street, interior and other inspection photos. Tick “Hold in working file” to keep
+          a photo on the job without printing it. Empty slots never print. Uploads sync via Storage
+          when available.
         </p>
       </div>
 
@@ -441,6 +462,9 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
               onCaption={(caption) => upsertSlotCaption(slot, label, caption)}
               onRemove={photo?.url ? () => void removePhoto(photo) : undefined}
               onOpenPasteMenu={openPasteMenu}
+              onOmitFromReport={
+                photo?.url ? (omit) => setOmitFromReport(photo.id, omit) : undefined
+              }
             />
           );
         })}
@@ -491,6 +515,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
               }
               onRemove={() => void removePhoto(photo)}
               onOpenPasteMenu={openPasteMenu}
+              onOmitFromReport={(omit) => setOmitFromReport(photo.id, omit)}
             />
           ))}
         </div>
@@ -519,6 +544,9 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
               onCaption={(caption) => upsertSlotCaption(slot, label, caption)}
               onRemove={photo?.url ? () => void removePhoto(photo) : undefined}
               onOpenPasteMenu={openPasteMenu}
+              onOmitFromReport={
+                photo?.url ? (omit) => setOmitFromReport(photo.id, omit) : undefined
+              }
             />
           );
         })}
@@ -551,6 +579,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
             }}
             onRemove={() => void removePhoto(photo)}
             onOpenPasteMenu={openPasteMenu}
+            onOmitFromReport={(omit) => setOmitFromReport(photo.id, omit)}
           />
         ))}
       </div>
