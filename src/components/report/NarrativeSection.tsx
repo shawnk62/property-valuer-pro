@@ -11,6 +11,14 @@ import {
   isPhilAssignment,
 } from "@/lib/report/narrative";
 import type { ReportNarrative } from "@/lib/report/types";
+import {
+  buildLocationFacts,
+  locationFactsFromDraft,
+  subjectCoordsFromPins,
+} from "@/lib/narrative/locationFacts";
+import { subjectAddressLine, type SalesMapPin } from "@/lib/maps/salesMapPins";
+import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
+import { geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
 import { CannedCommentsBar } from "@/components/report/CannedCommentsBar";
 
 function narrativeBlocks(murray: boolean): {
@@ -27,7 +35,7 @@ function narrativeBlocks(murray: boolean): {
     {
       key: "location",
       label: "Description of neighbourhood (5.1)",
-      hint: "Section 5.1 — locality and neighbourhood character.",
+      hint: "Section 5.1 — location relative to the CBD or nearest centre, then locality from the inspection.",
     },
     {
       key: "sitePhysical",
@@ -128,6 +136,35 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   }
 
   /** Fill only empty keys from the inspection-data template (never overwrites). */
+  function locationFacts() {
+    return locationFactsFromDraft({
+      values: draft.values,
+      pins: (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null,
+    });
+  }
+
+  async function locationFactsResolved() {
+    const pins = (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null;
+    if (subjectCoordsFromPins(pins) || !isGoogleMapsConfigured()) return locationFacts();
+    const address = subjectAddressLine(draft.values);
+    if (!address) return locationFacts();
+    try {
+      const geo = await geocodeGoogleAddresses({
+        data: { apiKey: loadGoogleMapsKey(), addresses: [address] },
+      });
+      const hit = geo.results[0];
+      if (hit?.lat != null && hit.lng != null) {
+        return buildLocationFacts({
+          values: draft.values,
+          coords: { lat: hit.lat, lng: hit.lng },
+        });
+      }
+    } catch {
+      /* keep address-only facts */
+    }
+    return locationFacts();
+  }
+
   function narrativeOpts() {
     return {
       salesCount: Array.isArray(draft.sales) ? draft.sales.length : 0,
@@ -136,6 +173,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
           ? draft.reportMeta.valueAmount
           : "",
       brief: String(narrativeRef.current.brief ?? "").trim() || undefined,
+      locationSentence: locationFacts().sentence || undefined,
     };
   }
 
@@ -307,6 +345,9 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               },
               blockKey: key,
               values,
+              ...(key === "location"
+                ? { locationContext: (await locationFactsResolved()).promptBlock }
+                : {}),
             },
           });
 

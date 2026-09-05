@@ -480,10 +480,15 @@ function buildRemarks(
 }
 
 
-function buildLocation(values: InspectionValues): string {
+function buildLocation(values: InspectionValues, locationSentence?: string): string {
+  const locLine = (locationSentence || "").trim();
   // Prefer free-text neighbourhood description when the valuer typed one on site
   if (hasValue(values["nbhd_description"])) {
-    return v(values, "nbhd_description");
+    const body = v(values, "nbhd_description");
+    if (locLine && !body.toLowerCase().includes(locLine.slice(0, 24).toLowerCase())) {
+      return [locLine, body].filter(Boolean).join("\n\n");
+    }
+    return body;
   }
 
   const parts: string[] = [];
@@ -521,7 +526,9 @@ function buildLocation(values: InspectionValues): string {
     parts.push(sentence([market]));
   }
 
-  return parts.filter(Boolean).join("\n\n");
+  const body = parts.filter(Boolean).join("\n\n");
+  if (locLine && body) return `${locLine}\n\n${body}`;
+  return locLine || body;
 }
 
 /** Service type as plain prose; skip empty / N/A / Nil. No parenthetical labels. */
@@ -725,6 +732,8 @@ export type NarrativeGenerateOptions = {
   valueAmount?: string;
   /** Existing brief text to reuse in Phil remarks when regenerating */
   brief?: string;
+  /** Calculated CBD / centre sentence for §5.1. */
+  locationSentence?: string;
 };
 
 export function generateNarrative(
@@ -736,7 +745,7 @@ export function generateNarrative(
     sentence(["The subject property is located at", fullAddress(values)]);
   return {
     brief,
-    location: buildLocation(values),
+    location: buildLocation(values, opts?.locationSentence),
     sitePhysical: buildSitePhysical(values),
     servicesAmenities: buildServicesAmenities(values),
     improvements: buildImprovements(values),

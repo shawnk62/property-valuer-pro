@@ -119,6 +119,7 @@ const GenerateBlockInput = z.object({
   blockKey: z.string().min(1),
   // Allow extra shapes from stored inspection JSON; prompt builder reads safely.
   values: z.record(ValueCell),
+  locationContext: z.string().optional(),
 });
 
 const ExtractPropertyInput = z.object({
@@ -180,7 +181,11 @@ export const generateNarrativeBlock = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const settings = asAiSettings(data.settings);
     const model = createModel(settings);
-    const { system, prompt } = buildBlockPrompt(data.blockKey, data.values as InspectionValues);
+    const { system, prompt } = buildBlockPrompt(
+      data.blockKey,
+      data.values as InspectionValues,
+      { locationContext: data.locationContext },
+    );
 
     const { text } = await generateText({
       model,

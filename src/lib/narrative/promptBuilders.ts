@@ -230,20 +230,11 @@ Improvements prose rules (all report types):
 export function buildBlockPrompt(
   blockKey: string,
   values: InspectionValues,
+  extras?: { locationContext?: string },
 ): BlockPrompt {
   const type = assignmentType(values);
 
   switch (blockKey) {
-    case "location":
-      return {
-        system: BASE_RULES,
-        prompt: `Write a "Location & Neighbourhood" paragraph for a ${type} valuation report of the subject property.
-
-Inspection data:
-${sectionAnswers(values, ["1", "1A"])}
-
-Describe the locality, surrounding uses, and any neighbourhood characteristics recorded. Keep it factual and concise.`,
-      };
     case "site":
       return {
         system: BASE_RULES,
@@ -309,14 +300,24 @@ Summarise the overall condition and any final remarks or qualifications recorded
     case "location":
       return {
         system: BASE_RULES + styleGuide(type),
-        prompt: `Write section 5.1 "Description of Neighbourhood" for a ${type} valuation report (QLD / Peterson style).
+        prompt: `Write section 5.1 Description of Neighbourhood for a ${type} valuation report.
 
-Inspection data (neighbourhood / location):
-${sectionAnswers(values, ["1A"])}
+This section must cover TWO required parts:
+1. LOCATION — position of the property relative to the CBD, nearest main town or regional centre.
+2. LOCALITY — the immediate surrounding neighbouring development, including recorded positive and/or negative features that may affect value.
 
-Murray Stamp Duty sample style: often one short sentence, e.g. "This is predominantly a rural residential precinct." Expand only with recorded neighbourhood character, built-up, growth, demand or boundaries — still keep it short (1–3 sentences).
-Phil Stamp Duty: one tight sentence or two.
-Do not invent facts.`,
+${extras?.locationContext?.trim() || "CALCULATED LOCATION: none. Do not invent kilometres or compass direction."}
+
+Inspection data (address, neighbourhood, off-site, overlays/flood where recorded):
+${sectionAnswers(values, ["1", "1A"])}
+
+Rules:
+- Paragraph 1 must be the CALCULATED LOCATION sentence when one is supplied. Copy it unchanged.
+- Following paragraph(s): locality only from recorded inspection data (character, built-up, land use mix, boundaries, description, off-site works, flood/overlays, view). Name positive or negative features only if they appear in the data.
+- Do not invent distances, centres, traffic, amenity, or neighbouring uses.
+- Murray reports: keep locality to 1–3 short sentences after the location sentence.
+- Phil Stamp Duty: location sentence plus one tight locality sentence if data exists.
+- No marketing language.`,
       };
         case "brief":
       return {
