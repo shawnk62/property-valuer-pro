@@ -45,12 +45,13 @@ function compassToward(
   return COMPASS[Math.round(brng / 45) % 8]!;
 }
 
-function withDistance(from: { lat: number; lng: number }, centre: QldCentre) {
-  const km = haversineKm(from, centre);
+function withDistance(subject: { lat: number; lng: number }, centre: QldCentre) {
+  const km = haversineKm(subject, centre);
   return {
     ...centre,
     km,
-    dir: compassToward(from, centre),
+    // "5 km north of Brisbane" = bearing from the centre to the subject
+    dir: compassToward(centre, subject),
     label: formatDistanceFromSubject(km),
   };
 }
