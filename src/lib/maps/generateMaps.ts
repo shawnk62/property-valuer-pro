@@ -1,10 +1,54 @@
 import { fetchGoogleStaticMap } from "@/lib/maps/maps.functions";
+import { QLD_CENTRES } from "@/lib/maps/qldCentres";
 import type { SalesMapPin } from "@/lib/maps/salesMapPins";
 
 const SIZE = 640;
 const SCALE = 2;
-/** ~10 km around the subject on a 640px roadmap (Brisbane latitudes). */
+/** Fallback only when a single pin cannot be fitted. */
 export const SUBJECT_MAP_ZOOM = 12;
+export const SUBJECT_ZOOM_MIN = 6;
+export const SUBJECT_ZOOM_MAX = 16;
+
+function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const lat1 = (a.lat * Math.PI) / 180;
+  const lat2 = (b.lat * Math.PI) / 180;
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+export function nearestQldCentre(subject: { lat: number; lng: number }) {
+  let best = QLD_CENTRES[0]!;
+  let bestKm = haversineKm(subject, best);
+  for (const c of QLD_CENTRES.slice(1)) {
+    const km = haversineKm(subject, c);
+    if (km < bestKm) {
+      best = c;
+      bestKm = km;
+    }
+  }
+  return { ...best, km: bestKm };
+}
+
+function centrePin(centre: ReturnType<typeof nearestQldCentre>): SalesMapPin {
+  return {
+    id: "pin-nearest-centre",
+    label: centre.name.replace(/^the /i, ""),
+    shortLabel: "C",
+    lat: centre.lat,
+    lng: centre.lng,
+    kind: "custom",
+    address: centre.name.replace(/^the /i, ""),
+  };
+}
+
+export function clampSubjectZoom(zoom: number): number {
+  return Math.min(SUBJECT_ZOOM_MAX, Math.max(SUBJECT_ZOOM_MIN, Math.round(zoom)));
+}
 
 function placedPins(pins: SalesMapPin[]): SalesMapPin[] {
   return pins.filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng) && !(p.lat === 0 && p.lng === 0));
@@ -140,9 +184,11 @@ async function annotate(
     for (const pin of pins) {
       const pt = pixelAt(pin.lat, pin.lng, center.lat, center.lng, zoom, SIZE, SCALE);
       const lines =
-        mode === "subject" || pin.kind === "subject"
+        mode === "subject"
           ? wrapLabel(pin.address || pin.label)
-          : [pin.kind === "sale" ? pin.shortLabel : pin.label];
+          : pin.kind === "subject"
+            ? wrapLabel(pin.address || pin.label)
+            : [pin.kind === "sale" ? pin.shortLabel : pin.label];
       const fontSize = pin.kind === "subject" && mode === "sales" ? 22 : 26;
       ctx.font = `700 ${fontSize}px Arial, Helvetica, sans-serif`;
       ctx.textAlign = "center";
@@ -173,20 +219,46 @@ async function annotate(
   }
 }
 
+export function subjectMapView(
+  subject: SalesMapPin,
+  zoomOverride?: number | null,
+): {
+  pins: SalesMapPin[];
+  center: { lat: number; lng: number };
+  zoom: number;
+  autoZoom: number;
+  centreName: string;
+} {
+  const placed = placedPins([subject]);
+  if (placed.length === 0) {
+    throw new Error("Subject address could not be located on the map");
+  }
+  const sub = placed[0]!;
+  const centre = nearestQldCentre(sub);
+  const pins = placedPins([sub, centrePin(centre)]);
+  const autoZoom = clampSubjectZoom(zoomToFit(pins, SIZE, 72));
+  const manual = zoomOverride != null && Number.isFinite(zoomOverride);
+  const zoom = manual ? clampSubjectZoom(zoomOverride!) : autoZoom;
+  const center = manual
+    ? { lat: sub.lat, lng: sub.lng }
+    : boundsCenter(pins);
+  return { pins, center, zoom, autoZoom, centreName: centre.name.replace(/^the /i, "") };
+}
+
 export async function buildSubjectLocationMap(opts: {
   apiKey: string;
   subject: SalesMapPin;
-}): Promise<File> {
-  const pins = placedPins([opts.subject]);
-  if (pins.length === 0) throw new Error("Subject address could not be located on the map");
-  const center = { lat: pins[0]!.lat, lng: pins[0]!.lng };
+  zoom?: number | null;
+}): Promise<{ file: File; zoom: number; centreName: string }> {
+  const view = subjectMapView(opts.subject, opts.zoom);
   const raw = await fetchMap({
     apiKey: opts.apiKey,
-    pins,
-    center,
-    zoom: SUBJECT_MAP_ZOOM,
+    pins: view.pins,
+    center: view.center,
+    zoom: view.zoom,
   });
-  return annotate(raw.blob, pins, center, SUBJECT_MAP_ZOOM, "subject");
+  const file = await annotate(raw.blob, view.pins, view.center, view.zoom, "subject");
+  return { file, zoom: view.zoom, centreName: view.centreName };
 }
 
 export async function buildComparableSalesMap(opts: {

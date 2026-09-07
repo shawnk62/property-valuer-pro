@@ -3,7 +3,13 @@ import { toast } from "sonner";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { SalesMapEditor } from "@/components/report/SalesMapEditor";
 import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
-import { buildComparableSalesMap, buildSubjectLocationMap } from "@/lib/maps/generateMaps";
+import {
+  buildComparableSalesMap,
+  buildSubjectLocationMap,
+  clampSubjectZoom,
+  SUBJECT_ZOOM_MAX,
+  SUBJECT_ZOOM_MIN,
+} from "@/lib/maps/generateMaps";
 import { geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
 import { proximityFromPins } from "@/lib/maps/distance";
 import {
@@ -390,7 +396,12 @@ export function SalesSection({ controller }: { controller: ReportDraftController
             : "Subject address is empty on the inspection form.",
         );
       }
-      const locationFile = await buildSubjectLocationMap({ apiKey: key, subject });
+      const locationBuilt = await buildSubjectLocationMap({
+        apiKey: key,
+        subject,
+        zoom: draft.reportMeta.subjectMapManual ? draft.reportMeta.subjectMapZoom : null,
+      });
+      const locationFile = locationBuilt.file;
       const printedIds = new Set(gridSales.map((s) => s.id));
       const salesPins = pins.filter(
         (p) =>
@@ -400,7 +411,11 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       const salesFile = await buildComparableSalesMap({ apiKey: key, pins: salesPins });
       await attachLocationMap(locationFile);
       await onSalesMapFile(salesFile);
-      setMeta({ salesMapPins: pins });
+      setMeta({
+        salesMapPins: pins,
+        subjectMapZoom: locationBuilt.zoom,
+        subjectMapManual: draft.reportMeta.subjectMapManual === true,
+      });
       replaceSales(proximityFromPins(sales, pins));
       toast.success("Maps generated", {
         description:
@@ -411,6 +426,41 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       const message = err instanceof Error ? err.message : "Map generation failed";
       toast.error("Could not generate maps", { description: message });
       setStatus(`Maps failed: ${message}`);
+    }
+  }
+
+  async function rescaleLocationMap(nextZoom: number | null) {
+    if (!isGoogleMapsConfigured()) {
+      toast.error("Add a Google Maps API key in Settings first");
+      return;
+    }
+    const pins = (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? [];
+    let subject = pins.find((p) => p.kind === "subject");
+    if (!subject || (subject.lat === 0 && subject.lng === 0)) {
+      toast.error("Generate maps first so the subject can be located");
+      return;
+    }
+    const manual = nextZoom != null;
+    const zoom = manual ? clampSubjectZoom(nextZoom) : null;
+    setStatus("Updating location map…");
+    try {
+      const built = await buildSubjectLocationMap({
+        apiKey: loadGoogleMapsKey(),
+        subject,
+        zoom,
+      });
+      await attachLocationMap(built.file);
+      setMeta({ subjectMapZoom: built.zoom, subjectMapManual: manual });
+      toast.success(
+        manual
+          ? `Location map zoom ${built.zoom}`
+          : `Location map fitted to ${built.centreName}`,
+      );
+      setStatus("Location map updated.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Location map failed";
+      toast.error("Could not update location map", { description: message });
+      setStatus(`Location map failed: ${message}`);
     }
   }
 
@@ -1293,8 +1343,16 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           const key = loadGoogleMapsKey();
           const subject = pins.find((p) => p.kind === "subject");
           if (subject && !(subject.lat === 0 && subject.lng === 0)) {
-            const locationFile = await buildSubjectLocationMap({ apiKey: key, subject });
-            await attachLocationMap(locationFile);
+            const locationBuilt = await buildSubjectLocationMap({
+              apiKey: key,
+              subject,
+              zoom: draft.reportMeta.subjectMapManual ? draft.reportMeta.subjectMapZoom : null,
+            });
+            await attachLocationMap(locationBuilt.file);
+            setMeta({
+              subjectMapZoom: locationBuilt.zoom,
+              subjectMapManual: draft.reportMeta.subjectMapManual === true,
+            });
           }
           const salesFile = await buildComparableSalesMap({ apiKey: key, pins });
           await onSalesMapFile(salesFile);
@@ -1325,9 +1383,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         <div>
           <h4 className="text-sm font-semibold text-foreground">Sales map &amp; front photos</h4>
           <p className="mt-1 text-xs text-muted-foreground">
-            Generate maps fills the location tile (subject only, about 10 km) and the sales-map
-            tile (subject address + comparable numbers matching the grid). Edit pins if a marker
-            is wrong, then Apply. You can still drop a Cotality map by hand.
+            Generate maps fills the location tile (subject plus nearest CBD / town / regional
+            centre) and the sales-map tile (subject address + comparable numbers). Location-map
+            scale can be adjusted below without changing the sales map.
           </p>
         </div>
 
@@ -1354,6 +1412,44 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                 className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent"
               >
                 Edit pins
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-xs font-medium text-foreground">Location map scale</p>
+              <button
+                type="button"
+                onClick={() => void rescaleLocationMap(null)}
+                className="rounded-md border border-input bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent"
+              >
+                Fit to nearest centre
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  void rescaleLocationMap(
+                    clampSubjectZoom((draft.reportMeta.subjectMapZoom ?? 12) - 1),
+                  )
+                }
+                disabled={(draft.reportMeta.subjectMapZoom ?? 12) <= SUBJECT_ZOOM_MIN}
+                className="rounded-md border border-input bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-40"
+              >
+                −
+              </button>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                z{draft.reportMeta.subjectMapZoom ?? "auto"}
+                {draft.reportMeta.subjectMapManual ? " · manual" : ""}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  void rescaleLocationMap(
+                    clampSubjectZoom((draft.reportMeta.subjectMapZoom ?? 12) + 1),
+                  )
+                }
+                disabled={(draft.reportMeta.subjectMapZoom ?? 16) >= SUBJECT_ZOOM_MAX}
+                className="rounded-md border border-input bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-40"
+              >
+                +
               </button>
             </div>
             {draft.reportMeta.salesMapUrl ? (

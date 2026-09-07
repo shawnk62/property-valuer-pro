@@ -192,6 +192,10 @@ export interface ReportMeta {
   salesMapUrl?: string;
   /** Supabase Storage path for salesMapUrl when uploaded. */
   salesMapStoragePath?: string;
+  /** Location-map (s.5.2) Google zoom. Sales map is unchanged. */
+  subjectMapZoom?: number;
+  /** When true, Generate maps keeps subjectMapZoom instead of refitting the nearest centre. */
+  subjectMapManual?: boolean;
   /** Editable pin set used to rebuild the Google sales map. */
   salesMapPins?: Array<{
     id: string;
