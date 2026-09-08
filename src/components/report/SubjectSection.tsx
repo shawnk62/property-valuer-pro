@@ -15,6 +15,7 @@ const REPORT_TYPE_OPTIONS = [
   "CGT - Phil",
   "CGT - Phil Retrospective",
   "CGT - Phil Apportionment",
+  "Joint Family Law - Phil",
   "Stamp Duty - Murray",
   "CGT - Murray",
   "CGT - Murray Retrospective",

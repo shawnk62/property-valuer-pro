@@ -16,7 +16,8 @@ export type ReportTypeId =
   | "cgt-murray"
   | "cgt-murray-retrospective"
   | "cgt-murray-apportionment"
-  | "family-law-murray";
+  | "family-law-murray"
+  | "joint-family-law-phil";
 
 export interface ReportTypeConfig {
   id: ReportTypeId;
@@ -156,6 +157,21 @@ export const REPORT_TYPE_CONFIGS: ReportTypeConfig[] = [
     saleNarrativeStyle: "detailed",
     valuationDisplay: "amount",
   },
+  {
+    id: "joint-family-law-phil",
+    match: [
+      "Joint Family Law - Phil",
+      "Joint Family Law Phil",
+      "Family Law - Phil Joint",
+      "Jointly Appointed Family Law - Phil",
+    ],
+    coverSubtitle: "Joint Family Law Valuation Report",
+    defaultPurpose:
+      "Determine the market value of the property for use in a jointly appointed family law matter.",
+    instructionsTitle: "Joint Instructions and Purpose",
+    saleNarrativeStyle: "compact",
+    valuationDisplay: "amount",
+  },
 ];
 
 /** Exact current Purchase / generic behaviour */
@@ -196,8 +212,13 @@ export function isPhilReportType(id: ReportTypeId | string): boolean {
     id === "cgt-murray" ||
     id === "cgt-murray-retrospective" ||
     id === "cgt-murray-apportionment" ||
-    id === "family-law-murray"
+    id === "family-law-murray" ||
+    id === "joint-family-law-phil"
   );
+}
+
+export function isJointFamilyLawPhilType(id: ReportTypeId | string): boolean {
+  return id === "joint-family-law-phil";
 }
 
 export function isMurrayReportType(id: ReportTypeId | string): boolean {

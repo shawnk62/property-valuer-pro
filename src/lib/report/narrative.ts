@@ -281,6 +281,11 @@ function isPhilAssignment(values: InspectionValues): boolean {
   return a.includes("phil");
 }
 
+function isJointFamilyLawPhil(values: InspectionValues): boolean {
+  const a = v(values, "prop_assignment").toLowerCase();
+  return a.includes("phil") && a.includes("joint") && a.includes("family");
+}
+
 function isMurrayAssignment(values: InspectionValues): boolean {
   const a = v(values, "prop_assignment").toLowerCase();
   return a.includes("murray");
@@ -368,6 +373,34 @@ function buildPhilRemarks(
     sentence([v(values, "other_notes")]),
     sentence([v(values, "defects_notes")]),
   ].filter(Boolean);
+
+  if (isJointFamilyLawPhil(values)) {
+    const cond = v(values, "overall_cond").trim().toLowerCase();
+    const defects = v(values, "defects_notes").trim() || v(values, "cond_imp_notes").trim();
+    const conditionLine = sentence([
+      cond ? `The dwelling is in ${cond} condition` : "",
+      defects
+        ? "There are a number of building defects/maintenance issues which need attention. See Condition of Improvements in this Report"
+        : "",
+    ]);
+    const jointSales =
+      count <= 0
+        ? ""
+        : count === 1
+          ? "I have included 1 sale."
+          : `I have included ${count} sales.`;
+    const jointValue = valueFmt ? sentence([`I assess the value at ${valueFmt}`]) : "";
+    return [
+      PHIL_STRUCTURAL,
+      brief,
+      ground,
+      conditionLine,
+      jointSales,
+      jointValue,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+  }
 
   return [
     philRemarksOpening(values),

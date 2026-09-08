@@ -3,6 +3,7 @@ import { get, hasValue, joinValues, labelFor, pick } from "@/lib/report/schema";
 import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, type ReportDraft } from "@/lib/report/types";
 import {
   getReportTypeConfig,
+  isJointFamilyLawPhilType,
   isMurrayReportType,
   isPhilReportType,
 } from "@/lib/report/reportTypes";
@@ -770,6 +771,9 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
         <div className="cover-title-block">
           <p>REPORT AND VALUATION</p>
+          {isJointFamilyLawPhilType(reportType.id) ? (
+            <p>ON A JOINTLY APPOINTED BASIS</p>
+          ) : null}
           {m.valueDate || m.inspectionDate ? (
             <p>
               {/retrospective/i.test(reportType.id)
@@ -778,7 +782,11 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               {formatCoverDate(m.valueDate || m.inspectionDate)}
             </p>
           ) : null}
-          <p>RESIDENTIAL PROPERTY SITUATED AT</p>
+          <p>
+            {isJointFamilyLawPhilType(reportType.id)
+              ? "RESIDENTIAL DWELLING SITUATED AT"
+              : "RESIDENTIAL PROPERTY SITUATED AT"}
+          </p>
           {addressLine ? <p>{addressLine}</p> : null}
         </div>
       </div>
@@ -818,8 +826,12 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 { label: "LAND AREA", value: siteArea },
                 { label: "ZONING", value: get(v, "prop_zoning") },
                 {
-                  label: "INSTRUCTIONS",
-                  value: instructionsFromLine(v),
+                  label: isJointFamilyLawPhilType(reportType.id)
+                    ? "JOINT INSTRUCTIONS"
+                    : "INSTRUCTIONS",
+                  value: isJointFamilyLawPhilType(reportType.id)
+                    ? get(v, "instr_from_name") || instructionsFromLine(v)
+                    : instructionsFromLine(v),
                 },
                 {
                   label: "CONTACT DETAILS",
@@ -963,22 +975,40 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
       {/* ---- 1. Instructions & purpose ---- */}
       {isPhilReportType(reportType.id) ? (
-        <Section id="sec-instructions" number="1." title={murray ? "Introduction" : "Instructions and Purpose"}>
-          <Sub title="1.1  Instructions">
+        <Section
+          id="sec-instructions"
+          number="1."
+          title={
+            murray
+              ? "Introduction"
+              : isJointFamilyLawPhilType(reportType.id)
+                ? "Joint Instructions and Purpose"
+                : "Instructions and Purpose"
+          }
+        >
+          <Sub
+            title={
+              isJointFamilyLawPhilType(reportType.id)
+                ? "1.1  Joint Instructions"
+                : "1.1  Instructions"
+            }
+          >
             <Para>
-              {[
-                get(v, "instr_from_name")
-                  ? `This report prepared as per instructions from ${get(v, "instr_from_name")}.`
-                  : "",
-                get(v, "instr_from_email")
-                  ? `Email: ${get(v, "instr_from_email")}`
-                  : "",
-                get(v, "instr_from_mobile")
-                  ? `Mobile: ${get(v, "instr_from_mobile")}`
-                  : "",
-              ]
-                .filter(Boolean)
-                .join(" ") || "As instructed."}
+              {isJointFamilyLawPhilType(reportType.id)
+                ? get(v, "instr_from_name") || "As jointly instructed."
+                : [
+                    get(v, "instr_from_name")
+                      ? `This report prepared as per instructions from ${get(v, "instr_from_name")}.`
+                      : "",
+                    get(v, "instr_from_email")
+                      ? `Email: ${get(v, "instr_from_email")}`
+                      : "",
+                    get(v, "instr_from_mobile")
+                      ? `Mobile: ${get(v, "instr_from_mobile")}`
+                      : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ") || "As instructed."}
             </Para>
           </Sub>
           <Sub title="1.2  Purpose of Valuation">

@@ -58,6 +58,16 @@ This is a Murray Peterson valuation report. Match Murray sample tone (Bassett Ro
 - Prefer "The subject property…" / "The subject allotment…" / "The subject parent allotment…" openings.
 - Use "allotment" for the subject site. Include recorded facts only. No marketing language.`;
   }
+  if (t.includes("phil") && t.includes("family") && t.includes("joint")) {
+    return `
+This is a Joint Family Law – Phil valuation. Match the Currimundi jointly-appointed sample:
+- Very compact. Neighbourhood is often one sentence ("This is predominantly a single unit residential area.").
+- Site physical: one short sentence. Services: one compact list sentence ("Water, electricity, sewerage and telephone are available.").
+- Brief / 7.1: one tight sentence (e.g. "A lowset rendered and tile dwelling.").
+- Accommodation: short factual sentences for rooms, cars, pool, solar, HVAC — no marketing.
+- Remarks follow the Joint Family Law – Phil sequence (pest recommendation first; no auction closer).
+- Use "allotment" for the site. Do not invent facts.`;
+  }
   if (t.includes("stamp duty")) {
     return `
 This is a Stamp Duty – Phil valuation: prefer concise wording.
@@ -407,6 +417,34 @@ Murray sample style: 1–2 short sentences, e.g. "The subject property appears t
       };
     case "remarks": {
       const isPhil = type.toLowerCase().includes("phil");
+      const isJointFamilyPhil =
+        isPhil && type.toLowerCase().includes("joint") && type.toLowerCase().includes("family");
+      if (isJointFamilyPhil) {
+        const pool = formatValueLine("Pool", values["pool"]);
+        const land = formatValueLine("Landscaping", values["land"]);
+        const fence = formatValueLine("Fencing", values["fence"]);
+        const overall = formatValueLine("Overall condition", values["overall_cond"]);
+        const defects = formatValueLine("Defects", values["defects_notes"]);
+        return {
+          system: BASE_RULES + styleGuide(type),
+          prompt: `Write section 13 Remarks for a Joint Family Law – Phil valuation (Currimundi jointly-appointed sample).
+
+Produce short paragraphs in this exact order. Do not invent facts. Do not add an auction/tender closer. Do not use the “valuation assumes information disclosed…” opening.
+
+1. Exactly: "I recommend that a structural survey and pest inspection be obtained from suitably qualified professionals."
+2. Brief description of the dwelling from inspection facts (set/style/materials, bedrooms, notable layout, age if recorded).
+3. Car accommodation and ground improvements (garage/carport, fencing, landscaping, pool) only if recorded — each as its own short sentence.
+4. Condition: "The dwelling is in {overall condition} condition." If defects/maintenance notes exist, add: "There are a number of building defects/maintenance issues which need attention. See Condition of Improvements in this Report."
+5. "I have included N sales." (singular "sale" if 1). Omit if N is unknown.
+6. "I assess the value at $X." only if an assessed value is provided; otherwise omit.
+
+Inspection facts:
+${sectionAnswers(values, ["2", "3", "4", "5", "6"])}
+${overall ? overall + "\n" : ""}${[pool, land, fence].filter(Boolean).join("\n")}
+${defects ? defects : ""}
+Plain Australian valuation English. Short sentences.`,
+        };
+      }
       if (isPhil) {
         const pool = formatValueLine("Pool", values["pool"]);
         const land = formatValueLine("Landscaping", values["land"]);
