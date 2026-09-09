@@ -839,9 +839,28 @@
     font-size: 9pt !important;
   }
 
-  #report-preview-sheet tr {
+  #report-preview-sheet thead {
+    display: table-header-group !important;
+  }
+
+  #report-preview-sheet tr,
+  #report-preview-sheet th,
+  #report-preview-sheet td {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
+  }
+
+  /* One comparable = one mini-table so Chrome/Safari cannot split a sale row. */
+  #report-preview-sheet .sales-evidence-item {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: auto !important;
+    page-break-after: auto !important;
+    margin: 0 0 8pt 0 !important;
+  }
+
+  #report-preview-sheet .sales-evidence-item thead {
+    display: table-header-group !important;
   }
 
   #report-preview-sheet th,

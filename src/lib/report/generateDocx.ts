@@ -742,13 +742,14 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
 
     // Table matching Preview columns
     const colW = [
-      Math.floor(CONTENT_WIDTH * 0.28),
-      Math.floor(CONTENT_WIDTH * 0.14),
-      Math.floor(CONTENT_WIDTH * 0.14),
-      Math.floor(CONTENT_WIDTH * 0.14),
-      Math.floor(CONTENT_WIDTH * 0.3),
+      Math.floor(CONTENT_WIDTH * 0.06),
+      Math.floor(CONTENT_WIDTH * 0.26),
+      Math.floor(CONTENT_WIDTH * 0.13),
+      Math.floor(CONTENT_WIDTH * 0.13),
+      Math.floor(CONTENT_WIDTH * 0.13),
+      Math.floor(CONTENT_WIDTH * 0.29),
     ];
-    const headers = ["Address", "Sale date", "Sale price", "Land area", "Comments"];
+    const headers = ["#", "Address", "Sale date", "Sale price", "Land area", "Comments"];
     const headerRow = new TableRow({
       children: headers.map(
         (h, i) =>
@@ -770,9 +771,17 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
       ),
     });
     const bodyRows = sales.map(
-      (s) =>
+      (s, idx) =>
         new TableRow({
-          children: [s.address, s.saleDate, s.salePrice, s.landArea, cleanSaleProse((s.narrative && s.narrative.trim()) || s.comments || "")].map(
+          cantSplit: true,
+          children: [
+            String(idx + 1),
+            s.address,
+            s.saleDate,
+            s.salePrice,
+            s.landArea,
+            cleanSaleProse((s.narrative && s.narrative.trim()) || s.comments || ""),
+          ].map(
             (cell, i) =>
               new TableCell({
                 width: { size: colW[i], type: WidthType.DXA },
