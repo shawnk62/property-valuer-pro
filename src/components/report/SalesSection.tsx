@@ -54,7 +54,6 @@ import {
   type CmaSaleExtract,
 } from "@/lib/report/importSalesCma";
 import { importSalesFromCsv } from "@/lib/report/importSalesCsv";
-import { MOCK_COTALITY_SALES } from "@/lib/report/mock-sales";
 import {
   buildSaleNarrativePrompt,
   loadAutoSaleNarratives,
@@ -1296,19 +1295,6 @@ export function SalesSection({ controller }: { controller: ReportDraftController
             className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
           >
             {generating ? "Generating…" : "Regenerate narratives"}
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              replaceSales(
-                MOCK_COTALITY_SALES.map((s, i) =>
-                  ensureSaleAdjustments({ ...s, id: `cotality-${i + 1}` }),
-                ),
-              )
-            }
-            className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
-          >
-            Load sample sales
           </button>
           <button
             type="button"
