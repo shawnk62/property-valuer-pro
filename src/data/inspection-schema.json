@@ -516,6 +516,12 @@
           "multiline": false
         },
         {
+          "name": "nbhd_use_vacant",
+          "label": "Present Land Use % – Vacant",
+          "type": "text",
+          "multiline": false
+        },
+        {
           "name": "nbhd_boundaries",
           "label": "Neighbourhood Boundaries",
           "type": "text",
