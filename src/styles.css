@@ -957,7 +957,7 @@
   .photo-annex-cell {
     width: 50% !important;
     box-sizing: border-box !important;
-    padding: 0 6pt 10pt 6pt !important;
+    padding: 0 5pt 6pt 5pt !important;
   }
 
   .photo-annex-page .report-photo-figure {
@@ -965,6 +965,12 @@
     width: 100% !important;
     margin: 0 !important;
   }
+
+  .photo-annex-page .report-photo-figure img {
+    height: 58mm !important;
+    max-height: 58mm !important;
+  }
+
 
   /* Drop CSS grid for print — grid + large images often split mid-photo */
   .report-annexure .grid {

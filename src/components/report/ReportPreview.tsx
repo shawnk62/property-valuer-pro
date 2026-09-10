@@ -528,8 +528,8 @@ function SignatureBlock({
   );
 }
 
-/** One row of two photos per printed page so the heading always fits with them. */
-const PHOTO_ANNEX_PER_PAGE = 2;
+/** Two rows of two photographs per printed page, with the heading on each page. */
+const PHOTO_ANNEX_PER_PAGE = 4;
 
 function PhotoAnnexPages({
   heading,
