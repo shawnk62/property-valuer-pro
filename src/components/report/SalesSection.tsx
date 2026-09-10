@@ -117,6 +117,19 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const salesRef = useRef(sales);
   salesRef.current = sales;
 
+  useEffect(() => {
+    const blockBrowserOpen = (e: DragEvent) => {
+      if (!e.dataTransfer?.types?.includes("Files")) return;
+      e.preventDefault();
+    };
+    window.addEventListener("dragover", blockBrowserOpen);
+    window.addEventListener("drop", blockBrowserOpen);
+    return () => {
+      window.removeEventListener("dragover", blockBrowserOpen);
+      window.removeEventListener("drop", blockBrowserOpen);
+    };
+  }, []);
+
   /**
    * Stable key so auto-narrative debounce is not reset on every parent re-render.
    * (draft.sales.map(...) creates a new array each render — that previously
@@ -281,7 +294,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   }
 
   function patchSale(id: string, patch: Partial<ComparableSale>) {
-    replaceSales(sales.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+    replaceSales(salesRef.current.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   }
 
   async function onSalesMapFile(file: File | null) {
@@ -516,17 +529,25 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
   function imageFileFromDataTransfer(dt: DataTransfer | null): File | null {
     if (!dt) return null;
+    const looksLikeImage = (f: File) =>
+      f.size > 0 &&
+      (f.type.startsWith("image/") ||
+        /\.(jpe?g|png|gif|webp|heic|heif|tif{1,2})$/i.test(f.name));
     for (const f of Array.from(dt.files ?? [])) {
-      if (f.type.startsWith("image/") && f.size > 0) return f;
+      if (looksLikeImage(f)) return f;
     }
-    // Dragged image may appear as an item
     for (const item of Array.from(dt.items ?? [])) {
-      if (item.kind === "file" && item.type.startsWith("image/")) {
-        const f = item.getAsFile();
-        if (f && f.size > 0) return f;
-      }
+      if (item.kind !== "file") continue;
+      const f = item.getAsFile();
+      if (f && looksLikeImage(f)) return f;
     }
     return null;
+  }
+
+  function salePhotoDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "copy";
   }
 
   /** Right-click / long-press paste: read image from system clipboard. */
@@ -646,7 +667,11 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     e.preventDefault();
     e.stopPropagation();
     const file = imageFileFromDataTransfer(e.dataTransfer);
-    if (file) void onSalePhotoFile(saleId, file);
+    if (file) {
+      void onSalePhotoFile(saleId, file);
+      return;
+    }
+    toast.error("Drop an image onto this comparable");
   }
 
   function onSalesMapPaste(e: React.ClipboardEvent) {
@@ -1508,6 +1533,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
             {gridSales.map((sale, idx) => (
               <div
                 key={sale.id}
+                onDragOver={salePhotoDragOver}
+                onDrop={(e) => onSalePhotoDrop(sale.id, e)}
                 className="rounded border border-border bg-background p-2 space-y-1.5"
               >
                 <p className="text-xs font-semibold text-foreground truncate">
@@ -1521,7 +1548,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                     <img
                       src={sale.photoUrl}
                       alt={sale.address || `Comparable ${idx + 1}`}
-                      className="max-h-28 w-full rounded object-cover"
+                      className="pointer-events-none max-h-28 w-full rounded object-cover"
                     />
                     <button
                       type="button"
@@ -1538,7 +1565,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                     onClick={() => openPhotoSource({ saleId: sale.id })}
                     onPaste={(e) => onSalePhotoPaste(sale.id, e)}
                     onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
-                    onDragOver={(e) => e.preventDefault()}
+                    onDragOver={salePhotoDragOver}
                     onDrop={(e) => onSalePhotoDrop(sale.id, e)}
                     className="flex h-20 w-full cursor-pointer flex-col items-center justify-center gap-0.5 rounded border border-dashed border-border text-xs text-muted-foreground hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
                     title="Tap to open the camera, or paste / drop an image"
@@ -1625,6 +1652,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                               <th
                                 key={sale.id}
                                 colSpan={2}
+                                onDragOver={salePhotoDragOver}
+                                onDrop={(e) => onSalePhotoDrop(sale.id, e)}
                                 className="border-l border-border px-1 py-1.5 align-top text-xs font-semibold text-foreground"
                               >
                                 <div className="flex items-start justify-between gap-0.5">
@@ -1652,7 +1681,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                         <img
                                           src={sale.photoUrl}
                                           alt=""
-                                          className="max-h-14 w-auto max-w-full rounded border border-border object-cover"
+                                          className="pointer-events-none max-h-14 w-auto max-w-full rounded border border-border object-cover"
                                         />
                                         <input
                                           type="file"
@@ -1672,7 +1701,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                         onPaste={(e) => onSalePhotoPaste(sale.id, e)}
                                         onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
                                         onMouseEnter={(e) => (e.currentTarget as HTMLElement).focus?.()}
-                                        onDragOver={(e) => e.preventDefault()}
+                                        onDragOver={salePhotoDragOver}
                                         onDrop={(e) => onSalePhotoDrop(sale.id, e)}
                                         className="mt-1 flex cursor-pointer flex-col items-center justify-center rounded border border-dashed border-border px-1 py-2 text-[0.6rem] font-normal text-muted-foreground hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
                                         title="Right-click → Paste image, or ⌘V"
