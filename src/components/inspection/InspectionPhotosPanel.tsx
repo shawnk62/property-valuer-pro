@@ -5,7 +5,7 @@
  * Writes into the same report_extras.photos array the report Photos tab uses,
  * so completed inspections already populate the report without a second import.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type DragEvent as ReactDragEvent } from "react";
 import { Camera, Check, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,29 @@ import { PHOTO_SLOTS, type PhotoSlot, type ReportPhoto } from "@/lib/report/type
 
 function newPhotoId(): string {
   return `photo-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function imageFileFromDataTransfer(dt: DataTransfer | null): File | null {
+  if (!dt) return null;
+  const named = Array.from(dt.files ?? []).find(
+    (f) =>
+      f.type.startsWith("image/") ||
+      /\.(jpe?g|png|gif|webp|heic|heif|tif{1,2})$/i.test(f.name),
+  );
+  if (named) return named;
+  const items = Array.from(dt.items ?? []);
+  for (const item of items) {
+    if (item.kind !== "file") continue;
+    const file = item.getAsFile();
+    if (
+      file &&
+      (file.type.startsWith("image/") ||
+        /\.(jpe?g|png|gif|webp|heic|heif|tif{1,2})$/i.test(file.name))
+    ) {
+      return file;
+    }
+  }
+  return null;
 }
 
 async function loadPhotos(inspectionId: string): Promise<ReportPhoto[]> {
@@ -164,6 +187,39 @@ export function InspectionPhotosPanel({
     setSourceOpen(true);
   }
 
+  function acceptDroppedFile(
+    e: ReactDragEvent,
+    opts: {
+      slot: PhotoSlot | null;
+      replaceId?: string;
+      caption: string;
+      draftId?: string;
+    },
+  ) {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = imageFileFromDataTransfer(e.dataTransfer);
+    if (!file) {
+      toast.error("Drop an image onto the tile");
+      return;
+    }
+    captureTargetRef.current = opts;
+    onFileSelected(file);
+  }
+
+  useEffect(() => {
+    const blockBrowserOpen = (e: DragEvent) => {
+      if (!e.dataTransfer?.types?.includes("Files")) return;
+      e.preventDefault();
+    };
+    window.addEventListener("dragover", blockBrowserOpen);
+    window.addEventListener("drop", blockBrowserOpen);
+    return () => {
+      window.removeEventListener("dragover", blockBrowserOpen);
+      window.removeEventListener("drop", blockBrowserOpen);
+    };
+  }, []);
+
   function clickPhotoInput(which: "camera" | "library") {
     const input = which === "camera" ? cameraInputRef.current : libraryInputRef.current;
     if (!input) return;
@@ -175,7 +231,10 @@ export function InspectionPhotosPanel({
     const target = captureTargetRef.current;
     captureTargetRef.current = null;
     if (!file || !target) return;
-    if (!file.type.startsWith("image/")) {
+    if (
+      !file.type.startsWith("image/") &&
+      !/\.(jpe?g|png|gif|webp|heic|heif|tif{1,2})$/i.test(file.name)
+    ) {
       toast.error("Please choose an image");
       return;
     }
@@ -282,7 +341,7 @@ export function InspectionPhotosPanel({
         <div>
           <h2 className="font-serif text-lg font-semibold text-foreground">Subject photos</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Tap a slot to open the camera. Review the picture, then OK to save and return to the form.
+            Tap a slot for camera or library, or drop an image onto the tile. Review, then OK to save.
             Photos appear on the report automatically.
           </p>
         </div>
@@ -333,18 +392,30 @@ export function InspectionPhotosPanel({
                       caption: photo?.caption || label,
                     })
                   }
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.dataTransfer.dropEffect = "copy";
+                  }}
+                  onDrop={(e) =>
+                    acceptDroppedFile(e, {
+                      slot,
+                      replaceId: photo?.id,
+                      caption: photo?.caption || label,
+                    })
+                  }
                   className="relative flex aspect-4/3 w-full items-center justify-center overflow-hidden rounded-md border-2 border-dashed border-border bg-muted/50 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
                 >
                   {photo?.url ? (
                     <img
                       src={photo.url}
                       alt={photo.caption || label}
-                      className="h-full w-full object-cover"
+                      className="pointer-events-none h-full w-full object-cover"
                     />
                   ) : (
-                    <span className="flex flex-col items-center gap-2 px-4 text-center">
+                    <span className="pointer-events-none flex flex-col items-center gap-2 px-4 text-center">
                       <Camera className="size-6 opacity-70" />
-                      Tap for camera or library
+                      Tap or drop photo
                     </span>
                   )}
                 </button>
@@ -399,12 +470,24 @@ export function InspectionPhotosPanel({
                     caption: photo.caption.trim() || "Extra photo",
                   })
                 }
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.dataTransfer.dropEffect = "copy";
+                }}
+                onDrop={(e) =>
+                  acceptDroppedFile(e, {
+                    slot: null,
+                    replaceId: photo.id,
+                    caption: photo.caption.trim() || "Extra photo",
+                  })
+                }
                 className="relative flex aspect-4/3 w-full items-center justify-center overflow-hidden rounded-md border-2 border-dashed border-border bg-muted/50"
               >
                 <img
                   src={photo.url}
                   alt={photo.caption}
-                  className="h-full w-full object-cover"
+                  className="pointer-events-none h-full w-full object-cover"
                 />
               </button>
             </div>
@@ -445,11 +528,23 @@ export function InspectionPhotosPanel({
                     draftId: draft.id,
                   })
                 }
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.dataTransfer.dropEffect = "copy";
+                }}
+                onDrop={(e) =>
+                  acceptDroppedFile(e, {
+                    slot: null,
+                    caption: draft.label.trim() || "Extra photo",
+                    draftId: draft.id,
+                  })
+                }
                 className="relative flex aspect-4/3 w-full items-center justify-center overflow-hidden rounded-md border-2 border-dashed border-border bg-muted/50 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
               >
-                <span className="flex flex-col items-center gap-2 px-4 text-center">
+                <span className="pointer-events-none flex flex-col items-center gap-2 px-4 text-center">
                   <Camera className="size-6 opacity-70" />
-                  Tap to photograph
+                  Tap or drop photo
                 </span>
               </button>
             </div>
