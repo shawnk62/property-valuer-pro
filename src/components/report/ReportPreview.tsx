@@ -1,3 +1,4 @@
+import type { ReactElement, ReactNode } from "react";
 import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { get, hasValue, joinValues, labelFor, pick } from "@/lib/report/schema";
 import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, type ReportDraft } from "@/lib/report/types";
@@ -524,6 +525,44 @@ function SignatureBlock({
       ) : null}
       {meta.valueDate ? <p className="mt-1 text-sm">{meta.valueDate}</p> : null}
     </div>
+  );
+}
+
+/** Print-safe photo grid: thead repeats on every printed page. */
+function PhotoAnnexTable({
+  heading,
+  children,
+}: {
+  heading: string;
+  children: ReactNode;
+}) {
+  const items = (Array.isArray(children) ? children : [children]).filter(Boolean) as ReactElement[];
+  const rows: React.ReactElement[][] = [];
+  for (let i = 0; i < items.length; i += 2) {
+    rows.push(items.slice(i, i + 2));
+  }
+  return (
+    <table className="photo-annex-table w-full border-collapse">
+      <thead>
+        <tr>
+          <th colSpan={2} className="photo-annex-heading">
+            {heading}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row, ri) => (
+          <tr key={`photo-row-${ri}`}>
+            {row.map((cell, ci) => (
+              <td key={cell.key ?? `photo-${ri}-${ci}`} className="photo-annex-cell">
+                {cell}
+              </td>
+            ))}
+            {row.length === 1 ? <td className="photo-annex-cell" /> : null}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
@@ -1850,61 +1889,52 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         ) : null}
       </Section>
 
-      {/* ---- Photo annexure (only when images exist) ---- */}
-      {annexurePhotos.length > 0 || printedSales.some((s) => s.photoUrl) ? (
-        <section id="report-annexure-photos" className="report-annexure mt-12">
-          <h2 className="report-h1 text-center">{photosAnnex?.heading ?? "Annexure — Photographs"}</h2>
-          <div className="mt-6 space-y-8">
-            {annexurePhotos.length > 0 ? (
-              <div className="grid gap-6 sm:grid-cols-2">
-                {annexurePhotos.map((photo) => (
-                  <figure key={photo.id} className="report-photo-figure">
-                    <img
-                      src={photo.url}
-                      alt={photo.caption || "Photograph"}
-                      className="aspect-4/3 w-full border border-[var(--rule)] object-cover"
-                      loading="eager"
-                      decoding="sync"
-                    />
-                    <figcaption className="mt-1.5 text-center text-sm">
-                      {photo.caption}
-                    </figcaption>
-                  </figure>
-                ))}
-              </div>
-            ) : null}
+      {/* ---- Subject photographs (repeating page heading) ---- */}
+      {annexurePhotos.length > 0 ? (
+        <section id="report-annexure-photos" className="report-annexure report-annexure-subject mt-12">
+          <PhotoAnnexTable heading="Subject Photographs">
+            {annexurePhotos.map((photo) => (
+              <figure key={photo.id} className="report-photo-figure">
+                <img
+                  src={photo.url}
+                  alt={photo.caption || "Photograph"}
+                  className="aspect-4/3 w-full border border-[var(--rule)] object-cover"
+                  loading="eager"
+                  decoding="sync"
+                />
+                <figcaption className="mt-1.5 text-center text-sm">{photo.caption}</figcaption>
+              </figure>
+            ))}
+          </PhotoAnnexTable>
+        </section>
+      ) : null}
 
-            {printedSales.some((s) => s.photoUrl) ? (
-              <div className="space-y-6">
-                <h3 className="text-center text-sm font-semibold uppercase tracking-wide">
-                  Comparable sales — front elevations
-                </h3>
-                <div className="grid gap-6 sm:grid-cols-2">
-                  {printedSales.map((s, idx) =>
-                    s.photoUrl ? (
-                      <figure key={s.id} className="report-photo-figure break-inside-avoid">
-                        <img
-                          src={s.photoUrl}
-                          alt={
-                            s.address
-                              ? `Comparable ${idx + 1} — ${s.address}`
-                              : `Comparable ${idx + 1}`
-                          }
-                          className="w-full border border-[var(--rule)] object-contain"
-                          loading="eager"
-                          decoding="sync"
-                        />
-                        <figcaption className="mt-1.5 text-center text-sm font-medium">
-                          Comparable {idx + 1}
-                          {s.address ? ` — ${s.address}` : ""}
-                        </figcaption>
-                      </figure>
-                    ) : null,
-                  )}
-                </div>
-              </div>
-            ) : null}
-          </div>
+      {/* ---- Comparable sale photographs (new page, heading repeats) ---- */}
+      {printedSales.some((s) => s.photoUrl) ? (
+        <section id="report-annexure-comp-photos" className="report-annexure report-annexure-comps mt-12">
+          <PhotoAnnexTable heading="Comparable Sale Photographs">
+            {printedSales.map((s, idx) =>
+              s.photoUrl ? (
+                <figure key={s.id} className="report-photo-figure">
+                  <img
+                    src={s.photoUrl}
+                    alt={
+                      s.address
+                        ? `Comparable ${idx + 1} — ${s.address}`
+                        : `Comparable ${idx + 1}`
+                    }
+                    className="w-full border border-[var(--rule)] object-contain"
+                    loading="eager"
+                    decoding="sync"
+                  />
+                  <figcaption className="mt-1.5 text-center text-sm font-medium">
+                    Comparable {idx + 1}
+                    {s.address ? ` — ${s.address}` : ""}
+                  </figcaption>
+                </figure>
+              ) : null,
+            )}
+          </PhotoAnnexTable>
         </section>
       ) : null}
 
