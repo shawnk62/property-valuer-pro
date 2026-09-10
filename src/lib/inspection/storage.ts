@@ -106,22 +106,44 @@ export function sanitizeInspectionValues(values: InspectionValues): InspectionVa
 }
 
 
-/** iPad/Safari often keeps an expired access token that still looks readable. */
+function sessionStillValid(
+  session: { access_token?: string; expires_at?: number } | null | undefined,
+  minSecondsLeft = 20,
+): boolean {
+  if (!session?.access_token) return false;
+  const expiresAt = session.expires_at;
+  if (!expiresAt) return true;
+  return expiresAt - Date.now() / 1000 > minSecondsLeft;
+}
+
+/**
+ * Confirm there is a usable session before writes.
+ * Do not refresh on every save — rotating the refresh token on one device
+ * invalidates the other (iPad vs iPhone). Refresh only when the access
+ * token is near expiry; if refresh fails but the current token still works,
+ * continue with the save.
+ */
 async function ensureFreshSession(): Promise<void> {
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
   if (sessionError) {
     throw new Error(sessionError.message || "Could not read sign-in session");
   }
-  if (!sessionData.session) {
+  const session = sessionData.session;
+  if (!session) {
     throw new Error("You are signed out. Sign in again on this device.");
   }
-  const { error: refreshError } = await supabase.auth.refreshSession();
-  if (refreshError) {
-    const msg = refreshError.message || "";
-    if (/jwt|expired|session|refresh/i.test(msg)) {
-      throw new Error("Session expired. Sign in again on this device.");
-    }
-  }
+
+  const expiresAt = session.expires_at ?? 0;
+  const secondsLeft = expiresAt ? expiresAt - Date.now() / 1000 : 3600;
+  if (secondsLeft > 120) return;
+
+  const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+  if (!refreshError && sessionStillValid(refreshed.session)) return;
+
+  const { data: again } = await supabase.auth.getSession();
+  if (sessionStillValid(again.session)) return;
+
+  throw new Error("Session expired. Sign in again on this device.");
 }
 
 export const inspectionStore = {
