@@ -1579,6 +1579,7 @@
             "Coastal",
             "Colonial",
             "Contemporary",
+            "Contemporary Queenslander",
             "Federation",
             "Federation Bungalow",
             "Federation Filigree",
@@ -1586,6 +1587,7 @@
             "Interwar",
             "Mid-century Modern",
             "Modular",
+            "Pole House",
             "Post-war Brick",
             "Post-war Timber",
             "Queenslander",
@@ -2120,6 +2122,10 @@
             {
               "id": "found_steel_posts",
               "label": "Steel posts"
+            },
+            {
+              "id": "found_timber_poles",
+              "label": "Timber poles"
             },
             {
               "id": "found_timber_stumps",
