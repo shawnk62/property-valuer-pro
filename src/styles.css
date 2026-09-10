@@ -945,10 +945,17 @@
   }
 
   /*
-   * One heading + up to four photos per printed page. Chrome does not reliably
-   * repeat thead when cells contain images, so each page is its own block.
+   * One heading + up to six photos (3x2) per printed page. Each page block
+   * fills the sheet below the heading so tiles are not left floating in
+   * white space. Chrome does not reliably repeat thead over images.
    */
   .photo-annex-page {
+    box-sizing: border-box !important;
+    height: 260mm !important;
+    max-height: 260mm !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
     break-after: page !important;
@@ -963,36 +970,45 @@
 
   .photo-annex-heading {
     display: block !important;
+    flex: 0 0 auto !important;
     text-align: center !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.06em !important;
     font-size: 12pt !important;
-    margin: 0 0 10pt 0 !important;
+    margin: 0 0 4pt 0 !important;
     break-after: avoid !important;
     page-break-after: avoid !important;
   }
 
   .photo-annex-grid {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
     display: flex !important;
     flex-wrap: wrap !important;
+    align-content: stretch !important;
   }
 
   .photo-annex-cell {
     width: 50% !important;
+    height: 33.33% !important;
     box-sizing: border-box !important;
-    padding: 0 5pt 6pt 5pt !important;
+    padding: 2pt 4pt 4pt 4pt !important;
   }
 
   .photo-annex-page .report-photo-figure {
-    display: block !important;
+    display: flex !important;
+    flex-direction: column !important;
     width: 100% !important;
+    height: 100% !important;
     margin: 0 !important;
   }
 
   .photo-annex-page .report-photo-figure img {
-    height: 58mm !important;
-    max-height: 58mm !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: 72mm !important;
+    max-height: 72mm !important;
   }
 
 
