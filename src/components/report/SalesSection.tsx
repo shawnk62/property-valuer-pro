@@ -668,9 +668,34 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     })();
   }
 
+  function cmaFileFromDataTransfer(dt: DataTransfer | null): File | null {
+    if (!dt) return null;
+    return (
+      Array.from(dt.files ?? []).find((f) => {
+        const n = f.name.toLowerCase();
+        return (
+          f.type === "application/pdf" ||
+          n.endsWith(".pdf") ||
+          f.type === "text/csv" ||
+          n.endsWith(".csv")
+        );
+      }) ?? null
+    );
+  }
+
+  function importDroppedCma(file: File) {
+    cmaImportModeRef.current = "merge";
+    void onCmaFileSelected(file);
+  }
+
   function onSalePhotoDrop(saleId: string, e: React.DragEvent) {
     e.preventDefault();
     e.stopPropagation();
+    const cma = cmaFileFromDataTransfer(e.dataTransfer);
+    if (cma) {
+      importDroppedCma(cma);
+      return;
+    }
     const file = imageFileFromDataTransfer(e.dataTransfer);
     if (file) {
       void onSalePhotoFile(saleId, file);
@@ -1183,7 +1208,22 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
 
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-4">
+      <div
+        className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-4"
+        onDragOver={(e) => {
+          if (!cmaFileFromDataTransfer(e.dataTransfer)) return;
+          e.preventDefault();
+          e.stopPropagation();
+          e.dataTransfer.dropEffect = "copy";
+        }}
+        onDrop={(e) => {
+          const cma = cmaFileFromDataTransfer(e.dataTransfer);
+          if (!cma) return;
+          e.preventDefault();
+          e.stopPropagation();
+          importDroppedCma(cma);
+        }}
+      >
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-foreground">Sales comparison grid (URAR)</h3>
           <p className="mt-1 text-sm text-muted-foreground">

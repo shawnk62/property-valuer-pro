@@ -227,7 +227,7 @@ function pickFact(current: string | undefined, incoming: string | undefined): st
   return String(incoming ?? "");
 }
 
-/** Keep working-file row; fill only blank facts from a later CMA. */
+/** Keep working-file row; fill only blank facts from a later CMA. Never overwrite valuer work. */
 export function fillBlankSaleFacts(
   keep: ComparableSale,
   incoming: ComparableSale,
@@ -250,6 +250,12 @@ export function fillBlankSaleFacts(
       keep.verificationSource,
     photoUrl: keep.photoUrl || incoming.photoUrl,
     photoStoragePath: keep.photoStoragePath || incoming.photoStoragePath,
+    photoLocalKey: keep.photoLocalKey || incoming.photoLocalKey,
+    adjustments: keep.adjustments,
+    narrative: keep.narrative,
+    narrativeManual: keep.narrativeManual,
+    workingNotes: keep.workingNotes,
+    omitFromReport: keep.omitFromReport,
   };
 }
 
