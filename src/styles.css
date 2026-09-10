@@ -945,17 +945,17 @@
   }
 
   /*
-   * One heading + up to six photos (3x2) per printed page. Each page block
+   * One heading + up to four photos (2x2) per printed page. Each page block
    * fills the sheet below the heading so tiles are not left floating in
    * white space. Chrome does not reliably repeat thead over images.
    */
   .photo-annex-page {
     box-sizing: border-box !important;
-    height: 260mm !important;
-    max-height: 260mm !important;
+    height: auto !important;
+    max-height: none !important;
     display: flex !important;
     flex-direction: column !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
     break-after: page !important;
@@ -991,17 +991,20 @@
 
   .photo-annex-cell {
     width: 50% !important;
-    height: 33.33% !important;
+    height: auto !important;
     box-sizing: border-box !important;
-    padding: 2pt 4pt 4pt 4pt !important;
+    padding: 2pt 4pt 8pt 4pt !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   .photo-annex-page .report-photo-figure {
-    display: flex !important;
-    flex-direction: column !important;
+    display: block !important;
     width: 100% !important;
-    height: 100% !important;
+    height: auto !important;
     margin: 0 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   .photo-annex-page .report-photo-figure img {
