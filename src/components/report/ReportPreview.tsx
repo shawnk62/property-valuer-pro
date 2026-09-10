@@ -141,6 +141,7 @@ function getTocEntries(murray: boolean): TocEntry[] {
           "topo",
           "land",
           "va",
+          "va_surface",
           "fence",
           "exc",
           "prop_view",
@@ -290,6 +291,7 @@ function getTocEntries(murray: boolean): TocEntry[] {
       "topo",
       "land",
       "va",
+      "va_surface",
       "fence",
       "exc",
       "prop_view",
@@ -1369,6 +1371,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                     "topo",
                     "land",
                     "va",
+                    "va_surface",
                     "fence",
                     "exc",
                     "prop_view",
@@ -1482,7 +1485,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                   <Facts values={v} fields={["imp_beds", "imp_baths", "accom", "park"]} />
                 </Sub>
                 <Sub title="7.5  Ancillary (Ground) Improvements">
-                  <Facts values={v} fields={["anc", "pool", "land", "fence", "va"]} />
+                  <Facts values={v} fields={["anc", "pool", "land", "fence", "va", "va_surface"]} />
                 </Sub>
                 <Sub title="7.6  Condition of Improvements">
                   {draft.narrative.conditionImprovements?.trim() ? (

@@ -1404,10 +1404,6 @@
               "label": "Double driveway"
             },
             {
-              "id": "va_stamped_concrete",
-              "label": "Stamped concrete driveway"
-            },
-            {
               "id": "va_circular",
               "label": "Circular driveway"
             },
@@ -1442,6 +1438,75 @@
           ],
           "condition_field": "va_cond",
           "notes_field": "va_notes"
+        },
+        {
+          "name": "va_surface",
+          "label": "Driveway surface",
+          "type": "checkbox_group",
+          "items": [
+            {
+              "id": "va_surf_concrete",
+              "label": "Concrete"
+            },
+            {
+              "id": "va_surf_bitumen",
+              "label": "Bitumen"
+            },
+            {
+              "id": "va_surf_clay_pavers",
+              "label": "Clay pavers"
+            },
+            {
+              "id": "va_surf_coloured_concrete",
+              "label": "Coloured concrete"
+            },
+            {
+              "id": "va_surf_concrete_pavers",
+              "label": "Concrete pavers"
+            },
+            {
+              "id": "va_surf_wheel_strips",
+              "label": "Concrete wheel strips"
+            },
+            {
+              "id": "va_surf_crusher_dust",
+              "label": "Crusher dust"
+            },
+            {
+              "id": "va_surf_decomposed_granite",
+              "label": "Decomposed granite"
+            },
+            {
+              "id": "va_surf_exposed_aggregate",
+              "label": "Exposed aggregate"
+            },
+            {
+              "id": "va_surf_gravel",
+              "label": "Gravel"
+            },
+            {
+              "id": "va_surf_mixed",
+              "label": "Mixed surfaces"
+            },
+            {
+              "id": "va_surf_stamped",
+              "label": "Stamped concrete"
+            },
+            {
+              "id": "va_surf_stencil",
+              "label": "Stencil concrete"
+            },
+            {
+              "id": "va_surf_turf",
+              "label": "Turf"
+            },
+            {
+              "id": "va_surf_other",
+              "label": "Other"
+            }
+          ],
+          "condition_field": "va_surface_cond",
+          "notes_field": "va_surface_notes"
         },
         {
           "name": "fence",
