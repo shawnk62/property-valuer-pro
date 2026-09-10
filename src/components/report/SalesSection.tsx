@@ -533,15 +533,20 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       f.size > 0 &&
       (f.type.startsWith("image/") ||
         /\.(jpe?g|png|gif|webp|heic|heif|tif{1,2})$/i.test(f.name));
+    const found: File[] = [];
     for (const f of Array.from(dt.files ?? [])) {
-      if (looksLikeImage(f)) return f;
+      if (looksLikeImage(f)) found.push(f);
     }
     for (const item of Array.from(dt.items ?? [])) {
       if (item.kind !== "file") continue;
       const f = item.getAsFile();
-      if (f && looksLikeImage(f)) return f;
+      if (f && looksLikeImage(f) && !found.some((x) => x.name === f.name && x.size === f.size)) {
+        found.push(f);
+      }
     }
-    return null;
+    if (found.length === 0) return null;
+    found.sort((a, b) => b.size - a.size);
+    return found[0] ?? null;
   }
 
   function salePhotoDragOver(e: React.DragEvent) {
@@ -726,7 +731,17 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           photoId: `sale-${saleId}-front`,
           file: prepared,
         });
-        patchSale(saleId, { photoUrl: url, photoStoragePath: storagePath });
+        const remoteOk = await new Promise<boolean>((resolve) => {
+          const probe = new Image();
+          probe.onload = () => resolve(probe.naturalWidth >= 40 && probe.naturalHeight >= 40);
+          probe.onerror = () => resolve(false);
+          probe.src = url;
+        });
+        if (remoteOk) {
+          patchSale(saleId, { photoUrl: url, photoStoragePath: storagePath });
+        } else {
+          patchSale(saleId, { photoStoragePath: storagePath });
+        }
         toast.success("Front photo attached and synced");
       } catch (cloudErr) {
         toast.message("Front photo saved on this device only", {
@@ -1548,7 +1563,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                     <img
                       src={sale.photoUrl}
                       alt={sale.address || `Comparable ${idx + 1}`}
-                      className="pointer-events-none max-h-28 w-full rounded object-cover"
+                      className="pointer-events-none max-h-36 w-full rounded object-contain bg-muted/30"
                     />
                     <button
                       type="button"

@@ -322,22 +322,27 @@ export function useReportDraft(
         const localSales = Array.isArray(local?.sales) ? (local!.sales as ComparableSale[]) : null;
         let sales: ComparableSale[] = [];
         if (cloudSales && cloudSales.length > 0 && localSales && localSales.length > 0) {
-          // Merge by index / address — restore local-only photoUrl when cloud stripped data URLs
-          const n = Math.max(cloudSales.length, localSales.length);
-          for (let i = 0; i < n; i++) {
-            const c = cloudSales[i];
-            const l = localSales[i];
-            if (c && l) {
-              sales.push({
-                ...l,
-                ...c,
-                photoUrl: isHttpUrl(c.photoUrl) ? c.photoUrl : l.photoUrl || c.photoUrl,
-                narrativeManual: c.narrativeManual ?? l.narrativeManual,
-                narrative: (c.narrative && c.narrative.trim()) || l.narrative || "",
-              });
-            } else {
-              sales.push((c || l)!);
-            }
+          const localById = new Map(localSales.map((s) => [s.id, s]));
+          const used = new Set<string>();
+          for (const c of cloudSales) {
+            const l = localById.get(c.id);
+            if (l) used.add(l.id);
+            sales.push(
+              l
+                ? {
+                    ...l,
+                    ...c,
+                    photoUrl: isHttpUrl(c.photoUrl) ? c.photoUrl : l.photoUrl || c.photoUrl,
+                    photoLocalKey: c.photoLocalKey || l.photoLocalKey,
+                    photoStoragePath: c.photoStoragePath || l.photoStoragePath,
+                    narrativeManual: c.narrativeManual ?? l.narrativeManual,
+                    narrative: (c.narrative && c.narrative.trim()) || l.narrative || "",
+                  }
+                : c,
+            );
+          }
+          for (const l of localSales) {
+            if (!used.has(l.id)) sales.push(l);
           }
         } else {
           sales = cloudSales?.length ? cloudSales : localSales || [];

@@ -99,7 +99,9 @@ export async function uploadReportPhoto(opts: {
     throw new Error("Upload succeeded but no public URL was returned.");
   }
 
-  return { url: data.publicUrl, storagePath };
+  // Bust CDN/browser cache after upsert so the new bytes show immediately.
+  const sep = data.publicUrl.includes("?") ? "&" : "?";
+  return { url: `${data.publicUrl}${sep}v=${Date.now()}`, storagePath };
 }
 
 /** Best-effort delete; ignores missing objects. */
