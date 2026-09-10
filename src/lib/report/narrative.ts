@@ -1,3 +1,4 @@
+import { describeLandUseMix } from "@/lib/narrative/landUseMix";
 import { BOILERPLATE } from "./boilerplate";
 import { displayValue, hasValue, joinValues } from "./schema";
 import type { InspectionValues, ReportNarrative } from "./types";
@@ -544,6 +545,8 @@ function buildLocation(values: InspectionValues, locationSentence?: string): str
       ]),
     );
   }
+  const landUse = describeLandUseMix(values);
+  if (landUse) parts.push(landUse);
   if (boundaries) {
     parts.push(sentence(["Neighbourhood boundaries are described as", boundaries]));
   }

@@ -1,5 +1,6 @@
 import { fieldKeys, labelForField, sections } from "@/lib/inspection/schema";
 import type { InspectionField, InspectionValues } from "@/lib/inspection/types";
+import { describeLandUseMix, stripLandUsePercentages } from "@/lib/narrative/landUseMix";
 
 export interface BlockPrompt {
   system: string;
@@ -307,7 +308,8 @@ Summarise the overall condition and any final remarks or qualifications recorded
       };
 
     /* ---- Report workspace narrative blocks (Narrative tab) ---- */
-    case "location":
+    case "location": {
+      const landUse = describeLandUseMix(values);
       return {
         system: BASE_RULES + styleGuide(type),
         prompt: `Write section 5.1 Description of Neighbourhood for a ${type} valuation report.
@@ -318,17 +320,22 @@ This section must cover TWO required parts:
 
 ${extras?.locationContext?.trim() || "CALCULATED LOCATION: none. Do not invent kilometres or compass direction."}
 
+LAND USE MIX (qualitative guide only — do not write percentages or figures):
+${landUse || "No land-use mix recorded."}
+
 Inspection data (address, neighbourhood, off-site, overlays/flood where recorded):
-${sectionAnswers(values, ["1", "1A"])}
+${sectionAnswers(stripLandUsePercentages(values), ["1", "1A"])}
 
 Rules:
 - Paragraph 1 must be the CALCULATED LOCATION sentence when one is supplied. Copy it unchanged.
 - Following paragraph(s): locality only from recorded inspection data (character, built-up, land use mix, boundaries, description, off-site works, flood/overlays, view). Name positive or negative features only if they appear in the data.
+- If a land-use mix sentence is supplied, weave that wording in. Use only qualitative phrases (predominantly, mainly, some, a few). Never quote exact percentages or numbers from land use.
 - Do not invent distances, centres, traffic, amenity, or neighbouring uses.
 - Murray reports: keep locality to 1–3 short sentences after the location sentence.
 - Phil Stamp Duty: location sentence plus one tight locality sentence if data exists.
 - No marketing language.`,
       };
+    }
         case "brief":
       return {
         system: BASE_RULES + styleGuide(type) + "\n\n" + IMPROVEMENTS_PROSE_RULES,
