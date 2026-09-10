@@ -873,12 +873,24 @@
     width: 100% !important;
   }
 
+  /* Same field = same width on every sale table. Comments take the rest. */
   #report-preview-sheet .sales-evidence-item .sales-col-num {
-    width: 8% !important;
+    width: 8mm !important;
   }
-
-  #report-preview-sheet .sales-evidence-item .sales-col {
-    width: 18.4% !important;
+  #report-preview-sheet .sales-evidence-item .sales-col-address {
+    width: 42mm !important;
+  }
+  #report-preview-sheet .sales-evidence-item .sales-col-date {
+    width: 22mm !important;
+  }
+  #report-preview-sheet .sales-evidence-item .sales-col-price {
+    width: 26mm !important;
+  }
+  #report-preview-sheet .sales-evidence-item .sales-col-area {
+    width: 20mm !important;
+  }
+  #report-preview-sheet .sales-evidence-item .sales-col-comments {
+    width: auto !important;
   }
 
   #report-preview-sheet h1,

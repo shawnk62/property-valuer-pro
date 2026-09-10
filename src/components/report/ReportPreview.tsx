@@ -1724,11 +1724,11 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 >
                   <colgroup>
                     <col className="sales-col-num" />
-                    <col className="sales-col" />
-                    <col className="sales-col" />
-                    <col className="sales-col" />
-                    <col className="sales-col" />
-                    <col className="sales-col" />
+                    <col className="sales-col-address" />
+                    <col className="sales-col-date" />
+                    <col className="sales-col-price" />
+                    <col className="sales-col-area" />
+                    <col className="sales-col-comments" />
                   </colgroup>
                   <thead>
                     <tr>
