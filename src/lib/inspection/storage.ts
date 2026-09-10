@@ -116,20 +116,59 @@ function sessionStillValid(
   return expiresAt - Date.now() / 1000 > minSecondsLeft;
 }
 
+function isAuthFailure(message: string): boolean {
+  return /jwt|expired|session|not authorized|unauthorized|401|403|signed out/i.test(message);
+}
+
+/** Tokens persist in localStorage even when the in-memory client has none. */
+function tokensFromLocalStorage(): { access_token: string; refresh_token: string } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    for (let i = 0; i < window.localStorage.length; i += 1) {
+      const key = window.localStorage.key(i);
+      if (!key || !/auth-token|supabase/i.test(key)) continue;
+      const raw = window.localStorage.getItem(key);
+      if (!raw || raw[0] !== "{") continue;
+      const parsed = JSON.parse(raw) as {
+        access_token?: string;
+        refresh_token?: string;
+        currentSession?: { access_token?: string; refresh_token?: string };
+      };
+      const access = parsed.access_token || parsed.currentSession?.access_token;
+      const refresh = parsed.refresh_token || parsed.currentSession?.refresh_token;
+      if (access && refresh) return { access_token: access, refresh_token: refresh };
+    }
+  } catch {
+    /* ignore unreadable keys */
+  }
+  return null;
+}
+
 /**
- * Confirm there is a usable session before writes.
- * Do not refresh on every save — rotating the refresh token on one device
- * invalidates the other (iPad vs iPhone). Refresh only when the access
- * token is near expiry; if refresh fails but the current token still works,
- * continue with the save.
+ * Restore a usable session before writes.
+ * getSession() is often empty on Safari/Chrome after a tab sleep even though
+ * tokens are still in localStorage. Recover those, then refresh only when
+ * the access token is near expiry.
  */
 async function ensureFreshSession(): Promise<void> {
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) {
-    throw new Error(sessionError.message || "Could not read sign-in session");
+  let session = (await supabase.auth.getSession()).data.session;
+
+  if (!session?.access_token) {
+    const stored = tokensFromLocalStorage();
+    if (stored) {
+      const restored = await supabase.auth.setSession(stored);
+      session = restored.data.session;
+    }
   }
-  const session = sessionData.session;
-  if (!session) {
+
+  if (!session?.access_token) {
+    const userRes = await supabase.auth.getUser();
+    if (userRes.data.user) {
+      session = (await supabase.auth.getSession()).data.session;
+    }
+  }
+
+  if (!session?.access_token) {
     throw new Error("You are signed out. Sign in again on this device.");
   }
 
@@ -139,9 +178,8 @@ async function ensureFreshSession(): Promise<void> {
 
   const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
   if (!refreshError && sessionStillValid(refreshed.session)) return;
-
-  const { data: again } = await supabase.auth.getSession();
-  if (sessionStillValid(again.session)) return;
+  if (sessionStillValid((await supabase.auth.getSession()).data.session)) return;
+  if (sessionStillValid(session, 15)) return;
 
   throw new Error("Session expired. Sign in again on this device.");
 }
@@ -344,22 +382,28 @@ export const inspectionStore = {
 async save(id: string, values: InspectionValues): Promise<void> {
     // Live form_values stay editable after submit so answers can be corrected.
     // submitted_form_values (first-submit snapshot) is left unchanged.
+    const payload = {
+      form_values: sanitizeInspectionValues(values),
+      schema_version: String(schema.version),
+      updated_at: new Date().toISOString(),
+    };
+    const write = () =>
+      supabase.from("inspections").update(payload).eq("id", id).select("id").maybeSingle();
+
     await ensureFreshSession();
     const existing = await this.get(id);
     if (!existing) throw new Error("Inspection not found");
-    const { data, error } = await supabase
-      .from("inspections")
-      .update({
-        form_values: sanitizeInspectionValues(values),
-        schema_version: String(schema.version),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select("id")
-      .maybeSingle();
+
+    let { data, error } = await write();
+    if (error && isAuthFailure(`${error.message || ""} ${error.code || ""}`)) {
+      const stored = tokensFromLocalStorage();
+      if (stored) await supabase.auth.setSession(stored);
+      else await supabase.auth.refreshSession();
+      ({ data, error } = await write());
+    }
     if (error) {
       const msg = error.message || "Failed to save";
-      if (/jwt|expired|session|not authorized|401|403/i.test(msg)) {
+      if (isAuthFailure(msg)) {
         throw new Error("Session expired or blocked. Sign in again on this device, then save.");
       }
       if (/network|fetch|Failed to fetch|timeout/i.test(msg)) {
