@@ -1,28 +1,10 @@
 import type { ReportDraftController } from "@/hooks/useReportDraft";
+import { PROP_ASSIGNMENT_OPTIONS } from "@/lib/inspection/schema";
 import { formatCurrencyInput } from "@/lib/report/salesRelativity";
 import { pick } from "@/lib/report/schema";
 import { resolveValuerProfile } from "@/lib/report/valuerProfiles";
 
-/** Options kept in sync with inspection-schema.json prop_assignment */
-const REPORT_TYPE_OPTIONS = [
-  "Purchase",
-  "Refinance",
-  "ATO / CGT",
-  "Resumption",
-  "Dispute",
-  "Other",
-  "Stamp Duty - Phil",
-  "CGT - Phil",
-  "CGT - Phil Retrospective",
-  "CGT - Phil Apportionment",
-  "Joint Family Law - Phil",
-  "Stamp Duty - Murray",
-  "CGT - Murray",
-  "CGT - Murray Retrospective",
-  "CGT - Murray Apportionment",
-  "Family Law - Murray",
-  "Singly Appointed Family Law - Murray",
-] as const;
+const REPORT_TYPE_OPTIONS = PROP_ASSIGNMENT_OPTIONS;
 
 const IDENTITY_FIELDS = [
   // prop_assignment is rendered as an editable control above the fact tables

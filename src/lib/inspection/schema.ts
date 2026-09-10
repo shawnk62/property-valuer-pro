@@ -14,34 +14,37 @@ import type {
  */
 export const schema = schemaJson as unknown as InspectionSchema;
 
-/**
- * Canonical Report Type options for the inspection form.
- * Kept explicit so the dropdown cannot silently fall back to a stale JSON bundle.
- */
-export const PROP_ASSIGNMENT_OPTIONS = [
-  "Purchase",
-  "Refinance",
-  "ATO / CGT",
-  "Resumption",
-  "Dispute",
-  "Other",
-  "Stamp Duty - Phil",
-  "CGT - Phil",
-  "CGT - Phil Retrospective",
-  "CGT - Phil Apportionment",
-] as const;
-
-/** Ensure schema select options include every canonical assignment (in place). */
-function ensureAssignmentOptions() {
+/** Report Type options from inspection-schema.json — do not keep a second list. */
+function assignmentOptionsFromSchema(): string[] {
   for (const section of schema.sections) {
     for (const field of section.fields) {
-      if (field.type === "select" && field.name === "prop_assignment") {
-        field.options = [...PROP_ASSIGNMENT_OPTIONS];
+      if (field.type === "select" && field.name === "prop_assignment" && field.options?.length) {
+        return [...field.options];
       }
     }
   }
+  return [
+    "Purchase",
+    "Refinance",
+    "ATO / CGT",
+    "Resumption",
+    "Dispute",
+    "Other",
+    "Stamp Duty - Phil",
+    "CGT - Phil",
+    "CGT - Phil Retrospective",
+    "CGT - Phil Apportionment",
+    "Joint Family Law - Phil",
+    "Stamp Duty - Murray",
+    "CGT - Murray",
+    "CGT - Murray Retrospective",
+    "CGT - Murray Apportionment",
+    "Family Law - Murray",
+    "Singly Appointed Family Law - Murray",
+  ];
 }
-ensureAssignmentOptions();
+
+export const PROP_ASSIGNMENT_OPTIONS = assignmentOptionsFromSchema();
 
 export const sections: InspectionSection[] = schema.sections;
 
