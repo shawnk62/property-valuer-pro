@@ -2040,10 +2040,17 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                         onChange={(e) =>
                                           patchAdjustment(sale.id, feature.id, {
                                             relativity: e.target.value as Relativity,
+                                            ...(isAreaRateRow ? { relativityManual: true } : {}),
                                           })
                                         }
                                         className={relativitySelectClass(adj.relativity)}
-                                        title="Relativity vs subject"
+                                        title={
+                                          isAreaRateRow
+                                            ? adj.relativityManual
+                                              ? "Manual superior/inferior — auto mark will not change this"
+                                              : "Auto mark from area comparison. Change it to override."
+                                            : "Relativity vs subject"
+                                        }
                                       >
                                         {RELATIVITY_OPTIONS.map((opt) => (
                                           <option key={opt} value={opt}>
@@ -2051,6 +2058,20 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                           </option>
                                         ))}
                                       </select>
+                                      {isAreaRateRow && adj.relativityManual ? (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            patchAdjustment(sale.id, feature.id, {
+                                              relativityManual: false,
+                                            })
+                                          }
+                                          className="text-left text-[0.6rem] font-medium text-primary hover:underline"
+                                          title="Recalculate superior/inferior from site or living area"
+                                        >
+                                          Use auto mark
+                                        </button>
+                                      ) : null}
                                     </div>
                                   </td>
                                   <td className="px-0.5 py-1 align-bottom">

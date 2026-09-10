@@ -98,6 +98,8 @@ export interface FeatureAdjustment {
   amount: number;
   /** When true, site/GLA rate math must not overwrite amount. */
   amountManual?: boolean;
+  /** When true, automatic superior/inferior for site/GLA must not overwrite relativity. */
+  relativityManual?: boolean;
 }
 
 export interface AdjustmentFeature {
@@ -193,6 +195,7 @@ export function ensureSaleAdjustments(sale: ComparableSale): ComparableSale {
           ? existing.amount
           : 0,
       ...(existing?.amountManual ? { amountManual: true } : {}),
+      ...(existing?.relativityManual ? { relativityManual: true } : {}),
     };
   }
   return { ...sale, adjustments };
@@ -544,9 +547,9 @@ export function applyQuantitativeRelativity(
       if (compN == null) return;
       const rel = relativityFromQuantity(subjectN, compN);
       const cur = adjustments[featureId] ?? defaultFeatureAdjustment();
-      // Only auto-drive qualitative when still at default "similar" so a manual
-      // superior/inferior choice is not wiped on the next sales refresh.
-      const canAutoRel = cur.relativity === "similar" || cur.relativity === DEFAULT_RELATIVITY;
+      const canAutoRel =
+        !cur.relativityManual &&
+        (cur.relativity === "similar" || cur.relativity === DEFAULT_RELATIVITY);
       const nextRel = canAutoRel ? rel : cur.relativity;
       const nextDetail = cur.detail?.trim() ? cur.detail : compRaw;
       if (cur.relativity === nextRel && (cur.detail?.trim() || !compRaw)) return;
@@ -596,13 +599,12 @@ export function applyAreaRateAdjustments(
         const cur = adjustments.grossLivingArea ?? defaultFeatureAdjustment();
         {
           const autoRel = relativityFromQuantity(subjectGla, compGla);
-          const keepManual =
-            cur.relativity !== "similar" && cur.relativity !== DEFAULT_RELATIVITY;
+          const keepManualRel = Boolean(cur.relativityManual);
           adjustments.grossLivingArea = {
             ...cur,
             detail: cur.detail?.trim() ? cur.detail : detail,
             amount: cur.amountManual ? cur.amount : computeAreaAdjustment(glaRate, subjectGla, compGla),
-            relativity: keepManual ? cur.relativity : autoRel,
+            relativity: keepManualRel ? cur.relativity : autoRel,
           };
         }
       }
@@ -615,8 +617,7 @@ export function applyAreaRateAdjustments(
         const cur = adjustments.site ?? defaultFeatureAdjustment();
         {
           const autoRel = relativityFromQuantity(subjectSite, compSite);
-          const keepManualRel =
-            cur.relativity !== "similar" && cur.relativity !== DEFAULT_RELATIVITY;
+          const keepManualRel = Boolean(cur.relativityManual);
           const autoAmount = computeAreaAdjustment(siteRate, subjectSite, compSite);
           adjustments.site = {
             ...cur,

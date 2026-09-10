@@ -89,6 +89,8 @@ export interface FeatureAdjustment {
   amount: number;
   /** When true, automatic site/GLA $ must not overwrite this amount. */
   amountManual?: boolean;
+  /** When true, automatic superior/inferior for site/GLA must not overwrite relativity. */
+  relativityManual?: boolean;
 }
 
 export interface ComparableSale {
