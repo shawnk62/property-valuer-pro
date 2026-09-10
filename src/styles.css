@@ -446,13 +446,19 @@
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
     height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
     overflow: visible !important;
   }
 
   /* App chrome only — do NOT hide all <button> (breaks some browsers' print trees) */
   .no-print,
-  .no-print * ,
-  [data-sonner-toaster] {
+  .no-print *,
+  header,
+  nav,
+  [data-sonner-toaster],
+  .hidden:not(.report-print-host) {
     display: none !important;
   }
 
@@ -460,6 +466,12 @@
     padding: 0 !important;
     margin: 0 !important;
     background: white !important;
+    min-height: 0 !important;
+  }
+
+  /* Never print the form / sales / narrative tabs ahead of the cover. */
+  main > div > :not(.report-print-host) {
+    display: none !important;
   }
 
   /* Preview is always in the DOM; force it visible for print even if tab was hidden */
@@ -476,6 +488,10 @@
     visibility: visible !important;
     opacity: 1 !important;
     pointer-events: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    break-before: auto !important;
+    page-break-before: auto !important;
   }
 
   #report-preview-sheet {
@@ -491,6 +507,8 @@
     color: black !important;
     font-size: 9.5pt !important;
     line-height: 1.35 !important;
+    break-before: auto !important;
+    page-break-before: auto !important;
   }
 
 
@@ -499,19 +517,25 @@
     color: inherit !important;
   }
 
-  /* Page 1: cover only. height:auto avoids blank second page from fixed 250mm. */
+  /* Page 1: cover only. Do not break-before — that prints blank pages first. */
   #report-cover {
+    break-before: auto !important;
+    page-break-before: auto !important;
     break-after: page !important;
     page-break-after: always !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   #report-cover.cover-photo-page {
+    break-before: auto !important;
+    page-break-before: auto !important;
     break-after: page !important;
     page-break-after: always !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
     display: flex !important;
     flex-direction: column !important;
     height: auto !important;
