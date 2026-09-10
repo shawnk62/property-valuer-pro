@@ -18,7 +18,7 @@ import {
   WidthType,
 } from "docx";
 import { BOILERPLATE } from "@/lib/report/boilerplate";
-import { buildPhilRemarks, buildMurrayRemarks } from "@/lib/report/narrative";
+import { buildPhilRemarks, buildMurrayRemarks, buildSummaryDescription } from "@/lib/report/narrative";
 import { annexureById, resolveAnnexures } from "@/lib/report/annexures";
 import { parseOverlayList } from "@/lib/report/overlays";
 import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
@@ -366,8 +366,9 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     ),
   );
 
-  if (draft.narrative.brief.trim()) {
-    children.push(...prose(draft.narrative.brief));
+  {
+    const summaryDesc = buildSummaryDescription(v) || draft.narrative.brief.trim();
+    if (summaryDesc) children.push(...prose(summaryDesc));
   }
 
   children.push(p(BOILERPLATE.summaryDisclaimer, { italics: true, size: 18, after: 200, before: 160 }));

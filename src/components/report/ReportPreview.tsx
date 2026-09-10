@@ -8,7 +8,12 @@ import {
   isPhilReportType,
 } from "@/lib/report/reportTypes";
 import { annexureById, resolveAnnexures } from "@/lib/report/annexures";
-import { buildPhilRemarks, buildMurrayRemarks, isMurrayAssignment } from "@/lib/report/narrative";
+import {
+  buildPhilRemarks,
+  buildMurrayRemarks,
+  buildSummaryDescription,
+  isMurrayAssignment,
+} from "@/lib/report/narrative";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { parseOverlayList } from "@/lib/report/overlays";
 import {
@@ -30,7 +35,10 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className="report-section mt-8 scroll-mt-24">
+    <section
+      id={id}
+      className={`report-section mt-8 scroll-mt-24${id === "sec-sales" ? " report-section-sales" : ""}`}
+    >
       <h2 className="report-h2 border-b border-[var(--rule)] pb-1 uppercase tracking-wide">
         <span className="mr-3 tabular-nums">{number}</span>
         {title}
@@ -812,7 +820,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 {
                   label: "DESCRIPTION",
                   value:
-                    (draft.narrative.brief && draft.narrative.brief.trim()) ||
+                    buildSummaryDescription(v) ||
                     [
                       get(v, "imp_design") || "A residential dwelling",
                       siteArea ? `on a ${siteArea} allotment.` : "",
@@ -898,12 +906,14 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             <p className="text-sm text-[var(--phil-green)]">Real Estate Valuers</p>
           </div>
 
-          <SignatureBlock values={v} meta={m} className="report-signature mt-8" />
+          <div className="phil-summary-close">
+            <SignatureBlock values={v} meta={m} className="report-signature mt-6" />
 
-          <div className="mt-8 border-t border-[var(--rule)] pt-4">
-            <p className="text-sm italic text-[var(--page-foreground)]/75">
-              {BOILERPLATE.summaryDisclaimer}
-            </p>
+            <div className="summary-disclaimer mt-4 border-t border-[var(--rule)] pt-3">
+              <p className="text-sm italic text-[var(--page-foreground)]/75">
+                {BOILERPLATE.summaryDisclaimer}
+              </p>
+            </div>
           </div>
         </div>
       ) : (
@@ -956,20 +966,21 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             />
           </div>
 
-          <Prose text={draft.narrative.brief} />
+          <Prose text={buildSummaryDescription(v) || draft.narrative.brief} />
 
-          <div className="mt-8 border-t border-[var(--rule)] pt-6">
-            <p className="text-sm italic text-[var(--page-foreground)]/75">
-              {BOILERPLATE.summaryDisclaimer}
-            </p>
+          <div className="phil-summary-close">
+            <SignatureBlock
+              values={v}
+              meta={m}
+              className="report-signature mt-6"
+              showFirm
+            />
+            <div className="summary-disclaimer mt-4 border-t border-[var(--rule)] pt-3">
+              <p className="text-sm italic text-[var(--page-foreground)]/75">
+                {BOILERPLATE.summaryDisclaimer}
+              </p>
+            </div>
           </div>
-
-          <SignatureBlock
-            values={v}
-            meta={m}
-            className="report-signature mt-10"
-            showFirm
-          />
         </div>
       )}
 
@@ -1677,6 +1688,14 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                   key={s.id}
                   className="sales-evidence-item w-full border-collapse text-[0.8125rem]"
                 >
+                  <colgroup>
+                    <col className="sales-col-num" />
+                    <col className="sales-col" />
+                    <col className="sales-col" />
+                    <col className="sales-col" />
+                    <col className="sales-col" />
+                    <col className="sales-col" />
+                  </colgroup>
                   <thead>
                     <tr>
                       {["#", "Address", "Sale date", "Sale price", "Land area", "Comments"].map(

@@ -772,6 +772,65 @@ export type NarrativeGenerateOptions = {
   locationSentence?: string;
 };
 
+/**
+ * Valuation Summary DESCRIPTION only: site + dwelling in short form.
+ * Locality, services, zoning and utilities stay in the body of the report.
+ */
+export function buildSummaryDescription(values: InspectionValues): string {
+  const area = hasValue(values["prop_sitearea"])
+    ? `${v(values, "prop_sitearea")}${
+        v(values, "prop_areaunit") === "m2" ? " square metres" : ` ${v(values, "prop_areaunit")}`
+      }`
+    : "";
+  const shapeRaw = v(values, "prop_shape").trim();
+  const shapePhrase = shapeRaw
+    ? shapeRaw.toLowerCase().includes("shaped")
+      ? shapeRaw.toLowerCase()
+      : `${shapeRaw.toLowerCase()} shaped`
+    : "";
+  const lotPos = v(values, "prop_lot_position");
+  const posPhrase = lotPos
+    ? lotPos.toLowerCase().includes("corner")
+      ? "occupies a corner position"
+      : lotPos.toLowerCase().includes("inside")
+        ? "occupies an inside position"
+        : `occupies ${lotPositionPhrase(lotPos)} position`
+    : "";
+
+  const siteBits: (string | false)[] = ["The subject allotment is"];
+  if (shapePhrase) siteBits.push(shapePhrase);
+  if (shapePhrase && posPhrase) siteBits.push("and");
+  if (posPhrase) siteBits.push(posPhrase);
+  if (area) siteBits.push(shapePhrase || posPhrase ? `with an area of ${area}` : `with an area of ${area}`);
+  const site = sentence(siteBits);
+
+  const level = setLevel(values);
+  const design = v(values, "imp_design").toLowerCase();
+  const walls = v(values, "ext").toLowerCase();
+  const roof = v(values, "rc")
+    .toLowerCase()
+    .replace(/\s+roof(?:\s+coverings?)?$/i, "")
+    .trim();
+  const dwelling = sentence([
+    "The improvements comprise a",
+    level,
+    design && design !== "other" ? design : "",
+    walls && `with ${walls} external walls`,
+    roof && `under a ${roof} roof`,
+  ]);
+
+  const accom = v(values, "accom").toLowerCase();
+  const extras = [v(values, "park"), v(values, "anc"), v(values, "pool")]
+    .map((s) => s.toLowerCase())
+    .filter(Boolean);
+  const living = sentence([
+    accom ? `The dwelling provides ${accom}` : "",
+    extras.length > 0 ? `together with ${extras.join(", ")}` : "",
+  ]);
+
+  return [site, dwelling, living].filter(Boolean).join("\n\n");
+}
+
 export function generateNarrative(
   values: InspectionValues,
   opts?: NarrativeGenerateOptions,

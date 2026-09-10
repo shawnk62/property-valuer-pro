@@ -682,6 +682,15 @@
     page-break-after: always !important;
   }
 
+  /* Signature + disclaimer stay on the summary page when they fit. */
+  .phil-summary-close,
+  .summary-disclaimer {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+  }
+
   /* Phil front photo must not inherit the 56px logo max-height */
   .report-type-phil .phil-front-photo-img {
     max-height: none !important;
@@ -820,6 +829,32 @@
     page-break-inside: avoid !important;
     break-before: auto !important;
     page-break-before: auto !important;
+  }
+
+  /* Sales Evidence always starts a page so the heading is not left at the foot. */
+  .report-section-sales {
+    break-before: page !important;
+    page-break-before: always !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .report-section-sales > .report-h2 {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  #report-preview-sheet .sales-evidence-item {
+    table-layout: fixed !important;
+    width: 100% !important;
+  }
+
+  #report-preview-sheet .sales-evidence-item .sales-col-num {
+    width: 8% !important;
+  }
+
+  #report-preview-sheet .sales-evidence-item .sales-col {
+    width: 18.4% !important;
   }
 
   #report-preview-sheet h1,
