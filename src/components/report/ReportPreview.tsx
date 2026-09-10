@@ -528,8 +528,10 @@ function SignatureBlock({
   );
 }
 
-/** Print-safe photo grid: thead repeats on every printed page. */
-function PhotoAnnexTable({
+/** One row of two photos per printed page so the heading always fits with them. */
+const PHOTO_ANNEX_PER_PAGE = 2;
+
+function PhotoAnnexPages({
   heading,
   children,
 }: {
@@ -537,32 +539,25 @@ function PhotoAnnexTable({
   children: ReactNode;
 }) {
   const items = (Array.isArray(children) ? children : [children]).filter(Boolean) as ReactElement[];
-  const rows: React.ReactElement[][] = [];
-  for (let i = 0; i < items.length; i += 2) {
-    rows.push(items.slice(i, i + 2));
+  const pages: ReactElement[][] = [];
+  for (let i = 0; i < items.length; i += PHOTO_ANNEX_PER_PAGE) {
+    pages.push(items.slice(i, i + PHOTO_ANNEX_PER_PAGE));
   }
   return (
-    <table className="photo-annex-table w-full border-collapse">
-      <thead>
-        <tr>
-          <th colSpan={2} className="photo-annex-heading">
-            {heading}
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row, ri) => (
-          <tr key={`photo-row-${ri}`}>
-            {row.map((cell, ci) => (
-              <td key={cell.key ?? `photo-${ri}-${ci}`} className="photo-annex-cell">
+    <>
+      {pages.map((pageItems, pi) => (
+        <div key={`annex-page-${pi}`} className="photo-annex-page">
+          <h2 className="photo-annex-heading">{heading}</h2>
+          <div className="photo-annex-grid">
+            {pageItems.map((cell, ci) => (
+              <div key={cell.key ?? `annex-cell-${pi}-${ci}`} className="photo-annex-cell">
                 {cell}
-              </td>
+              </div>
             ))}
-            {row.length === 1 ? <td className="photo-annex-cell" /> : null}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+          </div>
+        </div>
+      ))}
+    </>
   );
 }
 
@@ -1892,7 +1887,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       {/* ---- Subject photographs (repeating page heading) ---- */}
       {annexurePhotos.length > 0 ? (
         <section id="report-annexure-photos" className="report-annexure report-annexure-subject mt-12">
-          <PhotoAnnexTable heading="Subject Photographs">
+          <PhotoAnnexPages heading="Subject Photographs">
             {annexurePhotos.map((photo) => (
               <figure key={photo.id} className="report-photo-figure">
                 <img
@@ -1905,14 +1900,14 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 <figcaption className="mt-1.5 text-center text-sm">{photo.caption}</figcaption>
               </figure>
             ))}
-          </PhotoAnnexTable>
+          </PhotoAnnexPages>
         </section>
       ) : null}
 
       {/* ---- Comparable sale photographs (new page, heading repeats) ---- */}
       {printedSales.some((s) => s.photoUrl) ? (
         <section id="report-annexure-comp-photos" className="report-annexure report-annexure-comps mt-12">
-          <PhotoAnnexTable heading="Comparable Sale Photographs">
+          <PhotoAnnexPages heading="Comparable Sale Photographs">
             {printedSales.map((s, idx) =>
               s.photoUrl ? (
                 <figure key={s.id} className="report-photo-figure">
@@ -1934,7 +1929,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 </figure>
               ) : null,
             )}
-          </PhotoAnnexTable>
+          </PhotoAnnexPages>
         </section>
       ) : null}
 

@@ -920,39 +920,47 @@
     page-break-before: always !important;
   }
 
-  #report-preview-sheet .photo-annex-table {
-    width: 100% !important;
-    border-collapse: collapse !important;
+  /*
+   * One heading + up to four photos per printed page. Chrome does not reliably
+   * repeat thead when cells contain images, so each page is its own block.
+   */
+  .photo-annex-page {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: page !important;
+    page-break-after: always !important;
   }
 
-  #report-preview-sheet .photo-annex-table thead {
-    display: table-header-group !important;
+  .report-annexure-subject .photo-annex-page:last-child,
+  .report-annexure-comps .photo-annex-page:last-child {
+    break-after: auto !important;
+    page-break-after: auto !important;
   }
 
-  #report-preview-sheet .photo-annex-table .photo-annex-heading {
+  .photo-annex-heading {
+    display: block !important;
     text-align: center !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.06em !important;
-    font-size: 11pt !important;
-    padding: 0 0 8pt 0 !important;
-    border: none !important;
-    background: transparent !important;
+    font-size: 12pt !important;
+    margin: 0 0 10pt 0 !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
   }
 
-  #report-preview-sheet .photo-annex-table .photo-annex-cell {
+  .photo-annex-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+  }
+
+  .photo-annex-cell {
     width: 50% !important;
-    vertical-align: top !important;
-    border: none !important;
-    padding: 4pt 6pt 10pt !important;
+    box-sizing: border-box !important;
+    padding: 0 6pt 10pt 6pt !important;
   }
 
-  #report-preview-sheet .photo-annex-table tr {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  #report-preview-sheet .photo-annex-table .report-photo-figure {
+  .photo-annex-page .report-photo-figure {
     display: block !important;
     width: 100% !important;
     margin: 0 !important;
