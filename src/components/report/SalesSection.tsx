@@ -1,4 +1,12 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type SyntheticEvent,
+} from "react";
 import { toast } from "sonner";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { SalesMapEditor } from "@/components/report/SalesMapEditor";
@@ -100,6 +108,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   /** Expanded report-narrative editor (manual working mode). */
   const [expandedNarrativeId, setExpandedNarrativeId] = useState<string | null>(null);
   const [expandedWorkingNotesId, setExpandedWorkingNotesId] = useState<string | null>(null);
+  /** Which comparable column is visually active in the adjustment grid. */
+  const [activeGridSaleId, setActiveGridSaleId] = useState<string | null>(null);
   /** In-progress amount text so "-" can be typed before digits. */
   const [amountDrafts, setAmountDrafts] = useState<Record<string, string>>({});
   /** Right-click menu for paste into map / comp photo slots. */
@@ -170,6 +180,20 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
   function addBlankSale() {
     replaceSales([...sales, emptySale()]);
+  }
+
+  function saleGridCellProps(saleId: string, className = "") {
+    const on = activeGridSaleId === saleId;
+    return {
+      "data-sale-id": saleId,
+      className: [className, on ? "bg-primary/10" : ""].filter(Boolean).join(" "),
+    };
+  }
+
+  function onGridSalePointer(e: SyntheticEvent) {
+    const node = (e.target as HTMLElement | null)?.closest?.("[data-sale-id]");
+    const id = node instanceof HTMLElement ? node.getAttribute("data-sale-id") : null;
+    setActiveGridSaleId(id);
   }
 
   function moveSale(id: string, direction: -1 | 1) {
@@ -1674,6 +1698,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                   <div
                     key={`grid-${chunkIdx}`}
                     className="overflow-x-auto rounded-md border border-border"
+                    onPointerDownCapture={onGridSalePointer}
+                    onFocusCapture={onGridSalePointer}
                   >
                     <table className="w-full min-w-[36rem] border-collapse text-left text-sm table-fixed">
                       <colgroup>
@@ -1702,7 +1728,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                 colSpan={2}
                                 onDragOver={salePhotoDragOver}
                                 onDrop={(e) => onSalePhotoDrop(sale.id, e)}
-                                className="border-l border-border px-1 py-1.5 align-top text-xs font-semibold text-foreground"
+                                {...saleGridCellProps(
+                                  sale.id,
+                                  "border-l border-border px-1 py-1.5 align-top text-xs font-semibold text-foreground",
+                                )}
                               >
                                 <div className="flex items-start justify-between gap-0.5">
                                   <span className="min-w-0 leading-tight">
@@ -1844,10 +1873,17 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                           <th className="px-2 py-1" />
                           {chunk.map((sale) => (
                             <Fragment key={sale.id}>
-                              <th className="border-l border-border px-1.5 py-1 font-medium">
+                              <th
+                                {...saleGridCellProps(
+                                  sale.id,
+                                  "border-l border-border px-1.5 py-1 font-medium",
+                                )}
+                              >
                                 Description
                               </th>
-                              <th className="px-1 py-1 font-medium">+/− $</th>
+                              <th {...saleGridCellProps(sale.id, "px-1 py-1 font-medium")}>
+                                +/− $
+                              </th>
                             </Fragment>
                           ))}
                         </tr>
@@ -1914,7 +1950,12 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                             <td className="px-2 py-1.5 text-muted-foreground">{row.subject()}</td>
                             {chunk.map((sale) => (
                               <Fragment key={sale.id}>
-                                <td className="border-l border-border px-1 py-1 align-middle">
+                                <td
+                                  {...saleGridCellProps(
+                                    sale.id,
+                                    "border-l border-border px-1 py-1 align-middle",
+                                  )}
+                                >
                                   {row.write ? (
                                     <input
                                       value={row.read(sale)}
@@ -1927,7 +1968,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                     </span>
                                   )}
                                 </td>
-                                <td className="px-1 py-1 text-center text-muted-foreground">—</td>
+                                <td
+                                  {...saleGridCellProps(
+                                    sale.id,
+                                    "px-1 py-1 text-center text-muted-foreground",
+                                  )}
+                                >
+                                  —
+                                </td>
                               </Fragment>
                             ))}
                           </tr>
@@ -2051,7 +2099,12 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                 detail.trim() !== "";
                               return (
                                 <Fragment key={sale.id}>
-                                  <td className="border-l border-border px-0.5 py-1 align-bottom">
+                                  <td
+                                    {...saleGridCellProps(
+                                      sale.id,
+                                      "border-l border-border px-0.5 py-1 align-bottom",
+                                    )}
+                                  >
                                     <div className="flex min-w-0 flex-col gap-0.5">
                                       <input
                                         value={detail}
@@ -2102,7 +2155,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                       ) : null}
                                     </div>
                                   </td>
-                                  <td className="px-0.5 py-1 align-bottom">
+                                  <td
+                                    {...saleGridCellProps(sale.id, "px-0.5 py-1 align-bottom")}
+                                  >
                                     <input
                                       type="text"
                                       inputMode="text"
@@ -2220,11 +2275,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                               <Fragment key={sale.id}>
                                 <td
                                   colSpan={2}
-                                  className={`border-l border-border px-1.5 py-1.5 text-xs ${
-                                    "strong" in row && row.strong
-                                      ? "font-semibold"
-                                      : "font-medium"
-                                  }`}
+                                  {...saleGridCellProps(
+                                    sale.id,
+                                    `border-l border-border px-1.5 py-1.5 text-xs ${
+                                      "strong" in row && row.strong
+                                        ? "font-semibold"
+                                        : "font-medium"
+                                    }`,
+                                  )}
                                 >
                                   {row.cell(sale)}
                                 </td>
@@ -2244,7 +2302,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                             <td
                               key={sale.id}
                               colSpan={2}
-                              className="border-l border-border px-1 py-1"
+                              {...saleGridCellProps(
+                                sale.id,
+                                "border-l border-border px-1 py-1",
+                              )}
                             >
                               <div className="space-y-1">
                                 <textarea
@@ -2321,7 +2382,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                             <td
                               key={sale.id}
                               colSpan={2}
-                              className="border-l border-border px-1 py-1"
+                              {...saleGridCellProps(
+                                sale.id,
+                                "border-l border-border px-1 py-1",
+                              )}
                             >
                               <textarea
                                 rows={expandedWorkingNotesId === sale.id ? 12 : 3}
@@ -2358,7 +2422,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                             <td
                               key={sale.id}
                               colSpan={2}
-                              className="border-l border-border px-1 py-1"
+                              {...saleGridCellProps(
+                                sale.id,
+                                "border-l border-border px-1 py-1",
+                              )}
                             >
                               <textarea
                                 rows={2}
