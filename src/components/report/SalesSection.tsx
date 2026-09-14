@@ -176,15 +176,22 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     const visible = salesOnReport(sales);
     const visibleIndex = visible.findIndex((s) => s.id === id);
     if (visibleIndex < 0) return;
-    const swapWith = visible[visibleIndex + direction];
-    if (!swapWith) return;
-    const index = sales.findIndex((s) => s.id === id);
-    const nextIndex = sales.findIndex((s) => s.id === swapWith.id);
-    if (index < 0 || nextIndex < 0) return;
-    const next = [...sales];
-    const current = next[index]!;
-    next[index] = next[nextIndex]!;
-    next[nextIndex] = current;
+    const neighbour = visible[visibleIndex + direction];
+    if (!neighbour) return;
+    swapSales(id, neighbour.id);
+  }
+
+  /** Exchange two working-file rows. Report numbers follow the new order. */
+  function swapSales(idA: string, idB: string) {
+    if (!idA || !idB || idA === idB) return;
+    const list = salesRef.current;
+    const indexA = list.findIndex((s) => s.id === idA);
+    const indexB = list.findIndex((s) => s.id === idB);
+    if (indexA < 0 || indexB < 0) return;
+    const next = [...list];
+    const keep = next[indexA]!;
+    next[indexA] = next[indexB]!;
+    next[indexB] = keep;
     replaceSales(next);
   }
 
@@ -1785,6 +1792,27 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                         →
                                       </button>
                                     </div>
+                                    {gridSales.length > 1 ? (
+                                      <select
+                                        value=""
+                                        onChange={(e) => {
+                                          const otherId = e.target.value;
+                                          if (otherId) swapSales(sale.id, otherId);
+                                        }}
+                                        className="max-w-[4.5rem] rounded border border-input bg-card px-0.5 py-0.5 text-[0.6rem] text-foreground"
+                                        title="Swap this comparable with another number"
+                                        aria-label={`Swap comparable ${startNum + idx + 1} with`}
+                                      >
+                                        <option value="">Swap…</option>
+                                        {gridSales.map((other, otherIdx) =>
+                                          other.id === sale.id ? null : (
+                                            <option key={other.id} value={other.id}>
+                                              #{otherIdx + 1}
+                                            </option>
+                                          ),
+                                        )}
+                                      </select>
+                                    ) : null}
                                     <button
                                       type="button"
                                       onClick={() =>
