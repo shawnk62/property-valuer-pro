@@ -98,6 +98,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const sales = draft.sales.map(ensureSaleAdjustments);
   const gridSales = salesOnReport(sales);
   const heldSales = salesHeldBack(sales);
+  const subjectFrontPhoto = draft.photos.find((p) => p.slot === "front");
+  const subjectGridAddress = addressLines(
+    [draft.values["prop_address"], draft.values["prop_suburb"]].filter(Boolean).join(", "),
+  );
   const fileRef = useRef<HTMLInputElement>(null);
   const cmaImportModeRef = useRef<"merge" | "replace">("merge");
   const [importing, setImporting] = useState(false);
@@ -1697,7 +1701,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                 return (
                   <div
                     key={`grid-${chunkIdx}`}
-                    className="overflow-x-auto rounded-md border border-border"
+                    className="max-h-[min(70vh,52rem)] overflow-auto rounded-md border border-border"
                     onPointerDownCapture={onGridSalePointer}
                     onFocusCapture={onGridSalePointer}
                   >
@@ -1712,13 +1716,35 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                           </Fragment>
                         ))}
                       </colgroup>
-                      <thead>
-                        <tr className="border-b border-border bg-muted/60">
-                          <th className="sticky left-0 z-10 bg-muted/95 px-1.5 py-1.5 text-xs font-semibold text-foreground">
+                      <thead className="sticky top-0 z-20">
+                        <tr className="border-b border-border bg-muted/95">
+                          <th className="sticky left-0 z-30 bg-muted/95 px-1.5 py-1.5 text-xs font-semibold text-foreground">
                             Feature
                           </th>
-                          <th className="px-1.5 py-1.5 text-xs font-semibold text-foreground">
-                            Subject
+                          <th className="bg-muted/95 px-1.5 py-1.5 align-top text-xs font-semibold text-foreground">
+                            <span className="leading-tight">Subject</span>
+                            {subjectGridAddress.line1 ? (
+                              <span className="mt-0.5 block text-[0.65rem] font-normal text-muted-foreground">
+                                {subjectGridAddress.line1}
+                                {subjectGridAddress.line2 ? (
+                                  <>
+                                    <br />
+                                    {subjectGridAddress.line2}
+                                  </>
+                                ) : null}
+                              </span>
+                            ) : null}
+                            {subjectFrontPhoto?.url ? (
+                              <img
+                                src={subjectFrontPhoto.url}
+                                alt="Subject front"
+                                className="pointer-events-none mt-1 max-h-14 w-auto max-w-full rounded border border-border object-cover"
+                              />
+                            ) : (
+                              <span className="mt-1 block rounded border border-dashed border-border px-1 py-2 text-center text-[0.6rem] font-normal text-muted-foreground">
+                                No front photo
+                              </span>
+                            )}
                           </th>
                           {chunk.map((sale, idx) => {
                             const lines = addressLines(sale.address || "");
@@ -1730,7 +1756,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                 onDrop={(e) => onSalePhotoDrop(sale.id, e)}
                                 {...saleGridCellProps(
                                   sale.id,
-                                  "border-l border-border px-1 py-1.5 align-top text-xs font-semibold text-foreground",
+                                  "border-l border-border bg-muted/95 px-1 py-1.5 align-top text-xs font-semibold text-foreground",
                                 )}
                               >
                                 <div className="flex items-start justify-between gap-0.5">
@@ -1868,9 +1894,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                             );
                           })}
                         </tr>
-                        <tr className="border-b border-border bg-muted/40 text-xs text-muted-foreground">
-                          <th className="sticky left-0 z-10 bg-muted/90 px-2 py-1" />
-                          <th className="px-2 py-1" />
+                        <tr className="border-b border-border bg-muted/95 text-xs text-muted-foreground">
+                          <th className="sticky left-0 z-30 bg-muted/95 px-2 py-1" />
+                          <th className="bg-muted/95 px-2 py-1" />
                           {chunk.map((sale) => (
                             <Fragment key={sale.id}>
                               <th
