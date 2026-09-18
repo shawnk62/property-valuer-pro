@@ -1522,6 +1522,10 @@
               "label": "Cross fenced"
             },
             {
+              "id": "fence_fully_paddocks",
+              "label": "Fully fenced and subdivided into paddocks"
+            },
+            {
               "id": "fence_front",
               "label": "Front boundary fencing"
             },
