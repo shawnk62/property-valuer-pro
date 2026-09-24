@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": 41,
+  "version": 42,
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -20,6 +20,81 @@
           "label": "File number",
           "type": "text",
           "placeholder": "e.g. 2026-0142"
+        },
+        {
+          "name": "prop_type_residential",
+          "label": "Residential (improved and vacant)",
+          "type": "select",
+          "options": [
+            "Detached houses / single-unit dwellings",
+            "Townhouses, duplexes, terraces and semi-detached dwellings",
+            "Units, apartments, flats and other multi-unit dwellings",
+            "Community title / strata / group title lots and body-corporate common property",
+            "Rural-residential / lifestyle lots and large homesites",
+            "Vacant residential land (including subdivided lots under special valuation provisions)",
+            "Secondary dwellings / granny flats",
+            "Retirement villages, student accommodation and non-medical residential institutions",
+            "Caravan parks and other moveable-dwelling sites"
+          ]
+        },
+        {
+          "name": "prop_type_commercial",
+          "label": "Commercial (improved and vacant)",
+          "type": "select",
+          "options": [
+            "Retail: single shops, small shopping groups, supermarkets, neighbourhood/regional shopping centres, retail warehouses",
+            "Offices and professional suites",
+            "Mixed-use buildings (shops with dwellings)",
+            "Hotels, taverns, motels and guest houses",
+            "Restaurants and fast-food outlets",
+            "Service stations",
+            "Outdoor sales yards (vehicles, boats, etc.)",
+            "Car parks",
+            "Theatres and cinemas",
+            "Licensed clubs"
+          ]
+        },
+        {
+          "name": "prop_type_industrial",
+          "label": "Industrial (improved and vacant)",
+          "type": "select",
+          "options": [
+            "Light / service industry",
+            "General / medium industry",
+            "Heavy / high-impact / noxious industry (including abattoirs)",
+            "Warehouses and bulk stores",
+            "Transport terminals and depots",
+            "Builders’ / contractors’ yards",
+            "Cold stores"
+          ]
+        },
+        {
+          "name": "prop_type_rural",
+          "label": "Rural / primary production (improved and vacant)",
+          "type": "select",
+          "options": [
+            "Grazing (cattle, sheep, goats)",
+            "Dairy",
+            "Broadacre and horticultural cropping (grains, oilseeds, sugar cane, cotton, rice, turf, orchards, vineyards, small crops, tropical fruit, etc.)",
+            "Intensive animal production (pigs, poultry, horses, specialist livestock)",
+            "Forestry and plantations",
+            "Vacant rural land"
+          ]
+        },
+        {
+          "name": "prop_type_specialised",
+          "label": "Specialised and other",
+          "type": "select",
+          "options": [
+            "Extractive industries (quarries, mining, oil/gas)",
+            "Energy generation and storage (coal, solar, wind, battery)",
+            "Institutional uses: hospitals, education facilities, churches, cemeteries, libraries, welfare institutions",
+            "Community and recreation: parks, sports clubs, showgrounds, racecourses",
+            "Tourism and special attractions",
+            "Infrastructure (reservoirs, substations, pipelines, defence establishments)",
+            "Development sites and vacant land of mixed or unspecified zoning",
+            "Leasehold land (common across much of Queensland) versus freehold"
+          ]
         },
         {
           "name": "prop_assignment",

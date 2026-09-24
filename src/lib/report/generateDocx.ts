@@ -22,7 +22,7 @@ import { buildPhilRemarks, buildMurrayRemarks, buildSummaryDescription } from "@
 import { annexureById, resolveAnnexures } from "@/lib/report/annexures";
 import { parseOverlayList } from "@/lib/report/overlays";
 import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
-import { get, hasValue, joinValues, labelFor } from "@/lib/report/schema";
+import { formatPropertyType, get, hasValue, joinValues, labelFor } from "@/lib/report/schema";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
 
@@ -176,7 +176,7 @@ type TocEntry = {
 
 const TOC_ENTRIES: TocEntry[] = [
   { id: "sec-instructions", number: "1.", title: "Instructions and Purpose", fields: ["prop_assignment", "prop_rights", "insp_date"] },
-  { id: "sec-property", number: "2.", title: "Property Details", fields: ["prop_address", "prop_suburb", "prop_state", "prop_postcode", "prop_lotplan", "prop_legal", "prop_title", "prop_parish", "prop_lga", "prop_owner", "prop_occupant"] },
+  { id: "sec-property", number: "2.", title: "Property Details", fields: ["prop_type_residential", "prop_type_commercial", "prop_type_industrial", "prop_type_rural", "prop_type_specialised", "prop_address", "prop_suburb", "prop_state", "prop_postcode", "prop_lotplan", "prop_legal", "prop_title", "prop_parish", "prop_lga", "prop_owner", "prop_occupant"] },
   { id: "sec-statutory", number: "3.", title: "Statutory Information", fields: ["prop_lga", "prop_site_value", "prop_sv_date", "prop_offered", "prop_offer_details", "prop_contract_price", "prop_contract_date", "prop_seller_owner", "prop_assistance", "prop_assistance_details"] },
   { id: "sec-planning", number: "4.", title: "Town Planning", fields: ["prop_zoning", "prop_zoning_desc", "prop_zoning_comp", "prop_hbu"] },
   { id: "sec-location", number: "5.", title: "Location", fields: ["nbhd_description", "nbhd_market_conditions", "nbhd_location", "nbhd_builtup", "nbhd_growth", "nbhd_values", "nbhd_demand", "nbhd_marketing", "nbhd_price_range", "nbhd_age", "offsite_road_type", "offsite_road_surface", "offsite_carriageway", "offsite_kerb", "offsite_footpaths"] },
@@ -424,6 +424,11 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   push(
     children,
     factsTable(draft, [
+      "prop_type_residential",
+      "prop_type_commercial",
+      "prop_type_industrial",
+      "prop_type_rural",
+      "prop_type_specialised",
       "prop_address",
       "prop_suburb",
       "prop_state",

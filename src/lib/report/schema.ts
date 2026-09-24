@@ -105,3 +105,18 @@ export function joinValues(
 }
 
 export const SCHEMA_VERSION = (schema as unknown as { version: string }).version;
+
+/** Classification dropdowns on page 1 of the inspection form. */
+export const PROP_TYPE_FIELDS = [
+  "prop_type_residential",
+  "prop_type_commercial",
+  "prop_type_industrial",
+  "prop_type_rural",
+  "prop_type_specialised",
+] as const;
+
+export function formatPropertyType(values: InspectionValues): string {
+  return pick(values, [...PROP_TYPE_FIELDS])
+    .map((row) => `${row.label}: ${row.value}`)
+    .join("; ");
+}

@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 import { BOILERPLATE } from "@/lib/report/boilerplate";
-import { get, hasValue, joinValues, labelFor, pick } from "@/lib/report/schema";
+import { formatPropertyType, get, hasValue, joinValues, labelFor, pick } from "@/lib/report/schema";
 import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, type ReportDraft } from "@/lib/report/types";
 import {
   getReportTypeConfig,
@@ -77,6 +77,11 @@ function getTocEntries(murray: boolean): TocEntry[] {
         number: "2.",
         title: "Property Details",
         fields: [
+          "prop_type_residential",
+          "prop_type_commercial",
+          "prop_type_industrial",
+          "prop_type_rural",
+          "prop_type_specialised",
           "prop_address",
           "prop_suburb",
           "prop_state",
@@ -229,6 +234,11 @@ function getTocEntries(murray: boolean): TocEntry[] {
     number: "2.",
     title: "Property Details",
     fields: [
+      "prop_type_residential",
+      "prop_type_commercial",
+      "prop_type_industrial",
+      "prop_type_rural",
+      "prop_type_specialised",
       "prop_address",
       "prop_suburb",
       "prop_state",
@@ -1124,11 +1134,19 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                   .join(" ") || "—"}
               </Para>
             </Sub>
+            <Sub title="2.4  Property Type">
+              <Para>{formatPropertyType(v) || "—"}</Para>
+            </Sub>
           </>
         ) : (
           <Facts
             values={v}
             fields={[
+              "prop_type_residential",
+              "prop_type_commercial",
+              "prop_type_industrial",
+              "prop_type_rural",
+              "prop_type_specialised",
               "prop_address",
               "prop_suburb",
               "prop_state",
