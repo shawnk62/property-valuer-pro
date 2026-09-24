@@ -350,11 +350,24 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     setBusy(remaining.length === 1 ? remaining[0]! : "ai");
     setLastStatus("Generating…");
     const next: Partial<ReportNarrative> = {};
-    const errors: string[] = [];
     const values = serializableValues(draft.values);
+    let quotaHit = false;
+    let quotaDetail = "";
+
+    const applyInspectionFill = (keysToFill: (keyof ReportNarrative)[]) => {
+      const full = generateNarrative(draft.values, opts);
+      for (const key of keysToFill) {
+        const fallback = String(full[key] ?? "").trim();
+        if (!fallback) continue;
+        if (overwrite || !String(narrativeRef.current[key] ?? "").trim() || !next[key]) {
+          next[key] = fallback;
+        }
+      }
+    };
 
     try {
       for (const key of remaining) {
+        if (quotaHit) break;
         try {
           setLastStatus(`Generating “${key}”…`);
           const result = await generateNarrativeBlock({
@@ -381,12 +394,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                 : "";
 
           if (text.trim()) next[key] = text.trim();
-          else {
-            const full = generateNarrative(draft.values, opts);
-            const fallback = String(full[key] ?? "").trim();
-            if (fallback) next[key] = fallback;
-            else errors.push(`${key}: empty response`);
-          }
+          else applyInspectionFill([key]);
         } catch (err) {
           console.error("[narrative AI]", key, err);
           const message =
@@ -395,14 +403,17 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               : typeof err === "string"
                 ? err
                 : JSON.stringify(err);
-          const full = generateNarrative(draft.values, opts);
-          const fallback = String(full[key] ?? "").trim();
-          if (fallback && (overwrite || !String(narrativeRef.current[key] ?? "").trim())) {
-            next[key] = fallback;
-            errors.push(`${key}: AI unavailable (${message}); used inspection data`);
-          } else {
-            errors.push(`${key}: ${message}`);
+          if (
+            /permission-denied|spending limit|available credits|monthly spending|quota|insufficient.?credit/i.test(
+              message,
+            )
+          ) {
+            quotaHit = true;
+            quotaDetail = message;
+            applyInspectionFill(remaining);
+            break;
           }
+          applyInspectionFill([key]);
         }
       }
 
@@ -417,24 +428,46 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         setNarrative(safe);
         narrativeRef.current = { ...narrativeRef.current, ...safe };
         setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
-        setSource("ai");
-        setLastStatus(`Updated: ${Object.keys(safe).join(", ")}.`);
-        toast.success(
-          remaining.length === 1
-            ? `Generated “${remaining[0]}”`
-            : "Narrative generated",
+        if (quotaHit) {
+          setSource("template");
+          setLastStatus(
+            `AI credits are used up. Filled from inspection data: ${Object.keys(safe).join(", ")}.`,
+          );
+          toast.message("AI credits used up — filled from inspection data");
+        } else {
+          setSource("ai");
+          setLastStatus(`Updated: ${Object.keys(safe).join(", ")}.`);
+          toast.success(
+            remaining.length === 1
+              ? `Generated “${remaining[0]}”`
+              : "Narrative generated",
+          );
+        }
+      } else if (quotaHit) {
+        setSource("template");
+        setLastStatus(
+          "AI credits are used up. Use Regenerate from inspection data, or add credits in the AI provider account.",
         );
-      } else if (errors.length) {
-        setLastStatus(`No text returned. ${errors.join(" · ")}`);
-        toast.error("Generation failed", { description: errors.join(" · ") });
+        toast.message("AI credits used up", {
+          description: "Use Regenerate from inspection data. Narratives were not overwritten.",
+        });
       } else {
         setLastStatus("Existing text was kept.");
       }
     } catch (err) {
       console.error("[narrative AI]", err);
-      const message = err instanceof Error ? err.message : String(err);
-      setLastStatus(`Failed: ${message}`);
-      toast.error("Generation failed", { description: message });
+      applyInspectionFill(remaining);
+      if (Object.keys(next).length > 0) {
+        setNarrative(next);
+        narrativeRef.current = { ...narrativeRef.current, ...next };
+        setSource("template");
+        setLastStatus(`AI failed. Filled from inspection data: ${Object.keys(next).join(", ")}.`);
+        toast.message("Filled from inspection data");
+      } else {
+        const message = err instanceof Error ? err.message : String(err);
+        setLastStatus(`Failed: ${message}`);
+        toast.error("Generation failed", { description: message });
+      }
     } finally {
       setBusy(null);
     }

@@ -671,7 +671,11 @@ function buildLocation(values: InspectionValues, locationSentence?: string): str
 
   const body = parts.filter(Boolean).join("\n\n");
   if (locLine && body) return `${locLine}\n\n${body}`;
-  return locLine || body;
+  if (locLine || body) return locLine || body;
+  const addr = fullAddress(values);
+  return addr
+    ? sentence(["The subject is located at", addr])
+    : sentence(["The locality was not further described at inspection"]);
 }
 
 /** Service type as plain prose; skip empty / N/A / Nil. No parenthetical labels. */
@@ -799,7 +803,9 @@ function buildServicesAmenities(values: InspectionValues): string {
     serviceTypePhrase(v(values, "svc_internet_type")),
   ].filter((x): x is string => Boolean(x));
 
-  if (!listed.length) return "";
+  if (!listed.length) {
+    return sentence(["Services available to the subject were not separately recorded at inspection"]);
+  }
 
   // Murray sample: "Tank water, electricity, septic sewerage and telephone are available."
   if (isMurrayAssignment(values)) {
