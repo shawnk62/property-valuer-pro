@@ -233,7 +233,11 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     const brief = String(narrativeRef.current.brief ?? "");
     const location = String(narrativeRef.current.location ?? "");
     const staleBrief = /vacant land\s*\(/i.test(brief);
-    const staleLocation = /situated in a[^.]{0,40}%/i.test(location);
+    const staleLocation =
+      /situated in a[^.]{0,40}%/i.test(location) ||
+      /built up over 75/i.test(location) ||
+      /built up under 25/i.test(location) ||
+      /built up 25%\s*to\s*75/i.test(location);
     if (!staleBrief && !staleLocation) return;
     const full = generateNarrative(draft.values, narrativeOpts());
     const patch: Partial<ReportNarrative> = {};

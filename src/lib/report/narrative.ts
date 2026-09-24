@@ -658,7 +658,16 @@ function buildLocation(values: InspectionValues, locationSentence?: string): str
     );
   }
   if (builtup) {
-    parts.push(sentence(["The surrounding area is built up", builtup.toLowerCase()]));
+    const density = builtup.toLowerCase();
+    const densityPhrase =
+      /over\s*75|75\s*%/.test(density)
+        ? "predominantly built up"
+        : /25\s*%\s*to\s*75|25\s*to\s*75/.test(density)
+          ? "moderately built up"
+          : /under\s*25/.test(density)
+            ? "sparsely built up"
+            : `built up ${density}`;
+    parts.push(sentence(["The surrounding area is", densityPhrase]));
   }
   const landUse = describeLandUseMix(values);
   if (landUse) parts.push(landUse);
