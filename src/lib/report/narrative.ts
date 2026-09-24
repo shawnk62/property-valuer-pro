@@ -35,21 +35,15 @@ function setLevel(values: InspectionValues): string {
 }
 
 function vacantLandPhrase(values: InspectionValues): string {
-  const blob = [
+  const types = [
     v(values, "prop_type_residential"),
     v(values, "prop_type_commercial"),
     v(values, "prop_type_industrial"),
     v(values, "prop_type_rural"),
     v(values, "prop_type_specialised"),
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-  if (blob.includes("residential")) return "residential vacant land";
-  if (blob.includes("commercial")) return "commercial vacant land";
-  if (blob.includes("industrial")) return "industrial vacant land";
-  if (blob.includes("rural")) return "rural vacant land";
-  if (blob.includes("development")) return "a vacant development site";
+  ].filter(Boolean);
+  if (types.length === 1) return types[0]!.charAt(0).toLowerCase() + types[0]!.slice(1);
+  if (types.length > 1) return types.join("; ").replace(/^./, (c) => c.toLowerCase());
   return "vacant land";
 }
 
@@ -653,16 +647,18 @@ function buildLocation(values: InspectionValues, locationSentence?: string): str
   const demand = v(values, "nbhd_demand");
   const market = v(values, "nbhd_market_conditions");
 
-  if (location || builtup) {
+  if (location || character) {
     parts.push(
       sentence([
         "The subject is situated in a",
-        builtup && builtup.toLowerCase(),
         location && location.toLowerCase(),
         "locality",
         character && `characterised by ${character.toLowerCase()}`,
       ]),
     );
+  }
+  if (builtup) {
+    parts.push(sentence(["The surrounding area is built up", builtup.toLowerCase()]));
   }
   const landUse = describeLandUseMix(values);
   if (landUse) parts.push(landUse);

@@ -228,6 +228,23 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once after load when empty blocks exist
   }, [loaded, draft.inspectionId]);
 
+  useEffect(() => {
+    if (!loaded) return;
+    const brief = String(narrativeRef.current.brief ?? "");
+    const location = String(narrativeRef.current.location ?? "");
+    const staleBrief = /vacant land\s*\(/i.test(brief);
+    const staleLocation = /situated in a[^.]{0,40}%/i.test(location);
+    if (!staleBrief && !staleLocation) return;
+    const full = generateNarrative(draft.values, narrativeOpts());
+    const patch: Partial<ReportNarrative> = {};
+    if (staleBrief && full.brief) patch.brief = full.brief;
+    if (staleLocation && full.location) patch.location = full.location;
+    if (Object.keys(patch).length === 0) return;
+    setNarrative(patch);
+    narrativeRef.current = { ...narrativeRef.current, ...patch };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- rewrite known stale templates once after load
+  }, [loaded, draft.inspectionId]);
+
   /** Always fills Remarks from local builder (Phil structure or generic template). */
   function generateRemarksNow(overwrite = true) {
     const opts = narrativeOpts();
