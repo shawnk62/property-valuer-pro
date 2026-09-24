@@ -13,6 +13,7 @@ export const REQUIRED_FIELDS: string[] = [
   "insp_date",
   "insp_valuer",
   // Section 6 — Overall Condition Summary & Sign-off
+  // overall_cond is required only on improved jobs (see missingFields).
   "overall_cond",
 ];
 

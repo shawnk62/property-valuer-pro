@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": 42,
+  "version": 43,
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -94,6 +94,16 @@
             "Infrastructure (reservoirs, substations, pipelines, defence establishments)",
             "Development sites and vacant land of mixed or unspecified zoning",
             "Leasehold land (common across much of Queensland) versus freehold"
+          ]
+        },
+        {
+          "name": "prop_built_status",
+          "label": "Improved or vacant",
+          "type": "select",
+          "options": [
+            "Vacant",
+            "Improved",
+            "Mixed"
           ]
         },
         {
@@ -313,6 +323,13 @@
           "multiline": false
         },
         {
+          "name": "prop_frontage",
+          "label": "Frontage (m)",
+          "type": "text",
+          "multiline": false,
+          "placeholder": "e.g. 15.1"
+        },
+        {
           "name": "prop_orientation",
           "label": "Orientation",
           "type": "text",
@@ -374,6 +391,22 @@
           ]
         },
         {
+          "name": "prop_hbu_vacant",
+          "label": "Highest & Best Use as vacant is the current zoning / present vacant use?",
+          "type": "select",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "name": "prop_hbu_vacant_notes",
+          "label": "Highest & Best Use as vacant — notes",
+          "type": "text",
+          "multiline": true,
+          "placeholder": "Alternative use if No"
+        },
+        {
           "name": "prop_flood",
           "label": "Flood Hazard / Overland Flow",
           "type": "select",
@@ -388,6 +421,97 @@
           "label": "Flood Map / Source",
           "type": "text",
           "multiline": false
+        },
+        {
+          "name": "plan_overlay",
+          "label": "Planning overlays affecting the subject",
+          "type": "checkbox_group",
+          "items": [
+            { "id": "overlay_bushfire", "label": "Bushfire hazard" },
+            { "id": "overlay_landslide", "label": "Landslide" },
+            { "id": "overlay_wetland", "label": "Wetland / waterway" },
+            { "id": "overlay_character", "label": "Neighbourhood character / local plan" },
+            { "id": "overlay_airport", "label": "Airport / OLS" },
+            { "id": "overlay_coastal", "label": "Coastal" },
+            { "id": "overlay_koala", "label": "Koala habitat" },
+            { "id": "overlay_infrastructure", "label": "Infrastructure" },
+            { "id": "overlay_acid_sulfate", "label": "Acid sulfate soils" },
+            { "id": "overlay_other", "label": "Other" }
+          ],
+          "condition_field": "plan_overlay_cond",
+          "notes_field": "plan_overlay_notes"
+        },
+        {
+          "name": "enc",
+          "label": "Encumbrances",
+          "type": "checkbox_group",
+          "items": [
+            { "id": "enc_none", "label": "None observed" },
+            { "id": "enc_easement", "label": "Easement" },
+            { "id": "enc_covenant", "label": "Covenant" },
+            { "id": "enc_caveat", "label": "Caveat" },
+            { "id": "enc_access_handle", "label": "Access handle / battle-axe stem" },
+            { "id": "enc_other", "label": "Other" }
+          ],
+          "condition_field": "enc_cond",
+          "notes_field": "enc_notes"
+        },
+        {
+          "name": "contam_status",
+          "label": "Contamination / previous use",
+          "type": "select",
+          "options": [
+            "None observed",
+            "Possible",
+            "Known"
+          ]
+        },
+        {
+          "name": "contam_notes",
+          "label": "Contamination / previous use notes",
+          "type": "text",
+          "multiline": true
+        },
+        {
+          "name": "yield_approval",
+          "label": "Development approval status",
+          "type": "select",
+          "options": [
+            "None",
+            "MCU / ROL lodged",
+            "Approved",
+            "Not applicable"
+          ]
+        },
+        {
+          "name": "yield_lots",
+          "label": "Potential lot yield",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "yield_gfa",
+          "label": "Potential GFA (m²)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "yield_height",
+          "label": "Permitted / proposed height",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "yield_site_cover",
+          "label": "Site cover / plot ratio",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "infra_charges_notes",
+          "label": "Infrastructure charges / connection notes",
+          "type": "text",
+          "multiline": true
         },
         {
           "name": "prop_adverse_site",
@@ -1711,6 +1835,86 @@
           ],
           "condition_field": "fence_cond",
           "notes_field": "fence_notes"
+        },
+        {
+          "name": "rural_country",
+          "label": "Country / soil classification",
+          "type": "text",
+          "multiline": false,
+          "placeholder": "e.g. forest country, brigalow, alluvial"
+        },
+        {
+          "name": "rural_carrying",
+          "label": "Carrying capacity",
+          "type": "text",
+          "multiline": false,
+          "placeholder": "e.g. AE / ha or beasts to the acre"
+        },
+        {
+          "name": "rural_rainfall",
+          "label": "Rainfall band",
+          "type": "text",
+          "multiline": false,
+          "placeholder": "e.g. 900–1100 mm"
+        },
+        {
+          "name": "rural_water",
+          "label": "Rural water",
+          "type": "checkbox_group",
+          "items": [
+            { "id": "rural_water_rainfed", "label": "Rainfed" },
+            { "id": "rural_water_allocation", "label": "Licensed water allocation" },
+            { "id": "rural_water_scheme", "label": "Irrigation scheme" },
+            { "id": "rural_water_dams", "label": "Dams" },
+            { "id": "rural_water_bore", "label": "Bore" },
+            { "id": "rural_water_stock", "label": "Stock water only" }
+          ],
+          "condition_field": "rural_water_cond",
+          "notes_field": "rural_water_notes"
+        },
+        {
+          "name": "rural_veg",
+          "label": "Vegetation / clearing constraint",
+          "type": "select",
+          "options": [
+            "None observed",
+            "Yes",
+            "Unknown"
+          ]
+        },
+        {
+          "name": "rural_veg_notes",
+          "label": "Vegetation / clearing notes",
+          "type": "text",
+          "multiline": true
+        },
+        {
+          "name": "rural_access",
+          "label": "Rural access",
+          "type": "select",
+          "options": [
+            "All-weather",
+            "Dry-weather only",
+            "Restricted",
+            "Unknown"
+          ]
+        },
+        {
+          "name": "ind_power_kva",
+          "label": "Available power capacity",
+          "type": "text",
+          "multiline": false,
+          "placeholder": "e.g. 3-phase, kVA if known"
+        },
+        {
+          "name": "ind_bdouble",
+          "label": "B-double / heavy vehicle access",
+          "type": "select",
+          "options": [
+            "Yes",
+            "No",
+            "Unknown"
+          ]
         }
       ]
     },

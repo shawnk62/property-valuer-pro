@@ -12,6 +12,7 @@ import { useInspection } from "@/lib/inspection/useInspection";
 import { useEditLock } from "@/hooks/useEditLock";
 import { EditLockBanner } from "@/components/EditLockBanner";
 import { missingForStep } from "@/lib/inspection/validation";
+import { nextVisibleStep, visibleFields } from "@/lib/inspection/visibility";
 
 export const Route = createFileRoute("/inspect/$id")({
   validateSearch: (search: Record<string, unknown>): {
@@ -72,6 +73,21 @@ function InspectionWizard() {
   const isSubmitted = record?.status === "submitted";
 
   const section = sections[step];
+  const fieldsOnStep = useMemo(
+    () => (section ? visibleFields(section, values) : []),
+    [section, values],
+  );
+  const visibleCount = useMemo(
+    () => sections.filter((s) => visibleFields(s, values).length > 0).length,
+    [values],
+  );
+  const visibleOrdinal = useMemo(() => {
+    let n = 0;
+    for (let i = 0; i <= step && i < sections.length; i++) {
+      if (visibleFields(sections[i]!, values).length > 0) n += 1;
+    }
+    return Math.max(1, n);
+  }, [step, values]);
   const missing = useMemo(() => missingForStep(values, step), [values, step]);
 
 
@@ -107,17 +123,19 @@ function InspectionWizard() {
 
     setShowErrors(false);
     saveNow();
-    if (step === sections.length - 1) {
+    const next = nextVisibleStep(sections, step, values, 1);
+    if (next === "review") {
       void navigate({ to: "/inspect/$id/review", params: { id } });
       return;
     }
-    setStep((s) => s + 1);
+    setStep(next);
     window.scrollTo({ top: 0 });
   };
 
   const goBack = () => {
     setShowErrors(false);
-    setStep((s) => Math.max(0, s - 1));
+    const prev = nextVisibleStep(sections, step, values, -1);
+    setStep(typeof prev === "number" ? prev : 0);
     window.scrollTo({ top: 0 });
   };
 
@@ -173,7 +191,7 @@ function InspectionWizard() {
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {photosOpen
                   ? "Subject photos"
-                  : `${isSubmitted ? "Submitted · editable · " : ""}Step ${step + 1} of ${sections.length} · Section ${section?.id ?? ""}`}
+                  : `${isSubmitted ? "Submitted · editable · " : ""}Step ${visibleOrdinal} of ${visibleCount} · Section ${section?.id ?? ""}`}
               </p>
               <h1 className="truncate font-serif text-lg font-semibold text-foreground">
                 {photosOpen ? "Photos" : section?.title}
@@ -194,7 +212,7 @@ function InspectionWizard() {
               <Save className="size-4" />
             </Button>
           </div>
-          <Progress value={((step + 1) / sections.length) * 100} className="mt-3 h-1.5" />
+          <Progress value={(visibleOrdinal / Math.max(1, visibleCount)) * 100} className="mt-3 h-1.5" />
         </div>
       </header>
 
@@ -244,7 +262,7 @@ function InspectionWizard() {
             ) : null}
 
             <div className="space-y-4">
-              {section?.fields.map((field) => (
+              {fieldsOnStep.map((field) => (
                 <FieldRenderer
                   key={field.name}
                   field={field}

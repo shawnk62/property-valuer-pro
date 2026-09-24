@@ -120,3 +120,31 @@ export function formatPropertyType(values: InspectionValues): string {
     .map((row) => `${row.label}: ${row.value}`)
     .join("; ");
 }
+
+/** Extra identification / planning keys printed in Property Details. */
+export const PROPERTY_PLANNING_FIELDS = [
+  "prop_built_status",
+  "prop_frontage",
+  "prop_hbu",
+  "prop_hbu_vacant",
+  "prop_hbu_vacant_notes",
+  "plan_overlay",
+  "enc",
+  "contam_status",
+  "contam_notes",
+  "yield_approval",
+  "yield_lots",
+  "yield_gfa",
+  "yield_height",
+  "yield_site_cover",
+  "infra_charges_notes",
+  "rural_country",
+  "rural_carrying",
+  "rural_rainfall",
+  "rural_water",
+  "rural_veg",
+  "rural_veg_notes",
+  "rural_access",
+  "ind_power_kva",
+  "ind_bdouble",
+] as const;

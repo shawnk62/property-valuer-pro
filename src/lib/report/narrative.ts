@@ -1,4 +1,5 @@
 import { describeLandUseMix } from "@/lib/narrative/landUseMix";
+import { isVacantLand } from "@/lib/inspection/visibility";
 import { BOILERPLATE } from "./boilerplate";
 import { displayValue, hasValue, joinValues } from "./schema";
 import type { InspectionValues, ReportNarrative } from "./types";
@@ -33,7 +34,51 @@ function setLevel(values: InspectionValues): string {
   return "";
 }
 
+function vacantSiteBrief(values: InspectionValues): string {
+  const area = hasValue(values["prop_sitearea"])
+    ? `${v(values, "prop_sitearea")}${
+        v(values, "prop_areaunit") === "m2" ? "m²" : ` ${v(values, "prop_areaunit")}`
+      }`
+    : "";
+  const shape = v(values, "prop_shape");
+  const shapePhrase = shape
+    ? shape.toLowerCase().includes("shaped")
+      ? shape.toLowerCase()
+      : `${shape.toLowerCase()} shaped`
+    : "";
+  const lotPos = v(values, "prop_lot_position");
+  const frontage = v(values, "prop_frontage");
+  const zoning = v(values, "prop_zoning");
+  const typeBits = [
+    v(values, "prop_type_residential"),
+    v(values, "prop_type_commercial"),
+    v(values, "prop_type_industrial"),
+    v(values, "prop_type_rural"),
+    v(values, "prop_type_specialised"),
+  ].filter(Boolean);
+  return [
+    sentence([
+      "The subject is vacant land",
+      typeBits.length ? `(${typeBits.join("; ")})` : "",
+      area && `with an area of approximately ${area}`,
+      shapePhrase && `and is ${shapePhrase}`,
+      lotPos && lotPositionPhrase(lotPos),
+    ]),
+    frontage ? sentence([`Frontage is recorded as ${frontage} metres`]) : "",
+    zoning
+      ? sentence([
+          `The land is zoned ${zoning} under the planning scheme administered by ${
+            v(values, "prop_lga") || "the local authority"
+          }`,
+        ])
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
 function buildBrief(values: InspectionValues): string {
+  if (isVacantLand(values)) return vacantSiteBrief(values);
   const level = setLevel(values);
   const walls = v(values, "ext").toLowerCase();
   const roof = v(values, "rc").toLowerCase();
@@ -272,6 +317,10 @@ const PHIL_SALE_METHOD =
 
 /** Opening line — overall condition from overall_cond dropdown (fallback: good). */
 function philRemarksOpening(values: InspectionValues): string {
+  if (isVacantLand(values)) {
+    const siteCond = v(values, "overall_site_cond").trim() || "good";
+    return `The valuation assumes information disclosed by the client, with the overall condition of the site recorded as ${siteCond.toLowerCase()}, and a full schedule of limitations applies.`;
+  }
   const cond = v(values, "overall_cond").trim();
   const condPhrase = (cond || "good").toLowerCase();
   return `The valuation assumes information disclosed by the client, with the overall condition of improvements recorded as ${condPhrase}, and a full schedule of limitations applies.`;
@@ -346,13 +395,23 @@ function buildPhilRemarks(
   const brief =
     (opts?.brief && opts.brief.trim()) ||
     buildBrief(values) ||
-    sentence([
-      "The property comprises a residential dwelling",
-      hasValue(values["prop_sitearea"]) &&
-        `on a ${v(values, "prop_sitearea")}${
-          v(values, "prop_areaunit") === "m2" ? "m²" : ` ${v(values, "prop_areaunit")}`
-        } allotment`,
-    ]);
+    sentence(
+      isVacantLand(values)
+        ? [
+            "The subject comprises vacant land",
+            hasValue(values["prop_sitearea"]) &&
+              `with an area of approximately ${v(values, "prop_sitearea")}${
+                v(values, "prop_areaunit") === "m2" ? "m²" : ` ${v(values, "prop_areaunit")}`
+              }`,
+          ]
+        : [
+            "The property comprises a residential dwelling",
+            hasValue(values["prop_sitearea"]) &&
+              `on a ${v(values, "prop_sitearea")}${
+                v(values, "prop_areaunit") === "m2" ? "m²" : ` ${v(values, "prop_areaunit")}`
+              } allotment`,
+          ],
+    );
 
   const ground = buildGroundImprovementsLine(values);
 
@@ -441,9 +500,13 @@ function buildMurraySalesCommentary(
     : "current market value";
 
   // Default template — intended to be edited by the valuer (nearby suburbs list, etc.)
-  const p1 = `This lack of comparable sales in ${suburb} has led me to rely on sales taken from the nearby and surrounding suburbs. These out of subject suburb sales are considered appropriate for comparative analysis via the Direct Comparison Approach due to those localities being considered to be within the same ${lga} regional real estate market – i.e. prospective buyers would likely be interested in similarly sized and zoned improved listed properties across all suburbs.`;
+  const p1 = isVacantLand(values)
+    ? `This lack of comparable sales in ${suburb} has led me to rely on sales taken from the nearby and surrounding suburbs. These out of subject suburb sales are considered appropriate for comparative analysis via the Direct Comparison Approach due to those localities being considered to be within the same ${lga} regional real estate market – i.e. prospective buyers would likely be interested in similarly sized and zoned vacant land across all suburbs.`
+    : `This lack of comparable sales in ${suburb} has led me to rely on sales taken from the nearby and surrounding suburbs. These out of subject suburb sales are considered appropriate for comparative analysis via the Direct Comparison Approach due to those localities being considered to be within the same ${lga} regional real estate market – i.e. prospective buyers would likely be interested in similarly sized and zoned improved listed properties across all suburbs.`;
 
-  const p2 = `There is some variation between the subject property and the sales evidence properties considering (yet not limited to) attributes such as accommodation layout (namely number of bedrooms and bathrooms), locational factors including suburb, total internal floor area, outdoor area, style of dwelling (lowset, highset etcetera), aspect and outlook, age of construction, fit-out specification (type and quality of finishes including renovation/refurbishment status), presentation (internal and external), ancillary (ground) improvements, car accommodation (number of spaces and configuration), dual living status, flood status (including type of flood and extent), etcetera. The Valuer has made allowance for these variations whilst undertaking sales analysis via the Direct Comparison Approach.`;
+  const p2 = isVacantLand(values)
+    ? `There is some variation between the subject property and the sales evidence properties considering (yet not limited to) attributes such as site area and usable area, frontage, shape and position, topography, locational factors including suburb, zoning and overlays, services available to the boundary, flood status, access and any encumbrances. The Valuer has made allowance for these variations whilst undertaking sales analysis via the Direct Comparison Approach.`
+    : `There is some variation between the subject property and the sales evidence properties considering (yet not limited to) attributes such as accommodation layout (namely number of bedrooms and bathrooms), locational factors including suburb, total internal floor area, outdoor area, style of dwelling (lowset, highset etcetera), aspect and outlook, age of construction, fit-out specification (type and quality of finishes including renovation/refurbishment status), presentation (internal and external), ancillary (ground) improvements, car accommodation (number of spaces and configuration), dual living status, flood status (including type of flood and extent), etcetera. The Valuer has made allowance for these variations whilst undertaking sales analysis via the Direct Comparison Approach.`;
 
   const p3 = `Sales ${salesRange} in Section 9 above all recorded 'normal arm's length' transactions and were sold inside of 6 months previous to the date of valuation. They are appropriate for comparative analysis in order to ascertain the ${valueKind} of the subject property.`;
 
@@ -461,13 +524,23 @@ function buildMurrayRemarks(
   const brief =
     (opts?.brief && opts.brief.trim()) ||
     buildBrief(values) ||
-    sentence([
-      "The property comprises a residential dwelling",
-      hasValue(values["prop_sitearea"]) &&
-        `on a ${v(values, "prop_sitearea")}${
-          v(values, "prop_areaunit") === "m2" ? "m²" : ` ${v(values, "prop_areaunit")}`
-        } allotment`,
-    ]);
+    sentence(
+      isVacantLand(values)
+        ? [
+            "The subject comprises vacant land",
+            hasValue(values["prop_sitearea"]) &&
+              `with an area of approximately ${v(values, "prop_sitearea")}${
+                v(values, "prop_areaunit") === "m2" ? "m²" : ` ${v(values, "prop_areaunit")}`
+              }`,
+          ]
+        : [
+            "The property comprises a residential dwelling",
+            hasValue(values["prop_sitearea"]) &&
+              `on a ${v(values, "prop_sitearea")}${
+                v(values, "prop_areaunit") === "m2" ? "m²" : ` ${v(values, "prop_areaunit")}`
+              } allotment`,
+          ],
+    );
 
   const commentary = buildMurraySalesCommentary(values, {
     salesCount: opts?.salesCount,
@@ -636,6 +709,28 @@ function buildSitePhysical(values: InspectionValues): string {
 
   if (dims) {
     parts.push(sentence(["Dimensions are recorded as", dims]));
+  }
+  const frontage = v(values, "prop_frontage");
+  if (frontage) {
+    parts.push(sentence(["Frontage is recorded as", frontage, "metres"]));
+  }
+  const enc = v(values, "enc");
+  if (enc) {
+    parts.push(sentence(["Encumbrances recorded:", enc.toLowerCase()]));
+  }
+  const overlays = v(values, "plan_overlay");
+  if (overlays) {
+    parts.push(sentence(["Planning overlays recorded:", overlays.toLowerCase()]));
+  }
+  const ruralCountry = v(values, "rural_country");
+  const ruralWater = v(values, "rural_water");
+  if (ruralCountry || ruralWater) {
+    parts.push(
+      sentence([
+        ruralCountry && `Country is described as ${ruralCountry.toLowerCase()}`,
+        ruralWater && `water is ${ruralWater.toLowerCase()}`,
+      ]),
+    );
   }
   if (orient && !isMurrayAssignment(values)) {
     parts.push(sentence(["The allotment has a", orient.toLowerCase(), "orientation"]));
@@ -811,6 +906,16 @@ export function buildSummaryDescription(values: InspectionValues): string {
     .toLowerCase()
     .replace(/\s+roof(?:\s+coverings?)?$/i, "")
     .trim();
+  if (isVacantLand(values)) {
+    const frontage = v(values, "prop_frontage");
+    const zoning = v(values, "prop_zoning");
+    const extra = [
+      frontage ? sentence([`Frontage is ${frontage} metres`]) : "",
+      zoning ? sentence([`Zoning is recorded as ${zoning}`]) : "",
+    ].filter(Boolean);
+    return [site, ...extra].filter(Boolean).join("\n\n");
+  }
+
   const dwelling = sentence([
     "The improvements comprise a",
     level,
@@ -843,9 +948,9 @@ export function generateNarrative(
     location: buildLocation(values, opts?.locationSentence),
     sitePhysical: buildSitePhysical(values),
     servicesAmenities: buildServicesAmenities(values),
-    improvements: buildImprovements(values),
-    accommodation: buildAccommodation(values),
-    conditionImprovements: buildConditionImprovements(values),
+    improvements: isVacantLand(values) ? "" : buildImprovements(values),
+    accommodation: isVacantLand(values) ? "" : buildAccommodation(values),
+    conditionImprovements: isVacantLand(values) ? "" : buildConditionImprovements(values),
     remarks: buildRemarks(values, {
       salesCount: opts?.salesCount,
       valueAmount: opts?.valueAmount,

@@ -5,6 +5,7 @@ import { applyLocationPreset, LOCATION_PRESETS } from "@/lib/inspection/location
 import { inspectionStore } from "@/lib/inspection/storage";
 import type { InspectionRecord, InspectionValues } from "@/lib/inspection/types";
 import { resolveValuerProfile } from "@/lib/report/valuerProfiles";
+import { inferBuiltStatus } from "@/lib/inspection/visibility";
 
 /**
  * Sign-off fields that mirror an earlier answer until the valuer edits them
@@ -113,6 +114,14 @@ export function useInspection(id: string, opts?: { readOnly?: boolean }) {
           next = applyLocationPreset(next, value);
           if (next !== before) {
             toast.success(`Typical ${value.toLowerCase()} neighbourhood and site features pre-selected. Adjust any that do not apply.`);
+          }
+        }
+
+        if (key.startsWith("prop_type_") && typeof value === "string") {
+          const inferred = inferBuiltStatus(next);
+          const current = asText(next["prop_built_status"]);
+          if (inferred && current !== "Mixed") {
+            next = { ...next, prop_built_status: inferred };
           }
         }
 

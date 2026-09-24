@@ -1,6 +1,7 @@
 import { REQUIRED_SET } from "./required";
 import { fieldKeys, sections, stepForField } from "./schema";
 import type { InspectionValues } from "./types";
+import { fieldIsVisible, isVacantLand, sectionIsVisible } from "./visibility";
 
 export function isFilled(value: InspectionValues[string]): boolean {
   if (value === undefined || value === null) return false;
@@ -21,9 +22,13 @@ export interface MissingField {
 /** All required fields that are still empty, across every step. */
 export function missingFields(values: InspectionValues): MissingField[] {
   const missing: MissingField[] = [];
+  const vacant = isVacantLand(values);
   for (const section of sections) {
+    if (!sectionIsVisible(section, values)) continue;
     for (const field of section.fields) {
+      if (!fieldIsVisible(field, values)) continue;
       for (const key of fieldKeys(field)) {
+        if (key === "overall_cond" && vacant) continue;
         if (REQUIRED_SET.has(key) && !isFilled(values[key])) {
           missing.push({ name: key, step: stepForField(key) });
         }
