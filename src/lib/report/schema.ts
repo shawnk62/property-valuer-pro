@@ -134,7 +134,6 @@ export function formatHbuVacant(values: InspectionValues): string {
 
 /** Extra identification / planning keys printed in Property Details. */
 export const PROPERTY_PLANNING_FIELDS = [
-  "prop_built_status",
   "prop_frontage",
   "prop_hbu",
   "plan_overlay",

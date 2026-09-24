@@ -42,10 +42,6 @@ function str(values: InspectionValues, key: string): string {
   return typeof raw === "string" ? raw.trim() : "";
 }
 
-function typeBlob(values: InspectionValues): string {
-  return TYPE_KEYS.map((k) => str(values, k)).filter(Boolean).join(" | ");
-}
-
 export function isRuralType(values: InspectionValues): boolean {
   return Boolean(str(values, "prop_type_rural")) || str(values, "nbhd_location").toLowerCase() === "rural";
 }
@@ -62,23 +58,13 @@ export function isDevelopmentSite(values: InspectionValues): boolean {
   return /development site/i.test(str(values, "prop_type_specialised"));
 }
 
-/** Vacant land job: explicit status, or a vacant / development-site subtype. */
+/** Vacant land job: a vacant / development-site subtype and no improved subtype. */
 export function isVacantLand(values: InspectionValues): boolean {
-  const status = str(values, "prop_built_status").toLowerCase();
-  if (status === "improved" || status === "mixed") return false;
-  if (status === "vacant") return true;
-  const blob = typeBlob(values).toLowerCase();
-  if (!blob) return false;
-  if (blob.includes("vacant")) return true;
-  if (blob.includes("development site")) return true;
-  return false;
-}
-
-export function inferBuiltStatus(values: InspectionValues): "Vacant" | "Improved" | "" {
-  const blob = typeBlob(values).toLowerCase();
-  if (!blob) return "";
-  if (blob.includes("vacant") || blob.includes("development site")) return "Vacant";
-  return "Improved";
+  const selected = TYPE_KEYS.map((k) => str(values, k)).filter(Boolean);
+  if (selected.length === 0) return false;
+  const vacantish = selected.filter((t) => /vacant|development site/i.test(t));
+  const improved = selected.filter((t) => !/vacant|development site/i.test(t));
+  return vacantish.length > 0 && improved.length === 0;
 }
 
 export function sectionIsVisible(section: InspectionSection, values: InspectionValues): boolean {

@@ -23,7 +23,7 @@
         },
         {
           "name": "prop_type_residential",
-          "label": "Residential (improved and vacant)",
+          "label": "Residential",
           "type": "select",
           "options": [
             "Detached houses / single-unit dwellings",
@@ -39,9 +39,10 @@
         },
         {
           "name": "prop_type_commercial",
-          "label": "Commercial (improved and vacant)",
+          "label": "Commercial",
           "type": "select",
           "options": [
+            "Vacant commercial land",
             "Retail: single shops, small shopping groups, supermarkets, neighbourhood/regional shopping centres, retail warehouses",
             "Offices and professional suites",
             "Mixed-use buildings (shops with dwellings)",
@@ -56,9 +57,10 @@
         },
         {
           "name": "prop_type_industrial",
-          "label": "Industrial (improved and vacant)",
+          "label": "Industrial",
           "type": "select",
           "options": [
+            "Vacant industrial land",
             "Light / service industry",
             "General / medium industry",
             "Heavy / high-impact / noxious industry (including abattoirs)",
@@ -70,7 +72,7 @@
         },
         {
           "name": "prop_type_rural",
-          "label": "Rural / primary production (improved and vacant)",
+          "label": "Rural / primary production",
           "type": "select",
           "options": [
             "Grazing (cattle, sheep, goats)",
@@ -94,16 +96,6 @@
             "Infrastructure (reservoirs, substations, pipelines, defence establishments)",
             "Development sites and vacant land of mixed or unspecified zoning",
             "Leasehold land (common across much of Queensland) versus freehold"
-          ]
-        },
-        {
-          "name": "prop_built_status",
-          "label": "Improved or vacant",
-          "type": "select",
-          "options": [
-            "Vacant",
-            "Improved",
-            "Mixed"
           ]
         },
         {
