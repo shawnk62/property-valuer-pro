@@ -392,19 +392,18 @@
         },
         {
           "name": "prop_hbu_vacant",
-          "label": "Highest & Best Use as vacant is the current zoning / present vacant use?",
+          "label": "Highest & Best Use as vacant",
           "type": "select",
           "options": [
-            "Yes",
-            "No"
+            "Other"
           ]
         },
         {
           "name": "prop_hbu_vacant_notes",
-          "label": "Highest & Best Use as vacant — notes",
+          "label": "Highest & Best Use as vacant — other",
           "type": "text",
           "multiline": true,
-          "placeholder": "Alternative use if No"
+          "placeholder": "Describe the highest and best use if not the current zoning"
         },
         {
           "name": "prop_flood",

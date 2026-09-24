@@ -93,6 +93,11 @@ export function sectionIsVisible(section: InspectionSection, values: InspectionV
 export function fieldIsVisible(field: InspectionField, values: InspectionValues): boolean {
   const keys = fieldKeys(field);
   if (keys.some((k) => IMPROVED_ONLY_FIELDS.has(k)) && isVacantLand(values)) return false;
+  if (keys.includes("prop_hbu_vacant_notes")) {
+    const showBlock =
+      isVacantLand(values) || isDevelopmentSite(values) || isCommercialType(values) || isIndustrialType(values);
+    return showBlock && /^other$/i.test(str(values, "prop_hbu_vacant"));
+  }
   if (keys.some((k) => VACANT_FIELD_NAMES.has(k))) {
     return isVacantLand(values) || isDevelopmentSite(values) || isCommercialType(values) || isIndustrialType(values);
   }

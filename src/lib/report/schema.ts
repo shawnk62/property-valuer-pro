@@ -121,13 +121,22 @@ export function formatPropertyType(values: InspectionValues): string {
     .join("; ");
 }
 
+/** HBU as vacant: zoning or notes. Never print the "Other" placeholder. */
+export function formatHbuVacant(values: InspectionValues): string {
+  const selected = get(values, "prop_hbu_vacant").trim();
+  const notes = get(values, "prop_hbu_vacant_notes").trim();
+  const zoning = get(values, "prop_zoning").trim();
+  if (/^other$/i.test(selected) || /^no$/i.test(selected)) return notes;
+  if (/^yes$/i.test(selected)) return zoning;
+  if (selected) return selected;
+  return zoning;
+}
+
 /** Extra identification / planning keys printed in Property Details. */
 export const PROPERTY_PLANNING_FIELDS = [
   "prop_built_status",
   "prop_frontage",
   "prop_hbu",
-  "prop_hbu_vacant",
-  "prop_hbu_vacant_notes",
   "plan_overlay",
   "enc",
   "contam_status",

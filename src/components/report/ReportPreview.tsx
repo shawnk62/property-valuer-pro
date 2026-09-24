@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 import { BOILERPLATE } from "@/lib/report/boilerplate";
 import {
+  formatHbuVacant,
   formatPropertyType,
   get,
   hasValue,
@@ -1149,8 +1150,11 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             </Sub>
             <Sub title="2.5  Planning, encumbrances and site factors">
               <Para>
-                {pick(v, [...PROPERTY_PLANNING_FIELDS])
-                  .map((row) => `${row.label}: ${row.value}`)
+                {[
+                  formatHbuVacant(v) ? `Highest & Best Use as vacant: ${formatHbuVacant(v)}` : "",
+                  ...pick(v, [...PROPERTY_PLANNING_FIELDS]).map((row) => `${row.label}: ${row.value}`),
+                ]
+                  .filter(Boolean)
                   .join(". ") || "—"}
               </Para>
             </Sub>
@@ -1158,6 +1162,11 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         ) : (
           <Facts
             values={v}
+            extra={
+              formatHbuVacant(v)
+                ? [{ label: "Highest & Best Use as vacant", value: formatHbuVacant(v) }]
+                : []
+            }
             fields={[
               "prop_type_residential",
               "prop_type_commercial",

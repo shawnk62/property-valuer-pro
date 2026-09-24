@@ -18,6 +18,8 @@ const MIRRORED_FIELDS: Record<string, string> = {
   prop_owner: "instr_from_name",
   /** Usable site area defaults to Site Area until overwritten. */
   prop_sitearea: "prop_usable_sitearea",
+  /** HBU as vacant defaults to the zoning classification until Other is chosen. */
+  prop_zoning: "prop_hbu_vacant",
 };
 
 function asText(v: InspectionValues[string]): string {

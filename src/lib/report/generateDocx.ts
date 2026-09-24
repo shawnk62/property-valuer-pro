@@ -22,7 +22,7 @@ import { buildPhilRemarks, buildMurrayRemarks, buildSummaryDescription } from "@
 import { annexureById, resolveAnnexures } from "@/lib/report/annexures";
 import { parseOverlayList } from "@/lib/report/overlays";
 import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
-import { formatPropertyType, get, hasValue, joinValues, labelFor, PROPERTY_PLANNING_FIELDS } from "@/lib/report/schema";
+import { formatHbuVacant, formatPropertyType, get, hasValue, joinValues, labelFor, PROPERTY_PLANNING_FIELDS } from "@/lib/report/schema";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
 
@@ -441,7 +441,9 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
       "prop_lga",
       "prop_owner",
       "prop_occupant",
-    ]),
+    ], formatHbuVacant(draft.values)
+      ? [{ label: "Highest & Best Use as vacant", value: formatHbuVacant(draft.values) }]
+      : []),
   );
 
   // ---- 3 ----
@@ -464,7 +466,16 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
 
   // ---- 4 ----
   children.push(sectionHeading("4.", "Town Planning"));
-  push(children, factsTable(draft, ["prop_zoning", "prop_zoning_desc", "prop_zoning_comp", "prop_hbu"]));
+  push(
+    children,
+    factsTable(
+      draft,
+      ["prop_zoning", "prop_zoning_desc", "prop_zoning_comp", "prop_hbu"],
+      formatHbuVacant(draft.values)
+        ? [{ label: "Highest & Best Use as vacant", value: formatHbuVacant(draft.values) }]
+        : [],
+    ),
+  );
   children.push(p(BOILERPLATE.townPlanningConsent));
   children.push(subHeading("Development potential"));
   children.push(p(BOILERPLATE.developmentPotential));

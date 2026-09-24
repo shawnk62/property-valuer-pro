@@ -96,9 +96,13 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
     const isDesign = field.name === "imp_design";
     const isLocation = field.name === "nbhd_location";
     const isAssignment = field.name === "prop_assignment";
+    const isHbuVacant = field.name === "prop_hbu_vacant";
+    const zoning = asString(values["prop_zoning"]).trim();
     const selectOptions = isAssignment
       ? ([...PROP_ASSIGNMENT_OPTIONS] as string[])
-      : (field.options ?? []);
+      : isHbuVacant
+        ? [...(zoning ? [zoning] : []), ...((field.options ?? []).filter((o) => o !== zoning))]
+        : (field.options ?? []);
     return (
       <div className="space-y-2">
         <FieldLabel htmlFor={field.name} required={required}>
