@@ -34,6 +34,11 @@ function applyMirrors(values: InspectionValues): InspectionValues {
     const from = asText(values[source]);
     if (from && !asText(values[target])) next = { ...next, [target]: from };
   }
+  const vacantResOld =
+    "Vacant residential land (including subdivided lots under special valuation provisions)";
+  if (asText(next["prop_type_residential"]) === vacantResOld) {
+    next = { ...next, prop_type_residential: "Vacant residential land" };
+  }
   return applyZoningToHbuVacant(next);
 }
 
