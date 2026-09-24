@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": 43,
+  "version": 44,
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -1906,6 +1906,140 @@
             "No",
             "Unknown"
           ]
+        }
+      ]
+    },
+    {
+      "id": "2C",
+      "title": "Commercial building and occupancy",
+      "fields": [
+        {
+          "name": "comm_nla",
+          "label": "Net lettable area (m²)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "comm_gba",
+          "label": "Gross building area (m²)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "comm_storeys",
+          "label": "Storeys",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "comm_structure",
+          "label": "Structure / construction",
+          "type": "select",
+          "options": [
+            "Concrete frame",
+            "Steel portal frame",
+            "Masonry",
+            "Tilt-up concrete",
+            "Timber frame",
+            "Mixed construction",
+            "Other"
+          ]
+        },
+        {
+          "name": "comm_office_split",
+          "label": "Office component",
+          "type": "text",
+          "multiline": false,
+          "placeholder": "e.g. 15% office / 85% retail"
+        },
+        {
+          "name": "comm_parking",
+          "label": "On-site parking spaces",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "comm_occupancy",
+          "label": "Occupancy",
+          "type": "select",
+          "options": [
+            "Owner occupied",
+            "Leased",
+            "Vacant",
+            "Mixed"
+          ]
+        },
+        {
+          "name": "comm_passing_rent",
+          "label": "Passing rent (p.a.)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "comm_outgoings",
+          "label": "Outgoings (p.a.)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "comm_lease_term",
+          "label": "Lease term / expiry",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "comm_wale",
+          "label": "WALE (years)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "comm_vacancy",
+          "label": "Vacancy",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "comm_shopfront",
+          "label": "Shopfront",
+          "type": "select",
+          "options": [
+            "Yes",
+            "No",
+            "Not applicable"
+          ]
+        },
+        {
+          "name": "comm_awning",
+          "label": "Awning / verandah to street",
+          "type": "select",
+          "options": [
+            "Yes",
+            "No",
+            "Not applicable"
+          ]
+        },
+        {
+          "name": "comm_loading",
+          "label": "Rear lane / loading access",
+          "type": "select",
+          "options": [
+            "Yes",
+            "No",
+            "Not applicable"
+          ]
+        },
+        {
+          "name": "comm_keys",
+          "label": "Rooms / keys / covers (hospitality)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "comm_licence",
+          "label": "Licence / use notes",
+          "type": "text",
+          "multiline": true
         }
       ]
     },

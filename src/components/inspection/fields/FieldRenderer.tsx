@@ -13,6 +13,7 @@ import { isFilled } from "@/lib/inspection/validation";
 import type { InspectionField, InspectionValues } from "@/lib/inspection/types";
 import { cn } from "@/lib/utils";
 import { PROP_ASSIGNMENT_OPTIONS } from "@/lib/inspection/schema";
+import { TYPE_KEYS } from "@/lib/inspection/visibility";
 import { isAppliedSignature, SignaturePad } from "@/components/SignaturePad";
 
 interface Props {
@@ -116,6 +117,7 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
     const isDesign = field.name === "imp_design";
     const isLocation = field.name === "nbhd_location";
     const isAssignment = field.name === "prop_assignment";
+    const isPropertyType = (TYPE_KEYS as readonly string[]).includes(field.name);
     const isHbuVacant = field.name === "prop_hbu_vacant";
     const zoning = asString(values["prop_zoning"]).trim();
     const storedHbu = asString(values[field.name]).trim();
@@ -157,6 +159,17 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
           <p className="text-xs text-muted-foreground">
             Selecting a location pre-fills typical neighbourhood, street and site features (built-up density, roads, lighting, services, fencing, etc.). You can change or clear any item afterwards.
           </p>
+        ) : null}
+        {isPropertyType && asString(values[field.name]) ? (
+          <button
+            type="button"
+            className="text-xs font-medium text-primary underline-offset-2 hover:underline"
+            onClick={() => {
+              for (const key of TYPE_KEYS) onChange(key, "");
+            }}
+          >
+            Change property type
+          </button>
         ) : null}
       </div>
     );

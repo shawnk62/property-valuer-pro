@@ -1,5 +1,5 @@
 import { describeLandUseMix } from "@/lib/narrative/landUseMix";
-import { isVacantLand } from "@/lib/inspection/visibility";
+import { isCommercialType, isMixedUseCommercial, isVacantLand } from "@/lib/inspection/visibility";
 import { BOILERPLATE } from "./boilerplate";
 import { displayValue, hasValue, joinValues } from "./schema";
 import type { InspectionValues, ReportNarrative } from "./types";
@@ -77,8 +77,37 @@ function vacantSiteBrief(values: InspectionValues): string {
     .join("\n\n");
 }
 
+function commercialBuildingBrief(values: InspectionValues): string {
+  const subtype = v(values, "prop_type_commercial");
+  const nla = v(values, "comm_nla");
+  const gba = v(values, "comm_gba");
+  const structure = v(values, "comm_structure");
+  const occ = v(values, "comm_occupancy");
+  const park = v(values, "comm_parking");
+  const rent = v(values, "comm_passing_rent");
+  return [
+    sentence([
+      "The subject comprises",
+      subtype ? subtype.split(":")[0].toLowerCase() : "commercial premises",
+      structure && `of ${structure.toLowerCase()} construction`,
+      nla && `with a net lettable area of approximately ${nla} m²`,
+      !nla && gba && `with a gross building area of approximately ${gba} m²`,
+    ]),
+    sentence([
+      occ && `Occupancy is recorded as ${occ.toLowerCase()}`,
+      park && `with ${park} on-site parking spaces`,
+      rent && `Passing rent is ${rent}`,
+    ]),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
 function buildBrief(values: InspectionValues): string {
   if (isVacantLand(values)) return vacantSiteBrief(values);
+  if (isCommercialType(values) && !isMixedUseCommercial(values)) {
+    return commercialBuildingBrief(values);
+  }
   const level = setLevel(values);
   const walls = v(values, "ext").toLowerCase();
   const roof = v(values, "rc").toLowerCase();
@@ -500,13 +529,18 @@ function buildMurraySalesCommentary(
     : "current market value";
 
   // Default template — intended to be edited by the valuer (nearby suburbs list, etc.)
+  const comm = isCommercialType(values) && !isVacantLand(values);
   const p1 = isVacantLand(values)
     ? `This lack of comparable sales in ${suburb} has led me to rely on sales taken from the nearby and surrounding suburbs. These out of subject suburb sales are considered appropriate for comparative analysis via the Direct Comparison Approach due to those localities being considered to be within the same ${lga} regional real estate market – i.e. prospective buyers would likely be interested in similarly sized and zoned vacant land across all suburbs.`
-    : `This lack of comparable sales in ${suburb} has led me to rely on sales taken from the nearby and surrounding suburbs. These out of subject suburb sales are considered appropriate for comparative analysis via the Direct Comparison Approach due to those localities being considered to be within the same ${lga} regional real estate market – i.e. prospective buyers would likely be interested in similarly sized and zoned improved listed properties across all suburbs.`;
+    : comm
+      ? `This lack of comparable sales in ${suburb} has led me to rely on sales taken from the nearby and surrounding suburbs. These out of subject suburb sales are considered appropriate for comparative analysis via the Direct Comparison Approach due to those localities being considered to be within the same ${lga} regional real estate market – i.e. prospective buyers would likely be interested in similarly sized and zoned commercial properties across all suburbs.`
+      : `This lack of comparable sales in ${suburb} has led me to rely on sales taken from the nearby and surrounding suburbs. These out of subject suburb sales are considered appropriate for comparative analysis via the Direct Comparison Approach due to those localities being considered to be within the same ${lga} regional real estate market – i.e. prospective buyers would likely be interested in similarly sized and zoned improved listed properties across all suburbs.`;
 
   const p2 = isVacantLand(values)
     ? `There is some variation between the subject property and the sales evidence properties considering (yet not limited to) attributes such as site area and usable area, frontage, shape and position, topography, locational factors including suburb, zoning and overlays, services available to the boundary, flood status, access and any encumbrances. The Valuer has made allowance for these variations whilst undertaking sales analysis via the Direct Comparison Approach.`
-    : `There is some variation between the subject property and the sales evidence properties considering (yet not limited to) attributes such as accommodation layout (namely number of bedrooms and bathrooms), locational factors including suburb, total internal floor area, outdoor area, style of dwelling (lowset, highset etcetera), aspect and outlook, age of construction, fit-out specification (type and quality of finishes including renovation/refurbishment status), presentation (internal and external), ancillary (ground) improvements, car accommodation (number of spaces and configuration), dual living status, flood status (including type of flood and extent), etcetera. The Valuer has made allowance for these variations whilst undertaking sales analysis via the Direct Comparison Approach.`;
+    : comm
+      ? `There is some variation between the subject property and the sales evidence properties considering (yet not limited to) attributes such as net lettable area, gross building area, occupancy and lease terms, parking, shopfront and loading access, construction, locational factors including suburb and exposure, zoning and overlays, and flood status. The Valuer has made allowance for these variations whilst undertaking sales analysis via the Direct Comparison Approach.`
+      : `There is some variation between the subject property and the sales evidence properties considering (yet not limited to) attributes such as accommodation layout (namely number of bedrooms and bathrooms), locational factors including suburb, total internal floor area, outdoor area, style of dwelling (lowset, highset etcetera), aspect and outlook, age of construction, fit-out specification (type and quality of finishes including renovation/refurbishment status), presentation (internal and external), ancillary (ground) improvements, car accommodation (number of spaces and configuration), dual living status, flood status (including type of flood and extent), etcetera. The Valuer has made allowance for these variations whilst undertaking sales analysis via the Direct Comparison Approach.`;
 
   const p3 = `Sales ${salesRange} in Section 9 above all recorded 'normal arm's length' transactions and were sold inside of 6 months previous to the date of valuation. They are appropriate for comparative analysis in order to ascertain the ${valueKind} of the subject property.`;
 
@@ -906,6 +940,9 @@ export function buildSummaryDescription(values: InspectionValues): string {
     .toLowerCase()
     .replace(/\s+roof(?:\s+coverings?)?$/i, "")
     .trim();
+  if (isCommercialType(values) && !isMixedUseCommercial(values) && !isVacantLand(values)) {
+    return [site, commercialBuildingBrief(values)].filter(Boolean).join("\n\n");
+  }
   if (isVacantLand(values)) {
     const frontage = v(values, "prop_frontage");
     const zoning = v(values, "prop_zoning");
@@ -948,9 +985,20 @@ export function generateNarrative(
     location: buildLocation(values, opts?.locationSentence),
     sitePhysical: buildSitePhysical(values),
     servicesAmenities: buildServicesAmenities(values),
-    improvements: isVacantLand(values) ? "" : buildImprovements(values),
-    accommodation: isVacantLand(values) ? "" : buildAccommodation(values),
-    conditionImprovements: isVacantLand(values) ? "" : buildConditionImprovements(values),
+    improvements:
+      isVacantLand(values) || (isCommercialType(values) && !isMixedUseCommercial(values))
+        ? isCommercialType(values) && !isVacantLand(values)
+          ? commercialBuildingBrief(values)
+          : ""
+        : buildImprovements(values),
+    accommodation:
+      isVacantLand(values) || (isCommercialType(values) && !isMixedUseCommercial(values))
+        ? ""
+        : buildAccommodation(values),
+    conditionImprovements:
+      isVacantLand(values) || (isCommercialType(values) && !isMixedUseCommercial(values))
+        ? ""
+        : buildConditionImprovements(values),
     remarks: buildRemarks(values, {
       salesCount: opts?.salesCount,
       valueAmount: opts?.valueAmount,

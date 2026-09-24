@@ -1,7 +1,7 @@
 import type { InspectionField, InspectionSection, InspectionValues } from "./types";
 import { fieldKeys } from "./schema";
 
-const TYPE_KEYS = [
+export const TYPE_KEYS = [
   "prop_type_residential",
   "prop_type_commercial",
   "prop_type_industrial",
@@ -71,6 +71,14 @@ export function isDevelopmentSite(values: InspectionValues): boolean {
   return /development site/i.test(str(values, "prop_type_specialised"));
 }
 
+export function isMixedUseCommercial(values: InspectionValues): boolean {
+  return /mixed-use/i.test(str(values, "prop_type_commercial"));
+}
+
+export function selectedPropertyTypeKeys(values: InspectionValues): string[] {
+  return TYPE_KEYS.filter((k) => Boolean(str(values, k)));
+}
+
 /** Vacant land job: a vacant / development-site subtype and no improved subtype. */
 export function isVacantLand(values: InspectionValues): boolean {
   const selected = TYPE_KEYS.map((k) => str(values, k)).filter(Boolean);
@@ -81,7 +89,15 @@ export function isVacantLand(values: InspectionValues): boolean {
 }
 
 export function sectionIsVisible(section: InspectionSection, values: InspectionValues): boolean {
-  if (DWELLING_SECTION_IDS.has(section.id)) return !isVacantLand(values);
+  if (section.id === "2C") {
+    return isCommercialType(values) && !isVacantLand(values);
+  }
+  if (DWELLING_SECTION_IDS.has(section.id)) {
+    if (isVacantLand(values)) return false;
+    if (isIndustrialType(values) && !isMixedUseCommercial(values)) return false;
+    if (isCommercialType(values) && !isMixedUseCommercial(values)) return false;
+    return true;
+  }
   if (section.id === "5") {
     if (!isVacantLand(values)) return true;
     return isIndustrialType(values) || isCommercialType(values) || isRuralType(values);
@@ -91,6 +107,11 @@ export function sectionIsVisible(section: InspectionSection, values: InspectionV
 
 export function fieldIsVisible(field: InspectionField, values: InspectionValues): boolean {
   const keys = fieldKeys(field);
+  if (TYPE_KEYS.includes(field.name as (typeof TYPE_KEYS)[number])) {
+    const chosen = selectedPropertyTypeKeys(values);
+    if (chosen.length === 0) return true;
+    return chosen.includes(field.name);
+  }
   if (keys.some((k) => IMPROVED_ONLY_FIELDS.has(k)) && isVacantLand(values)) return false;
   if (keys.includes("prop_hbu_vacant_notes")) {
     const showBlock =

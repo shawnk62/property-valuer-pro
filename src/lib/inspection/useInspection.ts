@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { applyDesignPreset, DESIGN_PRESETS } from "@/lib/inspection/design-presets";
+import { applyCommercialPreset, COMMERCIAL_PRESETS } from "@/lib/inspection/commercial-presets";
 import { applyLocationPreset, LOCATION_PRESETS } from "@/lib/inspection/location-presets";
 import { inspectionStore } from "@/lib/inspection/storage";
 import type { InspectionRecord, InspectionValues } from "@/lib/inspection/types";
@@ -105,6 +106,14 @@ export function useInspection(id: string, opts?: { readOnly?: boolean }) {
 
         // When Design / Style is chosen, pre-fill typical construction features
         // that are still empty. Existing answers are never overwritten.
+        if (key === "prop_type_commercial" && typeof value === "string" && value && COMMERCIAL_PRESETS[value]) {
+          const before = next;
+          next = applyCommercialPreset(next, value);
+          if (next !== before) {
+            toast.success(`Typical features for “${value.split(":")[0]}” pre-selected. Adjust any that do not apply.`);
+          }
+        }
+
         if (key === "imp_design" && typeof value === "string" && value && DESIGN_PRESETS[value]) {
           const before = next;
           next = applyDesignPreset(next, value);
