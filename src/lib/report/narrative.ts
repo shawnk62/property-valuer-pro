@@ -34,6 +34,25 @@ function setLevel(values: InspectionValues): string {
   return "";
 }
 
+function vacantLandPhrase(values: InspectionValues): string {
+  const blob = [
+    v(values, "prop_type_residential"),
+    v(values, "prop_type_commercial"),
+    v(values, "prop_type_industrial"),
+    v(values, "prop_type_rural"),
+    v(values, "prop_type_specialised"),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  if (blob.includes("residential")) return "residential vacant land";
+  if (blob.includes("commercial")) return "commercial vacant land";
+  if (blob.includes("industrial")) return "industrial vacant land";
+  if (blob.includes("rural")) return "rural vacant land";
+  if (blob.includes("development")) return "a vacant development site";
+  return "vacant land";
+}
+
 function vacantSiteBrief(values: InspectionValues): string {
   const area = hasValue(values["prop_sitearea"])
     ? `${v(values, "prop_sitearea")}${
@@ -49,17 +68,10 @@ function vacantSiteBrief(values: InspectionValues): string {
   const lotPos = v(values, "prop_lot_position");
   const frontage = v(values, "prop_frontage");
   const zoning = v(values, "prop_zoning");
-  const typeBits = [
-    v(values, "prop_type_residential"),
-    v(values, "prop_type_commercial"),
-    v(values, "prop_type_industrial"),
-    v(values, "prop_type_rural"),
-    v(values, "prop_type_specialised"),
-  ].filter(Boolean);
   return [
     sentence([
-      "The subject is vacant land",
-      typeBits.length ? `(${typeBits.join("; ")})` : "",
+      "The subject is",
+      vacantLandPhrase(values),
       area && `with an area of approximately ${area}`,
       shapePhrase && `and is ${shapePhrase}`,
       lotPos && lotPositionPhrase(lotPos),
@@ -427,7 +439,7 @@ function buildPhilRemarks(
     sentence(
       isVacantLand(values)
         ? [
-            "The subject comprises vacant land",
+            `The subject comprises ${vacantLandPhrase(values)}`,
             hasValue(values["prop_sitearea"]) &&
               `with an area of approximately ${v(values, "prop_sitearea")}${
                 v(values, "prop_areaunit") === "m2" ? "m²" : ` ${v(values, "prop_areaunit")}`
@@ -561,7 +573,7 @@ function buildMurrayRemarks(
     sentence(
       isVacantLand(values)
         ? [
-            "The subject comprises vacant land",
+            `The subject comprises ${vacantLandPhrase(values)}`,
             hasValue(values["prop_sitearea"]) &&
               `with an area of approximately ${v(values, "prop_sitearea")}${
                 v(values, "prop_areaunit") === "m2" ? "m²" : ` ${v(values, "prop_areaunit")}`
