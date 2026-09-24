@@ -357,6 +357,8 @@ Unit / strata Family Law – Murray (Woodcliffe Crescent): unit in complex; buil
 For Phil Stamp Duty: keep wording concise; still use a new paragraph when the topic changes (e.g. dwelling then allotment).
 Use "allotment" / "parent allotment" for the site.
 Do not stack construction, internals, fencing, services and condition into one sentence.
+If the inspection records vacant land (or a vacant subtype), describe the allotment only. Do not invent a dwelling.
+If the inspection records commercial premises (NLA, GBA, occupancy, shopfront), describe those. Do not invent bedrooms or a house.
 Do not invent facts.`,
       };
         case "sitePhysical":
@@ -399,6 +401,8 @@ Required structure (all types):
 5. Do not include services or a tacked-on condition clause.
 
 Prefer openings such as "The improvements comprise…" or "The subject property improvements consist of…".
+If vacant land is recorded, write that there are no structural improvements other than those actually listed (fencing, services, earthworks). Do not invent a dwelling.
+If commercial NLA/GBA/structure/occupancy are recorded, describe the commercial building, not a house.
 Do not invent facts.`,
       };
         case "accommodation":

@@ -17,6 +17,7 @@ import {
   subjectCoordsFromPins,
 } from "@/lib/narrative/locationFacts";
 import { subjectAddressLine, type SalesMapPin } from "@/lib/maps/salesMapPins";
+import { skipAiNarrativeBlock } from "@/lib/inspection/visibility";
 import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
 import { geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
 import { CannedCommentsBar } from "@/components/report/CannedCommentsBar";
@@ -304,8 +305,29 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     if (keys.includes("remarks")) {
       generateRemarksNow(overwrite);
     }
-    const remaining = keys.filter((k) => k !== "remarks");
-    if (remaining.length === 0) return;
+    const remaining = keys.filter(
+      (k) => k !== "remarks" && !skipAiNarrativeBlock(draft.values, k),
+    );
+    const skipped = keys.filter((k) => skipAiNarrativeBlock(draft.values, k));
+    if (skipped.length > 0) {
+      const skipPatch = applyTemplateToEmptyKeys(skipped);
+      if (overwrite) {
+        const full = generateNarrative(draft.values, opts);
+        const forced: Partial<ReportNarrative> = {};
+        for (const key of skipped) {
+          if (String(full[key] ?? "").trim()) forced[key] = full[key];
+        }
+        if (Object.keys(forced).length > 0) setNarrative(forced);
+      } else if (Object.keys(skipPatch).length === 0) {
+        /* nothing to fill */
+      }
+    }
+    if (remaining.length === 0) {
+      if (skipped.length > 0) {
+        setLastStatus("Filled inapplicable blocks from inspection data.");
+      }
+      return;
+    }
 
     if (!isAiConfigured(settings)) {
       const emptyKeys = remaining.filter(
@@ -359,7 +381,12 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                 : "";
 
           if (text.trim()) next[key] = text.trim();
-          else errors.push(`${key}: empty response`);
+          else {
+            const full = generateNarrative(draft.values, opts);
+            const fallback = String(full[key] ?? "").trim();
+            if (fallback) next[key] = fallback;
+            else errors.push(`${key}: empty response`);
+          }
         } catch (err) {
           console.error("[narrative AI]", key, err);
           const message =
@@ -368,7 +395,14 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               : typeof err === "string"
                 ? err
                 : JSON.stringify(err);
-          errors.push(`${key}: ${message}`);
+          const full = generateNarrative(draft.values, opts);
+          const fallback = String(full[key] ?? "").trim();
+          if (fallback && (overwrite || !String(narrativeRef.current[key] ?? "").trim())) {
+            next[key] = fallback;
+            errors.push(`${key}: AI unavailable (${message}); used inspection data`);
+          } else {
+            errors.push(`${key}: ${message}`);
+          }
         }
       }
 

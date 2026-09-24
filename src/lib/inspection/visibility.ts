@@ -88,6 +88,22 @@ export function isVacantLand(values: InspectionValues): boolean {
   return vacantish.length > 0 && improved.length === 0;
 }
 
+/**
+ * Narrative blocks that do not apply to this job — do not call the AI for them.
+ * Vacant land and non-mixed commercial/industrial have no dwelling interiors.
+ */
+export function skipAiNarrativeBlock(values: InspectionValues, key: string): boolean {
+  const vacant = isVacantLand(values);
+  const commercialBuilding =
+    isCommercialType(values) && !isMixedUseCommercial(values) && !vacant;
+  const industrialBuilding = isIndustrialType(values) && !vacant;
+  if (key === "improvements" && vacant) return true;
+  if (key === "accommodation" || key === "conditionImprovements") {
+    return vacant || commercialBuilding || industrialBuilding;
+  }
+  return false;
+}
+
 export function sectionIsVisible(section: InspectionSection, values: InspectionValues): boolean {
   if (section.id === "2C") {
     return isCommercialType(values) && !isVacantLand(values);

@@ -118,7 +118,7 @@ const GenerateBlockInput = z.object({
   settings: SettingsInput,
   blockKey: z.string().min(1),
   // Allow extra shapes from stored inspection JSON; prompt builder reads safely.
-  values: z.record(ValueCell),
+  values: z.record(z.unknown()),
   locationContext: z.string().optional(),
 });
 
@@ -176,23 +176,40 @@ export const testAiConnection = createServerFn({ method: "POST" })
     }
   });
 
+function parseGenerateBlockInput(input: unknown) {
+  const raw =
+    input &&
+    typeof input === "object" &&
+    "data" in input &&
+    (input as { data: unknown }).data &&
+    typeof (input as { data: unknown }).data === "object" &&
+    "blockKey" in ((input as { data: unknown }).data as object)
+      ? (input as { data: unknown }).data
+      : input;
+  return GenerateBlockInput.parse(raw);
+}
+
 export const generateNarrativeBlock = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => GenerateBlockInput.parse(input))
+  .inputValidator((input: unknown) => parseGenerateBlockInput(input))
   .handler(async ({ data }) => {
-    const settings = asAiSettings(data.settings);
-    const model = createModel(settings);
-    const { system, prompt } = buildBlockPrompt(
-      data.blockKey,
-      data.values as InspectionValues,
-      { locationContext: data.locationContext },
-    );
+    try {
+      const settings = asAiSettings(data.settings);
+      const model = createModel(settings);
+      const { system, prompt } = buildBlockPrompt(
+        data.blockKey,
+        data.values as InspectionValues,
+        { locationContext: data.locationContext },
+      );
 
-    const { text } = await generateText({
-      model,
-      prompt: foldSystemIntoPrompt(system, prompt),
-    });
+      const { text } = await generateText({
+        model,
+        prompt: foldSystemIntoPrompt(system, prompt),
+      });
 
-    return { text: text.trim() };
+      return { text: text.trim() };
+    } catch (err) {
+      throw new Error(formatAiError(err));
+    }
   });
 
 const SaleNarrativeInput = z.object({
