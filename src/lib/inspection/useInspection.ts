@@ -5,6 +5,7 @@ import { applyLocationPreset, LOCATION_PRESETS } from "@/lib/inspection/location
 import { inspectionStore } from "@/lib/inspection/storage";
 import type { InspectionRecord, InspectionValues } from "@/lib/inspection/types";
 import { resolveValuerProfile } from "@/lib/report/valuerProfiles";
+import { applyZoningToHbuVacant } from "@/lib/inspection/visibility";
 
 /**
  * Sign-off fields that mirror an earlier answer until the valuer edits them
@@ -32,7 +33,7 @@ function applyMirrors(values: InspectionValues): InspectionValues {
     const from = asText(values[source]);
     if (from && !asText(values[target])) next = { ...next, [target]: from };
   }
-  return next;
+  return applyZoningToHbuVacant(next);
 }
 
 /** Loads a record on the client and autosaves value changes. */
@@ -97,6 +98,9 @@ export function useInspection(id: string, opts?: { readOnly?: boolean }) {
           if (!current || current === asText(prev[key])) {
             next = { ...next, [target]: typeof value === "string" ? value : "" };
           }
+        }
+        if (key === "prop_zoning" || key === "prop_hbu_vacant") {
+          next = applyZoningToHbuVacant(next);
         }
 
         // When Design / Style is chosen, pre-fill typical construction features

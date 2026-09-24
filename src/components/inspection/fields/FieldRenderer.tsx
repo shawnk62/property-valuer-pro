@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import {
   CheckboxRow,
@@ -28,6 +28,26 @@ function asString(v: InspectionValues[string]): string {
 
 function asArray(v: InspectionValues[string]): string[] {
   return Array.isArray(v) ? v : [];
+}
+
+function HbuZoningSync({
+  active,
+  zoning,
+  stored,
+  onChange,
+}: {
+  active: boolean;
+  zoning: string;
+  stored: string;
+  onChange: Props["onChange"];
+}) {
+  useEffect(() => {
+    if (!active || !zoning) return;
+    if (/^other$/i.test(stored)) return;
+    if (stored === zoning) return;
+    onChange("prop_hbu_vacant", zoning);
+  }, [active, zoning, stored, onChange]);
+  return null;
 }
 
 export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
@@ -98,6 +118,13 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
     const isAssignment = field.name === "prop_assignment";
     const isHbuVacant = field.name === "prop_hbu_vacant";
     const zoning = asString(values["prop_zoning"]).trim();
+    const storedHbu = asString(values[field.name]).trim();
+    const hbuIsOther = /^other$/i.test(storedHbu);
+    const hbuDisplay = isHbuVacant
+      ? hbuIsOther
+        ? "Other"
+        : zoning || storedHbu
+      : storedHbu;
     const selectOptions = isAssignment
       ? ([...PROP_ASSIGNMENT_OPTIONS] as string[])
       : isHbuVacant
@@ -105,12 +132,18 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
         : (field.options ?? []);
     return (
       <div className="space-y-2">
+        <HbuZoningSync
+          active={isHbuVacant}
+          zoning={zoning}
+          stored={storedHbu}
+          onChange={onChange}
+        />
         <FieldLabel htmlFor={field.name} required={required}>
           {field.label}
         </FieldLabel>
         <SelectInput
           id={field.name}
-          value={asString(values[field.name])}
+          value={isHbuVacant ? hbuDisplay : asString(values[field.name])}
           options={selectOptions}
           invalid={invalid}
           onChange={(v) => onChange(field.name, v)}

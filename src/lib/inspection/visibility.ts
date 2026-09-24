@@ -42,6 +42,19 @@ function str(values: InspectionValues, key: string): string {
   return typeof raw === "string" ? raw.trim() : "";
 }
 
+export function isHbuVacantOther(value: InspectionValues[string]): boolean {
+  return typeof value === "string" && /^other$/i.test(value.trim());
+}
+
+/** Keep HBU as vacant in lock-step with zoning until the valuer chooses Other. */
+export function applyZoningToHbuVacant(values: InspectionValues): InspectionValues {
+  const zoning = str(values, "prop_zoning");
+  if (!zoning) return values;
+  if (isHbuVacantOther(values["prop_hbu_vacant"])) return values;
+  if (str(values, "prop_hbu_vacant") === zoning) return values;
+  return { ...values, prop_hbu_vacant: zoning };
+}
+
 export function isRuralType(values: InspectionValues): boolean {
   return Boolean(str(values, "prop_type_rural")) || str(values, "nbhd_location").toLowerCase() === "rural";
 }
