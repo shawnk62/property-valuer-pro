@@ -141,6 +141,19 @@ function WorkspaceHome() {
                     <button
                       type="button"
                       className="rounded-md border border-input bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent"
+                      onClick={() =>
+                        void navigate({
+                          to: "/inspect/$id",
+                          params: { id: r.id },
+                          search: { step: 0 },
+                        })
+                      }
+                    >
+                      Form
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-md border border-input bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent"
                       title="Copy form + report as a new job (another unit or house)"
                       onClick={() => {
                         void (async () => {

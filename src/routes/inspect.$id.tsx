@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Camera, Check, ChevronLeft, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -71,6 +71,14 @@ function InspectionWizard() {
   const [focusSlot, setFocusSlot] = useState<string | null>(search.focusSlot ?? null);
   const returnTargetRef = useRef<{ step: number; scrollY: number } | null>(null);
   const isSubmitted = record?.status === "submitted";
+
+  useEffect(() => {
+    if (!loaded) return;
+    const current = sections[step];
+    if (current && visibleFields(current, values).length > 0) return;
+    const first = sections.findIndex((s) => visibleFields(s, values).length > 0);
+    if (first >= 0 && first !== step) setStep(first);
+  }, [loaded, step, values]);
 
   const section = sections[step];
   const fieldsOnStep = useMemo(
@@ -263,15 +271,21 @@ function InspectionWizard() {
             ) : null}
 
             <div className="space-y-4">
-              {fieldsOnStep.map((field) => (
-                <FieldRenderer
-                  key={field.name}
-                  field={field}
-                  values={values}
-                  showErrors={showErrors}
-                  onChange={setValue}
-                />
-              ))}
+              {fieldsOnStep.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  This section does not apply to this property type. Use Next to continue.
+                </p>
+              ) : (
+                fieldsOnStep.map((field) => (
+                  <FieldRenderer
+                    key={field.name}
+                    field={field}
+                    values={values}
+                    showErrors={showErrors}
+                    onChange={setValue}
+                  />
+                ))
+              )}
             </div>
           </>
         )}
@@ -298,7 +312,7 @@ function InspectionWizard() {
               Back
             </Button>
             <Button size="lg" onClick={goNext} className="flex-1">
-              {step === sections.length - 1 ? (
+              {nextVisibleStep(sections, step, values, 1) === "review" ? (
                 <>
                   <Check className="size-4" />
                   {isSubmitted ? "Back to review" : "Review"}

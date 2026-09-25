@@ -13,7 +13,7 @@ import { useInspection } from "@/lib/inspection/useInspection";
 import { useEditLock } from "@/hooks/useEditLock";
 import { EditLockBanner } from "@/components/EditLockBanner";
 import { missingRequiredPhotos, type RequiredPhotoElement } from "@/lib/inspection/photoRequirements";
-import { isVacantLand } from "@/lib/inspection/visibility";
+import { isVacantLand, sectionIsVisible } from "@/lib/inspection/visibility";
 import { isFilled, missingFields } from "@/lib/inspection/validation";
 import type { ReportPhoto } from "@/lib/report/types";
 import { useNarrative } from "@/lib/narrative/useNarrative";
@@ -338,6 +338,7 @@ function ReviewScreen() {
         ) : null}
 
         {sections.map((section, index) => {
+          if (!sectionIsVisible(section, recordValues)) return null;
           const rows = section.fields.flatMap((field) =>
             fieldKeys(field)
               .filter((key) => isFilled(recordValues[key]))

@@ -189,12 +189,21 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
             className="h-10 w-auto object-contain"
           />
           <div className="min-w-0 flex-1">
-            <Link
-              to="/reports"
-              className="text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-            >
-              &larr; Report workspace
-            </Link>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+              <Link
+                to="/reports"
+                className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+              >
+                &larr; Report workspace
+              </Link>
+              <Link
+                to="/inspect/$id"
+                params={{ id: inspectionId }}
+                className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+              >
+                Inspection form
+              </Link>
+            </div>
             <h1 className="truncate text-lg font-semibold text-foreground">{heading}</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2">
