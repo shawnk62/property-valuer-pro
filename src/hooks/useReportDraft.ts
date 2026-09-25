@@ -28,6 +28,7 @@ function emptyNarrative(): ReportNarrative {
     improvements: "",
     accommodation: "",
     conditionImprovements: "",
+    highestBestUse: "",
     remarks: "",
   };
 }
@@ -45,6 +46,7 @@ function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): R
     accommodation: typeof raw.accommodation === "string" ? raw.accommodation : "",
     conditionImprovements:
       typeof raw.conditionImprovements === "string" ? raw.conditionImprovements : "",
+    highestBestUse: typeof raw.highestBestUse === "string" ? raw.highestBestUse : "",
     remarks: typeof raw.remarks === "string" ? raw.remarks : "",
   };
 }

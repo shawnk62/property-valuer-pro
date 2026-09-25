@@ -163,6 +163,8 @@ export interface ReportNarrative {
   accommodation: string;
   /** §9.2 Condition of Improvements (AI or template from component conditions + notes). */
   conditionImprovements: string;
+  /** Highest and best use — editable; prints in 1.8 / Basis of valuation. */
+  highestBestUse: string;
   remarks: string;
 }
 

@@ -76,6 +76,13 @@ function narrativeBlocks(murray: boolean): {
         : "Section 9.2 — component conditions and notes.",
     },
     {
+      key: "highestBestUse",
+      label: murray ? "Highest and best use" : "Highest and best use (1.8)",
+      hint: murray
+        ? "Prints under Basis of valuation. API definition plus the use recorded on the inspection. Manual text is kept."
+        : "Section 1.8 and Basis of valuation. API definition plus the use recorded on the inspection. Manual text is kept.",
+    },
+    {
       key: "remarks",
       label: murray ? "Remarks (10)" : "Remarks (13)",
       hint: murray

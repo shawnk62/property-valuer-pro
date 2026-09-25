@@ -426,6 +426,32 @@ ${conditionOfImprovementsAnswers(values)}
 
 Murray sample style: 1–2 short sentences, e.g. "The subject property appears to be in good condition with a level of wear and tear to be expected given the age of the improvements." Reflect overall_cond and component notes only; do not invent defects or engineering conclusions.`,
       };
+    case "highestBestUse":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write the Highest and Best Use section for a ${type} valuation report.
+
+Start with the API definition in substance (physically possible, legally permissible, financially feasible, appropriately justified, highest value). Then state the highest and best use of THIS subject from the inspection data only.
+
+Inspection data:
+Zoning: ${formatValueLine("Zoning", values["prop_zoning"]) || "not recorded"}
+HBU (improved): ${formatValueLine("HBU", values["prop_hbu"]) || "not recorded"}
+HBU as vacant: ${formatValueLine("HBU vacant", values["prop_hbu_vacant"]) || "not recorded"}
+HBU vacant notes: ${formatValueLine("HBU notes", values["prop_hbu_vacant_notes"]) || "none"}
+Property type: ${[
+          values["prop_type_residential"],
+          values["prop_type_commercial"],
+          values["prop_type_industrial"],
+          values["prop_type_rural"],
+          values["prop_type_specialised"],
+        ]
+          .filter(Boolean)
+          .join("; ") || "not recorded"}
+
+If the subject is vacant land, conclude that the highest and best use is as vacant land under the recorded zoning. Do not invent a dwelling use.
+Do not put the property type in parentheses after "vacant land".
+Two short paragraphs. Do not invent facts.`,
+      };
     case "remarks": {
       const isPhil = type.toLowerCase().includes("phil");
       const isJointFamilyPhil =

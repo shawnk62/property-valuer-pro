@@ -1,7 +1,7 @@
 import { describeLandUseMix } from "@/lib/narrative/landUseMix";
 import { isCommercialType, isMixedUseCommercial, isVacantLand } from "@/lib/inspection/visibility";
 import { BOILERPLATE } from "./boilerplate";
-import { displayValue, hasValue, joinValues } from "./schema";
+import { displayValue, formatHbuVacant, hasValue, joinValues } from "./schema";
 import type { InspectionValues, ReportNarrative } from "./types";
 
 /**
@@ -996,6 +996,33 @@ export function buildSummaryDescription(values: InspectionValues): string {
   return [site, dwelling, living].filter(Boolean).join("\n\n");
 }
 
+function buildHighestBestUse(values: InspectionValues): string {
+  const definition = BOILERPLATE.highestAndBestUse;
+  const asVacant = formatHbuVacant(values);
+  const asImproved = v(values, "prop_hbu");
+  const zoning = v(values, "prop_zoning");
+
+  let conclusion = "";
+  if (isVacantLand(values)) {
+    conclusion = sentence([
+      "The highest and best use of the subject is as",
+      vacantLandPhrase(values),
+      zoning && `under the ${zoning} zoning`,
+    ]);
+  } else if (asImproved && !/^yes$/i.test(asImproved) && !/^no$/i.test(asImproved)) {
+    conclusion = sentence(["The highest and best use of the property is", asImproved]);
+  } else if (asVacant && asVacant !== "Yes") {
+    conclusion = sentence([
+      "The highest and best use of the property is its current use",
+      zoning && `under the ${zoning} zoning`,
+    ]);
+  } else {
+    conclusion = BOILERPLATE.developmentPotential;
+  }
+
+  return [definition, conclusion].filter(Boolean).join("\n\n");
+}
+
 export function generateNarrative(
   values: InspectionValues,
   opts?: NarrativeGenerateOptions,
@@ -1022,6 +1049,7 @@ export function generateNarrative(
       isVacantLand(values) || (isCommercialType(values) && !isMixedUseCommercial(values))
         ? ""
         : buildConditionImprovements(values),
+    highestBestUse: buildHighestBestUse(values),
     remarks: buildRemarks(values, {
       salesCount: opts?.salesCount,
       valueAmount: opts?.valueAmount,

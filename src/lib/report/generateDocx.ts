@@ -478,7 +478,12 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   );
   children.push(p(BOILERPLATE.townPlanningConsent));
   children.push(subHeading("Development potential"));
-  children.push(p(BOILERPLATE.developmentPotential));
+  children.push(
+    p(
+      (draft.narrative.highestBestUse && draft.narrative.highestBestUse.trim()) ||
+        BOILERPLATE.developmentPotential,
+    ),
+  );
   await pushInlineMap(children, draft, "map_zoning", "Zones");
 
   // ---- 5 ----

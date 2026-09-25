@@ -1098,7 +1098,11 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             <Para>{BOILERPLATE.marketValueDefinition}</Para>
           </Sub>
           <Sub title="1.8  Highest and Best Use">
-            <Para>{BOILERPLATE.highestAndBestUse}</Para>
+            {draft.narrative.highestBestUse?.trim() ? (
+              <Prose text={draft.narrative.highestBestUse} />
+            ) : (
+              <Para>{BOILERPLATE.highestAndBestUse}</Para>
+            )}
           </Sub>
           <Sub title="1.9  Assumptions and Limitations">
             <Para>{BOILERPLATE.assumptionsAndLimitations}</Para>
@@ -1726,7 +1730,11 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           <Para>{BOILERPLATE.marketValueDefinition}</Para>
         </Sub>
         <Sub title="Highest and best use">
-          <Para>{BOILERPLATE.highestAndBestUse}</Para>
+          {draft.narrative.highestBestUse?.trim() ? (
+            <Prose text={draft.narrative.highestBestUse} />
+          ) : (
+            <Para>{BOILERPLATE.highestAndBestUse}</Para>
+          )}
         </Sub>
         <Sub title="Method of valuation">
           <Para>{BOILERPLATE.directComparisonIntro}</Para>
