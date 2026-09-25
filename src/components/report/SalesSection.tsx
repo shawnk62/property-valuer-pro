@@ -119,6 +119,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       );
     }
   }, [loaded, draft.inspectionId, draft.sales, draft.values, setSales]);
+  const fileRef = useRef<HTMLInputElement>(null);
   const cmaImportModeRef = useRef<"merge" | "replace">("merge");
   const [importing, setImporting] = useState(false);
   const [cmaPaste, setCmaPaste] = useState("");
