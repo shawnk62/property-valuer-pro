@@ -1,7 +1,7 @@
 import { describeLandUseMix } from "@/lib/narrative/landUseMix";
 import { isCommercialType, isMixedUseCommercial, isVacantLand } from "@/lib/inspection/visibility";
 import { BOILERPLATE } from "./boilerplate";
-import { displayValue, formatHbuVacant, hasValue, joinValues } from "./schema";
+import { displayValue, hasValue, joinValues } from "./schema";
 import type { InspectionValues, ReportNarrative } from "./types";
 
 /**
@@ -996,26 +996,44 @@ export function buildSummaryDescription(values: InspectionValues): string {
   return [site, dwelling, living].filter(Boolean).join("\n\n");
 }
 
+function vacantDevelopmentUse(values: InspectionValues): string {
+  const notes = v(values, "prop_hbu_vacant_notes");
+  const selected = v(values, "prop_hbu_vacant");
+  if (notes && /^other$/i.test(selected)) return notes.replace(/\.$/, "");
+  const blob = [
+    v(values, "prop_type_residential"),
+    v(values, "prop_type_commercial"),
+    v(values, "prop_type_industrial"),
+    v(values, "prop_type_rural"),
+    v(values, "prop_type_specialised"),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  if (blob.includes("commercial")) return "commercial development";
+  if (blob.includes("industrial")) return "industrial development";
+  if (blob.includes("rural") && !blob.includes("residential")) return "rural / primary production use";
+  if (blob.includes("rural")) return "rural residential development";
+  if (blob.includes("development site")) return "development consistent with the recorded zoning";
+  return "development as a single unit dwelling";
+}
+
 function buildHighestBestUse(values: InspectionValues): string {
   const definition = BOILERPLATE.highestAndBestUse;
-  const asVacant = formatHbuVacant(values);
   const asImproved = v(values, "prop_hbu");
   const zoning = v(values, "prop_zoning");
+  const zoneTail = zoning
+    ? `in accordance with the current ${zoning} zoning`
+    : "in accordance with the current town planning scheme";
 
   let conclusion = "";
   if (isVacantLand(values)) {
-    conclusion = sentence([
-      "The highest and best use of the subject is as",
-      vacantLandPhrase(values),
-      zoning && `under the ${zoning} zoning`,
-    ]);
+    const use = vacantDevelopmentUse(values);
+    conclusion = /^the highest and best use/i.test(use)
+      ? sentence([use])
+      : sentence(["The highest and best use of the property is for", use, zoneTail]);
   } else if (asImproved && !/^yes$/i.test(asImproved) && !/^no$/i.test(asImproved)) {
     conclusion = sentence(["The highest and best use of the property is", asImproved]);
-  } else if (asVacant && asVacant !== "Yes") {
-    conclusion = sentence([
-      "The highest and best use of the property is its current use",
-      zoning && `under the ${zoning} zoning`,
-    ]);
   } else {
     conclusion = BOILERPLATE.developmentPotential;
   }

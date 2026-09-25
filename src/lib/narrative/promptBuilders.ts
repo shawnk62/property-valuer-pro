@@ -448,8 +448,10 @@ Property type: ${[
           .filter(Boolean)
           .join("; ") || "not recorded"}
 
-If the subject is vacant land, conclude that the highest and best use is as vacant land under the recorded zoning. Do not invent a dwelling use.
-Do not put the property type in parentheses after "vacant land".
+If the subject is vacant land, the second paragraph must follow:
+"The highest and best use of the property is for development as a single unit dwelling in accordance with the current {ZONING} zoning."
+Change only the use to match the recorded type (commercial, industrial, rural residential, or primary production). Use the actual zoning name. Do not write "as vacant land".
+If zoning is missing, write "in accordance with the current town planning scheme".
 Two short paragraphs. Do not invent facts.`,
       };
     case "remarks": {
