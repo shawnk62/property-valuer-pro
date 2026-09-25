@@ -16,7 +16,9 @@ import { objectUrlFromPhotoBlob, photoBlobKey, putPhotoBlob } from "@/lib/report
 import { captureFilename, saveToDeviceGallery } from "@/lib/report/save-to-device";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import { formatPhotoTimestamp, nowPhotoTimestamp } from "@/lib/inspection/photoRequirements";
-import { PHOTO_SLOTS, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
+import { photoSlotsForJob, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
+import { isVacantLand } from "@/lib/inspection/visibility";
+import type { InspectionValues } from "@/lib/inspection/types";
 
 function newPhotoId(): string {
   return `photo-${Math.random().toString(36).slice(2, 10)}`;
@@ -118,6 +120,7 @@ type PendingCapture = {
 
 interface Props {
   inspectionId: string;
+  values?: InspectionValues;
   /** When set (e.g. from review submit), scroll to / open that slot once loaded. */
   focusSlot?: string | null;
   /** Called after OK saves a photo — parent returns user to prior form position. */
@@ -128,10 +131,12 @@ interface Props {
 
 export function InspectionPhotosPanel({
   inspectionId,
+  values,
   focusSlot = null,
   onPhotoSaved,
   onClose,
 }: Props) {
+  const slotList = photoSlotsForJob(isVacantLand(values ?? {}));
   const [photos, setPhotos] = useState<ReportPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<PendingCapture | null>(null);
@@ -354,7 +359,7 @@ export function InspectionPhotosPanel({
         <p className="text-sm text-muted-foreground">Loading photos…</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {PHOTO_SLOTS.map(({ slot, label }) => {
+          {slotList.map(({ slot, label }) => {
             const photo = photoForSlot(slot);
             return (
               <div

@@ -243,6 +243,19 @@ export const PHOTO_SLOTS: { slot: PhotoSlot; label: string }[] = [
   { slot: "pool", label: "Pool" },
 ];
 
+/** Site / street slots only — interiors do not apply to vacant land. Extra slots stay unlimited. */
+export const VACANT_PHOTO_SLOTS: { slot: PhotoSlot; label: string }[] = [
+  { slot: "front", label: "Front / street view" },
+  { slot: "street", label: "Streetscape" },
+  { slot: "rear", label: "Rear / opposite boundary" },
+  { slot: "view", label: "View / outlook" },
+  { slot: "view_2", label: "View 2" },
+];
+
+export function photoSlotsForJob(vacantLand: boolean) {
+  return vacantLand ? VACANT_PHOTO_SLOTS : PHOTO_SLOTS;
+}
+
 /**
  * Planning / site maps for the report annex (Landchecker-style layers).
  * Manual insert only. Empty slots are never written to Word/PDF export.

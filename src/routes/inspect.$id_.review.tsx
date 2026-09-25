@@ -13,6 +13,7 @@ import { useInspection } from "@/lib/inspection/useInspection";
 import { useEditLock } from "@/hooks/useEditLock";
 import { EditLockBanner } from "@/components/EditLockBanner";
 import { missingRequiredPhotos, type RequiredPhotoElement } from "@/lib/inspection/photoRequirements";
+import { isVacantLand } from "@/lib/inspection/visibility";
 import { isFilled, missingFields } from "@/lib/inspection/validation";
 import type { ReportPhoto } from "@/lib/report/types";
 import { useNarrative } from "@/lib/narrative/useNarrative";
@@ -136,7 +137,7 @@ function ReviewScreen() {
     } catch {
       photos = [];
     }
-    const gaps = missingRequiredPhotos(photos);
+    const gaps = missingRequiredPhotos(photos, { vacantLand: isVacantLand(values) });
     if (gaps.length > 0) {
       setPhotoGaps(gaps);
       return;

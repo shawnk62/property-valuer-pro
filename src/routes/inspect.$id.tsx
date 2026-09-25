@@ -220,6 +220,7 @@ function InspectionWizard() {
         {photosOpen ? (
           <InspectionPhotosPanel
             inspectionId={id}
+            values={values}
             focusSlot={focusSlot}
             onPhotoSaved={returnToForm}
             onClose={returnToForm}

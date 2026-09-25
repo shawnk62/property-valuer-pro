@@ -23,6 +23,7 @@ import { proximityFromPins } from "@/lib/maps/distance";
 import {
   pinsFromDraft,
   pinsNeedingGeocode,
+  subjectAddressLine,
   type SalesMapPin,
 } from "@/lib/maps/salesMapPins";
 import { nowPhotoTimestamp } from "@/lib/inspection/photoRequirements";
@@ -54,6 +55,7 @@ import { captureFilename, saveToDeviceGallery } from "@/lib/report/save-to-devic
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import {
   cmaExtractsToSales,
+  dropSubjectFromSales,
   mergeCmaExtracts,
   mergeIncomingSales,
   parseCmaTextHeuristic,
@@ -94,7 +96,7 @@ function parseAmountInput(raw: string): number | null {
 }
 
 export function SalesSection({ controller }: { controller: ReportDraftController }) {
-  const { draft, setSales, setMeta, setPhotos } = controller;
+  const { draft, setSales, setMeta, setPhotos, loaded } = controller;
   const sales = draft.sales.map(ensureSaleAdjustments);
   const gridSales = salesOnReport(sales);
   const heldSales = salesHeldBack(sales);
@@ -102,7 +104,21 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const subjectGridAddress = addressLines(
     [draft.values["prop_address"], draft.values["prop_suburb"]].filter(Boolean).join(", "),
   );
-  const fileRef = useRef<HTMLInputElement>(null);
+  const subjectPurgedRef = useRef(false);
+  useEffect(() => {
+    if (!loaded || subjectPurgedRef.current) return;
+    subjectPurgedRef.current = true;
+    const { sales: next, dropped } = dropSubjectFromSales(
+      draft.sales,
+      subjectAddressLine(draft.values),
+    );
+    if (dropped > 0) {
+      setSales(next);
+      toast.message(
+        `Removed the subject property from the comparable grid (${dropped} row).`,
+      );
+    }
+  }, [loaded, draft.inspectionId, draft.sales, draft.values, setSales]);
   const cmaImportModeRef = useRef<"merge" | "replace">("merge");
   const [importing, setImporting] = useState(false);
   const [cmaPaste, setCmaPaste] = useState("");
@@ -1097,7 +1113,16 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         }
       }
 
-      let mapped = cmaExtractsToSales(extracts);
+      const stripped = dropSubjectFromSales(
+        cmaExtractsToSales(extracts),
+        subjectAddressLine(draft.values),
+      );
+      let mapped = stripped.sales;
+      if (stripped.dropped > 0) {
+        toast.message(
+          `Left the subject property out of the comparable grid (${stripped.dropped} row).`,
+        );
+      }
 
       if (mapped.length === 0) {
         toast.error("No comparable sales found", {

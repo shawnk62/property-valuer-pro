@@ -21,26 +21,31 @@ function hasSlot(photos: ReportPhoto[], slots: PhotoSlot[]): boolean {
 /**
  * Returns missing elements for submit gating. Empty array = OK to submit.
  */
-export function missingRequiredPhotos(photos: ReportPhoto[]): RequiredPhotoElement[] {
+export function missingRequiredPhotos(
+  photos: ReportPhoto[],
+  opts?: { vacantLand?: boolean },
+): RequiredPhotoElement[] {
   const withUrl = photos.filter((p) => typeof p.url === "string" && p.url.trim().length > 0);
   const missing: RequiredPhotoElement[] = [];
+  const vacant = Boolean(opts?.vacantLand);
 
   if (!hasSlot(withUrl, ["front"])) {
     missing.push({ id: "front", label: "Front elevation", focusSlot: "front" });
   }
-  if (!hasSlot(withUrl, ["rear"])) {
+  if (!vacant && !hasSlot(withUrl, ["rear"])) {
     missing.push({ id: "rear", label: "Rear elevation", focusSlot: "rear" });
   }
-  if (!hasSlot(withUrl, ["kitchen"])) {
+  if (!vacant && !hasSlot(withUrl, ["kitchen"])) {
     missing.push({ id: "kitchen", label: "Kitchen", focusSlot: "kitchen" });
   }
-  if (!hasSlot(withUrl, ["baths", "bath_2", "bath_3"])) {
+  if (!vacant && !hasSlot(withUrl, ["baths", "bath_2", "bath_3"])) {
     missing.push({ id: "bathroom", label: "Bathroom", focusSlot: "baths" });
   }
-  if (withUrl.length < MIN_PHOTOS) {
+  const min = vacant ? 2 : MIN_PHOTOS;
+  if (withUrl.length < min) {
     missing.push({
       id: "minimum_count",
-      label: `At least ${MIN_PHOTOS} photographs (currently ${withUrl.length})`,
+      label: `At least ${min} photographs (currently ${withUrl.length})`,
       focusSlot: null,
     });
   }

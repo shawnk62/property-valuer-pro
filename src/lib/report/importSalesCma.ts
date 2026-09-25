@@ -290,6 +290,20 @@ function isSameTransaction(
   return false;
 }
 
+/** Drop CMA rows that are the subject property, not a comparable. */
+export function dropSubjectFromSales(
+  sales: ComparableSale[],
+  subjectAddress: string,
+): { sales: ComparableSale[]; dropped: number } {
+  const subjectKey = streetKey(subjectAddress) || addressKey(subjectAddress);
+  if (!subjectKey) return { sales, dropped: 0 };
+  const next = sales.filter((sale) => {
+    const key = streetKey(sale.address || "") || addressKey(sale.address || "");
+    return !key || key !== subjectKey;
+  });
+  return { sales: next, dropped: sales.length - next.length };
+}
+
 export function mergeIncomingSales(
   existing: ComparableSale[],
   incoming: ComparableSale[],

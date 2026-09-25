@@ -6,7 +6,8 @@ import { photoBlobKey, putPhotoBlob } from "@/lib/report/photo-idb";
 import { captureFilename, saveToDeviceGallery } from "@/lib/report/save-to-device";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import { nowPhotoTimestamp } from "@/lib/inspection/photoRequirements";
-import { mapSlotsForImport, PHOTO_SLOTS, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
+import { mapSlotsForImport, photoSlotsForJob, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
+import { isVacantLand } from "@/lib/inspection/visibility";
 
 function newId() {
   return `photo-${Math.random().toString(36).slice(2, 10)}`;
@@ -450,7 +451,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {PHOTO_SLOTS.map(({ slot, label }) => {
+        {photoSlotsForJob(isVacantLand(draft.values)).map(({ slot, label }) => {
           const photo = photos.find((p) => p.slot === slot);
           return (
             <PhotoCard
