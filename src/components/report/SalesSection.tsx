@@ -1969,6 +1969,13 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                               write: (id: string, v: string) => patchSale(id, { salePrice: v }),
                             },
                             {
+                              key: "saleDate",
+                              label: "Date of Sale",
+                              subject: () => "—",
+                              read: (s: (typeof sales)[0]) => s.saleDate,
+                              write: (id: string, v: string) => patchSale(id, { saleDate: v }),
+                            },
+                            {
                               key: "priceGla",
                               label: "Sale Price/Gross Liv. Area",
                               subject: () => "—",
@@ -2040,7 +2047,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                         </tr>
 
                         {/* ---- URAR VALUE ADJUSTMENTS: Description | $ side by side ---- */}
-                        {ADJUSTMENT_FEATURES.map((feature, featureIdx) => {
+                        {ADJUSTMENT_FEATURES.filter((feature) => feature.id !== "dateOfSale").map((feature, featureIdx) => {
                           const isSite = feature.id === "site";
                           const isGla = feature.id === "grossLivingArea";
                           const isAreaRateRow = isSite || isGla;
