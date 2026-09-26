@@ -35,8 +35,13 @@ function narrativeBlocks(murray: boolean): {
     },
     {
       key: "location",
-      label: "Description of neighbourhood (5.1)",
-      hint: "Section 5.1 — location relative to the CBD or nearest centre, then locality from the inspection.",
+      label: "Location (5.1)",
+      hint: "Distance and direction from the CBD or nearest main town. Measured from the subject map coordinates. Do not describe the locality here.",
+    },
+    {
+      key: "neighbourhood",
+      label: "Neighbourhood (5.2)",
+      hint: "Immediate locality and neighbouring development, including recorded positive or negative features. No CBD distances, site shape, services or zoning.",
     },
     {
       key: "sitePhysical",
@@ -113,7 +118,7 @@ function serializableValues(
 }
 
 export function NarrativeSection({ controller }: { controller: ReportDraftController }) {
-  const { draft, setNarrative, loaded } = controller;
+  const { draft, setNarrative, setMeta, loaded } = controller;
   const murray = /murray/i.test(String(draft.values["prop_assignment"] ?? ""));
   const BLOCKS = narrativeBlocks(murray);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
@@ -148,20 +153,31 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     return locationFactsFromDraft({
       values: draft.values,
       pins: (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null,
+      subjectLat: draft.reportMeta.subjectLat,
+      subjectLng: draft.reportMeta.subjectLng,
     });
   }
 
   async function locationFactsResolved() {
-    const pins = (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null;
-    if (subjectCoordsFromPins(pins) || !isGoogleMapsConfigured()) return locationFacts();
+    const existing = locationFacts();
+    if (
+      subjectCoordsFromPins(
+        (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null,
+      ) ||
+      (draft.reportMeta.subjectLat != null && draft.reportMeta.subjectLng != null)
+    ) {
+      return existing;
+    }
+    if (!isGoogleMapsConfigured()) return existing;
     const address = subjectAddressLine(draft.values);
-    if (!address) return locationFacts();
+    if (!address) return existing;
     try {
       const geo = await geocodeGoogleAddresses({
         data: { apiKey: loadGoogleMapsKey(), addresses: [address] },
       });
       const hit = geo.results[0];
       if (hit?.lat != null && hit.lng != null) {
+        setMeta({ subjectLat: hit.lat, subjectLng: hit.lng });
         return buildLocationFacts({
           values: draft.values,
           coords: { lat: hit.lat, lng: hit.lng },
@@ -170,10 +186,11 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     } catch {
       /* keep address-only facts */
     }
-    return locationFacts();
+    return existing;
   }
 
-  function narrativeOpts() {
+  async function narrativeOpts() {
+    const facts = await locationFactsResolved();
     return {
       salesCount: Array.isArray(draft.sales) ? draft.sales.length : 0,
       valueAmount:
@@ -181,14 +198,14 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
           ? draft.reportMeta.valueAmount
           : "",
       brief: String(narrativeRef.current.brief ?? "").trim() || undefined,
-      locationSentence: locationFacts().sentence || undefined,
+      locationSentence: facts.sentence || undefined,
     };
   }
 
-  function applyTemplateToEmptyKeys(
+  async function applyTemplateToEmptyKeys(
     keys: (keyof ReportNarrative)[],
-  ): Partial<ReportNarrative> {
-    const full = generateNarrative(draft.values, narrativeOpts());
+  ): Promise<Partial<ReportNarrative>> {
+    const full = generateNarrative(draft.values, await narrativeOpts());
     const current = narrativeRef.current;
     const patch: Partial<ReportNarrative> = {};
     for (const key of keys) {
@@ -223,14 +240,15 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     if (isAiConfigured()) {
       void generateWithAi(keys, false);
     } else {
-      const patch = applyTemplateToEmptyKeys(keys);
-      if (Object.keys(patch).length > 0) {
-        setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
-        setSource("template");
-        setLastStatus(
-          `Filled empty blocks from inspection data (AI not configured).`,
-        );
-      }
+      void applyTemplateToEmptyKeys(keys).then((patch) => {
+        if (Object.keys(patch).length > 0) {
+          setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
+          setSource("template");
+          setLastStatus(
+            `Filled empty blocks from inspection data (AI not configured).`,
+          );
+        }
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once after load when empty blocks exist
   }, [loaded, draft.inspectionId]);
@@ -246,19 +264,29 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       /built up under 25/i.test(location) ||
       /built up 25%\s*to\s*75/i.test(location);
     if (!staleBrief && !staleLocation) return;
-    const full = generateNarrative(draft.values, narrativeOpts());
-    const patch: Partial<ReportNarrative> = {};
-    if (staleBrief && full.brief) patch.brief = full.brief;
-    if (staleLocation && full.location) patch.location = full.location;
-    if (Object.keys(patch).length === 0) return;
-    setNarrative(patch);
-    narrativeRef.current = { ...narrativeRef.current, ...patch };
+    void narrativeOpts().then((opts) => {
+      const full = generateNarrative(draft.values, opts);
+      const patch: Partial<ReportNarrative> = {};
+      if (staleBrief && full.brief) patch.brief = full.brief;
+      if (staleLocation && full.location) patch.location = full.location;
+      if (Object.keys(patch).length === 0) return;
+      setNarrative(patch);
+      narrativeRef.current = { ...narrativeRef.current, ...patch };
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- rewrite known stale templates once after load
   }, [loaded, draft.inspectionId]);
 
   /** Always fills Remarks from local builder (Phil structure or generic template). */
   function generateRemarksNow(overwrite = true) {
-    const opts = narrativeOpts();
+    const opts = {
+      salesCount: Array.isArray(draft.sales) ? draft.sales.length : 0,
+      valueAmount:
+        typeof draft.reportMeta?.valueAmount === "string"
+          ? draft.reportMeta.valueAmount
+          : "",
+      brief: String(narrativeRef.current.brief ?? "").trim() || undefined,
+      locationSentence: locationFacts().sentence || undefined,
+    };
     try {
       const full = generateNarrative(draft.values, opts);
       const text = String(full.remarks ?? "").trim();
@@ -291,11 +319,11 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     }
   }
 
-  function generateFromTemplate() {
+  async function generateFromTemplate() {
     setBusy("template");
     setLastStatus(null);
     try {
-      const full = generateNarrative(draft.values, narrativeOpts());
+      const full = generateNarrative(draft.values, await narrativeOpts());
       setNarrative(full);
       narrativeRef.current = { ...narrativeRef.current, ...full };
       setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
@@ -327,7 +355,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     }
 
     const settings = loadAiSettings();
-    const opts = narrativeOpts();
+    const opts = await narrativeOpts();
 
     // If bulk includes remarks, fill it first locally
     if (keys.includes("remarks")) {
@@ -338,7 +366,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     );
     const skipped = keys.filter((k) => skipAiNarrativeBlock(draft.values, k));
     if (skipped.length > 0) {
-      const skipPatch = applyTemplateToEmptyKeys(skipped);
+      const skipPatch = await applyTemplateToEmptyKeys(skipped);
       if (overwrite) {
         const full = generateNarrative(draft.values, opts);
         const forced: Partial<ReportNarrative> = {};
@@ -361,7 +389,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       const emptyKeys = remaining.filter(
         (k) => overwrite || !String(narrativeRef.current[k] ?? "").trim(),
       );
-      const patch = emptyKeys.length ? applyTemplateToEmptyKeys(emptyKeys) : {};
+      const patch = emptyKeys.length ? await applyTemplateToEmptyKeys(emptyKeys) : {};
       if (Object.keys(patch).length > 0) {
         setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
         setSource("template");

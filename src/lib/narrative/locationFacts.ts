@@ -136,9 +136,20 @@ export function buildLocationFacts(opts: {
 export function locationFactsFromDraft(opts: {
   values: InspectionValues;
   pins?: SalesMapPin[] | null;
+  subjectLat?: number | null;
+  subjectLng?: number | null;
 }): LocationFacts {
+  const fromPins = subjectCoordsFromPins(opts.pins);
+  const fromMeta =
+    opts.subjectLat != null &&
+    opts.subjectLng != null &&
+    Number.isFinite(opts.subjectLat) &&
+    Number.isFinite(opts.subjectLng) &&
+    !(opts.subjectLat === 0 && opts.subjectLng === 0)
+      ? { lat: opts.subjectLat, lng: opts.subjectLng }
+      : null;
   return buildLocationFacts({
     values: opts.values,
-    coords: subjectCoordsFromPins(opts.pins),
+    coords: fromPins ?? fromMeta,
   });
 }

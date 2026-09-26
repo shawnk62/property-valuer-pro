@@ -489,10 +489,18 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   // ---- 5 ----
   children.push(sectionHeading("5.", "Location and Neighbourhood"));
   {
-    const locationText =
-      (draft.narrative.location && draft.narrative.location.trim()) ||
+    const locationText = draft.narrative.location && draft.narrative.location.trim();
+    const neighbourhoodText =
+      (draft.narrative.neighbourhood && draft.narrative.neighbourhood.trim()) ||
       get(v, "nbhd_description");
-    if (locationText) children.push(...prose(locationText));
+    if (locationText) {
+      children.push(subHeading("Location"));
+      children.push(...prose(locationText));
+    }
+    if (neighbourhoodText) {
+      children.push(subHeading("Neighbourhood"));
+      children.push(...prose(neighbourhoodText));
+    }
   }
   if (get(v, "nbhd_market_conditions")) children.push(...prose(get(v, "nbhd_market_conditions")));
   push(

@@ -308,31 +308,46 @@ Summarise the overall condition and any final remarks or qualifications recorded
       };
 
     /* ---- Report workspace narrative blocks (Narrative tab) ---- */
-    case "location": {
+    case "location":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write section 5.1 Location only for a ${type} valuation report.
+
+Location is the position of the property relative to the CBD, nearest main town or regional centre. Distances to schools, public transport or beaches may be noted only if they appear in the inspection data. Do not describe the locality or neighbouring development.
+
+${extras?.locationContext?.trim() || "CALCULATED LOCATION: none. Do not invent kilometres or compass direction."}
+
+Inspection address:
+${sectionAnswers(values, ["1"])}
+
+Rules:
+- Use the CALCULATED LOCATION sentence unchanged when one is supplied.
+- One short paragraph. No neighbourhood character, land use mix, site shape, topography, access, services or zoning.
+- Do not invent distances or centres.`,
+      };
+    case "neighbourhood": {
       const landUse = describeLandUseMix(values);
       return {
         system: BASE_RULES + styleGuide(type),
-        prompt: `Write section 5.1 Description of Neighbourhood for a ${type} valuation report.
+        prompt: `Write section 5.2 Neighbourhood for a ${type} valuation report.
 
-This section must cover TWO required parts:
-1. LOCATION — position of the property relative to the CBD, nearest main town or regional centre.
-2. LOCALITY — the immediate surrounding neighbouring development, including recorded positive and/or negative features that may affect value.
-
-${extras?.locationContext?.trim() || "CALCULATED LOCATION: none. Do not invent kilometres or compass direction."}
+Required content only:
+- the immediate locality, and
+- neighbouring development,
+drawing attention to recorded positive or negative features that may affect value or marketability, including significant demographic change if recorded.
 
 LAND USE MIX (qualitative guide only — do not write percentages or figures):
 ${landUse || "No land-use mix recorded."}
 
-Inspection data (address, neighbourhood, off-site, overlays/flood where recorded):
-${sectionAnswers(stripLandUsePercentages(values), ["1", "1A"])}
+Inspection data (neighbourhood and character only):
+${sectionAnswers(stripLandUsePercentages(values), ["1A"])}
 
 Rules:
-- Paragraph 1 must be the CALCULATED LOCATION sentence when one is supplied. Copy it unchanged.
-- Following paragraph(s): locality only from recorded inspection data (character, built-up, land use mix, boundaries, description, off-site works, flood/overlays, view). Name positive or negative features only if they appear in the data.
-- If a land-use mix sentence is supplied, weave that wording in. Use only qualitative phrases (predominantly, mainly, some, a few). Never quote exact percentages or numbers from land use.
-- Do not invent distances, centres, traffic, amenity, or neighbouring uses.
-- Murray reports: keep locality to 1–3 short sentences after the location sentence.
-- Phil Stamp Duty: location sentence plus one tight locality sentence if data exists.
+- Do not state CBD or town distances. That belongs under Location.
+- Do not describe site shape, topography, access, services or zoning.
+- Use only qualitative phrases (predominantly, mainly, some, a few). Never quote land-use percentages.
+- Name positive or negative features only if they appear in the data.
+- Murray: 1–3 short sentences. Phil Stamp Duty: one tight paragraph if data exists.
 - No marketing language.`,
       };
     }

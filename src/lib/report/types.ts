@@ -153,8 +153,10 @@ export function salesHeldBack(sales: ComparableSale[] | null | undefined): Compa
 
 export interface ReportNarrative {
   brief: string;
-  /** §5.1 Description of Neighbourhood (AI or template). */
+  /** §5.1 Location — distance and direction from CBD / nearest centre. */
   location: string;
+  /** §5.2 Neighbourhood — locality and neighbouring development only. */
+  neighbourhood: string;
   /** §6.1 Physical Description of the allotment (AI or template). */
   sitePhysical: string;
   /** §6.2 Services/Amenities (AI or template). */
@@ -200,6 +202,9 @@ export interface ReportMeta {
   subjectMapZoom?: number;
   /** When true, Generate maps keeps subjectMapZoom instead of refitting the nearest centre. */
   subjectMapManual?: boolean;
+  /** Geocoded subject coordinates used for Location distances. */
+  subjectLat?: number;
+  subjectLng?: number;
   /** Editable pin set used to rebuild the Google sales map. */
   salesMapPins?: Array<{
     id: string;

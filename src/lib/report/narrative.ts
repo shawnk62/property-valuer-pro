@@ -629,13 +629,16 @@ function buildRemarks(
 
 function buildLocation(values: InspectionValues, locationSentence?: string): string {
   const locLine = (locationSentence || "").trim();
-  // Prefer free-text neighbourhood description when the valuer typed one on site
+  if (locLine) return locLine;
+  const addr = fullAddress(values);
+  return addr
+    ? sentence(["The subject property is located at", addr])
+    : "";
+}
+
+function buildNeighbourhood(values: InspectionValues): string {
   if (hasValue(values["nbhd_description"])) {
-    const body = v(values, "nbhd_description");
-    if (locLine && !body.toLowerCase().includes(locLine.slice(0, 24).toLowerCase())) {
-      return [locLine, body].filter(Boolean).join("\n\n");
-    }
-    return body;
+    return v(values, "nbhd_description");
   }
 
   const parts: string[] = [];
@@ -646,14 +649,14 @@ function buildLocation(values: InspectionValues, locationSentence?: string): str
   const growth = v(values, "nbhd_growth");
   const demand = v(values, "nbhd_demand");
   const market = v(values, "nbhd_market_conditions");
+  const view = joinValues(values, ["view"]);
 
   if (location || character) {
     parts.push(
       sentence([
-        "The subject is situated in a",
+        "The immediate locality is",
         location && location.toLowerCase(),
-        "locality",
-        character && `characterised by ${character.toLowerCase()}`,
+        character && `and is characterised by ${character.toLowerCase()}`,
       ]),
     );
   }
@@ -667,10 +670,13 @@ function buildLocation(values: InspectionValues, locationSentence?: string): str
           : /under\s*25/.test(density)
             ? "sparsely built up"
             : `built up ${density}`;
-    parts.push(sentence(["The surrounding area is", densityPhrase]));
+    parts.push(sentence(["Neighbouring development is", densityPhrase]));
   }
   const landUse = describeLandUseMix(values);
   if (landUse) parts.push(landUse);
+  if (view) {
+    parts.push(sentence(["Outlook from the locality includes", view.toLowerCase()]));
+  }
   if (boundaries) {
     parts.push(sentence(["Neighbourhood boundaries are described as", boundaries]));
   }
@@ -686,13 +692,7 @@ function buildLocation(values: InspectionValues, locationSentence?: string): str
     parts.push(sentence([market]));
   }
 
-  const body = parts.filter(Boolean).join("\n\n");
-  if (locLine && body) return `${locLine}\n\n${body}`;
-  if (locLine || body) return locLine || body;
-  const addr = fullAddress(values);
-  return addr
-    ? sentence(["The subject is located at", addr])
-    : sentence(["The locality was not further described at inspection"]);
+  return parts.filter(Boolean).join("\n\n");
 }
 
 /** Service type as plain prose; skip empty / N/A / Nil. No parenthetical labels. */
@@ -1051,6 +1051,7 @@ export function generateNarrative(
   return {
     brief,
     location: buildLocation(values, opts?.locationSentence),
+    neighbourhood: buildNeighbourhood(values),
     sitePhysical: buildSitePhysical(values),
     servicesAmenities: buildServicesAmenities(values),
     improvements:

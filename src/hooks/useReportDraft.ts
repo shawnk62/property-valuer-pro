@@ -23,6 +23,7 @@ function emptyNarrative(): ReportNarrative {
   return {
     brief: "",
     location: "",
+    neighbourhood: "",
     sitePhysical: "",
     servicesAmenities: "",
     improvements: "",
@@ -38,7 +39,19 @@ function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): R
   if (!raw || typeof raw !== "object") return base;
   return {
     brief: typeof raw.brief === "string" ? raw.brief : "",
-    location: typeof raw.location === "string" ? raw.location : "",
+    ...(() => {
+      const location = typeof raw.location === "string" ? raw.location : "";
+      const neighbourhood = typeof raw.neighbourhood === "string" ? raw.neighbourhood : "";
+      if (neighbourhood.trim() || !location.includes("\n\n")) {
+        return { location, neighbourhood };
+      }
+      const parts = location.split(/\n\n+/).map((s) => s.trim()).filter(Boolean);
+      const first = parts[0] ?? "";
+      if (parts.length < 2 || !/approximately\s+\d| km |located at|located in/i.test(first)) {
+        return { location, neighbourhood };
+      }
+      return { location: first, neighbourhood: parts.slice(1).join("\n\n") };
+    })(),
     sitePhysical: typeof raw.sitePhysical === "string" ? raw.sitePhysical : "",
     servicesAmenities:
       typeof raw.servicesAmenities === "string" ? raw.servicesAmenities : "",

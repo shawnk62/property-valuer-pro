@@ -1274,14 +1274,27 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       >
         {isPhilReportType(reportType.id) ? (
           <>
-            <Sub title="5.1  Description of Neighbourhood">
-              <Para>
-                {draft.narrative.location?.trim() ||
-                  get(v, "nbhd_description") ||
-                  "—"}
-              </Para>
+            <Sub title="5.1  Location">
+              {draft.narrative.location?.trim() ? (
+                <Prose text={draft.narrative.location} />
+              ) : (
+                <Para>
+                  {addressLine ? `The property is located at ${addressLine}.` : "—"}
+                </Para>
+              )}
             </Sub>
-            <Sub title="5.2  Property Location">
+            <Sub title="5.2  Neighbourhood">
+              {draft.narrative.neighbourhood?.trim() || get(v, "nbhd_description") ? (
+                <Prose
+                  text={
+                    draft.narrative.neighbourhood?.trim() || get(v, "nbhd_description")
+                  }
+                />
+              ) : (
+                <Para>—</Para>
+              )}
+            </Sub>
+            <Sub title="5.3  Property Location">
               <Para>
                 {addressLine
                   ? `The property is located at ${addressLine}.`
@@ -1289,7 +1302,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               </Para>
               <InlineMap photos={draft.photos} slot="map_location" caption="Property location" />
             </Sub>
-            <Sub title="5.3  Transport Patterns">
+            <Sub title="5.4  Transport Patterns">
               <Para>
                 {[get(v, "offsite_road_type"), get(v, "offsite_road_surface")]
                   .filter(Boolean)
@@ -1299,11 +1312,22 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           </>
         ) : (
           <>
-            <Prose
-              text={
-                draft.narrative.location?.trim() || get(v, "nbhd_description") || ""
-              }
-            />
+            <Sub title="Location">
+              {draft.narrative.location?.trim() ? (
+                <Prose text={draft.narrative.location} />
+              ) : addressLine ? (
+                <Para>{`The property is located at ${addressLine}.`}</Para>
+              ) : null}
+            </Sub>
+            <Sub title="Neighbourhood">
+              <Prose
+                text={
+                  draft.narrative.neighbourhood?.trim() ||
+                  get(v, "nbhd_description") ||
+                  ""
+                }
+              />
+            </Sub>
             <Prose text={get(v, "nbhd_market_conditions")} />
             <Facts
               values={v}
