@@ -50,8 +50,7 @@ import {
 } from "@/lib/report/adjustmentGrid";
 import { extractTextFromPdf } from "@/lib/report/extractPdfText";
 import { dataUrlToFile, fileToDataUrl, preparePhotoForReport } from "@/lib/report/photo-data";
-import { photoBlobKey, putPhotoBlob } from "@/lib/report/photo-idb";
-import { captureFilename, saveToDeviceGallery } from "@/lib/report/save-to-device";
+import { deletePhotoBlob, photoBlobKey, putPhotoBlob } from "@/lib/report/photo-idb";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import {
   cmaExtractsToSales,
@@ -791,12 +790,13 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       return;
     }
     try {
-      saveToDeviceGallery(file, captureFilename(`comp-${saleId}`));
-      const prepared = await preparePhotoForReport(file);
+      const previewUrl = URL.createObjectURL(file);
       const localKey = photoBlobKey(draft.inspectionId, `sale-${saleId}-front`);
+      patchSale(saleId, { photoUrl: previewUrl, photoLocalKey: localKey });
+      const prepared = await preparePhotoForReport(file);
       await putPhotoBlob(localKey, prepared);
-      const dataUrl = await fileToDataUrl(prepared);
-      patchSale(saleId, { photoUrl: dataUrl, photoLocalKey: localKey });
+      const preparedUrl = URL.createObjectURL(prepared);
+      patchSale(saleId, { photoUrl: preparedUrl, photoLocalKey: localKey });
       try {
         const existing = sales.find((s) => s.id === saleId);
         if (existing?.photoStoragePath) {
@@ -843,7 +843,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         /* ignore */
       }
     }
-    patchSale(saleId, { photoUrl: "", photoStoragePath: "" });
+    if (existing?.photoLocalKey) {
+      void deletePhotoBlob(existing.photoLocalKey);
+    }
+    patchSale(saleId, { photoUrl: "", photoStoragePath: "", photoLocalKey: "" });
   }
 
   /**

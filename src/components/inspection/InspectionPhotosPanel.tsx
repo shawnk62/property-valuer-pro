@@ -12,8 +12,7 @@ import { Button } from "@/components/ui/button";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { inspectionStore } from "@/lib/inspection/storage";
 import { fileToDataUrl, preparePhotoForReport } from "@/lib/report/photo-data";
-import { objectUrlFromPhotoBlob, photoBlobKey, putPhotoBlob } from "@/lib/report/photo-idb";
-import { captureFilename, saveToDeviceGallery } from "@/lib/report/save-to-device";
+import { deletePhotoBlob, objectUrlFromPhotoBlob, photoBlobKey, putPhotoBlob } from "@/lib/report/photo-idb";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import { formatPhotoTimestamp, nowPhotoTimestamp } from "@/lib/inspection/photoRequirements";
 import { photoSlotsForJob, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
@@ -243,7 +242,6 @@ export function InspectionPhotosPanel({
       toast.error("Please choose an image");
       return;
     }
-    saveToDeviceGallery(file, captureFilename(target.slot || target.caption || "photo"));
     const previewUrl = URL.createObjectURL(file);
     setPending({
       slot: target.slot,
@@ -283,7 +281,7 @@ export function InspectionPhotosPanel({
         url = await fileToDataUrl(file);
         toast.message("Saved on this device only", {
           description:
-            "Cloud upload failed. The photo is kept in this app and a copy was sent to the device.",
+            "Cloud upload failed. The photo is kept in this app on this device.",
         });
       }
 
@@ -326,6 +324,7 @@ export function InspectionPhotosPanel({
       if (photo.storagePath) {
         await deleteReportPhoto(photo.storagePath).catch(() => undefined);
       }
+      if (photo.localBlobKey) await deletePhotoBlob(photo.localBlobKey);
       const next = photos.filter((p) => p.id !== photo.id);
       setPhotos(next);
       await persistPhotos(inspectionId, next);

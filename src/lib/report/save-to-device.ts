@@ -1,28 +1,13 @@
 /**
- * Best-effort copy of a captured image onto the device.
- * Runs from the file-input change handler so iOS still treats it as a user gesture.
- * Safari cannot silently write the Photos library; a download is the reliable
- * offline copy (Files / Downloads, and Photos when the browser offers that).
+ * Device copies of captured photos.
+ *
+ * Do not use <a download>. On iOS Safari that prompts “Download PVP-….jpg”,
+ * often interrupts the attach handler, and parks copies in Downloads that the
+ * app does not need. The durable on-device backup is IndexedDB (photo-idb).
+ *
+ * Optional extra: Web Share → Save Image, which writes to Photos. That file is
+ * the user’s copy. The report never points at it.
  */
-export function saveToDeviceGallery(file: File, filename: string): void {
-  if (typeof document === "undefined") return;
-  try {
-    const safe = filename.replace(/[^\w.-]+/g, "-").replace(/-+/g, "-");
-    const name = /\.(jpe?g|png|webp|heic|heif)$/i.test(safe) ? safe : `${safe}.jpg`;
-    const url = URL.createObjectURL(file);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = name;
-    a.rel = "noopener";
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.setTimeout(() => URL.revokeObjectURL(url), 8000);
-  } catch {
-    /* ignore — app copy is stored separately */
-  }
-}
 
 export function captureFilename(kind: string): string {
   const stamp = new Date()
@@ -30,4 +15,35 @@ export function captureFilename(kind: string): string {
     .replace(/[:.]/g, "-")
     .slice(0, 19);
   return `PVP-${kind}-${stamp}.jpg`;
+}
+
+export function canShareImageFile(file: File): boolean {
+  if (typeof navigator === "undefined" || typeof navigator.share !== "function") {
+    return false;
+  }
+  const payload = { files: [file] };
+  if (typeof navigator.canShare === "function") {
+    try {
+      return navigator.canShare(payload);
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
+/** User-gesture share sheet. On iOS choose Save Image. Never auto-called. */
+export async function shareImageToDevice(file: File, filename: string): Promise<boolean> {
+  if (!canShareImageFile(file)) return false;
+  const named =
+    file.name && file.name !== "image.jpg"
+      ? file
+      : new File([file], filename, { type: file.type || "image/jpeg" });
+  try {
+    await navigator.share({ files: [named], title: named.name });
+    return true;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") return false;
+    return false;
+  }
 }
