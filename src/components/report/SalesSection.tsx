@@ -1964,10 +1964,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                             {
                               key: "salePrice",
                               label: "Sale Price",
-                              subject: () =>
-                                draft.reportMeta.valueAmount
-                                  ? `Subject value ${formatCurrencyDisplay(draft.reportMeta.valueAmount)}`
-                                  : "—",
+                              subject: () => "—",
                               read: (s: (typeof sales)[0]) => s.salePrice,
                               write: (id: string, v: string) => patchSale(id, { salePrice: v }),
                             },
