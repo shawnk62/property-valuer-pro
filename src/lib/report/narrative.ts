@@ -3,6 +3,7 @@ import { isCommercialType, isMixedUseCommercial, isVacantLand } from "@/lib/insp
 import { BOILERPLATE } from "./boilerplate";
 import { displayValue, hasValue, joinValues } from "./schema";
 import type { InspectionValues, ReportNarrative } from "./types";
+import { buildRiskAnalysis } from "./propertyRiskRatings";
 
 /**
  * Mock narrative generator. Composes QLD residential prose from the subject
@@ -1069,6 +1070,7 @@ export function generateNarrative(
         ? ""
         : buildConditionImprovements(values),
     highestBestUse: buildHighestBestUse(values),
+    riskAnalysis: buildRiskAnalysis(values),
     remarks: buildRemarks(values, {
       salesCount: opts?.salesCount,
       valueAmount: opts?.valueAmount,

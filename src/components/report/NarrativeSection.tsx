@@ -21,13 +21,19 @@ import { skipAiNarrativeBlock } from "@/lib/inspection/visibility";
 import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
 import { geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
 import { CannedCommentsBar } from "@/components/report/CannedCommentsBar";
+import { RiskRatingsPanel } from "@/components/report/RiskRatingsPanel";
+import { isShawnExamType, getReportTypeConfig } from "@/lib/report/reportTypes";
 
-function narrativeBlocks(murray: boolean): {
+function narrativeBlocks(murray: boolean, shawnExam: boolean): {
   key: keyof ReportNarrative;
   label: string;
   hint: string;
 }[] {
-  return [
+  const blocks: {
+    key: keyof ReportNarrative;
+    label: string;
+    hint: string;
+  }[] = [
     {
       key: "brief",
       label: "Brief description (valuation summary)",
@@ -95,6 +101,14 @@ function narrativeBlocks(murray: boolean): {
         : "Section 13 Remarks — Phil fixed sequence.",
     },
   ];
+  if (shawnExam) {
+    blocks.splice(blocks.length - 1, 0, {
+      key: "riskAnalysis",
+      label: "Risk analysis",
+      hint: "One short paragraph per PropertyPRO heading. Uses the selected 1–5 scores. Manual text is kept.",
+    });
+  }
+  return blocks;
 }
 
 /** Make inspection values safe for the server function (JSON-serializable, no proxies). */
@@ -120,7 +134,10 @@ function serializableValues(
 export function NarrativeSection({ controller }: { controller: ReportDraftController }) {
   const { draft, setNarrative, setMeta, loaded } = controller;
   const murray = /murray/i.test(String(draft.values["prop_assignment"] ?? ""));
-  const BLOCKS = narrativeBlocks(murray);
+  const shawnExam = isShawnExamType(
+    getReportTypeConfig(String(draft.values["prop_assignment"] ?? "")).id,
+  );
+  const BLOCKS = narrativeBlocks(murray, shawnExam);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [source, setSource] = useState<"template" | "ai" | null>(null);
   const [busy, setBusy] = useState<"template" | "ai" | keyof ReportNarrative | null>(null);
@@ -585,6 +602,8 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
           </button>
         </div>
       </div>
+
+      {shawnExam ? <RiskRatingsPanel controller={controller} /> : null}
 
       {BLOCKS.map((block) => {
         const blockText =

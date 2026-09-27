@@ -168,6 +168,8 @@ export interface ReportNarrative {
   /** Highest and best use — editable; prints in 1.8 / Basis of valuation. */
   highestBestUse: string;
   remarks: string;
+  /** PropertyPRO risk analysis — one paragraph per heading. */
+  riskAnalysis: string;
 }
 
 export interface ReportMeta {

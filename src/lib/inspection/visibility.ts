@@ -128,6 +128,7 @@ function isShawnExamAssignment(values: InspectionValues): boolean {
 export function fieldIsVisible(field: InspectionField, values: InspectionValues): boolean {
   const keys = fieldKeys(field);
   if (keys.some((k) => k.startsWith("exam_"))) return isShawnExamAssignment(values);
+  if (keys.some((k) => k.startsWith("risk_"))) return false;
   if (TYPE_KEYS.includes(field.name as (typeof TYPE_KEYS)[number])) {
     const chosen = selectedPropertyTypeKeys(values);
     if (chosen.length === 0) return true;

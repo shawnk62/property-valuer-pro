@@ -469,6 +469,33 @@ Change only the use to match the recorded type (commercial, industrial, rural re
 If zoning is missing, write "in accordance with the current town planning scheme".
 Two short paragraphs. Do not invent facts.`,
       };
+    case "riskAnalysis":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write the Property Risk Ratings commentary for a ${type} valuation report.
+
+Use the selected 1–5 scores and the PropertyPRO criteria. One short paragraph per heading, in this order:
+Location / Neighbourhood; Land (planning and title); Environmental issues; Improvements; Recent market direction (price); Market volatility; Local / regional economy impact; Market segment conditions.
+
+Selected scores and inspection facts:
+${sectionAnswers(values, ["1", "1A", "2", "6"])}
+Location rating: ${String(values["risk_location"] ?? "not selected")}
+Land rating: ${String(values["risk_land"] ?? "not selected")}
+Environment rating: ${String(values["risk_environment"] ?? "not selected")}
+Improvements rating: ${String(values["risk_improvements"] ?? "not selected")}
+Market direction rating: ${String(values["risk_market_direction"] ?? "not selected")}
+Volatility rating: ${String(values["risk_volatility"] ?? "not selected")}
+Local economy rating: ${String(values["risk_local_economy"] ?? "not selected")}
+Segment rating: ${String(values["risk_segment"] ?? "not selected")}
+
+Rules:
+- Name the rating number and label (Low through High) in each paragraph.
+- Explain the rating from the official criteria and only recorded facts (flood, overlays, title, condition, vacant land).
+- Do not invent market statistics or overlay names.
+- If a heading has no score, say that no rating was selected.
+- If vacant land is recorded, treat Improvements as vacant-land risk, not a dwelling.
+- Do not write percentages.`,
+      };
     case "remarks": {
       const isPhil = type.toLowerCase().includes("phil");
       const isJointFamilyPhil =

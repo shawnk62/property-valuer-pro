@@ -28,6 +28,11 @@ import {
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { parseOverlayList } from "@/lib/report/overlays";
 import {
+  parseRiskScore,
+  RISK_CATEGORIES,
+  RISK_SCALE,
+} from "@/lib/report/propertyRiskRatings";
+import {
   letterheadFromProfile,
   resolveValuerProfile,
 } from "@/lib/report/valuerProfiles";
@@ -1031,10 +1036,56 @@ function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       ) : null}
 
       <ExamHeading>Risk ratings table and commentary</ExamHeading>
-      <Prose text={get(v, "exam_risk_commentary")} />
-      {!get(v, "exam_risk_commentary") ? (
-        <Para>Record PropertyPRO-style risk ratings and commentary here if required.</Para>
-      ) : null}
+      <table className="mt-3 w-full border-collapse text-sm">
+        <thead>
+          <tr>
+            <th className="border border-neutral-400 px-2 py-1.5 text-left">Risk rating</th>
+            {RISK_SCALE.map((col) => (
+              <th key={col.score} className="border border-neutral-400 px-1 py-1.5 text-center">
+                {col.score}. {col.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {RISK_CATEGORIES.map((cat) => {
+            const selected = parseRiskScore(v[cat.field]);
+            return (
+              <tr key={cat.id}>
+                <th className="border border-neutral-400 px-2 py-1.5 text-left font-normal">
+                  {cat.heading}
+                </th>
+                {RISK_SCALE.map((col) => (
+                  <td
+                    key={col.score}
+                    className={
+                      "border border-neutral-400 px-1 py-2 text-center " +
+                      (selected === col.score ? "bg-sky-200 font-semibold" : "")
+                    }
+                  >
+                    {selected === col.score ? selected : ""}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <div className="mt-4">
+        <Prose
+          text={
+            draft.narrative.riskAnalysis?.trim() ||
+            get(v, "exam_risk_commentary") ||
+            ""
+          }
+        />
+        {!draft.narrative.riskAnalysis?.trim() && !get(v, "exam_risk_commentary") ? (
+          <Para>
+            Select a rating for each heading on the Narrative tab, then generate the risk
+            analysis block.
+          </Para>
+        ) : null}
+      </div>
 
       <ExamHeading>Valuation</ExamHeading>
       <Para>

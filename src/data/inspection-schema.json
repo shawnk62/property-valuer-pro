@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": 45,
+  "version": 46,
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -173,6 +173,54 @@
           "name": "exam_references",
           "label": "References",
           "type": "textarea"
+        },
+        {
+          "name": "risk_location",
+          "label": "Risk rating — Location / Neighbourhood",
+          "type": "select",
+          "options": ["1", "2", "3", "4", "5"]
+        },
+        {
+          "name": "risk_land",
+          "label": "Risk rating — Land (planning & title)",
+          "type": "select",
+          "options": ["1", "2", "3", "4", "5"]
+        },
+        {
+          "name": "risk_environment",
+          "label": "Risk rating — Environmental issues",
+          "type": "select",
+          "options": ["1", "2", "3", "4", "5"]
+        },
+        {
+          "name": "risk_improvements",
+          "label": "Risk rating — Improvements",
+          "type": "select",
+          "options": ["1", "2", "3", "4", "5"]
+        },
+        {
+          "name": "risk_market_direction",
+          "label": "Risk rating — Recent market direction",
+          "type": "select",
+          "options": ["1", "2", "3", "4", "5"]
+        },
+        {
+          "name": "risk_volatility",
+          "label": "Risk rating — Market volatility",
+          "type": "select",
+          "options": ["1", "2", "3", "4", "5"]
+        },
+        {
+          "name": "risk_local_economy",
+          "label": "Risk rating — Local / regional economy",
+          "type": "select",
+          "options": ["1", "2", "3", "4", "5"]
+        },
+        {
+          "name": "risk_segment",
+          "label": "Risk rating — Market segment conditions",
+          "type": "select",
+          "options": ["1", "2", "3", "4", "5"]
         },
         {
           "name": "insp_purpose",
