@@ -17,7 +17,8 @@ export type ReportTypeId =
   | "cgt-murray-retrospective"
   | "cgt-murray-apportionment"
   | "family-law-murray"
-  | "joint-family-law-phil";
+  | "joint-family-law-phil"
+  | "shawn-exam";
 
 export interface ReportTypeConfig {
   id: ReportTypeId;
@@ -172,6 +173,15 @@ export const REPORT_TYPE_CONFIGS: ReportTypeConfig[] = [
     saleNarrativeStyle: "compact",
     valuationDisplay: "amount",
   },
+  {
+    id: "shawn-exam",
+    match: ["Shawn Exam", "Shawn exam", "SHAWN EXAM"],
+    coverSubtitle: "Valuation of vacant residential land",
+    defaultPurpose: "Valuation for mortgage security purposes.",
+    instructionsTitle: "Purpose of the Report",
+    saleNarrativeStyle: "detailed",
+    valuationDisplay: "amount",
+  },
 ];
 
 /** Exact current Purchase / generic behaviour */
@@ -229,6 +239,10 @@ export function isMurrayReportType(id: ReportTypeId | string): boolean {
     id === "cgt-murray-apportionment" ||
     id === "family-law-murray"
   );
+}
+
+export function isShawnExamType(id: ReportTypeId | string): boolean {
+  return id === "shawn-exam";
 }
 
 export function isCgtPhilReportType(id: ReportTypeId | string): boolean {

@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": 44,
+  "version": 45,
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -119,8 +119,60 @@
             "CGT - Murray Retrospective",
             "CGT - Murray Apportionment",
             "Family Law - Murray",
-            "Singly Appointed Family Law - Murray"
+            "Singly Appointed Family Law - Murray",
+            "Shawn Exam"
           ]
+        },
+        {
+          "name": "exam_student_name",
+          "label": "Student name",
+          "type": "text"
+        },
+        {
+          "name": "exam_student_number",
+          "label": "Student number",
+          "type": "text"
+        },
+        {
+          "name": "exam_identification",
+          "label": "How the site was identified",
+          "type": "text",
+          "placeholder": "e.g. inspection and cadastral maps / survey pegs"
+        },
+        {
+          "name": "exam_title_search_date",
+          "label": "Title search date",
+          "type": "date"
+        },
+        {
+          "name": "exam_planning_scheme",
+          "label": "Planning scheme (name and version)",
+          "type": "text"
+        },
+        {
+          "name": "exam_market_commentary",
+          "label": "Market commentary",
+          "type": "textarea"
+        },
+        {
+          "name": "exam_assumptions",
+          "label": "Assumptions or special conditions",
+          "type": "textarea"
+        },
+        {
+          "name": "exam_risk_commentary",
+          "label": "Risk ratings commentary",
+          "type": "textarea"
+        },
+        {
+          "name": "exam_limitations",
+          "label": "Limitations or disclaimers",
+          "type": "textarea"
+        },
+        {
+          "name": "exam_references",
+          "label": "References",
+          "type": "textarea"
         },
         {
           "name": "insp_purpose",

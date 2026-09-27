@@ -121,8 +121,13 @@ export function sectionIsVisible(section: InspectionSection, values: InspectionV
   return true;
 }
 
+function isShawnExamAssignment(values: InspectionValues): boolean {
+  return /shawn\s*exam/i.test(str(values, "prop_assignment"));
+}
+
 export function fieldIsVisible(field: InspectionField, values: InspectionValues): boolean {
   const keys = fieldKeys(field);
+  if (keys.some((k) => k.startsWith("exam_"))) return isShawnExamAssignment(values);
   if (TYPE_KEYS.includes(field.name as (typeof TYPE_KEYS)[number])) {
     const chosen = selectedPropertyTypeKeys(values);
     if (chosen.length === 0) return true;

@@ -16,6 +16,7 @@ import {
   isJointFamilyLawPhilType,
   isMurrayReportType,
   isPhilReportType,
+  isShawnExamType,
 } from "@/lib/report/reportTypes";
 import { annexureById, resolveAnnexures } from "@/lib/report/annexures";
 import {
@@ -703,11 +704,453 @@ function formatCoverDate(raw: string | undefined | null): string {
   return s;
 }
 
+const IVSC_MARKET_VALUE =
+  "Market value is the estimated amount for which an asset or liability should exchange on the valuation date between a willing buyer and a willing seller in an arm’s length transaction, after proper marketing and where the parties had each acted knowledgeably, prudently and without compulsion. (IVS 2025)";
+
+function amountInWords(raw: string): string {
+  const n = Number(String(raw).replace(/[^0-9.]/g, ""));
+  if (!Number.isFinite(n) || n < 0) return "";
+  const ones = [
+    "", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+    "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen",
+    "seventeen", "eighteen", "nineteen",
+  ];
+  const tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+  const chunk = (num: number): string => {
+    if (num === 0) return "";
+    if (num < 20) return ones[num] ?? "";
+    if (num < 100) {
+      const unit = num % 10;
+      return `${tens[Math.floor(num / 10)]}${unit ? `-${ones[unit]}` : ""}`;
+    }
+    const rest = num % 100;
+    return `${ones[Math.floor(num / 100)]} hundred${rest ? ` and ${chunk(rest)}` : ""}`;
+  };
+  const dollars = Math.floor(n);
+  if (dollars === 0) return "zero dollars";
+  const millions = Math.floor(dollars / 1_000_000);
+  const thousands = Math.floor((dollars % 1_000_000) / 1000);
+  const rest = dollars % 1000;
+  const parts: string[] = [];
+  if (millions) parts.push(`${chunk(millions)} million`);
+  if (thousands) parts.push(`${chunk(thousands)} thousand`);
+  if (rest) parts.push(chunk(rest));
+  return `${parts.join(" ")} dollars`;
+}
+
+function ExamHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="mt-8 border-b border-neutral-400 pb-1 text-base font-semibold tracking-normal">
+      {children}
+    </h2>
+  );
+}
+
+function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
+  const v = draft.values;
+  const m = draft.reportMeta;
+  const printedSales = salesOnReport(draft.sales);
+  const addressLine = [
+    get(v, "prop_address"),
+    [get(v, "prop_suburb"), get(v, "prop_state"), get(v, "prop_postcode")]
+      .filter(Boolean)
+      .join(" "),
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const lotPlan = get(v, "prop_lotplan") || get(v, "prop_legal");
+  const frontPhoto = draft.photos.find((p) => p.slot === "front" && photoIsOnReport(p));
+  const student = get(v, "exam_student_name") || get(v, "insp_valuer") || m.valuerName;
+  const studentNo = get(v, "exam_student_number");
+  const instructing =
+    get(v, "instr_from_name") || get(v, "prop_owner") || "the instructing party";
+  const purpose =
+    get(v, "insp_purpose") ||
+    getReportTypeConfig(get(v, "prop_assignment")).defaultPurpose;
+  const annexurePhotos = [
+    ...PHOTO_SLOTS.map(({ slot, label }) => {
+      const found = draft.photos.find((p) => p.slot === slot && photoIsOnReport(p));
+      return found ? { ...found, caption: found.caption || label } : null;
+    }).filter(Boolean),
+    ...draft.photos.filter((p) => p.slot === null && p.kind !== "map" && photoIsOnReport(p)),
+  ] as typeof draft.photos;
+  const mapPhotos = draft.photos.filter((p) => p.kind === "map" && photoIsOnReport(p));
+  const valueWords = m.valueAmount ? amountInWords(m.valueAmount) : "";
+  const envBits = [
+    get(v, "prop_flood"),
+    get(v, "prop_flood_map"),
+    get(v, "prop_adverse_site"),
+    joinValues(v, ["overlay"]),
+  ].filter(Boolean);
+
+  return (
+    <article id="report-preview-sheet" className="report-sheet mx-auto max-w-[52rem] px-8 py-10 shadow-sm sm:px-12 sm:py-14">
+      <header className="space-y-3 text-center">
+        <p className="text-sm uppercase tracking-wide">Valuation report</p>
+        <h1 className="text-xl font-semibold">Vacant residential land</h1>
+        {student ? <p>Student name: {student}</p> : null}
+        {studentNo ? <p>Student number: {studentNo}</p> : null}
+      </header>
+
+      {frontPhoto?.url ? (
+        <figure className="mx-auto mt-6 max-w-xl">
+          <img
+            src={frontPhoto.url}
+            alt={addressLine || "Subject property"}
+            className="w-full border border-neutral-400 object-contain"
+          />
+          <figcaption className="mt-2 text-center text-sm">
+            {[addressLine, lotPlan].filter(Boolean).join(" — ")}
+          </figcaption>
+        </figure>
+      ) : null}
+
+      <div className="mt-6 space-y-1 text-sm">
+        <p>Name of instructing party: {instructing}</p>
+        <p>Basis of the valuation: Market value</p>
+        <p>Purpose of the report: {purpose || "—"}</p>
+      </div>
+
+      <ExamHeading>Table of contents</ExamHeading>
+      <ol className="ml-5 list-decimal space-y-0.5 text-sm">
+        {[
+          "Purpose of the Report",
+          "Title and property details",
+          "Planning Control",
+          "Location and Locality",
+          "Property Description",
+          "Services",
+          "Environmental Issues",
+          "Market Commentary",
+          "Basis of Value",
+          "Sales Evidence and Market Analysis",
+          "Assumptions or special conditions",
+          "Risk ratings table and commentary",
+          "Valuation",
+          "Limitations or disclaimers",
+          "References",
+          "Annexures",
+        ].map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ol>
+
+      <ExamHeading>Purpose of the Report</ExamHeading>
+      <Facts
+        values={v}
+        fields={["prop_assignment", "insp_purpose", "prop_rights"]}
+        extra={[
+          { label: "Instructing party", value: instructing },
+          { label: "Basis of value", value: "Market value" },
+          { label: "Date of inspection", value: m.inspectionDate },
+          { label: "Date of valuation", value: m.valueDate },
+        ]}
+      />
+      <Para>
+        Methodology: the market approach (direct comparison) has been adopted. Other approaches
+        have not been applied where they are not appropriate to vacant residential land.
+      </Para>
+
+      <ExamHeading>Title and property details</ExamHeading>
+      <Facts
+        values={v}
+        fields={[
+          "prop_address",
+          "prop_suburb",
+          "prop_state",
+          "prop_postcode",
+          "prop_lotplan",
+          "prop_legal",
+          "prop_title",
+          "prop_owner",
+          "prop_rights",
+          "prop_lga",
+        ]}
+        extra={[
+          {
+            label: "Identification",
+            value: get(v, "exam_identification") || "Identified on inspection with reference to available cadastral information.",
+          },
+          { label: "Date of title search", value: get(v, "exam_title_search_date") },
+        ]}
+      />
+
+      <ExamHeading>Planning Control</ExamHeading>
+      <Facts
+        values={v}
+        fields={["prop_zoning", "prop_zoning_desc", "prop_zoning_comp"]}
+        extra={[{ label: "Planning scheme", value: get(v, "exam_planning_scheme") }]}
+      />
+
+      <ExamHeading>Location and Locality</ExamHeading>
+      <h3 className="mt-3 text-sm font-semibold">Location</h3>
+      <Prose text={draft.narrative.location?.trim() || ""} />
+      {!draft.narrative.location?.trim() && addressLine ? (
+        <Para>The property is located at {addressLine}.</Para>
+      ) : null}
+      <h3 className="mt-3 text-sm font-semibold">Locality</h3>
+      <Prose
+        text={draft.narrative.neighbourhood?.trim() || get(v, "nbhd_description") || ""}
+      />
+      <InlineMap photos={draft.photos} slot="map_location" caption="Locality map" />
+
+      <ExamHeading>Property Description</ExamHeading>
+      <Prose text={draft.narrative.sitePhysical?.trim() || ""} />
+      <Facts
+        values={v}
+        fields={[
+          "prop_sitearea",
+          "prop_usable_sitearea",
+          "prop_shape",
+          "prop_lot_position",
+          "prop_dimensions",
+          "prop_frontage",
+          "topo",
+        ]}
+      />
+      <InlineMap photos={draft.photos} slot="map_site_dimensions" caption="Site dimensions" />
+
+      <ExamHeading>Services</ExamHeading>
+      <Prose text={draft.narrative.servicesAmenities?.trim() || ""} />
+
+      <ExamHeading>Environmental Issues</ExamHeading>
+      {envBits.length > 0 ? (
+        <Para>{envBits.join(". ")}.</Para>
+      ) : (
+        <Para>None noted at inspection.</Para>
+      )}
+
+      <ExamHeading>Market Commentary</ExamHeading>
+      <Prose
+        text={
+          get(v, "exam_market_commentary") ||
+          draft.narrative.remarks?.trim() ||
+          ""
+        }
+      />
+      {!get(v, "exam_market_commentary") && !draft.narrative.remarks?.trim() ? (
+        <Para>
+          Record the state of the market for this class of property, supply and demand, and
+          the price range of similar vacant lots in the locality.
+        </Para>
+      ) : null}
+
+      <ExamHeading>Basis of Value</ExamHeading>
+      <Para>{IVSC_MARKET_VALUE}</Para>
+
+      <section id="sec-sales" className="report-section report-section-sales mt-8">
+        <ExamHeading>Sales Evidence and Market Analysis</ExamHeading>
+        {printedSales.length === 0 ? (
+          <Para>No sales evidence has been recorded.</Para>
+        ) : (
+          <div className="space-y-6">
+            {draft.reportMeta.salesMapUrl ? (
+              <div className="sales-map">
+                <p className="mb-1.5 text-[0.75rem] font-semibold uppercase tracking-wide">
+                  Sales map
+                </p>
+                <img
+                  src={draft.reportMeta.salesMapUrl}
+                  alt="Comparable sales map"
+                  className="mx-auto max-h-[28rem] w-auto max-w-full border border-neutral-400 object-contain"
+                />
+              </div>
+            ) : null}
+            <div className="sales-evidence-list space-y-3">
+              {printedSales.map((s, idx) => (
+                <table
+                  key={s.id}
+                  className="sales-evidence-item w-full border-collapse text-[0.8125rem]"
+                >
+                  <colgroup>
+                    <col className="sales-col-num" />
+                    <col className="sales-col-address" />
+                    <col className="sales-col-date" />
+                    <col className="sales-col-price" />
+                    <col className="sales-col-area" />
+                    <col className="sales-col-comments" />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      {["#", "Address", "Sale date", "Sale price", "Land area", "Comments"].map(
+                        (h) => (
+                          <th
+                            key={h}
+                            className="border border-neutral-400 bg-neutral-100 px-2 py-1.5 text-left font-semibold"
+                          >
+                            {h}
+                          </th>
+                        ),
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="align-top">
+                      <td className="border border-neutral-400 px-2 py-1.5 whitespace-nowrap font-semibold">
+                        {idx + 1}
+                      </td>
+                      <td className="border border-neutral-400 px-2 py-1.5">
+                        <div>{s.address}</div>
+                        {s.photoUrl ? (
+                          <img
+                            src={s.photoUrl}
+                            alt={`Comparable ${idx + 1}`}
+                            className="mt-1.5 h-12 w-auto max-w-[5.5rem] border border-neutral-400 object-cover"
+                          />
+                        ) : null}
+                      </td>
+                      <td className="border border-neutral-400 px-2 py-1.5 whitespace-nowrap">
+                        {s.saleDate}
+                      </td>
+                      <td className="border border-neutral-400 px-2 py-1.5 whitespace-nowrap">
+                        {s.salePrice}
+                      </td>
+                      <td className="border border-neutral-400 px-2 py-1.5 whitespace-nowrap">
+                        {s.landArea}
+                      </td>
+                      <td className="border border-neutral-400 px-2 py-1.5">
+                        {cleanSaleProse(s.narrative?.trim() || s.comments || "")}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <ExamHeading>Assumptions or special conditions</ExamHeading>
+      <Prose text={get(v, "exam_assumptions")} />
+      {!get(v, "exam_assumptions") ? (
+        <Para>
+          This valuation assumes the information disclosed by the instructing party is complete
+          and correct. If any assumption is not correct, the report should be referred back
+          before reliance.
+        </Para>
+      ) : null}
+
+      <ExamHeading>Risk ratings table and commentary</ExamHeading>
+      <Prose text={get(v, "exam_risk_commentary")} />
+      {!get(v, "exam_risk_commentary") ? (
+        <Para>Record PropertyPRO-style risk ratings and commentary here if required.</Para>
+      ) : null}
+
+      <ExamHeading>Valuation</ExamHeading>
+      <Para>
+        Having regard to the sales evidence and the market conditions at the date of
+        valuation, the market value of the unencumbered fee simple interest in the subject
+        property{addressLine ? `, ${addressLine},` : ""} as at{" "}
+        {m.valueDate || "the date of valuation"} is:
+      </Para>
+      {m.valueAmount ? (
+        <p className="py-3 text-center text-lg font-semibold">
+          ${formatCurrencyDisplay(m.valueAmount)}
+          {valueWords ? ` (${valueWords})` : ""}
+        </p>
+      ) : null}
+      <Para>
+        Date of inspection: {m.inspectionDate || "—"}. Date of valuation: {m.valueDate || "—"}.
+      </Para>
+      <SignatureBlock values={v} meta={m} className="report-signature mt-8" />
+      <p className="text-sm">Student Valuer</p>
+
+      <ExamHeading>Limitations or disclaimers</ExamHeading>
+      <Prose text={get(v, "exam_limitations")} />
+      {!get(v, "exam_limitations") ? (
+        <Para>
+          This report may be relied upon only by the instructing party for the stated purpose.
+          Figures are exclusive of GST unless otherwise stated. The valuer is not a
+          geo-technical expert; no soil or contamination search has been assumed beyond
+          matters noted on inspection.
+        </Para>
+      ) : null}
+
+      <ExamHeading>References</ExamHeading>
+      <Prose text={get(v, "exam_references")} />
+      {!get(v, "exam_references") ? (
+        <Para>List sources used for the market commentary.</Para>
+      ) : null}
+
+      <ExamHeading>Annexures</ExamHeading>
+      <ol className="ml-5 list-decimal space-y-0.5 text-sm">
+        {annexurePhotos.length > 0 ? <li>Photographs of the subject property</li> : null}
+        {printedSales.some((s) => s.photoUrl) ? <li>Comparable sale photographs</li> : null}
+        {mapPhotos.length > 0 ? <li>Locality and planning maps</li> : null}
+      </ol>
+
+      {annexurePhotos.length > 0 ? (
+        <section className="report-annexure report-annexure-subject mt-12">
+          <PhotoAnnexPages heading="Subject Photographs">
+            {annexurePhotos.map((photo) => (
+              <figure key={photo.id} className="report-photo-figure">
+                <img
+                  src={photo.url}
+                  alt={photo.caption || "Photograph"}
+                  className="aspect-4/3 w-full border border-neutral-400 object-cover"
+                  loading="eager"
+                  decoding="sync"
+                />
+                <figcaption className="mt-1.5 text-center text-sm">{photo.caption}</figcaption>
+              </figure>
+            ))}
+          </PhotoAnnexPages>
+        </section>
+      ) : null}
+
+      {printedSales.some((s) => s.photoUrl) ? (
+        <section className="report-annexure report-annexure-comps mt-12">
+          <PhotoAnnexPages heading="Comparable Sale Photographs">
+            {printedSales.map((s, idx) =>
+              s.photoUrl ? (
+                <figure key={s.id} className="report-photo-figure">
+                  <img
+                    src={s.photoUrl}
+                    alt={s.address || `Comparable ${idx + 1}`}
+                    className="w-full border border-neutral-400 object-contain"
+                    loading="eager"
+                    decoding="sync"
+                  />
+                  <figcaption className="mt-1.5 text-center text-sm font-medium">
+                    Comparable {idx + 1}
+                    {s.address ? ` — ${s.address}` : ""}
+                  </figcaption>
+                </figure>
+              ) : null,
+            )}
+          </PhotoAnnexPages>
+        </section>
+      ) : null}
+
+      {mapPhotos.length > 0 ? (
+        <section className="report-annexure mt-12">
+          <h2 className="text-center text-base font-semibold">Annexure — Maps</h2>
+          <div className="mt-6 grid gap-6">
+            {mapPhotos.map((photo) => (
+              <figure key={photo.id} className="report-photo-figure break-inside-avoid">
+                <img
+                  src={photo.url}
+                  alt={photo.caption || "Map"}
+                  className="mx-auto max-h-[28rem] w-auto max-w-full border border-neutral-400 object-contain"
+                />
+                <figcaption className="mt-1.5 text-center text-sm">{photo.caption}</figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      ) : null}
+    </article>
+  );
+}
+
 export function ReportPreview({ draft }: { draft: ReportDraft }) {
   const v = draft.values;
   const printedSales = salesOnReport(draft.sales);
   const m = draft.reportMeta;
   const reportType = getReportTypeConfig(get(v, "prop_assignment"));
+  if (isShawnExamType(reportType.id)) {
+    return <ShawnExamPreview draft={draft} />;
+  }
   const murray = isMurrayReportType(reportType.id);
 
   const addressLine = [
