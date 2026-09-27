@@ -1,4 +1,5 @@
 import schemaJson from "@/data/inspection-schema.json";
+import { ensureAssignmentOptions } from "@/lib/report/reportTypes";
 import type {
   CheckboxGroupField,
   InspectionField,
@@ -41,10 +42,13 @@ function assignmentOptionsFromSchema(): string[] {
     "CGT - Murray Apportionment",
     "Family Law - Murray",
     "Singly Appointed Family Law - Murray",
+    "Shawn Exam",
   ];
 }
 
-export const PROP_ASSIGNMENT_OPTIONS = assignmentOptionsFromSchema();
+export const PROP_ASSIGNMENT_OPTIONS = ensureAssignmentOptions(
+  assignmentOptionsFromSchema(),
+);
 
 export const sections: InspectionSection[] = schema.sections;
 

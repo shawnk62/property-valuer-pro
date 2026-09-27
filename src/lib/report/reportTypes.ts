@@ -195,6 +195,24 @@ export const DEFAULT_REPORT_TYPE_CONFIG: ReportTypeConfig = {
   valuationDisplay: "amount",
 };
 
+/** Keep dropdowns in sync with the report-type registry. */
+export function ensureAssignmentOptions(schemaOptions: string[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const add = (label: string) => {
+    const value = label.trim();
+    if (!value || value === "*" || seen.has(value)) return;
+    seen.add(value);
+    out.push(value);
+  };
+  for (const label of schemaOptions) add(label);
+  for (const cfg of REPORT_TYPE_CONFIGS) {
+    const matches = Array.isArray(cfg.match) ? cfg.match : [cfg.match];
+    add(matches[0] ?? "");
+  }
+  return out;
+}
+
 export function getReportTypeConfig(
   propAssignment: string | null | undefined,
 ): ReportTypeConfig {

@@ -153,7 +153,10 @@ export function SubjectSection({ controller }: { controller: ReportDraftControll
               className="w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Select…</option>
-              {REPORT_TYPE_OPTIONS.map((opt) => (
+              {(REPORT_TYPE_OPTIONS.includes(currentReportType) || !currentReportType
+                ? REPORT_TYPE_OPTIONS
+                : [...REPORT_TYPE_OPTIONS, currentReportType]
+              ).map((opt) => (
                 <option key={opt} value={opt}>
                   {opt}
                 </option>
