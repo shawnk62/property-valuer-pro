@@ -359,8 +359,8 @@
 .sales-evidence-item .sales-col-num { width: 8mm; }
 .sales-evidence-item .sales-col-address { width: 31.5mm; }
 .sales-evidence-item .sales-col-date { width: 22mm; }
-.sales-evidence-item .sales-col-price { width: 26mm; }
-.sales-evidence-item .sales-col-area { width: 20mm; }
+.sales-evidence-item .sales-col-price { width: 22mm; white-space: nowrap; }
+.sales-evidence-item .sales-col-area { width: 24mm; white-space: nowrap; }
 .sales-evidence-item .sales-col-comments { width: auto; }
 
 /* File number — top left of valuation summary (PDF page 2) */
@@ -921,10 +921,12 @@
     width: 22mm !important;
   }
   #report-preview-sheet .sales-evidence-item .sales-col-price {
-    width: 26mm !important;
+    width: 22mm !important;
+    white-space: nowrap !important;
   }
   #report-preview-sheet .sales-evidence-item .sales-col-area {
-    width: 20mm !important;
+    width: 24mm !important;
+    white-space: nowrap !important;
   }
   #report-preview-sheet .sales-evidence-item .sales-col-comments {
     width: auto !important;
