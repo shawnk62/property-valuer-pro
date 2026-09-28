@@ -324,7 +324,8 @@ ${sectionAnswers(values, ["1"])}
 Rules:
 - Use the CALCULATED LOCATION sentence unchanged when one is supplied.
 - One short paragraph. No neighbourhood character, land use mix, site shape, topography, access, services or zoning.
-- Do not invent distances or centres.`,
+- Do not invent distances or centres.
+- Do not repeat the section number or the heading "Location". Start with the location sentence.`
       };
     case "neighbourhood": {
       const landUse = describeLandUseMix(values);

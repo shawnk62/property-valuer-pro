@@ -1,5 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 import { australianiseSpelling } from "@/lib/report/australianEnglish";
+import { stripLeadingHeading } from "@/lib/report/printText";
 import {
   formatHbuVacant,
   formatPropertyType,
@@ -501,12 +502,20 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
 
       <H1 id="exam-5">5.0 Locality and Location</H1>
       <H2>5.1 Location</H2>
-      <Prose text={draft.narrative.location?.trim() || ""} />
+      <Prose text={stripLeadingHeading(draft.narrative.location?.trim() || "", "Location")} />
       {!draft.narrative.location?.trim() && addressLine ? (
         <Para>The property is located at {addressLine}.</Para>
       ) : null}
       <H2>5.2 Locality</H2>
-      <Prose text={draft.narrative.neighbourhood?.trim() || get(v, "nbhd_description") || ""} />
+      <Prose
+        text={stripLeadingHeading(
+          stripLeadingHeading(
+            draft.narrative.neighbourhood?.trim() || get(v, "nbhd_description") || "",
+            "Neighbourhood",
+          ),
+          "Locality",
+        )}
+      />
       {get(v, "exam_amenities") ? (
         <>
           <H2>5.3 Amenities</H2>

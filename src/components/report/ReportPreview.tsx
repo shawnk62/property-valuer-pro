@@ -1,5 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 import { australianiseSpelling } from "@/lib/report/australianEnglish";
+import { stripLeadingHeading } from "@/lib/report/printText";
 import { BOILERPLATE } from "@/lib/report/boilerplate";
 import {
   formatHbuVacant,
@@ -1303,7 +1304,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           <>
             <Sub title="5.1  Location">
               {draft.narrative.location?.trim() ? (
-                <Prose text={draft.narrative.location} />
+                <Prose text={stripLeadingHeading(draft.narrative.location, "Location")} />
               ) : (
                 <Para>
                   {addressLine ? `The property is located at ${addressLine}.` : "—"}
@@ -1341,7 +1342,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           <>
             <Sub title="Location">
               {draft.narrative.location?.trim() ? (
-                <Prose text={draft.narrative.location} />
+                <Prose text={stripLeadingHeading(draft.narrative.location, "Location")} />
               ) : addressLine ? (
                 <Para>{`The property is located at ${addressLine}.`}</Para>
               ) : null}
