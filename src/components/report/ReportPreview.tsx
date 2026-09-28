@@ -10,7 +10,7 @@ import {
   pick,
   PROPERTY_PLANNING_FIELDS,
 } from "@/lib/report/schema";
-import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, titlePhotosOnReport, type ReportDraft } from "@/lib/report/types";
+import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, surveyPhotosOnReport, titlePhotosOnReport, type ReportDraft } from "@/lib/report/types";
 import {
   getReportTypeConfig,
   isJointFamilyLawPhilType,
@@ -732,7 +732,12 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       return found ? { ...found, caption: found.caption || label } : null;
     }).filter(Boolean),
     ...draft.photos.filter(
-      (p) => p.slot === null && p.kind !== "map" && p.kind !== "title" && photoIsOnReport(p),
+      (p) =>
+        p.slot === null &&
+        p.kind !== "map" &&
+        p.kind !== "title" &&
+        p.kind !== "survey" &&
+        photoIsOnReport(p),
     ),
   ] as typeof draft.photos;
 
@@ -759,7 +764,9 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
   const mapsAnnex = annexureById(annexures, "maps");
   const placeAnnex = annexureById(annexures, "placeBased");
   const titleAnnex = annexureById(annexures, "title");
+  const surveyAnnex = annexureById(annexures, "survey");
   const titlePages = titlePhotosOnReport(draft.photos);
+  const surveyPages = surveyPhotosOnReport(draft.photos);
 
   const frontPhoto = draft.photos.find((p) => p.slot === "front" && photoIsOnReport(p));
   // Letterhead + credentials follow Report Type (Phil vs Murray)
@@ -2038,6 +2045,30 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 />
                 <figcaption className="mt-1.5 text-center text-sm font-medium">
                   {photo.caption || "Certificate of Title"}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {surveyPages.length > 0 ? (
+        <section id="report-annexure-survey" className="report-annexure mt-12">
+          <h2 className="report-h1 text-center">
+            {surveyAnnex?.heading ?? "Annexure — Survey Plan"}
+          </h2>
+          <div className="mt-6 grid gap-8">
+            {surveyPages.map((photo) => (
+              <figure key={photo.id} className="report-photo-figure break-inside-avoid">
+                <img
+                  src={photo.url}
+                  alt={photo.caption || "Survey Plan"}
+                  className="mx-auto max-h-[240mm] w-auto max-w-full border border-[var(--rule)] object-contain"
+                  loading="eager"
+                  decoding="sync"
+                />
+                <figcaption className="mt-1.5 text-center text-sm font-medium">
+                  {photo.caption || "Survey Plan"}
                 </figcaption>
               </figure>
             ))}

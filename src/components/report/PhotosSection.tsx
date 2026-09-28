@@ -228,6 +228,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
   const inspectionId = draft.inspectionId;
   const extraInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const surveyInputRef = useRef<HTMLInputElement>(null);
   const [uploadingIds, setUploadingIds] = useState<Set<string>>(new Set());
   const [photoMenu, setPhotoMenu] = useState<null | {
     x: number;
@@ -268,7 +269,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     slot: PhotoSlot | null;
     caption: string;
     replaceId?: string;
-    kind?: "map" | "photo" | "title";
+    kind?: "map" | "photo" | "title" | "survey";
   }) {
     if (!opts.file || opts.file.size <= 0) {
       toast.error("The selected file is empty.");
@@ -457,9 +458,32 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     }
   }
 
-  const extras = photos.filter((p) => p.slot === null && p.kind !== "map" && p.kind !== "title");
+  async function onSurveyFile(file: File) {
+    try {
+      const pages = isPdfFile(file) ? await rasterizePdfPages(file) : [file];
+      const start = photos.filter((p) => p.kind === "survey").length;
+      if (isPdfFile(file)) {
+        toast.message(`Survey Plan — ${pages.length} page${pages.length === 1 ? "" : "s"}`);
+      }
+      for (let i = 0; i < pages.length; i++) {
+        await attachPhoto({
+          file: pages[i],
+          slot: null,
+          caption: `Survey Plan — page ${start + i + 1}`,
+          kind: "survey",
+        });
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not attach the survey plan");
+    }
+  }
+
+  const extras = photos.filter(
+    (p) => p.slot === null && p.kind !== "map" && p.kind !== "title" && p.kind !== "survey",
+  );
   const extraMaps = photos.filter((p) => p.slot === null && p.kind === "map");
   const titlePages = photos.filter((p) => p.kind === "title");
+  const surveyPages = photos.filter((p) => p.kind === "survey");
 
   return (
     <div className="space-y-6">
@@ -675,6 +699,62 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
                   caption: photo.caption || `Certificate of Title — page ${index + 1}`,
                   replaceId: photo.id,
                   kind: "title",
+                })
+              }
+              onCaption={(caption) =>
+                setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, caption } : p)))
+              }
+              onRemove={() => void removePhoto(photo)}
+              onOpenPasteMenu={openPasteMenu}
+              onOmitFromReport={(omit) => setOmitFromReport(photo.id, omit)}
+            />
+          ))}
+        </div>
+      ) : null}
+
+      <div className="rounded-md border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold text-foreground">Survey Plan</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Attach the registered survey plan PDF (or map images). Multi-page plans print page by
+          page in the annex, after the Certificate of Title. Empty slot does not print.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => surveyInputRef.current?.click()}
+            className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+          >
+            Attach survey plan PDF
+          </button>
+          <input
+            ref={surveyInputRef}
+            type="file"
+            accept="application/pdf,image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) void onSurveyFile(file);
+            }}
+          />
+        </div>
+      </div>
+
+      {surveyPages.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {surveyPages.map((photo, index) => (
+            <PhotoCard
+              key={photo.id}
+              slotLabel={photo.caption || `Survey Plan — page ${index + 1}`}
+              photo={photo}
+              uploading={uploadingIds.has(photo.id)}
+              onFile={(file) =>
+                void attachPhoto({
+                  file,
+                  slot: null,
+                  caption: photo.caption || `Survey Plan — page ${index + 1}`,
+                  replaceId: photo.id,
+                  kind: "survey",
                 })
               }
               onCaption={(caption) =>

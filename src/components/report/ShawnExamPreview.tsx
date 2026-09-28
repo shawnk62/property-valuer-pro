@@ -4,6 +4,7 @@ import {
   PHOTO_SLOTS,
   photoIsOnReport,
   salesOnReport,
+  surveyPhotosOnReport,
   titlePhotosOnReport,
   type ReportDraft,
 } from "@/lib/report/types";
@@ -219,11 +220,17 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       return found ? { ...found, caption: found.caption || label } : null;
     }).filter(Boolean),
     ...draft.photos.filter(
-      (p) => p.slot === null && p.kind !== "map" && p.kind !== "title" && photoIsOnReport(p),
+      (p) =>
+        p.slot === null &&
+        p.kind !== "map" &&
+        p.kind !== "title" &&
+        p.kind !== "survey" &&
+        photoIsOnReport(p),
     ),
   ] as typeof draft.photos;
   const mapPhotos = draft.photos.filter((p) => p.kind === "map" && photoIsOnReport(p));
   const titlePages = titlePhotosOnReport(draft.photos);
+  const surveyPages = surveyPhotosOnReport(draft.photos);
   const valueWords = m.valueAmount ? amountInWords(m.valueAmount) : "";
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], " ");
   const servicesText = draft.narrative.servicesAmenities?.trim() || "";
@@ -669,6 +676,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <H1 id="exam-10">10.0 Appendices</H1>
       <ol className="ml-5 list-decimal space-y-0.5 text-sm">
         {titlePages.length > 0 ? <li>Certificate of Title</li> : null}
+        {surveyPages.length > 0 ? <li>Survey Plan</li> : null}
         {annexurePhotos.length > 0 ? <li>Site images</li> : null}
         {printedSales.some((s) => s.photoUrl) ? <li>Comparable sale photographs</li> : null}
         {mapPhotos.length > 0 ? <li>Locality and planning maps</li> : null}
@@ -685,6 +693,27 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 <img
                   src={photo.url}
                   alt={photo.caption || "Certificate of Title"}
+                  className="mx-auto max-h-[240mm] w-auto max-w-full object-contain"
+                  style={{ border: `1px solid ${RULE}` }}
+                />
+                <figcaption className="mt-1.5 text-center text-sm">{photo.caption}</figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {surveyPages.length > 0 ? (
+        <section className="report-annexure mt-12">
+          <h2 className="text-center text-base font-semibold" style={{ color: TEAL }}>
+            Appendix — Survey Plan
+          </h2>
+          <div className="mt-6 grid gap-8">
+            {surveyPages.map((photo) => (
+              <figure key={photo.id} className="report-photo-figure break-inside-avoid">
+                <img
+                  src={photo.url}
+                  alt={photo.caption || "Survey Plan"}
                   className="mx-auto max-h-[240mm] w-auto max-w-full object-contain"
                   style={{ border: `1px solid ${RULE}` }}
                 />

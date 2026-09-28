@@ -52,9 +52,10 @@ export interface ReportPhoto {
   /**
    * When slot is null: "map" = additional labeled map/overlay tile (annex maps);
    * "title" = Certificate of Title page (annex);
+   * "survey" = Survey Plan page (annex);
    * "photo" or omitted = additional subject photograph.
    */
-  kind?: "map" | "photo" | "title";
+  kind?: "map" | "photo" | "title" | "survey";
   /**
    * When true, the image stays on the job (working file) but is omitted from
    * the printed report, Word export, cover and annexures.
@@ -72,6 +73,10 @@ export function photosOnReport(photos: ReportPhoto[] | null | undefined): Report
 
 export function titlePhotosOnReport(photos: ReportPhoto[] | null | undefined): ReportPhoto[] {
   return photosOnReport(photos).filter((p) => p.kind === "title");
+}
+
+export function surveyPhotosOnReport(photos: ReportPhoto[] | null | undefined): ReportPhoto[] {
+  return photosOnReport(photos).filter((p) => p.kind === "survey");
 }
 
 /** Relativity mark on a comparison feature (URAR-style description). */
