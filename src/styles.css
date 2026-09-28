@@ -363,6 +363,40 @@
 .sales-evidence-item .sales-col-area { width: 24mm; white-space: nowrap; }
 .sales-evidence-item .sales-col-comments { width: auto; }
 
+.risk-ratings-print table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9pt;
+}
+.risk-ratings-print th,
+.risk-ratings-print td {
+  border: 0.4pt solid #222;
+  padding: 3pt 4pt;
+  vertical-align: middle;
+}
+.risk-ratings-print thead th {
+  text-align: center;
+  font-weight: 600;
+}
+.risk-ratings-print tbody th {
+  text-align: left;
+  font-weight: 400;
+}
+.risk-ratings-print .risk-print-label { width: 38%; }
+.risk-ratings-print .risk-print-band { width: 12.4%; }
+.risk-ratings-print .risk-print-num {
+  display: block;
+  font-weight: 600;
+}
+.risk-ratings-print .risk-print-band-label {
+  display: block;
+  font-weight: 500;
+  line-height: 1.15;
+}
+.risk-ratings-print tbody td {
+  height: 7.5mm;
+}
+
 /* File number — top left of valuation summary (PDF page 2) */
 .report-file-no {
   font-family: Arial, Helvetica, sans-serif;

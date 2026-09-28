@@ -31,13 +31,8 @@ import { A4DocumentAnnex } from "@/components/report/A4DocumentAnnex";
 import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
 import { purposeOfValuation } from "@/lib/report/reportTypes";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
-import {
-  buildRiskAnalysis,
-  parseRiskScore,
-  RISK_CATEGORIES,
-  RISK_SCALE,
-  type RiskCategory,
-} from "@/lib/report/propertyRiskRatings";
+import { buildRiskAnalysis } from "@/lib/report/propertyRiskRatings";
+import { RiskRatingsPrintTable } from "@/components/report/RiskRatingsPrintTable";
 
 
 
@@ -166,57 +161,6 @@ function StripeTable({ rows }: { rows: { label: string; value: string }[] }) {
   );
 }
 
-function RiskPrintTable({
-  categories,
-  values,
-}: {
-  categories: RiskCategory[];
-  values: ReportDraft["values"];
-}) {
-  return (
-    <div className="report-table-keep">
-    <table className="report-fact-table mt-3 w-full border-collapse text-sm">
-      <thead>
-        <tr style={{ background: TEAL, color: "#fff" }}>
-          <th className="border px-2 py-1.5 text-left font-semibold" style={{ borderColor: RULE }}>
-            Risk Rating Category
-          </th>
-          {RISK_SCALE.map((col) => (
-            <th key={col.score} className="border px-1 py-1.5 text-center font-semibold" style={{ borderColor: RULE }}>
-              {col.score}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {categories.map((cat, i) => {
-          const selected = parseRiskScore(values[cat.field]);
-          return (
-            <tr key={cat.id} style={{ background: i % 2 === 0 ? STRIPE : "#fff" }}>
-              <th className="border px-2 py-1.5 text-left font-normal" style={{ borderColor: RULE }}>
-                {cat.heading}
-              </th>
-              {RISK_SCALE.map((col) => (
-                <td
-                  key={col.score}
-                  className="border px-1 py-1.5 text-center font-semibold"
-                  style={{
-                    borderColor: RULE,
-                    background: selected === col.score ? "#7eb6c9" : undefined,
-                  }}
-                >
-                  {selected === col.score ? "X" : ""}
-                </td>
-              ))}
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
-    </div>
-  );
-}
-
 const PHOTO_ANNEX_PER_PAGE = 4;
 
 function PhotoAnnexPages({ heading, children }: { heading: string; children: ReactNode }) {
@@ -292,8 +236,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], " ");
   const usableSiteArea = formatUsableSiteAreaIfDifferent(v);
   const servicesText = draft.narrative.servicesAmenities?.trim() || "";
-  const propertyRisk = RISK_CATEGORIES.filter((c) => c.group === "property");
-  const marketRisk = RISK_CATEGORIES.filter((c) => c.group === "market");
+ 
 
   const toc = [
     "Executive Summary",
@@ -643,18 +586,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep>
       </Lead>
       <Keep>
-      <H2>7.1 Property risk assessment</H2>
-      <RiskPrintTable categories={propertyRisk} values={v} />
-      <p className="mt-2 text-xs text-neutral-600">
-        1 Low, 2 Low to medium, 3 Medium, 4 Medium to high, 5 High
-      </p>
-      </Keep>
-      <Keep>
-      <H2>7.2 Market risk assessment</H2>
-      <RiskPrintTable categories={marketRisk} values={v} />
-      <p className="mt-2 text-xs text-neutral-600">
-        1 Low, 2 Low to medium, 3 Medium, 4 Medium to high, 5 High
-      </p>
+      <RiskRatingsPrintTable values={v} />
       </Keep>
       <div className="mt-4">
         <Prose text={buildRiskAnalysis(v) || get(v, "exam_risk_commentary") || ""} />
