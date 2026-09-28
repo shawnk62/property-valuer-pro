@@ -104,6 +104,45 @@ export function joinValues(
     .join(separator);
 }
 
+function areaCompareToken(raw: string): string {
+  const t = raw.trim().toLowerCase().replace(/,/g, "");
+  const num = t.match(/^([\d.]+)/);
+  if (num) return num[1]!;
+  return t.replace(/\s+/g, "");
+}
+
+export function formatSiteAreaDisplay(values: InspectionValues): string {
+  return joinValues(values, ["prop_sitearea", "prop_areaunit"], " ").trim();
+}
+
+/**
+ * Estimated usable site area for print. Empty when the figure matches the
+ * recorded site area (default on the form) so the report does not repeat it.
+ */
+export function formatUsableSiteAreaIfDifferent(values: InspectionValues): string {
+  const usableRaw = get(values, "prop_usable_sitearea").trim();
+  if (!usableRaw) return "";
+  const siteRaw = get(values, "prop_sitearea").trim();
+  if (siteRaw && areaCompareToken(usableRaw) === areaCompareToken(siteRaw)) {
+    return "";
+  }
+  if (/(m[²2]|ha|hectare|sq\.?\s*m|sqm)/i.test(usableRaw)) return usableRaw;
+  const unit = get(values, "prop_areaunit").trim();
+  return unit ? `${usableRaw} ${unit}` : usableRaw;
+}
+
+/** Site area rows for any report type. Usable row only when it differs. */
+export function siteAreaPrintRows(
+  values: InspectionValues,
+): { label: string; value: string }[] {
+  const rows: { label: string; value: string }[] = [];
+  const site = formatSiteAreaDisplay(values);
+  if (site) rows.push({ label: labelFor("prop_sitearea") || "Site area", value: site });
+  const usable = formatUsableSiteAreaIfDifferent(values);
+  if (usable) rows.push({ label: "Estimated usable site area", value: usable });
+  return rows;
+}
+
 export const SCHEMA_VERSION = (schema as unknown as { version: string }).version;
 
 /** Classification dropdowns on page 1 of the inspection form. */

@@ -3,6 +3,7 @@ import { BOILERPLATE } from "@/lib/report/boilerplate";
 import {
   formatHbuVacant,
   formatPropertyType,
+  formatUsableSiteAreaIfDifferent,
   get,
   hasValue,
   joinValues,
@@ -726,6 +727,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
     .join(", ");
 
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], "");
+  const usableSiteArea = formatUsableSiteAreaIfDifferent(v);
   const annexurePhotos = [
     ...PHOTO_SLOTS.map(({ slot, label }) => {
       const found = draft.photos.find((p) => p.slot === slot && photoIsOnReport(p));
@@ -906,6 +908,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                   value: get(v, "prop_lotplan"),
                 },
                 { label: "LAND AREA", value: siteArea },
+                { label: "ESTIMATED USABLE SITE AREA", value: usableSiteArea },
                 { label: "ZONING", value: get(v, "prop_zoning") },
                 {
                   label: isJointFamilyLawPhilType(reportType.id)
@@ -1149,6 +1152,9 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             </Sub>
             <Sub title="2.2  Land Area">
               <Para>{siteArea || "—"}</Para>
+              {usableSiteArea ? (
+                <Para>Estimated usable site area: {usableSiteArea}</Para>
+              ) : null}
             </Sub>
             <Sub title="2.3  Registered Owner">
               <Para>
@@ -1512,11 +1518,14 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                     "exc",
                     "prop_view",
                   ]}
-                  extra={
-                    siteArea
+                  extra={[
+                    ...(siteArea
                       ? [{ label: labelFor("prop_sitearea"), value: siteArea }]
-                      : []
-                  }
+                      : []),
+                    ...(usableSiteArea
+                      ? [{ label: "Estimated usable site area", value: usableSiteArea }]
+                      : []),
+                  ]}
                 />
               )}
             </Sub>

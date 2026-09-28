@@ -22,7 +22,7 @@ import { buildPhilRemarks, buildMurrayRemarks, buildSummaryDescription } from "@
 import { annexureById, resolveAnnexures } from "@/lib/report/annexures";
 import { parseOverlayList } from "@/lib/report/overlays";
 import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
-import { formatHbuVacant, formatPropertyType, get, hasValue, joinValues, labelFor, PROPERTY_PLANNING_FIELDS } from "@/lib/report/schema";
+import { formatHbuVacant, formatPropertyType, formatUsableSiteAreaIfDifferent, get, hasValue, joinValues, labelFor, PROPERTY_PLANNING_FIELDS } from "@/lib/report/schema";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
 
@@ -296,6 +296,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   const m = draft.reportMeta;
   const addr = addressLine(draft);
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], "");
+  const usableSiteArea = formatUsableSiteAreaIfDifferent(v);
   const children: (Paragraph | Table)[] = [];
 
   // ---- Cover (mirrors ReportPreview header + summary band) ----
@@ -558,7 +559,12 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
             "exc",
             "prop_view",
           ],
-          siteArea ? [{ label: labelFor("prop_sitearea"), value: siteArea }] : [],
+          [
+            ...(siteArea ? [{ label: labelFor("prop_sitearea"), value: siteArea }] : []),
+            ...(usableSiteArea
+              ? [{ label: "Estimated usable site area", value: usableSiteArea }]
+              : []),
+          ],
         ),
       );
     }

@@ -1,5 +1,10 @@
 import type { ReactElement, ReactNode } from "react";
-import { formatPropertyType, get, joinValues } from "@/lib/report/schema";
+import {
+  formatPropertyType,
+  formatUsableSiteAreaIfDifferent,
+  get,
+  joinValues,
+} from "@/lib/report/schema";
 import {
   PHOTO_SLOTS,
   photoIsOnReport,
@@ -233,6 +238,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const surveyPages = surveyPhotosOnReport(draft.photos);
   const valueWords = m.valueAmount ? amountInWords(m.valueAmount) : "";
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], " ");
+  const usableSiteArea = formatUsableSiteAreaIfDifferent(v);
   const servicesText = draft.narrative.servicesAmenities?.trim() || "";
   const propertyRisk = RISK_CATEGORIES.filter((c) => c.group === "property");
   const marketRisk = RISK_CATEGORIES.filter((c) => c.group === "market");
@@ -369,6 +375,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       {!draft.narrative.sitePhysical?.trim() ? (
         <Para>
           {siteArea ? `The subject allotment has an area of ${siteArea}. ` : ""}
+          {usableSiteArea
+            ? `Estimated usable site area is ${usableSiteArea}. `
+            : ""}
           {get(v, "prop_shape") ? `Allotment shape is recorded as ${get(v, "prop_shape")}. ` : ""}
           {get(v, "prop_lot_position") ? `Lot position is ${get(v, "prop_lot_position")}.` : ""}
         </Para>
@@ -392,7 +401,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <StripeTable
         rows={[
           { label: "Area", value: siteArea },
-          { label: "Usable site area", value: get(v, "prop_usable_sitearea") },
+          { label: "Estimated usable site area", value: usableSiteArea },
           { label: "Dimensions", value: get(v, "prop_dimensions") },
           { label: "Frontage", value: get(v, "prop_frontage") },
           { label: "Allotment shape", value: get(v, "prop_shape") },
