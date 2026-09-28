@@ -13,7 +13,7 @@ import {
 } from "@/lib/report/schema";
 import { A4DocumentAnnex } from "@/components/report/A4DocumentAnnex";
 import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
-import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, surveyPhotosOnReport, titlePhotosOnReport, type ReportDraft } from "@/lib/report/types";
+import { MAP_SLOTS, PHOTO_SLOTS, isMapAnnexPhoto, isSurveyAnnexPhoto, isTitleAnnexPhoto, photoIsOnReport, salesOnReport, surveyPhotosOnReport, titlePhotosOnReport, type ReportDraft } from "@/lib/report/types";
 import {
   getReportTypeConfig,
   isJointFamilyLawPhilType,
@@ -467,7 +467,7 @@ function TableOfContents({
 function Sub({ title, children }: { title: string; children: React.ReactNode }) {
   if (!children) return null;
   return (
-    <div>
+    <div className="report-keep-block">
       <h3 className="report-h2 text-[0.9375rem] font-semibold">{title}</h3>
       <div className="mt-1 space-y-2">{children}</div>
     </div>
@@ -738,9 +738,9 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
     ...draft.photos.filter(
       (p) =>
         p.slot === null &&
-        p.kind !== "map" &&
-        p.kind !== "title" &&
-        p.kind !== "survey" &&
+        !isMapAnnexPhoto(p) &&
+        !isTitleAnnexPhoto(p) &&
+        !isSurveyAnnexPhoto(p) &&
         photoIsOnReport(p),
     ),
   ] as typeof draft.photos;
@@ -1996,16 +1996,10 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       {mapPhotos.length > 0 ? (
         <section id="report-annexure-maps" className="report-annexure mt-12">
           <h2 className="report-h1 text-center">{mapsAnnex?.heading ?? "Annexure — Maps & planning layers"}</h2>
-          <div className="mt-6 grid gap-6 sm:grid-cols-1">
+          <div className="mt-6">
             {mapPhotos.map((photo) => (
-              <figure key={photo.id} className="report-photo-figure break-inside-avoid">
-                <img
-                  src={photo.url}
-                  alt={photo.caption || "Map"}
-                  className="w-full border border-[var(--rule)] object-contain"
-                  loading="eager"
-                  decoding="sync"
-                />
+              <figure key={photo.id} className="report-map-figure">
+                <img src={photo.url} alt={photo.caption || "Map"} />
                 <figcaption className="mt-1.5 text-center text-sm font-medium">
                   {photo.caption}
                 </figcaption>

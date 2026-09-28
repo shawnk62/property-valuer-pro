@@ -1151,6 +1151,20 @@
     margin: 0 0 3mm 0 !important;
   }
 
+  #report-preview-sheet .report-a4-page,
+  .report-a4-page {
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 265mm !important;
+    max-height: 265mm !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+  }
+
+  #report-preview-sheet .report-a4-page img,
   .report-a4-page img {
     flex: 1 1 auto !important;
     display: block !important;
@@ -1163,6 +1177,31 @@
     object-position: top center !important;
     border: none !important;
     aspect-ratio: auto !important;
+  }
+
+  .report-keep-block {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .report-map-figure {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 0 10pt 0 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  #report-preview-sheet .report-map-figure img,
+  .report-map-figure img {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 220mm !important;
+    object-fit: contain !important;
+    object-position: top center !important;
+    border: 0.3pt solid #ccc !important;
   }
 
   /* Logo and other non-annexure images still scale naturally */

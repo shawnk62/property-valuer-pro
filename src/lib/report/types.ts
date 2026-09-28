@@ -71,12 +71,27 @@ export function photosOnReport(photos: ReportPhoto[] | null | undefined): Report
   return (photos ?? []).filter((p) => p.omitFromReport !== true);
 }
 
+export function isTitleAnnexPhoto(photo: ReportPhoto): boolean {
+  if (photo.kind === "title") return true;
+  return /^certificate of title/i.test(photo.caption || "");
+}
+
+export function isSurveyAnnexPhoto(photo: ReportPhoto): boolean {
+  if (photo.kind === "survey") return true;
+  return /^survey plan/i.test(photo.caption || "");
+}
+
+export function isMapAnnexPhoto(photo: ReportPhoto): boolean {
+  if (photo.kind === "map") return true;
+  return Boolean(photo.slot && String(photo.slot).startsWith("map_"));
+}
+
 export function titlePhotosOnReport(photos: ReportPhoto[] | null | undefined): ReportPhoto[] {
-  return photosOnReport(photos).filter((p) => p.kind === "title");
+  return photosOnReport(photos).filter(isTitleAnnexPhoto);
 }
 
 export function surveyPhotosOnReport(photos: ReportPhoto[] | null | undefined): ReportPhoto[] {
-  return photosOnReport(photos).filter((p) => p.kind === "survey");
+  return photosOnReport(photos).filter(isSurveyAnnexPhoto);
 }
 
 /** Relativity mark on a comparison feature (URAR-style description). */

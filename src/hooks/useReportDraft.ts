@@ -165,9 +165,16 @@ function photosFromCloud(extras: ReportExtras | null | undefined): ReportPhoto[]
       ...((p as { capturedAt?: string }).capturedAt
         ? { capturedAt: String((p as { capturedAt?: string }).capturedAt) }
         : {}),
-      ...((p as { kind?: string }).kind === "map" || (p as { kind?: string }).kind === "photo"
-        ? { kind: (p as { kind?: "map" | "photo" }).kind }
-        : {}),
+      ...((() => {
+        const kind = (p as { kind?: string }).kind;
+        if (kind === "map" || kind === "photo" || kind === "title" || kind === "survey") {
+          return { kind: kind as ReportPhoto["kind"] };
+        }
+        const cap = String(p.caption ?? "");
+        if (/^certificate of title/i.test(cap)) return { kind: "title" as const };
+        if (/^survey plan/i.test(cap)) return { kind: "survey" as const };
+        return {};
+      })()),
       ...((p as { omitFromReport?: boolean }).omitFromReport
         ? { omitFromReport: true }
         : {}),

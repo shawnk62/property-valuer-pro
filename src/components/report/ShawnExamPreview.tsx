@@ -1,12 +1,17 @@
 import type { ReactElement, ReactNode } from "react";
 import {
+  formatHbuVacant,
   formatPropertyType,
   formatUsableSiteAreaIfDifferent,
   get,
   joinValues,
 } from "@/lib/report/schema";
 import {
+  MAP_SLOTS,
   PHOTO_SLOTS,
+  isMapAnnexPhoto,
+  isSurveyAnnexPhoto,
+  isTitleAnnexPhoto,
   photoIsOnReport,
   salesOnReport,
   surveyPhotosOnReport,
@@ -233,13 +238,21 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     ...draft.photos.filter(
       (p) =>
         p.slot === null &&
-        p.kind !== "map" &&
-        p.kind !== "title" &&
-        p.kind !== "survey" &&
+        !isMapAnnexPhoto(p) &&
+        !isTitleAnnexPhoto(p) &&
+        !isSurveyAnnexPhoto(p) &&
         photoIsOnReport(p),
     ),
   ] as typeof draft.photos;
-  const mapPhotos = draft.photos.filter((p) => p.kind === "map" && photoIsOnReport(p));
+  const mapPhotos = [
+    ...MAP_SLOTS.map(({ slot, label }) => {
+      const found = draft.photos.find((p) => p.slot === slot && photoIsOnReport(p));
+      return found ? { ...found, caption: found.caption || label } : null;
+    }).filter(Boolean),
+    ...draft.photos.filter(
+      (p) => p.slot === null && isMapAnnexPhoto(p) && photoIsOnReport(p),
+    ),
+  ] as typeof draft.photos;
   const titlePages = titlePhotosOnReport(draft.photos);
   const surveyPages = surveyPhotosOnReport(draft.photos);
   const valueWords = m.valueAmount ? amountInWords(m.valueAmount) : "";
@@ -429,12 +442,14 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           { label: "Zoning compliance", value: get(v, "prop_zoning_comp") },
         ]}
       />
-      {draft.narrative.highestBestUse?.trim() ? (
-        <>
-          <H2>Highest and Best Use</H2>
+      <div className="report-keep-block">
+        <H2>3.2 Highest and Best Use</H2>
+        {draft.narrative.highestBestUse?.trim() ? (
           <Prose text={draft.narrative.highestBestUse} />
-        </>
-      ) : null}
+        ) : (
+          <Para>{formatHbuVacant(v) || "Record the highest and best use of the subject property."}</Para>
+        )}
+      </div>
 
       <H1 id="exam-4">4.0 Environmental Issues</H1>
       <Para>
@@ -706,15 +721,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           <h2 className="text-center text-base font-semibold" style={{ color: TEAL }}>
             Appendix — Maps
           </h2>
-          <div className="mt-6 grid gap-6">
+          <div className="mt-6">
             {mapPhotos.map((photo) => (
-              <figure key={photo.id} className="report-photo-figure break-inside-avoid">
-                <img
-                  src={photo.url}
-                  alt={photo.caption || "Map"}
-                  className="mx-auto max-h-[28rem] w-auto max-w-full object-contain"
-                  style={{ border: `1px solid ${RULE}` }}
-                />
+              <figure key={photo.id} className="report-map-figure">
+                <img src={photo.url} alt={photo.caption || "Map"} />
                 <figcaption className="mt-1.5 text-center text-sm">{photo.caption}</figcaption>
               </figure>
             ))}
