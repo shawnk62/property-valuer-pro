@@ -1183,6 +1183,24 @@
     page-break-inside: avoid !important;
   }
 
+  /* Executive Summary + valuer signature stay on one sheet after the TOC. */
+  .report-exam-summary-sheet {
+    break-before: page !important;
+    page-break-before: always !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+
+  .report-exam-summary-sheet .report-h2 {
+    margin-top: 0 !important;
+  }
+
+  .report-exam-summary-sheet .report-signature {
+    margin-top: 6pt !important;
+  }
+
   .report-map-figure {
     display: block !important;
     width: 100% !important;

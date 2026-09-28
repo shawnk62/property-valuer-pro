@@ -334,7 +334,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ))}
       </ol>
 
-      <Keep>
+      <div className="report-exam-summary-sheet report-keep-block">
       <H1>Executive Summary</H1>
       <Para>
         Instructions were received from {instructing} to prepare a valuation of
@@ -360,17 +360,17 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           { label: "Date of Valuation", value: m.valueDate },
         ]}
       />
-      </Keep>
       {m.valueAmount ? (
-        <div className="mt-6 text-center">
+        <div className="mt-4 text-center">
           <p>The Market Valuation of {addressLine || "the subject property"} is:</p>
           <p className="mt-2 text-xl font-semibold">${formatCurrencyDisplay(m.valueAmount)}</p>
           {valueWords ? <p className="mt-1">({valueWords})</p> : null}
         </div>
       ) : null}
-      <div className="mt-8">
+      <div className="mt-4">
         <p className="text-sm">Signature of Student Valuer</p>
         <ExamSignature draft={draft} />
+      </div>
       </div>
 
       <H1 id="exam-1">1.0 Basis of Value</H1>
