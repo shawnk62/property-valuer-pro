@@ -1,4 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
+import { australianiseSpelling } from "@/lib/report/australianEnglish";
 import {
   formatHbuVacant,
   formatPropertyType,
@@ -79,7 +80,7 @@ function Prose({ text }: { text: string }) {
   if (!text.trim()) return null;
   return (
     <>
-      {text
+      {australianiseSpelling(text)
         .split(/\n{1,}/)
         .map((line) => line.trim())
         .filter(Boolean)

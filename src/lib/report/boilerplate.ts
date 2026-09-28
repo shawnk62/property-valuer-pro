@@ -11,7 +11,7 @@ export const BOILERPLATE = {
     company: "PETERSON PROPERTY VALUATIONS PTY LTD",
     acn: "603 599 604",
     abn: "78 603 599 604",
-    defaultValuer: "Murray Peterson, AVI, Certified Practicing Valuer",
+    defaultValuer: "Murray Peterson, AVI, Certified Practising Valuer",
     defaultRegistration: "Registered Valuer No. 3799",
     postal: "Postal Address: PO Box 353, Wilston, QLD, 4051",
     phone: "Phone: 07 3355 1311",

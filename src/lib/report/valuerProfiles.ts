@@ -14,7 +14,7 @@ export type ValuerProfile = {
   displayName: string;
   /**
    * Primary credentials line under company on the cover
-   * e.g. "Phillip R Peterson, AVI, Certified Practicing Valuer"
+   * e.g. "Phillip R Peterson, AVI, Certified Practising Valuer"
    */
   credentialsLine: string;
   /** Second line: Registered Valuer No. … */
@@ -48,9 +48,9 @@ const TRADING = "Real Estate Valuers";
 export const PHIL_PROFILE: ValuerProfile = {
   id: "phil",
   displayName: "Phillip R Peterson",
-  credentialsLine: "Phillip R Peterson, AVI, Certified Practicing Valuer",
+  credentialsLine: "Phillip R Peterson, AVI, Certified Practising Valuer",
   registrationLine: "Registered Valuer No. 1083",
-  membershipLine: "AVI, Certified Practicing Valuer — Registered Valuer No. 1083",
+  membershipLine: "AVI, Certified Practising Valuer — Registered Valuer No. 1083",
   firm: FIRM_META,
   companyLine: COMPANY_LINE,
   tradingAs: TRADING,
@@ -67,9 +67,9 @@ export const PHIL_PROFILE: ValuerProfile = {
 export const MURRAY_PROFILE: ValuerProfile = {
   id: "murray",
   displayName: "Murray Peterson",
-  credentialsLine: "Murray Peterson, AVI, Certified Practicing Valuer",
+  credentialsLine: "Murray Peterson, AVI, Certified Practising Valuer",
   registrationLine: "Registered Valuer No. 3799",
-  membershipLine: "AVI, Certified Practicing Valuer — Registered Valuer No. 3799",
+  membershipLine: "AVI, Certified Practising Valuer — Registered Valuer No. 3799",
   firm: FIRM_META,
   companyLine: COMPANY_LINE,
   tradingAs: TRADING,

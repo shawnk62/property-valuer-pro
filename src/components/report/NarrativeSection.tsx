@@ -10,6 +10,7 @@ import {
   generateNarrative,
   isPhilAssignment,
 } from "@/lib/report/narrative";
+import { australianiseSpelling } from "@/lib/report/australianEnglish";
 import type { ReportNarrative } from "@/lib/report/types";
 import {
   buildLocationFacts,
@@ -494,7 +495,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       const current = narrativeRef.current;
       for (const [k, v] of Object.entries(next) as [keyof ReportNarrative, string][]) {
         if (!v.trim()) continue;
-        if (overwrite || !String(current[k] ?? "").trim()) safe[k] = v;
+        if (overwrite || !String(current[k] ?? "").trim()) safe[k] = australianiseSpelling(v);
       }
 
       if (Object.keys(safe).length > 0) {

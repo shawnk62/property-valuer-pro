@@ -7,6 +7,8 @@
  * - sale price < valuation → Overall inferior to the subject
  * - equal                   → Overall comparable to the subject
  */
+import { australianiseSpelling } from "./australianEnglish";
+
 const INFERIOR = "Overall inferior to the subject";
 const SUPERIOR = "Overall superior to the subject";
 const COMPARABLE = "Overall comparable to the subject";
@@ -142,7 +144,9 @@ export function collapseSpacedLetters(text: string): string {
 
 /** Normalise narrative/comment text before save or display. */
 export function cleanSaleProse(text: string): string {
-  return collapseSpacedLetters(String(text ?? "").replace(/\s{2,}/g, " ")).trim();
+  return australianiseSpelling(
+    collapseSpacedLetters(String(text ?? "").replace(/\s{2,}/g, " ")).trim(),
+  );
 }
 
 export function relativityPhrase(salePrice: string, valueAmount: string): string | null {

@@ -17,6 +17,7 @@ import {
   TextRun,
   WidthType,
 } from "docx";
+import { australianiseSpelling } from "@/lib/report/australianEnglish";
 import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { buildPhilRemarks, buildMurrayRemarks, buildSummaryDescription } from "@/lib/report/narrative";
 import { annexureById, resolveAnnexures } from "@/lib/report/annexures";
@@ -87,7 +88,7 @@ function subHeading(title: string) {
 }
 
 function prose(body: string): Paragraph[] {
-  return body
+  return australianiseSpelling(body)
     .split(/\n+/)
     .map((line) => line.trim())
     .filter(Boolean)

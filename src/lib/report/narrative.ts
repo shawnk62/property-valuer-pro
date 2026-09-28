@@ -3,6 +3,7 @@ import { isCommercialType, isMixedUseCommercial, isVacantLand } from "@/lib/insp
 import { BOILERPLATE } from "./boilerplate";
 import { displayValue, hasValue, joinValues } from "./schema";
 import type { InspectionValues, ReportNarrative } from "./types";
+import { australianiseSpelling } from "./australianEnglish";
 import { buildRiskAnalysis } from "./propertyRiskRatings";
 
 /**
@@ -1049,7 +1050,7 @@ export function generateNarrative(
   const brief =
     buildBrief(values) ||
     sentence(["The subject property is located at", fullAddress(values)]);
-  return {
+  const raw: ReportNarrative = {
     brief,
     location: buildLocation(values, opts?.locationSentence),
     neighbourhood: buildNeighbourhood(values),
@@ -1077,6 +1078,9 @@ export function generateNarrative(
       brief: opts?.brief || brief,
     }),
   };
+  return Object.fromEntries(
+    Object.entries(raw).map(([k, v]) => [k, typeof v === "string" ? australianiseSpelling(v) : v]),
+  ) as ReportNarrative;
 }
 
 export { fullAddress, buildPhilRemarks, buildMurrayRemarks, isPhilAssignment, isMurrayAssignment };

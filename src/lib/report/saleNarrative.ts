@@ -100,7 +100,7 @@ Rules:
 - Mention material differences only; do not list every "similar" feature.
 - Use ONLY provided facts and marks. Do not invent features, prices, or adjustments.
 - Do NOT invent overall superior/inferior — that phrase is appended outside the model.
-- Plain Australian valuation English. No bullet points or adjustment schedules.`
+- Plain Australian valuation English and Australian spelling (neighbourhood, analyse, metres). No bullet points or adjustment schedules.`
     : compact
     ? `You are writing sales evidence notes for an Australian residential valuation report (QLD), matching Peterson / Phil sample style (Stamp Duty - Phil only).
 Write ONE compact note — ideally 1–2 short sentences, maximum about 45 words.
@@ -114,7 +114,7 @@ Rules:
 - Use ONLY the facts and marks provided. Do not invent features, prices, or adjustments.
 - Do NOT invent overall superior/inferior — that phrase is appended outside the model.
 - No bullet points, headings, or dollar adjustment schedules.
-- Tone: plain professional valuation English. Prefer short clauses over long sentences.`
+- Tone: plain professional valuation English. Australian spelling only. Prefer short clauses over long sentences.`
     : `You are writing sales evidence comments for an Australian Capital Gains Tax / full valuation report (QLD), matching Peterson CGT sample style.
 Write ONE professional paragraph of 3–6 sentences comparing this comparable sale to the subject.
 Style (match this tone and density):
@@ -124,7 +124,7 @@ Style (match this tone and density):
 - Do not invent features, prices, or adjustments. Use only facts and marks provided.
 - Do NOT invent overall superior/inferior — that phrase is appended outside the model.
 - No bullet points, headings, or dollar adjustment schedules unless a net figure is clearly useful in one short clause.
-- Tone: formal Australian valuation English.`;
+- Tone: formal Australian valuation English and Australian spelling only.`;
 
   const writeInstruction = murrayStamp
     ? "Write the Murray Stamp Duty sales-evidence note now (2–4 short sentences). Do not end with overall superior/inferior — that is applied separately."

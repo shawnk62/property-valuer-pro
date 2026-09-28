@@ -215,6 +215,7 @@ function conditionOfImprovementsAnswers(values: InspectionValues): string {
 const BASE_RULES = `
 You are writing formal valuation narrative for a Queensland Registered Valuer's report (Peterson Property Valuations style).
 Write in plain, professional Australian valuation English suitable for inclusion in the report.
+Use Australian spelling only (neighbourhood, analyse, organisation, coloured, practising, metres, kilometres). Never use American spelling.
 Describe only what is recorded in the inspection data. Do not invent measurements, materials, values, or conditions.
 If a detail is not recorded, omit it rather than guess.
 Use third-person, objective tone. Avoid marketing language.
