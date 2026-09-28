@@ -102,10 +102,10 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
     },
   ];
   if (shawnExam) {
-    blocks.splice(blocks.length - 1, 0, {
+    blocks.unshift({
       key: "riskAnalysis",
       label: "Risk analysis",
-      hint: "One short paragraph per PropertyPRO heading. Uses the selected 1–5 scores. Manual text is kept.",
+      hint: "Prints under the risk tables. One short paragraph per PropertyPRO heading. Manual text is kept.",
     });
   }
   return blocks;
