@@ -1148,15 +1148,15 @@
     overflow: visible !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
-    break-after: page !important;
-    page-break-after: always !important;
+    break-after: auto !important;
+    page-break-after: auto !important;
     break-before: auto !important;
     page-break-before: auto !important;
   }
 
-  .report-a4-annex .report-a4-page:last-child {
-    break-after: auto !important;
-    page-break-after: auto !important;
+  .report-a4-page + .report-a4-page {
+    break-before: page !important;
+    page-break-before: always !important;
   }
 
   .report-a4-page .photo-annex-heading {
