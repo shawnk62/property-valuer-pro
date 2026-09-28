@@ -11,6 +11,7 @@ import {
   pick,
   PROPERTY_PLANNING_FIELDS,
 } from "@/lib/report/schema";
+import { A4DocumentAnnex } from "@/components/report/A4DocumentAnnex";
 import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
 import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, surveyPhotosOnReport, titlePhotosOnReport, type ReportDraft } from "@/lib/report/types";
 import {
@@ -1982,47 +1983,14 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         </section>
       ) : null}
 
-      {titlePages.length > 0 ? (
-        <section id="report-annexure-title" className="report-a4-annex mt-12">
-          <h2 className="report-h1 text-center">
-            {titleAnnex?.heading ?? "Annexure — Certificate of Title"}
-          </h2>
-          {titlePages.map((photo) => (
-            <figure key={photo.id} className="report-a4-page">
-              <figcaption className="text-center text-sm font-medium">
-                {photo.caption || "Certificate of Title"}
-              </figcaption>
-              <img
-                src={photo.url}
-                alt={photo.caption || "Certificate of Title"}
-                loading="eager"
-                decoding="sync"
-              />
-            </figure>
-          ))}
-        </section>
-      ) : null}
-
-      {surveyPages.length > 0 ? (
-        <section id="report-annexure-survey" className="report-a4-annex mt-12">
-          <h2 className="report-h1 text-center">
-            {surveyAnnex?.heading ?? "Annexure — Survey Plan"}
-          </h2>
-          {surveyPages.map((photo) => (
-            <figure key={photo.id} className="report-a4-page">
-              <figcaption className="text-center text-sm font-medium">
-                {photo.caption || "Survey Plan"}
-              </figcaption>
-              <img
-                src={photo.url}
-                alt={photo.caption || "Survey Plan"}
-                loading="eager"
-                decoding="sync"
-              />
-            </figure>
-          ))}
-        </section>
-      ) : null}
+      <A4DocumentAnnex
+        heading={titleAnnex?.heading ?? "Annexure — Certificate of Title"}
+        pages={titlePages}
+      />
+      <A4DocumentAnnex
+        heading={surveyAnnex?.heading ?? "Annexure — Survey Plan"}
+        pages={surveyPages}
+      />
 
       {/* ---- Maps annexure (only filled map slots) ---- */}
       {mapPhotos.length > 0 ? (

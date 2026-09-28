@@ -388,6 +388,9 @@
   object-fit: contain;
   background: #fff;
 }
+.report-a4-page .photo-annex-heading {
+  margin-bottom: 0.5rem;
+}
 
 /* global @page page numbers — applied when printing */
 @page {
@@ -1106,38 +1109,50 @@
   }
 
   /*
-   * Certificate of Title / Survey Plan: each source page is A4.
+   * Certificate of Title / Survey Plan: one A4 sheet per source page.
+   * Heading stays with the image. Image uses contain so the page is not cropped.
    * Must not inherit the 47% × 72mm photo-tile rules.
    */
-  .report-a4-annex > h2 {
-    display: none !important;
+  .report-a4-annex.report-annexure {
+    break-before: page !important;
+    page-break-before: always !important;
   }
 
   .report-a4-page {
-    display: block !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
     width: 100% !important;
     max-width: 100% !important;
-    height: auto !important;
+    height: 265mm !important;
+    max-height: 265mm !important;
     margin: 0 !important;
-    page-break-before: always !important;
-    break-before: page !important;
-    page-break-inside: avoid !important;
+    overflow: hidden !important;
     break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: page !important;
+    page-break-after: always !important;
+    break-before: auto !important;
+    page-break-before: auto !important;
   }
 
-  .report-a4-page figcaption {
-    display: block !important;
-    margin: 0 0 2mm 0 !important;
-    font-size: 9pt !important;
-    text-align: center !important;
+  .report-a4-annex .report-a4-page:last-child {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+
+  .report-a4-page .photo-annex-heading {
+    flex: 0 0 auto !important;
+    margin: 0 0 3mm 0 !important;
   }
 
   .report-a4-page img {
+    flex: 1 1 auto !important;
     display: block !important;
-    width: 100% !important;
+    width: auto !important;
     max-width: 100% !important;
-    height: 248mm !important;
-    max-height: 248mm !important;
+    height: auto !important;
+    max-height: 252mm !important;
     margin: 0 auto !important;
     object-fit: contain !important;
     object-position: top center !important;

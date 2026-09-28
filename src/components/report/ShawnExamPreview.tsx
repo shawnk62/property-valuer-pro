@@ -13,6 +13,7 @@ import {
   titlePhotosOnReport,
   type ReportDraft,
 } from "@/lib/report/types";
+import { A4DocumentAnnex } from "@/components/report/A4DocumentAnnex";
 import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
 import { purposeOfValuation } from "@/lib/report/reportTypes";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
@@ -90,7 +91,7 @@ function H1({ id, children }: { id?: string; children: React.ReactNode }) {
   return (
     <h2
       id={id}
-      className="mt-8 border-b pb-1 text-[1.05rem] font-semibold"
+      className="report-h2 mt-8 border-b pb-1 text-[1.05rem] font-semibold"
       style={{ color: TEAL, borderColor: RULE }}
     >
       {children}
@@ -100,7 +101,7 @@ function H1({ id, children }: { id?: string; children: React.ReactNode }) {
 
 function H2({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
+    <h3 className="report-h2 mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
       {children}
     </h3>
   );
@@ -110,7 +111,7 @@ function StripeTable({ rows }: { rows: { label: string; value: string }[] }) {
   const shown = rows.filter((r) => r.value.trim());
   if (shown.length === 0) return null;
   return (
-    <table className="mt-3 w-full border-collapse text-sm">
+    <table className="report-fact-table mt-3 w-full border-collapse text-sm">
       <tbody>
         {shown.map((row, i) => (
           <tr key={`${row.label}-${i}`} style={{ background: i % 2 === 0 ? STRIPE : "#fff" }}>
@@ -135,7 +136,7 @@ function RiskPrintTable({
   values: ReportDraft["values"];
 }) {
   return (
-    <table className="mt-3 w-full border-collapse text-sm">
+    <table className="report-fact-table mt-3 w-full border-collapse text-sm">
       <thead>
         <tr style={{ background: TEAL, color: "#fff" }}>
           <th className="border px-2 py-1.5 text-left font-semibold" style={{ borderColor: RULE }}>
@@ -648,33 +649,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {mapPhotos.length > 0 ? <li>Locality and planning maps</li> : null}
       </ol>
 
-      {titlePages.length > 0 ? (
-        <section className="report-a4-annex mt-12">
-          <h2 className="text-center text-base font-semibold" style={{ color: TEAL }}>
-            Appendix — Certificate of Title
-          </h2>
-          {titlePages.map((photo) => (
-            <figure key={photo.id} className="report-a4-page">
-              <figcaption className="text-center text-sm">{photo.caption || "Certificate of Title"}</figcaption>
-              <img src={photo.url} alt={photo.caption || "Certificate of Title"} />
-            </figure>
-          ))}
-        </section>
-      ) : null}
-
-      {surveyPages.length > 0 ? (
-        <section className="report-a4-annex mt-12">
-          <h2 className="text-center text-base font-semibold" style={{ color: TEAL }}>
-            Appendix — Survey Plan
-          </h2>
-          {surveyPages.map((photo) => (
-            <figure key={photo.id} className="report-a4-page">
-              <figcaption className="text-center text-sm">{photo.caption || "Survey Plan"}</figcaption>
-              <img src={photo.url} alt={photo.caption || "Survey Plan"} />
-            </figure>
-          ))}
-        </section>
-      ) : null}
+      <A4DocumentAnnex heading="Appendix — Certificate of Title" pages={titlePages} />
+      <A4DocumentAnnex heading="Appendix — Survey Plan" pages={surveyPages} />
 
       {annexurePhotos.length > 0 ? (
         <section className="report-annexure report-annexure-subject mt-12">
