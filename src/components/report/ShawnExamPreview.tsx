@@ -266,6 +266,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       className="report-sheet report-type-exam mx-auto max-w-[52rem] px-8 py-10 shadow-sm sm:px-12 sm:py-14"
     >
       <section className="exam-cover break-after-page text-center">
+        <header className="exam-wordmark">
+          <p className="exam-wordmark-name">{EXAM.firmName}</p>
+          <p className="exam-wordmark-trade">{EXAM.firmTrade}</p>
+        </header>
         {frontPhoto?.url ? (
           <figure className="exam-cover-photo mx-auto">
             <img
@@ -584,6 +588,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep>
       </Lead>
       <Keep>
+      <H2>7.1 Property risk assessment</H2>
       <RiskRatingsPrintTable values={v} />
       </Keep>
       <div className="mt-4">

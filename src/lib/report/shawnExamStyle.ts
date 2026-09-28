@@ -1,16 +1,19 @@
 /**
  * Visual tokens for Shawn Exam (and future Shawn-*) printed reports.
- * Sourced from the Kelly & Company Style-3 specimen. Content is unchanged.
+ * Sampled from Report — Style-3 (Kelly & Company) pages 1–3.
  */
 export const SHAWN_EXAM_STYLE = {
-  navy: "#1B2A4A",
-  slate: "#5C6B7A",
-  muted: "#6B7280",
-  ink: "#1C1C1C",
-  rule: "#D0D5DC",
-  stripe: "#F3F4F6",
-  headerBg: "#1B2A4A",
+  navy: "#1A2740",
+  navyDeep: "#152033",
+  slate: "#8A93A0",
+  muted: "#6E7783",
+  ink: "#1A1D23",
+  rule: "#D8DDE3",
+  stripe: "#F0F2F4",
+  headerBg: "#1A2740",
   headerFg: "#FFFFFF",
-  fill: "#6B7C8D",
+  fill: "#7B8794",
   page: "#FFFFFF",
+  firmName: "KELLY & COMPANY",
+  firmTrade: "REAL ESTATE VALUERS",
 } as const;

@@ -1287,23 +1287,30 @@
   }
 
   .report-type-exam .risk-ratings-print thead th {
-    background: #1b2a4a !important;
+    background: #1a2740 !important;
     color: #fff !important;
-    border-color: #1b2a4a !important;
+    border-color: #1a2740 !important;
   }
   .report-type-exam .risk-ratings-print td.is-filled {
-    background: #6b7c8d !important;
+    background: #7b8794 !important;
+  }
+  .report-type-exam .risk-ratings-print tr.is-stripe th,
+  .report-type-exam .risk-ratings-print tr.is-stripe td {
+    background: #f0f2f4;
+  }
+  .report-type-exam .risk-ratings-print tr.is-stripe td.is-filled {
+    background: #7b8794 !important;
   }
 }
 
 /* Shawn Exam and future Shawn-* reports — Style-3 specimen */
 .report-type-exam {
-  --exam-navy: #1b2a4a;
-  --exam-slate: #5c6b7a;
-  --exam-muted: #6b7280;
-  --exam-ink: #1c1c1c;
-  --exam-rule: #d0d5dc;
-  --exam-stripe: #f3f4f6;
+  --exam-navy: #1a2740;
+  --exam-slate: #8a93a0;
+  --exam-muted: #6e7783;
+  --exam-ink: #1a1d23;
+  --exam-rule: #d8dde3;
+  --exam-stripe: #f0f2f4;
   color: var(--exam-ink);
   font-family: "Avenir Next", "Segoe UI", Arial, Helvetica, sans-serif;
   font-size: 10.5pt;
@@ -1320,6 +1327,26 @@
   border: 0;
   padding: 0;
   color: var(--exam-navy);
+}
+.report-type-exam .exam-wordmark {
+  margin: 0 0 1.5rem;
+}
+.report-type-exam .exam-wordmark-name {
+  margin: 0;
+  color: var(--exam-navy);
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  line-height: 1.15;
+}
+.report-type-exam .exam-wordmark-trade {
+  margin: 0.45rem 0 0;
+  padding-top: 0.45rem;
+  border-top: 0.6pt solid var(--exam-navy);
+  color: var(--exam-slate);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
 }
 .report-type-exam .exam-cover-photo {
   max-width: 100%;
