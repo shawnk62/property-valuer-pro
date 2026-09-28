@@ -115,7 +115,7 @@ export interface AdjustmentFeature {
  * Ids are stable keys; do not rename (stored on drafts).
  */
 export const ADJUSTMENT_FEATURES: AdjustmentFeature[] = [
-  { id: "saleOrFinancing", label: "Sale or Financing" },
+  { id: "saleOrFinancing", label: "Sale or financing concessions" },
   { id: "concessions", label: "Concessions" },
   { id: "dateOfSale", label: "Date of Sale/Time" },
   { id: "location", label: "Location" },
@@ -163,15 +163,16 @@ const VACANT_FEATURE_IDS = new Set([
 export function adjustmentFeaturesForProperty(
   values: InspectionValues,
 ): AdjustmentFeature[] {
+  const hideSplitTerms = (f: AdjustmentFeature) => f.id !== "concessions";
   if (isVacantLand(values)) {
-    return ADJUSTMENT_FEATURES.filter((f) => VACANT_FEATURE_IDS.has(f.id));
+    return ADJUSTMENT_FEATURES.filter((f) => VACANT_FEATURE_IDS.has(f.id)).filter(hideSplitTerms);
   }
   if (isCommercialType(values) && !isMixedUseCommercial(values)) {
-    return ADJUSTMENT_FEATURES.filter(
+    return ADJUSTMENT_FEATURES.filter(hideSplitTerms).filter(
       (f) => f.id !== "basement" && f.id !== "aboveGradeRoomCount" && f.id !== "porchPatioDeck",
     );
   }
-  return ADJUSTMENT_FEATURES.filter((f) => f.id !== "basement");
+  return ADJUSTMENT_FEATURES.filter((f) => f.id !== "basement" && hideSplitTerms(f));
 }
 
 export function printSalesEvidenceEnabled(meta: ReportMeta | undefined): boolean {
