@@ -267,8 +267,11 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     >
       <section className="exam-cover break-after-page text-center">
         <header className="exam-wordmark">
-          <p className="exam-wordmark-name">{EXAM.firmName}</p>
-          <p className="exam-wordmark-trade">{EXAM.firmTrade}</p>
+          <img
+            src={EXAM.logoSrc}
+            alt={`${EXAM.firmName} ${EXAM.firmTrade}`}
+            className="exam-wordmark-logo"
+          />
         </header>
         {frontPhoto?.url ? (
           <figure className="exam-cover-photo mx-auto">
