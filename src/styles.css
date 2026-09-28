@@ -357,7 +357,7 @@
   width: 100%;
 }
 .sales-evidence-item .sales-col-num { width: 8mm; }
-.sales-evidence-item .sales-col-address { width: 42mm; }
+.sales-evidence-item .sales-col-address { width: 31.5mm; }
 .sales-evidence-item .sales-col-date { width: 22mm; }
 .sales-evidence-item .sales-col-price { width: 26mm; }
 .sales-evidence-item .sales-col-area { width: 20mm; }
@@ -915,7 +915,7 @@
     width: 8mm !important;
   }
   #report-preview-sheet .sales-evidence-item .sales-col-address {
-    width: 42mm !important;
+    width: 31.5mm !important;
   }
   #report-preview-sheet .sales-evidence-item .sales-col-date {
     width: 22mm !important;
