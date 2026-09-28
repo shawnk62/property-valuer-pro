@@ -24,6 +24,7 @@ import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule
 import { purposeOfValuation } from "@/lib/report/reportTypes";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import {
+  buildRiskAnalysis,
   parseRiskScore,
   RISK_CATEGORIES,
   RISK_SCALE,
@@ -580,11 +581,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </p>
       </Keep>
       <div className="mt-4">
-        <Prose
-          text={
-            draft.narrative.riskAnalysis?.trim() || get(v, "exam_risk_commentary") || ""
-          }
-        />
+        <Prose text={buildRiskAnalysis(v) || get(v, "exam_risk_commentary") || ""} />
       </div>
 
       <section id="sec-sales" className="report-section report-section-sales">

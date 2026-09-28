@@ -1071,7 +1071,7 @@ export function generateNarrative(
         ? ""
         : buildConditionImprovements(values),
     highestBestUse: buildHighestBestUse(values),
-    riskAnalysis: buildRiskAnalysis(values),
+    riskAnalysis: "",
     remarks: buildRemarks(values, {
       salesCount: opts?.salesCount,
       valueAmount: opts?.valueAmount,

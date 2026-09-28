@@ -102,13 +102,6 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
         : "Section 13 Remarks — Phil fixed sequence.",
     },
   ];
-  if (shawnExam) {
-    blocks.unshift({
-      key: "riskAnalysis",
-      label: "Risk analysis",
-      hint: "Prints under the risk tables. Built from each heading comment. Manual heading comments and this box are kept.",
-    });
-  }
   return blocks;
 }
 
@@ -380,7 +373,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       generateRemarksNow(overwrite);
     }
     const remaining = keys.filter(
-      (k) => k !== "remarks" && !skipAiNarrativeBlock(draft.values, k),
+      (k) => k !== "remarks" && k !== "riskAnalysis" && !skipAiNarrativeBlock(draft.values, k),
     );
     const skipped = keys.filter((k) => skipAiNarrativeBlock(draft.values, k));
     if (skipped.length > 0) {

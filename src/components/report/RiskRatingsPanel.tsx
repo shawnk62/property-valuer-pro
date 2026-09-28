@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import {
-  buildRiskAnalysis,
   criteriaParagraph,
   hintForCategory,
   noteIsStock,
@@ -23,22 +22,13 @@ import {
 } from "@/components/ui/sheet";
 
 export function RiskRatingsPanel({ controller }: { controller: ReportDraftController }) {
-  const { draft, setValue, setNarrative } = controller;
+  const { draft, setValue } = controller;
   const [openId, setOpenId] = useState<string | null>(null);
 
   const openCat = useMemo(
     () => RISK_CATEGORIES.find((c) => c.id === openId) ?? null,
     [openId],
   );
-
-  function rebuildCombined(values: typeof draft.values) {
-    const next = buildRiskAnalysis(values);
-    const current = String(draft.narrative.riskAnalysis ?? "").trim();
-    const previousAuto = buildRiskAnalysis(draft.values).trim();
-    if (!current || current === previousAuto) {
-      setNarrative({ riskAnalysis: next });
-    }
-  }
 
   function applyBand(cat: RiskCategory, score: RiskScore) {
     const noteKey = riskNoteField(cat.id);
@@ -47,21 +37,11 @@ export function RiskRatingsPanel({ controller }: { controller: ReportDraftContro
     const nextNote = noteIsStock(cat, existing) ? seed : existing;
     setValue(cat.field, String(score));
     if (nextNote !== existing) setValue(noteKey, nextNote);
-    rebuildCombined({
-      ...draft.values,
-      [cat.field]: String(score),
-      [noteKey]: nextNote,
-    });
     setOpenId(null);
   }
 
   function saveNote(cat: RiskCategory, text: string) {
-    const noteKey = riskNoteField(cat.id);
-    setValue(noteKey, text);
-    rebuildCombined({
-      ...draft.values,
-      [noteKey]: text,
-    });
+    setValue(riskNoteField(cat.id), text);
   }
 
   return (
