@@ -1313,7 +1313,9 @@
   .report-type-exam .sales-evidence-item td {
     border-color: #c5d0c0 !important;
   }
-  .report-type-exam .sales-evidence-item thead th {
+  .report-type-exam table thead th,
+  .report-type-exam .sales-evidence-item thead th,
+  .report-type-exam .report-fact-table th {
     background: #324758 !important;
     color: #fff !important;
   }
@@ -1390,11 +1392,14 @@
   border-color: var(--exam-rule);
 }
 .report-type-exam .report-fact-table th {
-  color: var(--exam-navy);
+  background: #324758 !important;
+  color: #fff !important;
   font-weight: 600;
 }
-.report-type-exam .sales-evidence-item thead th {
-  background: var(--exam-navy) !important;
+.report-type-exam table thead th,
+.report-type-exam .sales-evidence-item thead th,
+.report-type-exam .risk-ratings-print thead th {
+  background: #324758 !important;
   color: #fff !important;
 }
 .report-type-exam .risk-ratings-print thead th {
