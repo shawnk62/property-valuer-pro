@@ -1,6 +1,12 @@
 import type { ReactElement, ReactNode } from "react";
 import { formatPropertyType, get, joinValues } from "@/lib/report/schema";
-import { PHOTO_SLOTS, photoIsOnReport, salesOnReport, type ReportDraft } from "@/lib/report/types";
+import {
+  PHOTO_SLOTS,
+  photoIsOnReport,
+  salesOnReport,
+  titlePhotosOnReport,
+  type ReportDraft,
+} from "@/lib/report/types";
 import { purposeOfValuation } from "@/lib/report/reportTypes";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import {
@@ -212,9 +218,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       const found = draft.photos.find((p) => p.slot === slot && photoIsOnReport(p));
       return found ? { ...found, caption: found.caption || label } : null;
     }).filter(Boolean),
-    ...draft.photos.filter((p) => p.slot === null && p.kind !== "map" && photoIsOnReport(p)),
+    ...draft.photos.filter(
+      (p) => p.slot === null && p.kind !== "map" && p.kind !== "title" && photoIsOnReport(p),
+    ),
   ] as typeof draft.photos;
   const mapPhotos = draft.photos.filter((p) => p.kind === "map" && photoIsOnReport(p));
+  const titlePages = titlePhotosOnReport(draft.photos);
   const valueWords = m.valueAmount ? amountInWords(m.valueAmount) : "";
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], " ");
   const servicesText = draft.narrative.servicesAmenities?.trim() || "";
@@ -659,10 +668,32 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
 
       <H1 id="exam-10">10.0 Appendices</H1>
       <ol className="ml-5 list-decimal space-y-0.5 text-sm">
+        {titlePages.length > 0 ? <li>Certificate of Title</li> : null}
         {annexurePhotos.length > 0 ? <li>Site images</li> : null}
         {printedSales.some((s) => s.photoUrl) ? <li>Comparable sale photographs</li> : null}
         {mapPhotos.length > 0 ? <li>Locality and planning maps</li> : null}
       </ol>
+
+      {titlePages.length > 0 ? (
+        <section className="report-annexure mt-12">
+          <h2 className="text-center text-base font-semibold" style={{ color: TEAL }}>
+            Appendix — Certificate of Title
+          </h2>
+          <div className="mt-6 grid gap-8">
+            {titlePages.map((photo) => (
+              <figure key={photo.id} className="report-photo-figure break-inside-avoid">
+                <img
+                  src={photo.url}
+                  alt={photo.caption || "Certificate of Title"}
+                  className="mx-auto max-h-[240mm] w-auto max-w-full object-contain"
+                  style={{ border: `1px solid ${RULE}` }}
+                />
+                <figcaption className="mt-1.5 text-center text-sm">{photo.caption}</figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {annexurePhotos.length > 0 ? (
         <section className="report-annexure report-annexure-subject mt-12">

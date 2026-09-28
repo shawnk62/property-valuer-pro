@@ -1,6 +1,12 @@
-import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, type ReportDraft } from "@/lib/report/types";
+import {
+  MAP_SLOTS,
+  PHOTO_SLOTS,
+  photoIsOnReport,
+  titlePhotosOnReport,
+  type ReportDraft,
+} from "@/lib/report/types";
 
-export type AnnexureId = "photos" | "maps" | "placeBased";
+export type AnnexureId = "photos" | "maps" | "placeBased" | "title";
 
 export interface AnnexureSpec {
   id: AnnexureId;
@@ -60,6 +66,9 @@ export function resolveAnnexures(draft: ReportDraft): AnnexureSpec[] {
   const filled: { id: AnnexureId; title: string }[] = [];
   if (hasSubjectOrSalePhotos(draft)) {
     filled.push({ id: "photos", title: "Photographs" });
+  }
+  if (titlePhotosOnReport(draft.photos).length > 0) {
+    filled.push({ id: "title", title: "Certificate of Title" });
   }
   if (hasAnnexMaps(draft)) {
     filled.push({ id: "maps", title: "Maps & planning layers" });

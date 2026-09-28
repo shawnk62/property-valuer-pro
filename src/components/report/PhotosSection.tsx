@@ -6,6 +6,7 @@ import { deletePhotoBlob, photoBlobKey, putPhotoBlob } from "@/lib/report/photo-
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import { nowPhotoTimestamp } from "@/lib/inspection/photoRequirements";
 import { mapSlotsForImport, photoSlotsForJob, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
+import { isPdfFile, rasterizePdfPages } from "@/lib/report/rasterizePdfPages";
 import { isVacantLand } from "@/lib/inspection/visibility";
 
 function newId() {
@@ -226,6 +227,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
   const photos = draft.photos;
   const inspectionId = draft.inspectionId;
   const extraInputRef = useRef<HTMLInputElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
   const [uploadingIds, setUploadingIds] = useState<Set<string>>(new Set());
   const [photoMenu, setPhotoMenu] = useState<null | {
     x: number;
@@ -266,7 +268,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     slot: PhotoSlot | null;
     caption: string;
     replaceId?: string;
-    kind?: "map" | "photo";
+    kind?: "map" | "photo" | "title";
   }) {
     if (!opts.file || opts.file.size <= 0) {
       toast.error("The selected file is empty.");
@@ -435,8 +437,29 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     setPhotos((prev) => prev.map((p) => (p.id === photoId ? { ...p, omitFromReport: omit } : p)));
   }
 
-  const extras = photos.filter((p) => p.slot === null && p.kind !== "map");
+  async function onTitleFile(file: File) {
+    try {
+      const pages = isPdfFile(file) ? await rasterizePdfPages(file) : [file];
+      const start = photos.filter((p) => p.kind === "title").length;
+      if (isPdfFile(file)) {
+        toast.message(`Certificate of Title — ${pages.length} page${pages.length === 1 ? "" : "s"}`);
+      }
+      for (let i = 0; i < pages.length; i++) {
+        await attachPhoto({
+          file: pages[i],
+          slot: null,
+          caption: `Certificate of Title — page ${start + i + 1}`,
+          kind: "title",
+        });
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not attach the title document");
+    }
+  }
+
+  const extras = photos.filter((p) => p.slot === null && p.kind !== "map" && p.kind !== "title");
   const extraMaps = photos.filter((p) => p.slot === null && p.kind === "map");
+  const titlePages = photos.filter((p) => p.kind === "title");
 
   return (
     <div className="space-y-6">
@@ -608,6 +631,62 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
           Extra labeled tiles for additional overlays or maps. Empty tiles do not print.
         </span>
       </div>
+
+      <div className="rounded-md border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold text-foreground">Certificate of Title</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Drop the title-search PDF (or page images). Each page prints in the annex as Certificate
+          of Title. Empty slot does not print.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => titleInputRef.current?.click()}
+            className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+          >
+            Attach title PDF
+          </button>
+          <input
+            ref={titleInputRef}
+            type="file"
+            accept="application/pdf,image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) void onTitleFile(file);
+            }}
+          />
+        </div>
+      </div>
+
+      {titlePages.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {titlePages.map((photo, index) => (
+            <PhotoCard
+              key={photo.id}
+              slotLabel={photo.caption || `Certificate of Title — page ${index + 1}`}
+              photo={photo}
+              uploading={uploadingIds.has(photo.id)}
+              onFile={(file) =>
+                void attachPhoto({
+                  file,
+                  slot: null,
+                  caption: photo.caption || `Certificate of Title — page ${index + 1}`,
+                  replaceId: photo.id,
+                  kind: "title",
+                })
+              }
+              onCaption={(caption) =>
+                setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, caption } : p)))
+              }
+              onRemove={() => void removePhoto(photo)}
+              onOpenPasteMenu={openPasteMenu}
+              onOmitFromReport={(omit) => setOmitFromReport(photo.id, omit)}
+            />
+          ))}
+        </div>
+      ) : null}
 
       {photoMenu ? (
         <div
