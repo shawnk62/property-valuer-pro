@@ -1737,7 +1737,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                     <table className="w-full min-w-[36rem] border-collapse text-left text-sm table-fixed">
                       <colgroup>
                         <col className="w-[8.5rem]" />
-                        <col className="w-[6.5rem]" />
+                        <col className="w-[7.25rem]" />
                         {chunk.map((sale) => (
                           <Fragment key={sale.id}>
                             <col className="w-[7.25rem]" />

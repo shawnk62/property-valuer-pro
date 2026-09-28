@@ -11,6 +11,7 @@ import {
   pick,
   PROPERTY_PLANNING_FIELDS,
 } from "@/lib/report/schema";
+import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
 import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, surveyPhotosOnReport, titlePhotosOnReport, type ReportDraft } from "@/lib/report/types";
 import {
   getReportTypeConfig,
@@ -1820,66 +1821,10 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               </div>
             ) : null}
 
-            <div className="sales-evidence-list space-y-3">
-              {printedSales.map((s, idx) => (
-                <table
-                  key={s.id}
-                  className="sales-evidence-item w-full border-collapse text-[0.8125rem]"
-                >
-                  <colgroup>
-                    <col className="sales-col-num" />
-                    <col className="sales-col-address" />
-                    <col className="sales-col-date" />
-                    <col className="sales-col-price" />
-                    <col className="sales-col-area" />
-                    <col className="sales-col-comments" />
-                  </colgroup>
-                  <thead>
-                    <tr>
-                      {["#", "Address", "Sale date", "Sale price", "Land area", "Comments"].map(
-                        (h) => (
-                          <th
-                            key={h}
-                            className="border border-[var(--rule)] bg-[var(--page-foreground)]/5 px-2 py-1.5 text-left font-semibold"
-                          >
-                            {h}
-                          </th>
-                        ),
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="align-top">
-                      <td className="border border-[var(--rule)] px-2 py-1.5 whitespace-nowrap font-semibold">
-                        {idx + 1}
-                      </td>
-                      <td className="border border-[var(--rule)] px-2 py-1.5">
-                        <div>{s.address}</div>
-                        {s.photoUrl ? (
-                          <img
-                            src={s.photoUrl}
-                            alt={`Comparable ${idx + 1}`}
-                            className="mt-1.5 h-12 w-auto max-w-[5.5rem] border border-[var(--rule)] object-cover"
-                          />
-                        ) : null}
-                      </td>
-                      <td className="border border-[var(--rule)] px-2 py-1.5 whitespace-nowrap">
-                        {s.saleDate}
-                      </td>
-                      <td className="border border-[var(--rule)] px-2 py-1.5 whitespace-nowrap">
-                        {s.salePrice}
-                      </td>
-                      <td className="border border-[var(--rule)] px-2 py-1.5 whitespace-nowrap">
-                        {s.landArea}
-                      </td>
-                      <td className="border border-[var(--rule)] px-2 py-1.5 text-left normal-case tracking-normal">
-                        {cleanSaleProse(s.narrative?.trim() || s.comments || "")}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              ))}
-            </div>
+            <SalesEvidenceSchedule
+              sales={printedSales}
+              headerClassName="bg-[var(--page-foreground)]/5"
+            />
           </div>
         )}
       </Section>

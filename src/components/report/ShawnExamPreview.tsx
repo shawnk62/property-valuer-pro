@@ -13,6 +13,7 @@ import {
   titlePhotosOnReport,
   type ReportDraft,
 } from "@/lib/report/types";
+import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
 import { purposeOfValuation } from "@/lib/report/reportTypes";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import {
@@ -576,56 +577,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 />
               </div>
             ) : null}
-            <div className="sales-evidence-list space-y-3">
-              {printedSales.map((s, idx) => (
-                <table
-                  key={s.id}
-                  className="sales-evidence-item w-full border-collapse text-[0.8125rem]"
-                >
-                  <thead>
-                    <tr style={{ background: TEAL, color: "#fff" }}>
-                      {["#", "Address", "Sale date", "Sale price", "Land area", "Comments"].map(
-                        (h) => (
-                          <th key={h} className="border px-2 py-1.5 text-left font-semibold" style={{ borderColor: RULE }}>
-                            {h}
-                          </th>
-                        ),
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="align-top">
-                      <td className="border px-2 py-1.5 font-semibold" style={{ borderColor: RULE }}>
-                        {idx + 1}
-                      </td>
-                      <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>
-                        <div>{s.address}</div>
-                        {s.photoUrl ? (
-                          <img
-                            src={s.photoUrl}
-                            alt={`Comparable ${idx + 1}`}
-                            className="mt-1.5 h-12 w-auto max-w-[5.5rem] object-cover"
-                            style={{ border: `1px solid ${RULE}` }}
-                          />
-                        ) : null}
-                      </td>
-                      <td className="border px-2 py-1.5 whitespace-nowrap" style={{ borderColor: RULE }}>
-                        {s.saleDate}
-                      </td>
-                      <td className="border px-2 py-1.5 whitespace-nowrap" style={{ borderColor: RULE }}>
-                        {s.salePrice}
-                      </td>
-                      <td className="border px-2 py-1.5 whitespace-nowrap" style={{ borderColor: RULE }}>
-                        {s.landArea}
-                      </td>
-                      <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>
-                        {cleanSaleProse(s.narrative?.trim() || s.comments || "")}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              ))}
-            </div>
+            <SalesEvidenceSchedule
+              sales={printedSales}
+              headerStyle={{ background: TEAL, color: "#fff" }}
+              cellBorderClassName="border"
+              cellStyle={{ borderColor: RULE }}
+            />
           </div>
         )}
         {get(v, "exam_on_market") ? (
