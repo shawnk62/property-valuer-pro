@@ -934,21 +934,30 @@
   #report-preview-sheet h2,
   #report-preview-sheet h3,
   #report-preview-sheet .report-h1,
-  #report-preview-sheet .report-h2 {
-    break-after: avoid !important;
+  #report-preview-sheet .report-h2,
+  #report-preview-sheet .report-heading-lead {
+    break-after: avoid-page !important;
     page-break-after: avoid !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
 
-  /* Pull the first block after a heading onto the same page as the heading. */
+  /* First line, table or keep-block after a heading stays with that heading. */
   #report-preview-sheet h1 + *,
   #report-preview-sheet h2 + *,
   #report-preview-sheet h3 + *,
   #report-preview-sheet .report-h1 + *,
-  #report-preview-sheet .report-h2 + * {
-    break-before: avoid !important;
+  #report-preview-sheet .report-h2 + *,
+  #report-preview-sheet .report-heading-lead + * {
+    break-before: avoid-page !important;
     page-break-before: avoid !important;
+  }
+
+  #report-preview-sheet .report-h-block {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: auto !important;
+    page-break-after: auto !important;
   }
 
   /*

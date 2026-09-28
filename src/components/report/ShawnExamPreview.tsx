@@ -105,7 +105,7 @@ function H1({ id, children }: { id?: string; children: React.ReactNode }) {
   return (
     <h2
       id={id}
-      className="report-h2 mt-8 border-b pb-1 text-[1.05rem] font-semibold"
+      className="report-h2 report-heading-lead mt-8 border-b pb-1 text-[1.05rem] font-semibold"
       style={{ color: TEAL, borderColor: RULE }}
     >
       {children}
@@ -115,9 +115,26 @@ function H1({ id, children }: { id?: string; children: React.ReactNode }) {
 
 function H2({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="report-h2 mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
+    <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
       {children}
     </h3>
+  );
+}
+
+function Lead({
+  id,
+  title,
+  children,
+}: {
+  id?: string;
+  title: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="report-h-block">
+      <H1 id={id}>{title}</H1>
+      {children}
+    </div>
   );
 }
 
@@ -373,7 +390,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </div>
       </div>
 
-      <H1 id="exam-1">1.0 Basis of Value</H1>
+      <Lead id="exam-1" title="1.0 Basis of Value">
+      <Keep>
       <H2>1.1 Instructions</H2>
       <Para>
         Instructions were received from {instructing} to assess
@@ -381,6 +399,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {purpose ? ` for ${purpose}` : ""}. The property was inspected and this report prepared in
         accordance with those instructions.
       </Para>
+      </Keep>
+      </Lead>
 
       <H2>1.2 Valuation Standards</H2>
       <Para>
@@ -408,7 +428,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         conditions.
       </Para>
 
-      <H1 id="exam-2">2.0 Title and Property Details</H1>
+      <Lead id="exam-2" title="2.0 Title and Property Details">
+      <Keep>
       <H2>2.1 Property Description</H2>
       <Prose
         text={propertyDescriptionBodyText({ brief: draft.narrative.brief })}
@@ -423,6 +444,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           {get(v, "prop_lot_position") ? `Lot position is ${get(v, "prop_lot_position")}.` : ""}
         </Para>
       ) : null}
+      </Keep>
+      </Lead>
 
       <Keep>
       <H2>2.2 Title Particulars</H2>
@@ -458,7 +481,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       />
       </Keep>
 
-      <H1 id="exam-3">3.0 Planning Controls</H1>
+      <Lead id="exam-3" title="3.0 Planning Controls">
       <Keep>
       <H2>3.1 Planning Scheme and Zoning</H2>
       <StripeTable
@@ -470,6 +493,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ]}
       />
       </Keep>
+      </Lead>
       <div className="report-keep-block">
         <H2>3.2 Highest and Best Use</H2>
         {draft.narrative.highestBestUse?.trim() ? (
@@ -479,12 +503,16 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         )}
       </div>
 
-      <H1 id="exam-4">4.0 Environmental Issues</H1>
+      <Lead id="exam-4" title="4.0 Environmental Issues">
+      <Keep>
       <Para>
         No separate contaminated-land search is assumed beyond the inspection record and any planning
         overlays noted. The valuation assumes there are no environmental issues other than those set
         out below.
       </Para>
+      </Keep>
+      </Lead>
+      <Keep>
       <H2>4.1 Acid sulphate soils</H2>
       <Prose
         text={
@@ -502,23 +530,32 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           an acid sulphate soils overlay applies, record whether it affects development or value.
         </Para>
       ) : null}
+      </Keep>
+      <Keep>
       <H2>4.2 Flood assessment</H2>
       <Para>
         {[get(v, "prop_flood"), get(v, "prop_flood_map")].filter(Boolean).join(". ") ||
           "No flood notation is recorded on the inspection."}
       </Para>
+      </Keep>
+      <Keep>
       <H2>4.3 Noise and other nuisances</H2>
       <Para>
         {get(v, "nbhd_adverse") ||
           "No formal acoustic report has been obtained. Comment is limited to features recorded on the inspection."}
       </Para>
+      </Keep>
 
-      <H1 id="exam-5">5.0 Locality and Location</H1>
+      <Lead id="exam-5" title="5.0 Locality and Location">
+      <Keep>
       <H2>5.1 Location</H2>
       <Prose text={stripLeadingHeading(draft.narrative.location?.trim() || "", "Location")} />
       {!draft.narrative.location?.trim() && addressLine ? (
         <Para>The property is located at {addressLine}.</Para>
       ) : null}
+      </Keep>
+      </Lead>
+      <Keep>
       <H2>5.2 Locality</H2>
       <Prose
         text={stripLeadingHeading(
@@ -529,49 +566,50 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           "Locality",
         )}
       />
+      </Keep>
       {get(v, "exam_amenities") ? (
-        <>
+        <Keep>
           <H2>5.3 Amenities</H2>
           <Prose text={get(v, "exam_amenities")} />
-        </>
+        </Keep>
       ) : null}
       {get(v, "exam_destinations") ? (
-        <>
+        <Keep>
           <H2>5.4 Popular destinations</H2>
           <Prose text={get(v, "exam_destinations")} />
-        </>
+        </Keep>
       ) : null}
 
-      <H1 id="exam-6">6.0 Market Commentary</H1>
+      <Lead id="exam-6" title="6.0 Market Commentary">
       {hasMarketParts ? (
         <>
           {get(v, "exam_market_australia") ? (
-            <>
+            <Keep>
               <H2>6.1 Australia</H2>
               <Prose text={get(v, "exam_market_australia")} />
-            </>
+            </Keep>
           ) : null}
           {get(v, "exam_market_state") ? (
-            <>
+            <Keep>
               <H2>6.2 State</H2>
               <Prose text={get(v, "exam_market_state")} />
-            </>
+            </Keep>
           ) : null}
           {get(v, "exam_market_region") ? (
-            <>
+            <Keep>
               <H2>6.3 Region</H2>
               <Prose text={get(v, "exam_market_region")} />
-            </>
+            </Keep>
           ) : null}
           {get(v, "exam_market_local") ? (
-            <>
+            <Keep>
               <H2>6.4 Locality</H2>
               <Prose text={get(v, "exam_market_local")} />
-            </>
+            </Keep>
           ) : null}
         </>
       ) : (
-        <>
+        <Keep>
           <Prose text={get(v, "exam_market_commentary") || ""} />
           {!get(v, "exam_market_commentary") ? (
             <Para>
@@ -580,14 +618,18 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
               for the 6.1–6.4 structure used in the sample reports.
             </Para>
           ) : null}
-        </>
+        </Keep>
       )}
+      </Lead>
 
-      <H1 id="exam-7">7.0 Risk Assessment</H1>
+      <Lead id="exam-7" title="7.0 Risk Assessment">
+      <Keep>
       <Para>
         Each category has been considered against the criteria in the PropertyPRO Supporting
         Memorandum (API).
       </Para>
+      </Keep>
+      </Lead>
       <Keep>
       <H2>7.1 Property risk assessment</H2>
       <RiskPrintTable categories={propertyRisk} values={v} />
@@ -607,7 +649,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </div>
 
       <section id="sec-sales" className="report-section report-section-sales">
-        <H1 id="exam-8">8.0 Valuation Approach</H1>
+        <Lead id="exam-8" title="8.0 Valuation Approach">
+        <Keep>
         <Para>
           The market value of the subject property has been determined using the Direct Comparison
           Approach. Recent sales of similar properties are analysed and adjusted for points of
@@ -615,6 +658,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           area and shape, topography and zoning, location and proximity to amenities, aspect and
           views, and surrounding development.
         </Para>
+        </Keep>
+        </Lead>
         <Keep>
         <H2>8.1 Comparable sales evidence (sales schedule)</H2>
         {printedSales.length === 0 ? (
@@ -691,13 +736,16 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </div>
       ) : null}
 
-      <H1 id="exam-9">9.0 References</H1>
+      <Lead id="exam-9" title="9.0 References">
+      <Keep>
       <Prose text={get(v, "exam_references")} />
       {!get(v, "exam_references") ? (
         <Para>List sources used for the market commentary, planning searches and sales evidence.</Para>
       ) : null}
+      </Keep>
+      </Lead>
 
-      <H1 id="exam-10">10.0 Appendices</H1>
+      <Lead id="exam-10" title="10.0 Appendices">
       <ol className="ml-5 list-decimal space-y-0.5 text-sm">
         {titlePages.length > 0 ? <li>Certificate of Title</li> : null}
         {surveyPages.length > 0 ? <li>Survey Plan</li> : null}
@@ -708,6 +756,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {printedSales.some((s) => s.photoUrl) ? <li>Comparable sale photographs</li> : null}
         {mapPhotos.length > 0 ? <li>Locality and planning maps</li> : null}
       </ol>
+      </Lead>
 
       <A4DocumentAnnex heading="Appendix — Certificate of Title" pages={titlePages} />
       <A4DocumentAnnex heading="Appendix — Survey Plan" pages={surveyPages} />
@@ -776,7 +825,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </section>
       ) : null}
 
-      <H1 id="exam-11">11.0 Individual Commentary</H1>
+      <Lead id="exam-11" title="11.0 Individual Commentary">
+      <Keep>
       <Prose text={get(v, "exam_individual_commentary")} />
       {!get(v, "exam_individual_commentary") ? (
         <Para>
@@ -784,6 +834,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           differently, and confidence in the adopted value.
         </Para>
       ) : null}
+      </Keep>
+      </Lead>
     </article>
   );
 }

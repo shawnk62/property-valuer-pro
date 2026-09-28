@@ -1,4 +1,4 @@
-import type { ReactElement, ReactNode } from "react";
+import { Children, type ReactElement, type ReactNode } from "react";
 import { australianiseSpelling } from "@/lib/report/australianEnglish";
 import { stripLeadingHeading } from "@/lib/report/printText";
 import { BOILERPLATE } from "@/lib/report/boilerplate";
@@ -52,16 +52,22 @@ function Section({
   title: string;
   children: React.ReactNode;
 }) {
+  const items = Children.toArray(children);
+  const first = items[0];
+  const rest = items.slice(1);
   return (
     <section
       id={id}
       className={`report-section mt-8 scroll-mt-24${id === "sec-sales" ? " report-section-sales" : ""}`}
     >
-      <h2 className="report-h2 border-b border-[var(--rule)] pb-1 uppercase tracking-wide">
-        <span className="mr-3 tabular-nums">{number}</span>
-        {title}
-      </h2>
-      <div className="mt-3 space-y-3">{children}</div>
+      <div className="report-h-block">
+        <h2 className="report-h2 report-heading-lead border-b border-[var(--rule)] pb-1 uppercase tracking-wide">
+          <span className="mr-3 tabular-nums">{number}</span>
+          {title}
+        </h2>
+        {first ? <div className="mt-3 space-y-3">{first}</div> : null}
+      </div>
+      {rest.length > 0 ? <div className="mt-3 space-y-3">{rest}</div> : null}
     </section>
   );
 }
