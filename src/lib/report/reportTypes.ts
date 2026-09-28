@@ -263,6 +263,17 @@ export function isShawnExamType(id: ReportTypeId | string): boolean {
   return id === "shawn-exam";
 }
 
+/** Inspection-form Purpose of Report when set; otherwise the report-type default. */
+export function purposeOfValuation(
+  assignment: string,
+  values: Record<string, unknown>,
+): string {
+  const selected =
+    typeof values.insp_purpose === "string" ? values.insp_purpose.trim() : "";
+  if (selected) return selected;
+  return getReportTypeConfig(assignment).defaultPurpose;
+}
+
 export function isCgtPhilReportType(id: ReportTypeId | string): boolean {
   return (
     id === "cgt-phil" ||

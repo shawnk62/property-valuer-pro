@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": 46,
+  "version": 47,
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -243,6 +243,7 @@
             "Family transfer",
             "Finance and lending",
             "Mortgage security",
+            "To assess the market value of the property for mortgage security purposes.",
             "Loan approval",
             "Refinance",
             "Taxation",

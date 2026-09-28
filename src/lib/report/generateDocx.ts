@@ -410,7 +410,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     children,
     factsTable(
       draft,
-      ["prop_assignment", "prop_rights"],
+      ["prop_assignment", "prop_rights", "insp_purpose"],
       [
         { label: "Date of inspection", value: m.inspectionDate },
         { label: "Date of valuation", value: m.valueDate },

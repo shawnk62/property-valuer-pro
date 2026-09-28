@@ -1,7 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 import { formatPropertyType, get, joinValues } from "@/lib/report/schema";
 import { PHOTO_SLOTS, photoIsOnReport, salesOnReport, type ReportDraft } from "@/lib/report/types";
-import { getReportTypeConfig } from "@/lib/report/reportTypes";
+import { purposeOfValuation } from "@/lib/report/reportTypes";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import {
   parseRiskScore,
@@ -205,7 +205,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const studentNo = get(v, "exam_student_number");
   const instructing = get(v, "instr_from_name") || get(v, "prop_owner") || "the instructing party";
   const purpose =
-    get(v, "insp_purpose") || getReportTypeConfig(get(v, "prop_assignment")).defaultPurpose;
+    purposeOfValuation(get(v, "prop_assignment"), v);
   const propertyType = formatPropertyType(v) || "Vacant residential land";
   const annexurePhotos = [
     ...PHOTO_SLOTS.map(({ slot, label }) => {

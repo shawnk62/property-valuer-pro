@@ -17,6 +17,7 @@ import {
   isMurrayReportType,
   isPhilReportType,
   isShawnExamType,
+  purposeOfValuation,
 } from "@/lib/report/reportTypes";
 import { annexureById, resolveAnnexures } from "@/lib/report/annexures";
 import {
@@ -909,7 +910,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 },
                 {
                   label: "PURPOSE OF VALUATION",
-                  value: reportType.defaultPurpose,
+                  value: purposeOfValuation(get(v, "prop_assignment"), v),
                 },
               ].filter((r) => r.value && String(r.value).trim())}
             />
@@ -1085,7 +1086,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             </Para>
           </Sub>
           <Sub title="1.2  Purpose of Valuation">
-            <Prose text={reportType.defaultPurpose} />
+            <Prose text={purposeOfValuation(get(v, "prop_assignment"), v)} />
           </Sub>
           <Sub title="1.3  Nature of Interest to be Valued">
             <Para>{BOILERPLATE.natureOfInterest}</Para>
@@ -1119,6 +1120,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             values={v}
             fields={["prop_assignment", "prop_rights"]}
             extra={[
+              { label: "Purpose of valuation", value: purposeOfValuation(get(v, "prop_assignment"), v) },
               { label: "Date of inspection", value: m.inspectionDate },
               { label: "Date of valuation", value: m.valueDate },
             ]}
