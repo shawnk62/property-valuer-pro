@@ -29,7 +29,9 @@ import {
   buildPhilRemarks,
   buildMurrayRemarks,
   buildSummaryDescription,
+  executiveSummaryBriefText,
   isMurrayAssignment,
+  section61PhysicalText,
 } from "@/lib/report/narrative";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { parseOverlayList } from "@/lib/report/overlays";
@@ -906,6 +908,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 {
                   label: "DESCRIPTION",
                   value:
+                    executiveSummaryBriefText({ brief: draft.narrative.brief }) ||
                     buildSummaryDescription(v) ||
                     [
                       get(v, "imp_design") || "A residential dwelling",
@@ -1053,7 +1056,12 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             />
           </div>
 
-          <Prose text={buildSummaryDescription(v) || draft.narrative.brief} />
+          <Prose
+            text={
+              executiveSummaryBriefText({ brief: draft.narrative.brief }) ||
+              buildSummaryDescription(v)
+            }
+          />
 
           <div className="phil-summary-close">
             <SignatureBlock
@@ -1413,8 +1421,16 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         {isPhilReportType(reportType.id) ? (
           <>
             <Sub title="6.1  Physical Description">
-              {draft.narrative.sitePhysical?.trim() ? (
-                <Prose text={draft.narrative.sitePhysical} />
+              {section61PhysicalText({
+                sitePhysical: draft.narrative.sitePhysical,
+                values: v,
+              }) ? (
+                <Prose
+                  text={section61PhysicalText({
+                    sitePhysical: draft.narrative.sitePhysical,
+                    values: v,
+                  })}
+                />
               ) : (
                 <Para>
                   {[
@@ -1512,8 +1528,16 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         ) : (
           <>
             <Sub title="6.1  Physical Description">
-              {draft.narrative.sitePhysical?.trim() ? (
-                <Prose text={draft.narrative.sitePhysical} />
+              {section61PhysicalText({
+                sitePhysical: draft.narrative.sitePhysical,
+                values: v,
+              }) ? (
+                <Prose
+                  text={section61PhysicalText({
+                    sitePhysical: draft.narrative.sitePhysical,
+                    values: v,
+                  })}
+                />
               ) : (
                 <Facts
                   values={v}

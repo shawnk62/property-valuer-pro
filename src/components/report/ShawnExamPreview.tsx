@@ -3,7 +3,7 @@ import { australianiseSpelling } from "@/lib/report/australianEnglish";
 import { stripLeadingHeading } from "@/lib/report/printText";
 import {
   executiveSummaryBriefText,
-  propertyDescriptionBodyText,
+  section61PhysicalText,
 } from "@/lib/report/narrative";
 import {
   formatHbuVacant,
@@ -368,8 +368,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           {
             label: "Brief Description of the Property",
             value: executiveSummaryBriefText({
-              sitePhysical: draft.narrative.sitePhysical,
-              values: v,
+              brief: draft.narrative.brief,
             }),
           },
           { label: "Zoning", value: get(v, "prop_zoning") },
@@ -438,9 +437,15 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <Keep>
       <H2>2.1 Property Description</H2>
       <Prose
-        text={propertyDescriptionBodyText({ brief: draft.narrative.brief })}
+        text={section61PhysicalText({
+          sitePhysical: draft.narrative.sitePhysical,
+          values: v,
+        })}
       />
-      {!propertyDescriptionBodyText({ brief: draft.narrative.brief }) ? (
+      {!section61PhysicalText({
+        sitePhysical: draft.narrative.sitePhysical,
+        values: v,
+      }) ? (
         <Para>
           {siteArea ? `The subject allotment has an area of ${siteArea}. ` : ""}
           {usableSiteArea

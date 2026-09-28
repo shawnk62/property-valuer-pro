@@ -1043,12 +1043,16 @@ function buildHighestBestUse(values: InspectionValues): string {
   return [definition, conclusion].filter(Boolean).join("\n\n");
 }
 
+/** Executive / valuation-summary brief line. Always the Brief description narrative. */
+export function executiveSummaryBriefText(opts: { brief?: string }): string {
+  return String(opts.brief ?? "").trim();
+}
+
 /**
- * Executive Summary “Brief Description” uses the site / physical narrative
- * (printed as section 2.1 before this swap). Improvements / brief narrative
- * prints in the property-description body section.
+ * Section 6.1 Physical Description (Phil / Murray) and the matching site
+ * description on other templates. Always the “Physical description (6.1)” narrative.
  */
-export function executiveSummaryBriefText(opts: {
+export function section61PhysicalText(opts: {
   sitePhysical?: string;
   values: InspectionValues;
 }): string {
@@ -1066,10 +1070,6 @@ export function executiveSummaryBriefText(opts: {
     shape && `Allotment shape is recorded as ${shape}`,
     lotPos && `Lot position is ${lotPos}`,
   ]);
-}
-
-export function propertyDescriptionBodyText(opts: { brief?: string }): string {
-  return String(opts.brief ?? "").trim();
 }
 
 export function generateNarrative(
