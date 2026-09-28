@@ -1192,14 +1192,15 @@
     page-break-inside: avoid !important;
   }
 
-  /* Executive Summary + valuer signature stay on one sheet after the TOC. */
-  .report-exam-summary-sheet {
+  /* Executive Summary occupies its own sheet. Section 1.0 cannot start on it. */
+  .report-exam-summary-sheet,
+  .report-summary-page {
     break-before: page !important;
     page-break-before: always !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-    break-after: auto !important;
-    page-break-after: auto !important;
+    break-after: page !important;
+    page-break-after: always !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
   }
 
   .report-exam-summary-sheet .report-h2 {

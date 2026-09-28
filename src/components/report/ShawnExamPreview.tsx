@@ -402,6 +402,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep>
       </Lead>
 
+      <Keep>
       <H2>1.2 Valuation Standards</H2>
       <Para>
         The methodological framework for this valuation is grounded in the standards established by
@@ -410,7 +411,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         Value, defined as follows:
       </Para>
       <p className="mt-2 italic">{IVSC_MARKET_VALUE}</p>
+      </Keep>
 
+      <Keep>
       <H2>1.3 Valuer’s Interest</H2>
       <Para>
         The valuer declares that there is no pecuniary, professional or other interest that would
@@ -418,7 +421,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         independent and unbiased valuation. Directives for this assignment have been received from
         the instructing party.
       </Para>
+      </Keep>
 
+      <Keep>
       <H2>1.4 Date of Valuation / Liability</H2>
       <Para>
         The subject property was inspected on {m.inspectionDate || "the date recorded in this report"}.
@@ -427,6 +432,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         including market fluctuations, interest-rate movements and changes in broader economic
         conditions.
       </Para>
+      </Keep>
 
       <Lead id="exam-2" title="2.0 Title and Property Details">
       <Keep>
