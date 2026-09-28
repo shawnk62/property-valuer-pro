@@ -61,31 +61,20 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
   }
 
   /**
-   * PDF via browser print of the live Preview sheet (always mounted in DOM).
-   * Must call window.print() synchronously in the click handler — any await
-   * before print() loses the user-gesture token and Safari shows
-   * “This webpage is trying to print…” instead of the normal print dialog.
+   * PDF via the browser print dialog of the live Preview sheet.
+   * Must call window.print() synchronously in the click handler. Any setState,
+   * toast, or await before print() drops the user-gesture token on iOS Safari
+   * and the sheet opens without a Save-as-PDF destination.
    */
   function handleDownloadPdf() {
-    setPrinting(true);
-
-    // Persist in the background; do not block print on network.
-    void save().catch(() => {});
-
-    // Preview sheet is always mounted (may be CSS-hidden); print CSS forces it visible.
-    // Switching tab is optional UX only — not required for a successful print.
-    if (tab !== "preview") {
-      setTab("preview");
-    }
-
     const sheet = document.getElementById("report-preview-sheet");
     if (!sheet) {
       toast.error("Report preview is not ready. Open the Preview tab and try again.");
-      setPrinting(false);
       return;
     }
 
-    // Browser "Save as PDF" often uses document.title as the suggested filename.
+    void save().catch(() => {});
+
     const previousTitle = document.title;
     const fileNo =
       typeof draft.values.insp_file_no === "string"
@@ -96,8 +85,6 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
       : "";
     document.title = safeFileName || "\u00A0";
 
-    // Inject a dedicated @page rule at print time (margin-box page numbers).
-    // Do not use position:fixed + counter(page) — that prints "0" in Chrome.
     const pageStyle = document.createElement("style");
     pageStyle.setAttribute("data-ppv-page-numbers", "1");
     pageStyle.textContent = `
@@ -114,12 +101,6 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
     `;
     document.head.appendChild(pageStyle);
 
-    toast.message("Save as PDF", {
-      description:
-        "In the print dialog, turn OFF “Headers and footers”. That is the only way to remove the URL and date/time. Page numbers (bottom-left) come from the report and will still print.",
-      duration: 14000,
-    });
-
     const restore = () => {
       document.title = previousTitle;
       pageStyle.remove();
@@ -128,9 +109,8 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
     };
     window.addEventListener("afterprint", restore);
 
-    // Synchronous — same user-gesture stack as the button click (Safari-safe).
     window.print();
-    window.setTimeout(restore, 2000);
+    window.setTimeout(restore, 4000);
   }
 
   const heading =
@@ -273,9 +253,9 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
             <button
               type="button"
               disabled={printing}
-              onClick={() => void handleDownloadPdf()}
+              onClick={handleDownloadPdf}
               className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
-              title="Opens the print dialog — choose Save as PDF for a file matching the Preview"
+              title="Opens the system print sheet. On iPhone use the share icon on the preview to save a PDF."
             >
               {printing ? "Preparing PDF…" : "Download PDF"}
             </button>
