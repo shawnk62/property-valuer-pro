@@ -2,6 +2,10 @@ import type { ReactElement, ReactNode } from "react";
 import { australianiseSpelling } from "@/lib/report/australianEnglish";
 import { stripLeadingHeading } from "@/lib/report/printText";
 import {
+  executiveSummaryBriefText,
+  propertyDescriptionBodyText,
+} from "@/lib/report/narrative";
+import {
   formatHbuVacant,
   formatPropertyType,
   formatUsableSiteAreaIfDifferent,
@@ -346,7 +350,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           { label: "Valuation Purpose", value: purpose },
           {
             label: "Brief Description of the Property",
-            value: draft.narrative.brief?.trim() || draft.narrative.sitePhysical?.trim() || "",
+            value: executiveSummaryBriefText({
+              sitePhysical: draft.narrative.sitePhysical,
+              values: v,
+            }),
           },
           { label: "Zoning", value: get(v, "prop_zoning") },
           { label: "Date of Inspection", value: m.inspectionDate },
@@ -403,8 +410,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
 
       <H1 id="exam-2">2.0 Title and Property Details</H1>
       <H2>2.1 Property Description</H2>
-      <Prose text={draft.narrative.sitePhysical?.trim() || ""} />
-      {!draft.narrative.sitePhysical?.trim() ? (
+      <Prose
+        text={propertyDescriptionBodyText({ brief: draft.narrative.brief })}
+      />
+      {!propertyDescriptionBodyText({ brief: draft.narrative.brief }) ? (
         <Para>
           {siteArea ? `The subject allotment has an area of ${siteArea}. ` : ""}
           {usableSiteArea

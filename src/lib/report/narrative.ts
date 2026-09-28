@@ -1043,6 +1043,35 @@ function buildHighestBestUse(values: InspectionValues): string {
   return [definition, conclusion].filter(Boolean).join("\n\n");
 }
 
+/**
+ * Executive Summary “Brief Description” uses the site / physical narrative
+ * (printed as section 2.1 before this swap). Improvements / brief narrative
+ * prints in the property-description body section.
+ */
+export function executiveSummaryBriefText(opts: {
+  sitePhysical?: string;
+  values: InspectionValues;
+}): string {
+  const site = String(opts.sitePhysical ?? "").trim();
+  if (site) return site;
+  const area = hasValue(opts.values["prop_sitearea"])
+    ? `${v(opts.values, "prop_sitearea")}${
+        v(opts.values, "prop_areaunit") === "m2" ? "m²" : ` ${v(opts.values, "prop_areaunit")}`
+      }`
+    : "";
+  const shape = v(opts.values, "prop_shape");
+  const lotPos = v(opts.values, "prop_lot_position");
+  return sentence([
+    area && `The subject allotment has an area of ${area}`,
+    shape && `Allotment shape is recorded as ${shape}`,
+    lotPos && `Lot position is ${lotPos}`,
+  ]);
+}
+
+export function propertyDescriptionBodyText(opts: { brief?: string }): string {
+  return String(opts.brief ?? "").trim();
+}
+
 export function generateNarrative(
   values: InspectionValues,
   opts?: NarrativeGenerateOptions,
