@@ -2038,50 +2038,44 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       ) : null}
 
       {titlePages.length > 0 ? (
-        <section id="report-annexure-title" className="report-annexure mt-12">
+        <section id="report-annexure-title" className="report-a4-annex mt-12">
           <h2 className="report-h1 text-center">
             {titleAnnex?.heading ?? "Annexure — Certificate of Title"}
           </h2>
-          <div className="mt-6 grid gap-8">
-            {titlePages.map((photo) => (
-              <figure key={photo.id} className="report-photo-figure break-inside-avoid">
-                <img
-                  src={photo.url}
-                  alt={photo.caption || "Certificate of Title"}
-                  className="mx-auto max-h-[240mm] w-auto max-w-full border border-[var(--rule)] object-contain"
-                  loading="eager"
-                  decoding="sync"
-                />
-                <figcaption className="mt-1.5 text-center text-sm font-medium">
-                  {photo.caption || "Certificate of Title"}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
+          {titlePages.map((photo) => (
+            <figure key={photo.id} className="report-a4-page">
+              <figcaption className="text-center text-sm font-medium">
+                {photo.caption || "Certificate of Title"}
+              </figcaption>
+              <img
+                src={photo.url}
+                alt={photo.caption || "Certificate of Title"}
+                loading="eager"
+                decoding="sync"
+              />
+            </figure>
+          ))}
         </section>
       ) : null}
 
       {surveyPages.length > 0 ? (
-        <section id="report-annexure-survey" className="report-annexure mt-12">
+        <section id="report-annexure-survey" className="report-a4-annex mt-12">
           <h2 className="report-h1 text-center">
             {surveyAnnex?.heading ?? "Annexure — Survey Plan"}
           </h2>
-          <div className="mt-6 grid gap-8">
-            {surveyPages.map((photo) => (
-              <figure key={photo.id} className="report-photo-figure break-inside-avoid">
-                <img
-                  src={photo.url}
-                  alt={photo.caption || "Survey Plan"}
-                  className="mx-auto max-h-[240mm] w-auto max-w-full border border-[var(--rule)] object-contain"
-                  loading="eager"
-                  decoding="sync"
-                />
-                <figcaption className="mt-1.5 text-center text-sm font-medium">
-                  {photo.caption || "Survey Plan"}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
+          {surveyPages.map((photo) => (
+            <figure key={photo.id} className="report-a4-page">
+              <figcaption className="text-center text-sm font-medium">
+                {photo.caption || "Survey Plan"}
+              </figcaption>
+              <img
+                src={photo.url}
+                alt={photo.caption || "Survey Plan"}
+                loading="eager"
+                decoding="sync"
+              />
+            </figure>
+          ))}
         </section>
       ) : null}
 

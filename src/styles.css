@@ -357,6 +357,22 @@
   color: var(--page-foreground, #111);
 }
 
+/* Title search / survey plan pages — A4 proportion on screen */
+.report-a4-page {
+  display: block;
+  width: 100%;
+  max-width: 210mm;
+  margin: 1.5rem auto;
+}
+.report-a4-page img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  object-fit: contain;
+  background: #fff;
+}
+
 /* global @page page numbers — applied when printing */
 @page {
   size: A4 portrait;
@@ -1071,6 +1087,46 @@
     page-break-before: avoid !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
+  }
+
+  /*
+   * Certificate of Title / Survey Plan: each source page is A4.
+   * Must not inherit the 47% × 72mm photo-tile rules.
+   */
+  .report-a4-annex > h2 {
+    display: none !important;
+  }
+
+  .report-a4-page {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    page-break-before: always !important;
+    break-before: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .report-a4-page figcaption {
+    display: block !important;
+    margin: 0 0 2mm 0 !important;
+    font-size: 9pt !important;
+    text-align: center !important;
+  }
+
+  .report-a4-page img {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 248mm !important;
+    max-height: 248mm !important;
+    margin: 0 auto !important;
+    object-fit: contain !important;
+    object-position: top center !important;
+    border: none !important;
+    aspect-ratio: auto !important;
   }
 
   /* Logo and other non-annexure images still scale naturally */

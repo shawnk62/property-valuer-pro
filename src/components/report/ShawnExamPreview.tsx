@@ -692,44 +692,30 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </ol>
 
       {titlePages.length > 0 ? (
-        <section className="report-annexure mt-12">
+        <section className="report-a4-annex mt-12">
           <h2 className="text-center text-base font-semibold" style={{ color: TEAL }}>
             Appendix — Certificate of Title
           </h2>
-          <div className="mt-6 grid gap-8">
-            {titlePages.map((photo) => (
-              <figure key={photo.id} className="report-photo-figure break-inside-avoid">
-                <img
-                  src={photo.url}
-                  alt={photo.caption || "Certificate of Title"}
-                  className="mx-auto max-h-[240mm] w-auto max-w-full object-contain"
-                  style={{ border: `1px solid ${RULE}` }}
-                />
-                <figcaption className="mt-1.5 text-center text-sm">{photo.caption}</figcaption>
-              </figure>
-            ))}
-          </div>
+          {titlePages.map((photo) => (
+            <figure key={photo.id} className="report-a4-page">
+              <figcaption className="text-center text-sm">{photo.caption || "Certificate of Title"}</figcaption>
+              <img src={photo.url} alt={photo.caption || "Certificate of Title"} />
+            </figure>
+          ))}
         </section>
       ) : null}
 
       {surveyPages.length > 0 ? (
-        <section className="report-annexure mt-12">
+        <section className="report-a4-annex mt-12">
           <h2 className="text-center text-base font-semibold" style={{ color: TEAL }}>
             Appendix — Survey Plan
           </h2>
-          <div className="mt-6 grid gap-8">
-            {surveyPages.map((photo) => (
-              <figure key={photo.id} className="report-photo-figure break-inside-avoid">
-                <img
-                  src={photo.url}
-                  alt={photo.caption || "Survey Plan"}
-                  className="mx-auto max-h-[240mm] w-auto max-w-full object-contain"
-                  style={{ border: `1px solid ${RULE}` }}
-                />
-                <figcaption className="mt-1.5 text-center text-sm">{photo.caption}</figcaption>
-              </figure>
-            ))}
-          </div>
+          {surveyPages.map((photo) => (
+            <figure key={photo.id} className="report-a4-page">
+              <figcaption className="text-center text-sm">{photo.caption || "Survey Plan"}</figcaption>
+              <img src={photo.url} alt={photo.caption || "Survey Plan"} />
+            </figure>
+          ))}
         </section>
       ) : null}
 
