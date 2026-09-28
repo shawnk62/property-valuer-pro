@@ -1126,25 +1126,26 @@
   }
 
   /*
-   * Certificate of Title / Survey Plan: one A4 sheet per source page.
-   * Heading stays with the image. Image uses contain so the page is not cropped.
-   * Must not inherit the 47% × 72mm photo-tile rules.
+   * Certificate of Title / Survey Plan: one source page per printed sheet.
+   * Do not lock the figure to 265mm — that plus the heading overflows A4
+   * and Chrome inserts a blank page after each document page.
    */
   .report-a4-annex.report-annexure {
     break-before: page !important;
     page-break-before: always !important;
   }
 
+  #report-preview-sheet .report-a4-page,
   .report-a4-page {
     box-sizing: border-box !important;
-    display: flex !important;
-    flex-direction: column !important;
+    display: block !important;
     width: 100% !important;
     max-width: 100% !important;
-    height: 265mm !important;
-    max-height: 265mm !important;
+    height: auto !important;
+    max-height: none !important;
     margin: 0 !important;
-    overflow: hidden !important;
+    padding: 0 !important;
+    overflow: visible !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
     break-after: page !important;
@@ -1159,31 +1160,17 @@
   }
 
   .report-a4-page .photo-annex-heading {
-    flex: 0 0 auto !important;
-    margin: 0 0 3mm 0 !important;
-  }
-
-  #report-preview-sheet .report-a4-page,
-  .report-a4-page {
-    box-sizing: border-box !important;
-    display: flex !important;
-    flex-direction: column !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: 265mm !important;
-    max-height: 265mm !important;
-    margin: 0 !important;
-    overflow: hidden !important;
+    display: block !important;
+    margin: 0 0 2mm 0 !important;
   }
 
   #report-preview-sheet .report-a4-page img,
   .report-a4-page img {
-    flex: 1 1 auto !important;
     display: block !important;
     width: auto !important;
     max-width: 100% !important;
     height: auto !important;
-    max-height: 252mm !important;
+    max-height: 240mm !important;
     margin: 0 auto !important;
     object-fit: contain !important;
     object-position: top center !important;
