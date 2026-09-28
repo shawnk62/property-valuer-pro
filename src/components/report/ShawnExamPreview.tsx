@@ -112,6 +112,10 @@ function H2({ children }: { children: React.ReactNode }) {
   );
 }
 
+function Keep({ children }: { children: React.ReactNode }) {
+  return <div className="report-keep-block">{children}</div>;
+}
+
 function StripeTable({ rows }: { rows: { label: string; value: string }[] }) {
   const shown = rows.filter((r) => r.value.trim());
   if (shown.length === 0) return null;
@@ -319,6 +323,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ))}
       </ol>
 
+      <Keep>
       <H1>Executive Summary</H1>
       <Para>
         Instructions were received from {instructing} to prepare a valuation of
@@ -341,6 +346,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           { label: "Date of Valuation", value: m.valueDate },
         ]}
       />
+      </Keep>
       {m.valueAmount ? (
         <div className="mt-6 text-center">
           <p>The Market Valuation of {addressLine || "the subject property"} is:</p>
@@ -402,6 +408,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </Para>
       ) : null}
 
+      <Keep>
       <H2>2.2 Title Particulars</H2>
       <StripeTable
         rows={[
@@ -415,9 +422,11 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           { label: "Date of title search", value: get(v, "exam_title_search_date") },
         ]}
       />
+      </Keep>
 
+      <Keep>
       <H2>2.3 Particulars of Land</H2>
-      <StripeTable
+      <StripeTable>
         rows={[
           { label: "Area", value: siteArea },
           { label: "Estimated usable site area", value: usableSiteArea },
@@ -431,8 +440,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           { label: "Easements, encumbrances and restrictions", value: get(v, "prop_rights") },
         ]}
       />
+      </Keep>
 
       <H1 id="exam-3">3.0 Planning Controls</H1>
+      <Keep>
       <H2>3.1 Planning Scheme and Zoning</H2>
       <StripeTable
         rows={[
@@ -442,6 +453,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           { label: "Zoning compliance", value: get(v, "prop_zoning_comp") },
         ]}
       />
+      </Keep>
       <div className="report-keep-block">
         <H2>3.2 Highest and Best Use</H2>
         {draft.narrative.highestBestUse?.trim() ? (
@@ -552,16 +564,20 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         Each category has been considered against the criteria in the PropertyPRO Supporting
         Memorandum (API).
       </Para>
+      <Keep>
       <H2>7.1 Property risk assessment</H2>
       <RiskPrintTable categories={propertyRisk} values={v} />
       <p className="mt-2 text-xs text-neutral-600">
         1 Low, 2 Low to medium, 3 Medium, 4 Medium to high, 5 High
       </p>
+      </Keep>
+      <Keep>
       <H2>7.2 Market risk assessment</H2>
       <RiskPrintTable categories={marketRisk} values={v} />
       <p className="mt-2 text-xs text-neutral-600">
         1 Low, 2 Low to medium, 3 Medium, 4 Medium to high, 5 High
       </p>
+      </Keep>
       <div className="mt-4">
         <Prose
           text={
@@ -579,6 +595,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           area and shape, topography and zoning, location and proximity to amenities, aspect and
           views, and surrounding development.
         </Para>
+        <Keep>
         <H2>8.1 Comparable sales evidence (sales schedule)</H2>
         {printedSales.length === 0 ? (
           <Para>No sales evidence has been recorded.</Para>
@@ -605,6 +622,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             />
           </div>
         )}
+        </Keep>
         {get(v, "exam_on_market") ? (
           <>
             <H2>8.2 On-the-market listings</H2>

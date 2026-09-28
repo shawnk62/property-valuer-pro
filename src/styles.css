@@ -883,9 +883,11 @@
    * (break-inside:avoid is soft when content overflows a page).
    * No forced break-before — multiple short sections can share a page.
    */
+  /* Do not lock a whole numbered section — that orphans headings.
+     Keep heading + the next block together instead. */
   .report-section {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
     break-before: auto !important;
     page-break-before: auto !important;
   }
@@ -937,6 +939,16 @@
     page-break-after: avoid !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
+  }
+
+  /* Pull the first block after a heading onto the same page as the heading. */
+  #report-preview-sheet h1 + *,
+  #report-preview-sheet h2 + *,
+  #report-preview-sheet h3 + *,
+  #report-preview-sheet .report-h1 + *,
+  #report-preview-sheet .report-h2 + * {
+    break-before: avoid !important;
+    page-break-before: avoid !important;
   }
 
   /*
