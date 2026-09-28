@@ -526,6 +526,20 @@ export function useReportDraft(
       setDirty(true);
       // Signature lives on the inspection form — persist form_values so lock
       // state is shared between form and report across devices.
+      if (name.startsWith("risk_")) {
+        void (async () => {
+          try {
+            const rec = await inspectionStore.get(inspectionId);
+            const base = rec?.values ?? {};
+            await inspectionStore.save(inspectionId, {
+              ...base,
+              [name]: typeof value === "string" ? value : String(value ?? ""),
+            });
+          } catch (err) {
+            console.error("risk rating form save failed", err);
+          }
+        })();
+      }
       if (name === "sign_sig") {
         void (async () => {
           try {

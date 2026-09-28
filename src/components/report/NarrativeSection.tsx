@@ -105,7 +105,7 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
     blocks.unshift({
       key: "riskAnalysis",
       label: "Risk analysis",
-      hint: "Prints under the risk tables. One short paragraph per PropertyPRO heading. Manual text is kept.",
+      hint: "Prints under the risk tables. Built from each heading comment. Manual heading comments and this box are kept.",
     });
   }
   return blocks;

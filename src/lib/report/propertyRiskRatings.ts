@@ -45,15 +45,16 @@ export const RISK_CATEGORIES: RiskCategory[] = [
       "Quality of the neighbourhood and location relative to amenities, including adverse features that affect marketability.",
     criteria: {
       1: [
-        "Established locality with no adverse features recorded.",
-        "Services and amenities consistent with the market for this class of property.",
+        "Established locality with no adverse neighbourhood features recorded.",
+        "Location relative to amenities and facilities is consistent with the market for this class of property.",
       ],
       2: [
-        "Established locality with only minor adverse features.",
-        "Amenities adequate; any drawback is not expected to affect value.",
+        "Established locality with only minor adverse features (for example proximity to a main road, train line, moderate traffic noise, or similar).",
+        "Any drawback is not expected to affect value or marketability.",
       ],
       3: [
         "Developing locality, or some adverse features in the immediate area.",
+        "Known flood zone / water over the land that does not adversely affect existing improvements; storm-surge area; or overlays such as bushfire, flood, cyclone or mine-subsidence district may apply under this heading where they affect neighbourhood quality.",
         "Marketability may be narrower than a comparable lot without those features.",
       ],
       4: [
@@ -61,7 +62,8 @@ export const RISK_CATEGORIES: RiskCategory[] = [
         "Saleability is constrained relative to the broader market.",
       ],
       5: [
-        "Major adverse features that impair value or saleability (for example proximity to a noxious use, or a locality buyers would avoid).",
+        "Proximity to major industry, an isolated community, a poorly perceived location, or another extreme location risk.",
+        "There is an important adverse issue that could have a major impact on current value or marketability.",
       ],
     },
   },
@@ -74,20 +76,23 @@ export const RISK_CATEGORIES: RiskCategory[] = [
       "Shape, title, easements, planning and whether the land can be used as assumed.",
     criteria: {
       1: [
-        "Regular allotment, clear title, zoning consistent with the assumed use.",
-        "No material easement or planning constraint recorded.",
+        "Regular allotment, clear title, and zoning consistent with the assumed use.",
+        "No material easement, encroachment or planning constraint recorded.",
       ],
       2: [
-        "Minor title or planning issues that are not expected to affect value.",
+        "Minor title, shape or planning issues that are not expected to affect current marketability or value.",
       ],
       3: [
-        "Some planning or title constraints (shape, easement, overlay) that a buyer would weigh.",
+        "Some planning or title constraints a buyer would weigh (irregular or hatchet shape, easement, overlay, or similar).",
+        "Characteristics of the land may require specialised construction techniques.",
       ],
       4: [
-        "Significant constraints on use or title that affect marketability.",
+        "Significant constraints on use or title that affect marketability or value.",
+        "Examples include known encumbrances or easements that adversely affect the land, access issues, existing-use rights only, or a NSW limited-title scenario.",
       ],
       5: [
-        "Limited title, building across boundaries, or a planning impediment that prevents the assumed use.",
+        "Illegal use of the property, extremely difficult access, cultural or heritage constraints that prevent the assumed use, or adverse current or known future authority proposals.",
+        "There is an important adverse title or planning issue for the client to consider before reliance on the report.",
       ],
     },
   },
@@ -101,16 +106,18 @@ export const RISK_CATEGORIES: RiskCategory[] = [
     criteria: {
       1: ["No environmental issues recorded at inspection."],
       2: [
-        "Minor environmental notation that is not expected to affect value.",
+        "Minor environmental notation that is not expected to affect current value or marketability.",
       ],
       3: [
-        "Known overlay or flood/bushfire notation that requires investigation or allowance.",
+        "Known overlay or flood / bushfire / cyclone / storm-surge notation that requires investigation or allowance.",
+        "Previous site contamination rehabilitated, but restrictions on use may remain.",
       ],
       4: [
-        "Significant environmental constraint likely to affect value or insurance/lending.",
+        "Significant environmental constraint likely to affect value, insurance or lending.",
       ],
       5: [
-        "Contamination, severe flooding, or another constraint that materially impairs saleability.",
+        "Known or suspected site contamination that has not been rehabilitated, evidence of soil contamination or radioactive material, a neighbouring polluting site, mining subsidence, or direct coastal erosion.",
+        "There is an important adverse environmental issue for the client to consider before reliance on the report.",
       ],
     },
   },
@@ -125,11 +132,12 @@ export const RISK_CATEGORIES: RiskCategory[] = [
       1: [
         "Vacant land with no structural improvement risk, or improvements that appear sound with no material defects recorded.",
       ],
-      2: ["Minor maintenance items only."],
+      2: ["Minor maintenance items only. No material structural issue recorded."],
       3: ["Age-related wear or some defects a buyer would allow for."],
       4: ["Significant defects affecting saleability or requiring substantial work."],
       5: [
-        "Major structural or safety issues, or improvements that cannot be assumed to be fit for the recorded use.",
+        "Evidence of major structural faults, a dwelling that has been gutted, observable friable asbestos, or a unit development known to contain non-compliant cladding.",
+        "Improvements cannot be assumed to be fit for the recorded use without further investigation.",
       ],
     },
   },
@@ -141,11 +149,16 @@ export const RISK_CATEGORIES: RiskCategory[] = [
     purpose:
       "Direction and magnitude of price movement over about the past 12 months and the likely near-term trend.",
     criteria: {
-      1: ["Markets appear stable, with no evidence of significant price movement."],
-      2: ["Modest decline or a consistent modest increase."],
-      3: ["Early signs of a larger rise or fall in the subject market."],
-      4: ["Definite signs of a larger rise or fall."],
-      5: ["Significant price increase or decrease that affects reliance on recent sales."],
+      1: [
+        "Relates to the direction and strength of price movement over the previous 12 months in the market segment in which the subject is transacted.",
+        "Markets appear stable, with no evidence of significant price movement.",
+      ],
+      2: ["Modest decline, or a consistent modest increase, over the previous 12 months."],
+      3: ["Early signs of a larger rise or fall in the subject market segment."],
+      4: ["Definite signs of a larger rise or fall over the previous 12 months."],
+      5: [
+        "Significant price increase or decrease that affects reliance on recent sales as evidence of current value.",
+      ],
     },
   },
   {
@@ -153,12 +166,16 @@ export const RISK_CATEGORIES: RiskCategory[] = [
     field: "risk_volatility",
     heading: "Market volatility",
     group: "market",
-    purpose: "How stable prices and saleability are for this class of property.",
+    purpose:
+      "Market activity for competing product in the segment in which the subject is transacted (API Market Activity).",
     criteria: {
-      1: ["Price levels and saleability of the subject class are expected to remain stable."],
-      2: ["Some evidence that sales in this segment are subject to variation."],
+      1: [
+        "Supply and demand for competing product appear balanced.",
+        "Price levels and saleability of the subject class are expected to remain stable.",
+      ],
+      2: ["Some evidence that sales of competing product in this segment are subject to variation."],
       3: ["Clear variability among competing product in the subject market."],
-      4: ["Material variability; saleability is less certain than a stable market."],
+      4: ["Material variability in activity; saleability is less certain than a stable market."],
       5: ["Wide range of competing outcomes; saleability is uncertain."],
     },
   },
@@ -170,12 +187,20 @@ export const RISK_CATEGORIES: RiskCategory[] = [
     purpose: "Dependence of the local economy on particular industries or employers.",
     criteria: {
       1: [
-        "Local or regional economy appears stable and is not reliant on a single industry or employer.",
+        "Local or regional economy (population, employment and services) appears stable.",
+        "The economy is broad based and not reliant on one or two major industries.",
       ],
-      2: ["Minor seasonal fluctuation only."],
-      3: ["Some variation in the local or regional economy."],
-      4: ["Significant fluctuations in the local or regional economy."],
-      5: ["Economy reliant on a single industry or employer."],
+      2: ["Normal seasonal fluctuation in the local or regional economy only."],
+      3: [
+        "Above-average seasonal fluctuation, or evidence of softening in the local or regional economy.",
+      ],
+      4: [
+        "Significant fluctuations in the local or regional economy (for example mining, rural or drought-exposed industries).",
+        "The economy is not broad based and is reliant on one or two major industries.",
+      ],
+      5: [
+        "Significant decline evident in the local or regional economy, or another extreme economic risk.",
+      ],
     },
   },
   {
@@ -185,11 +210,29 @@ export const RISK_CATEGORIES: RiskCategory[] = [
     group: "market",
     purpose: "Demand and supply for this class of property in this locality.",
     criteria: {
-      1: ["Demand for the subject property type is expected to remain stable."],
-      2: ["Demand expected to remain stable, with some variation."],
-      3: ["Reduced demand or increased supply is emerging."],
-      4: ["Reduced demand and/or oversupply."],
-      5: ["Significant reduced demand or oversupply."],
+      1: [
+        "Readily saleable property with an expected selling period of about six weeks.",
+        "Demand is underpinned by the owner-occupier market.",
+        "Assessed value is supported by sales evidence within the past six months.",
+      ],
+      2: [
+        "Expected marketing period of up to three months.",
+        "Assessed value is supported by sales evidence within the last six months.",
+      ],
+      3: [
+        "Expected marketing period of up to six months.",
+        "Limited sales evidence within the last six months that supports the assessed value, or sales evidence suggests a fairly broad range in value.",
+        "There may be a known restriction on resale in the open market (for example an over-55s restriction on occupation or ownership).",
+      ],
+      4: [
+        "Expected marketing period of up to 12 months.",
+        "Unique property for the locality, or limited sales evidence within the last 12 months that supports the assessed value.",
+        "Market largely driven by interstate or overseas investors, or the contract price cannot be supported by available sales evidence.",
+      ],
+      5: [
+        "Expected marketing period of over 12 months, limited potential purchasers, or no available sales evidence within the last 12 months that supports the assessed value.",
+        "Do not use 5 solely because the locality is thinly traded where it is tightly held and highly desired.",
+      ],
     },
   },
 ];
@@ -202,6 +245,21 @@ export function parseRiskScore(raw: unknown): RiskScore | null {
 
 export function scoreLabel(score: RiskScore): string {
   return RISK_SCALE.find((s) => s.score === score)?.label ?? String(score);
+}
+
+export function riskNoteField(id: RiskCategoryId): string {
+  return `risk_note_${id}`;
+}
+
+export function criteriaParagraph(category: RiskCategory, score: RiskScore): string {
+  return category.criteria[score].join(" ");
+}
+
+/** True when the note is empty or still one of the stock API bands for this heading. */
+export function noteIsStock(category: RiskCategory, text: string): boolean {
+  const t = text.trim();
+  if (!t) return true;
+  return RISK_SCALE.some((col) => criteriaParagraph(category, col.score) === t);
 }
 
 export interface RiskHint {
@@ -349,16 +407,11 @@ export function buildRiskAnalysis(values: InspectionValues): string {
   const parts: string[] = [];
   for (const cat of RISK_CATEGORIES) {
     const score = parseRiskScore(values[cat.field]);
-    if (!score) {
-      parts.push(`${cat.heading}: no rating selected.`);
-      continue;
-    }
-    const criteria = cat.criteria[score].join(" ");
-    const hint = hintForCategory(cat, values);
-    const support = hint ? ` Inspection data supporting this heading: ${hint.reason}.` : "";
-    parts.push(
-      `${cat.heading} is rated ${score} (${scoreLabel(score)}). ${criteria}${support}`,
-    );
+    const note = str(values, riskNoteField(cat.id));
+    if (!score && !note) continue;
+    const body = note || (score ? criteriaParagraph(cat, score) : "");
+    const rating = score ? ` is rated ${score} (${scoreLabel(score)})` : " is not rated";
+    parts.push(`${cat.heading}${rating}. ${body}`.trim());
   }
   return parts.join("\n\n");
 }
