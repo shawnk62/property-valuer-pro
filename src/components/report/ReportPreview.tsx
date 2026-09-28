@@ -15,7 +15,7 @@ import {
 } from "@/lib/report/schema";
 import { A4DocumentAnnex } from "@/components/report/A4DocumentAnnex";
 import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
-import { MAP_SLOTS, PHOTO_SLOTS, isMapAnnexPhoto, isSurveyAnnexPhoto, isTitleAnnexPhoto, photoIsOnReport, salesOnReport, surveyPhotosOnReport, titlePhotosOnReport, type ReportDraft } from "@/lib/report/types";
+import { MAP_SLOTS, PHOTO_SLOTS, extraAnnexGroupsOnReport, isExtraAnnexPhoto, isMapAnnexPhoto, isSurveyAnnexPhoto, isTitleAnnexPhoto, photoIsOnReport, salesOnReport, surveyPhotosOnReport, titlePhotosOnReport, type ReportDraft } from "@/lib/report/types";
 import {
   getReportTypeConfig,
   isJointFamilyLawPhilType,
@@ -743,6 +743,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         !isMapAnnexPhoto(p) &&
         !isTitleAnnexPhoto(p) &&
         !isSurveyAnnexPhoto(p) &&
+        !isExtraAnnexPhoto(p) &&
         photoIsOnReport(p),
     ),
   ] as typeof draft.photos;
@@ -773,6 +774,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
   const surveyAnnex = annexureById(annexures, "survey");
   const titlePages = titlePhotosOnReport(draft.photos);
   const surveyPages = surveyPhotosOnReport(draft.photos);
+  const extraAnnexGroups = extraAnnexGroupsOnReport(draft.photos);
 
   const frontPhoto = draft.photos.find((p) => p.slot === "front" && photoIsOnReport(p));
   // Letterhead + credentials follow Report Type (Phil vs Murray)
@@ -1993,6 +1995,9 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         heading={surveyAnnex?.heading ?? "Annexure — Survey Plan"}
         pages={surveyPages}
       />
+      {extraAnnexGroups.map((g) => (
+        <A4DocumentAnnex key={g.id} heading={`Annexure — ${g.title}`} pages={g.pages} />
+      ))}
 
       {/* ---- Maps annexure (only filled map slots) ---- */}
       {mapPhotos.length > 0 ? (

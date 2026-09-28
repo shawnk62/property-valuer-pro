@@ -146,6 +146,8 @@ function toCloudExtras(draft: ReportDraft): ReportExtras {
         storagePath: p.storagePath,
         ...(p.capturedAt ? { capturedAt: p.capturedAt } : {}),
         ...(p.kind ? { kind: p.kind } : {}),
+        ...(p.annexGroup ? { annexGroup: p.annexGroup } : {}),
+        ...(p.annexTitle ? { annexTitle: p.annexTitle } : {}),
         ...(p.omitFromReport ? { omitFromReport: true } : {}),
         ...(p.localBlobKey ? { localBlobKey: p.localBlobKey } : {}),
       })),
@@ -167,14 +169,27 @@ function photosFromCloud(extras: ReportExtras | null | undefined): ReportPhoto[]
         : {}),
       ...((() => {
         const kind = (p as { kind?: string }).kind;
-        if (kind === "map" || kind === "photo" || kind === "title" || kind === "survey") {
+        if (
+          kind === "map" ||
+          kind === "photo" ||
+          kind === "title" ||
+          kind === "survey" ||
+          kind === "annex"
+        ) {
           return { kind: kind as ReportPhoto["kind"] };
         }
         const cap = String(p.caption ?? "");
         if (/^certificate of title/i.test(cap)) return { kind: "title" as const };
         if (/^survey plan/i.test(cap)) return { kind: "survey" as const };
+        if (/^appendix document/i.test(cap)) return { kind: "annex" as const };
         return {};
       })()),
+      ...((p as { annexGroup?: string }).annexGroup
+        ? { annexGroup: String((p as { annexGroup?: string }).annexGroup) }
+        : {}),
+      ...((p as { annexTitle?: string }).annexTitle
+        ? { annexTitle: String((p as { annexTitle?: string }).annexTitle) }
+        : {}),
       ...((p as { omitFromReport?: boolean }).omitFromReport
         ? { omitFromReport: true }
         : {}),

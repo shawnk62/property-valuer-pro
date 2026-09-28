@@ -11,6 +11,8 @@ import {
 import {
   MAP_SLOTS,
   PHOTO_SLOTS,
+  extraAnnexGroupsOnReport,
+  isExtraAnnexPhoto,
   isMapAnnexPhoto,
   isSurveyAnnexPhoto,
   isTitleAnnexPhoto,
@@ -248,6 +250,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         !isMapAnnexPhoto(p) &&
         !isTitleAnnexPhoto(p) &&
         !isSurveyAnnexPhoto(p) &&
+        !isExtraAnnexPhoto(p) &&
         photoIsOnReport(p),
     ),
   ] as typeof draft.photos;
@@ -262,6 +265,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   ] as typeof draft.photos;
   const titlePages = titlePhotosOnReport(draft.photos);
   const surveyPages = surveyPhotosOnReport(draft.photos);
+  const extraAnnexGroups = extraAnnexGroupsOnReport(draft.photos);
   const valueWords = m.valueAmount ? amountInWords(m.valueAmount) : "";
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], " ");
   const usableSiteArea = formatUsableSiteAreaIfDifferent(v);
@@ -688,6 +692,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <ol className="ml-5 list-decimal space-y-0.5 text-sm">
         {titlePages.length > 0 ? <li>Certificate of Title</li> : null}
         {surveyPages.length > 0 ? <li>Survey Plan</li> : null}
+        {extraAnnexGroups.map((g) => (
+          <li key={g.id}>{g.title}</li>
+        ))}
         {annexurePhotos.length > 0 ? <li>Site images</li> : null}
         {printedSales.some((s) => s.photoUrl) ? <li>Comparable sale photographs</li> : null}
         {mapPhotos.length > 0 ? <li>Locality and planning maps</li> : null}
@@ -695,6 +702,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
 
       <A4DocumentAnnex heading="Appendix — Certificate of Title" pages={titlePages} />
       <A4DocumentAnnex heading="Appendix — Survey Plan" pages={surveyPages} />
+      {extraAnnexGroups.map((g) => (
+        <A4DocumentAnnex key={g.id} heading={`Appendix — ${g.title}`} pages={g.pages} />
+      ))}
 
       {annexurePhotos.length > 0 ? (
         <section className="report-annexure report-annexure-subject mt-12">

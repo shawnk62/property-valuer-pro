@@ -1,13 +1,14 @@
 import {
   MAP_SLOTS,
   PHOTO_SLOTS,
+  extraAnnexPhotosOnReport,
   photoIsOnReport,
   surveyPhotosOnReport,
   titlePhotosOnReport,
   type ReportDraft,
 } from "@/lib/report/types";
 
-export type AnnexureId = "photos" | "maps" | "placeBased" | "title" | "survey";
+export type AnnexureId = "photos" | "maps" | "placeBased" | "title" | "survey" | "extraAnnex";
 
 export interface AnnexureSpec {
   id: AnnexureId;
@@ -34,7 +35,15 @@ function hasSubjectOrSalePhotos(draft: ReportDraft): boolean {
     ...PHOTO_SLOTS.map(({ slot }) =>
       draft.photos.find((p) => p.slot === slot && photoIsOnReport(p)),
     ),
-    ...draft.photos.filter((p) => p.slot === null && p.kind !== "map" && photoIsOnReport(p)),
+    ...draft.photos.filter(
+      (p) =>
+        p.slot === null &&
+        p.kind !== "map" &&
+        p.kind !== "title" &&
+        p.kind !== "survey" &&
+        p.kind !== "annex" &&
+        photoIsOnReport(p),
+    ),
   ].some(Boolean);
   const sales = draft.sales.some((s) => s.omitFromReport !== true && Boolean(s.photoUrl));
   return subject || sales;
@@ -73,6 +82,9 @@ export function resolveAnnexures(draft: ReportDraft): AnnexureSpec[] {
   }
   if (surveyPhotosOnReport(draft.photos).length > 0) {
     filled.push({ id: "survey", title: "Survey Plan" });
+  }
+  if (extraAnnexPhotosOnReport(draft.photos).length > 0) {
+    filled.push({ id: "extraAnnex", title: "Additional documents" });
   }
   if (hasAnnexMaps(draft)) {
     filled.push({ id: "maps", title: "Maps & planning layers" });

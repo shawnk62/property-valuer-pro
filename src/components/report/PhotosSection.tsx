@@ -5,7 +5,7 @@ import { fileToDataUrl, preparePhotoForReport } from "@/lib/report/photo-data";
 import { deletePhotoBlob, photoBlobKey, putPhotoBlob } from "@/lib/report/photo-idb";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import { nowPhotoTimestamp } from "@/lib/inspection/photoRequirements";
-import { mapSlotsForImport, photoSlotsForJob, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
+import { extraAnnexGroupsOnReport, mapSlotsForImport, photoSlotsForJob, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
 import { isPdfFile, rasterizePdfPages } from "@/lib/report/rasterizePdfPages";
 import { isVacantLand } from "@/lib/inspection/visibility";
 
@@ -244,6 +244,8 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
   const extraInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const surveyInputRef = useRef<HTMLInputElement>(null);
+  const annexInputRef = useRef<HTMLInputElement>(null);
+  const annexTargetGroupRef = useRef<string | null>(null);
   const [uploadingIds, setUploadingIds] = useState<Set<string>>(new Set());
   const [photoMenu, setPhotoMenu] = useState<null | {
     x: number;
@@ -284,7 +286,9 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     slot: PhotoSlot | null;
     caption: string;
     replaceId?: string;
-    kind?: "map" | "photo" | "title" | "survey";
+    kind?: "map" | "photo" | "title" | "survey" | "annex";
+    annexGroup?: string;
+    annexTitle?: string;
   }) {
     if (!opts.file || opts.file.size <= 0) {
       toast.error("The selected file is empty.");
@@ -309,6 +313,8 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
           localBlobKey: localKey,
           capturedAt: nowPhotoTimestamp(),
           ...(opts.kind ? { kind: opts.kind } : {}),
+          ...(opts.annexGroup ? { annexGroup: opts.annexGroup } : {}),
+          ...(opts.annexTitle ? { annexTitle: opts.annexTitle } : {}),
         };
         if (opts.slot) {
           return [...prev.filter((p) => p.slot !== opts.slot && p.id !== photoId), entry];
@@ -493,8 +499,41 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     }
   }
 
+  async function onAnnexFile(file: File, groupId?: string) {
+    try {
+      const pages = isPdfFile(file) ? await rasterizePdfPages(file) : [file];
+      const existingGroups = extraAnnexGroupsOnReport(photos);
+      const id = groupId || newId();
+      const existing = photos.filter((p) => p.kind === "annex" && p.annexGroup === id);
+      const title =
+        existing[0]?.annexTitle?.trim() ||
+        `Appendix document ${existingGroups.filter((g) => g.id !== id).length + 1}`;
+      const start = existing.length;
+      if (isPdfFile(file)) {
+        toast.message(`${title} — ${pages.length} page${pages.length === 1 ? "" : "s"}`);
+      }
+      for (let i = 0; i < pages.length; i++) {
+        await attachPhoto({
+          file: pages[i],
+          slot: null,
+          caption: `${title} — page ${start + i + 1}`,
+          kind: "annex",
+          annexGroup: id,
+          annexTitle: title,
+        });
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not attach the appendix document");
+    }
+  }
+
   const extras = photos.filter(
-    (p) => p.slot === null && p.kind !== "map" && p.kind !== "title" && p.kind !== "survey",
+    (p) =>
+      p.slot === null &&
+      p.kind !== "map" &&
+      p.kind !== "title" &&
+      p.kind !== "survey" &&
+      p.kind !== "annex",
   );
   const extraMaps = photos.filter((p) => p.slot === null && p.kind === "map");
   const titlePages = photos.filter((p) => p.kind === "title");
@@ -828,6 +867,122 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
           ))}
         </div>
       ) : null}
+
+      <div
+        className="rounded-md border border-dashed border-border bg-card p-4"
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const files = Array.from(e.dataTransfer.files ?? []);
+          const pdf = files.find((f) => isPdfFile(f));
+          if (pdf) {
+            void onAnnexFile(pdf);
+            return;
+          }
+          const images = files.filter((f) => isImageFile(f));
+          for (const img of images) void onAnnexFile(img);
+        }}
+      >
+        <h3 className="text-sm font-semibold text-foreground">Additional appendix documents</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Drop another PDF or images here. Each file becomes its own A4 appendix after the Survey
+          Plan. Multi-page PDFs keep every page. Empty slot does not print.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => annexInputRef.current?.click()}
+            className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+          >
+            Attach appendix PDF
+          </button>
+          <input
+            ref={annexInputRef}
+            type="file"
+            accept="application/pdf,image/*"
+            className="hidden"
+            multiple
+            onChange={(e) => {
+              const files = Array.from(e.target.files ?? []);
+              const groupId = annexTargetGroupRef.current;
+              annexTargetGroupRef.current = null;
+              e.target.value = "";
+              for (const file of files) void onAnnexFile(file, groupId ?? undefined);
+            }}
+          />
+        </div>
+      </div>
+
+      {extraAnnexGroupsOnReport(photos).map((group) => (
+        <div key={group.id} className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              className="min-w-[16rem] flex-1 rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+              value={group.title}
+              onChange={(e) => {
+                const title = e.target.value;
+                setPhotos((prev) =>
+                  prev.map((p) =>
+                    p.annexGroup === group.id
+                      ? {
+                          ...p,
+                          annexTitle: title,
+                          caption: p.caption.replace(/^.*?(?=\s+[—-]\s+page\s+\d+)/i, title) || title,
+                        }
+                      : p,
+                  ),
+                );
+              }}
+            />
+            <button
+              type="button"
+              className="rounded-md border border-input px-3 py-1.5 text-sm"
+              onClick={() => {
+                annexTargetGroupRef.current = group.id;
+                annexInputRef.current?.click();
+              }}
+            >
+              Add pages
+            </button>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {group.pages.map((photo, index) => (
+              <PhotoCard
+                key={photo.id}
+                slotLabel={photo.caption || `${group.title} — page ${index + 1}`}
+                photo={photo}
+                uploading={uploadingIds.has(photo.id)}
+                acceptDocument
+                onFile={(file) => {
+                  if (isPdfFile(file)) {
+                    void onAnnexFile(file, group.id);
+                    return;
+                  }
+                  void attachPhoto({
+                    file,
+                    slot: null,
+                    caption: photo.caption || `${group.title} — page ${index + 1}`,
+                    replaceId: photo.id,
+                    kind: "annex",
+                    annexGroup: group.id,
+                    annexTitle: group.title,
+                  });
+                }}
+                onCaption={(caption) =>
+                  setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, caption } : p)))
+                }
+                onRemove={() => void removePhoto(photo)}
+                onOpenPasteMenu={openPasteMenu}
+                onOmitFromReport={(omit) => setOmitFromReport(photo.id, omit)}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
 
       {photoMenu ? (
         <div

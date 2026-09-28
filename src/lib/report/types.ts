@@ -53,9 +53,14 @@ export interface ReportPhoto {
    * When slot is null: "map" = additional labeled map/overlay tile (annex maps);
    * "title" = Certificate of Title page (annex);
    * "survey" = Survey Plan page (annex);
+   * "annex" = additional appendix PDF/image page (A4);
    * "photo" or omitted = additional subject photograph.
    */
-  kind?: "map" | "photo" | "title" | "survey";
+  kind?: "map" | "photo" | "title" | "survey" | "annex";
+  /** Groups pages from one dropped appendix PDF. */
+  annexGroup?: string;
+  /** Heading for that appendix document. */
+  annexTitle?: string;
   /**
    * When true, the image stays on the job (working file) but is omitted from
    * the printed report, Word export, cover and annexures.
@@ -92,6 +97,41 @@ export function titlePhotosOnReport(photos: ReportPhoto[] | null | undefined): R
 
 export function surveyPhotosOnReport(photos: ReportPhoto[] | null | undefined): ReportPhoto[] {
   return photosOnReport(photos).filter(isSurveyAnnexPhoto);
+}
+
+export function isExtraAnnexPhoto(photo: ReportPhoto): boolean {
+  if (photo.kind === "annex") return true;
+  return /^appendix document/i.test(photo.caption || "");
+}
+
+export function extraAnnexPhotosOnReport(photos: ReportPhoto[] | null | undefined): ReportPhoto[] {
+  return photosOnReport(photos).filter(isExtraAnnexPhoto);
+}
+
+export function extraAnnexGroupsOnReport(
+  photos: ReportPhoto[] | null | undefined,
+): { id: string; title: string; pages: ReportPhoto[] }[] {
+  const pages = extraAnnexPhotosOnReport(photos);
+  const order: string[] = [];
+  const map = new Map<string, ReportPhoto[]>();
+  for (const page of pages) {
+    const id = page.annexGroup || page.id;
+    if (!map.has(id)) {
+      map.set(id, []);
+      order.push(id);
+    }
+    map.get(id)!.push(page);
+  }
+  return order.map((id, i) => {
+    const groupPages = map.get(id) ?? [];
+    const title =
+      groupPages.find((p) => p.annexTitle?.trim())?.annexTitle?.trim() ||
+      String(groupPages[0]?.caption ?? "")
+        .replace(/\s+[—-]\s+page\s+\d+\s*$/i, "")
+        .trim() ||
+      `Appendix document ${i + 1}`;
+    return { id, title, pages: groupPages };
+  });
 }
 
 /** Relativity mark on a comparison feature (URAR-style description). */
