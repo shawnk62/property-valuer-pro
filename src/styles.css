@@ -939,9 +939,14 @@
     page-break-inside: avoid !important;
   }
 
-  #report-preview-sheet table {
-    break-inside: auto !important;
-    page-break-inside: auto !important;
+  /*
+   * Keep a table on one sheet when it fits. The browser will only split
+   * if the table is taller than the printable page.
+   */
+  #report-preview-sheet table,
+  #report-preview-sheet .report-table-keep {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
     font-size: 9pt !important;
   }
 

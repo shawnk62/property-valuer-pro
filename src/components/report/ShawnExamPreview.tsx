@@ -111,6 +111,7 @@ function StripeTable({ rows }: { rows: { label: string; value: string }[] }) {
   const shown = rows.filter((r) => r.value.trim());
   if (shown.length === 0) return null;
   return (
+    <div className="report-table-keep">
     <table className="report-fact-table mt-3 w-full border-collapse text-sm">
       <tbody>
         {shown.map((row, i) => (
@@ -125,6 +126,7 @@ function StripeTable({ rows }: { rows: { label: string; value: string }[] }) {
         ))}
       </tbody>
     </table>
+    </div>
   );
 }
 
@@ -136,6 +138,7 @@ function RiskPrintTable({
   values: ReportDraft["values"];
 }) {
   return (
+    <div className="report-table-keep">
     <table className="report-fact-table mt-3 w-full border-collapse text-sm">
       <thead>
         <tr style={{ background: TEAL, color: "#fff" }}>
@@ -174,6 +177,7 @@ function RiskPrintTable({
         })}
       </tbody>
     </table>
+    </div>
   );
 }
 
