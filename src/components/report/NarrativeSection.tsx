@@ -34,77 +34,105 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
     key: keyof ReportNarrative;
     label: string;
     hint: string;
-  }[] = [
+  }[] = shawnExam
+    ? [
+        {
+          key: "instructions",
+          label: "1.1 Instructions",
+          hint: "Prints under 1.0 Basis of Value.",
+        },
+        {
+          key: "brief",
+          label: "Brief Description of the Property",
+          hint: "Prints in the Executive Summary.",
+        },
+        {
+          key: "sitePhysical",
+          label: "2.1 Property Description",
+          hint: "Prints under 2.0 Title and Property Details.",
+        },
+        {
+          key: "highestBestUse",
+          label: "3.2 Highest and Best Use",
+          hint: "Prints under 3.0 Planning Controls.",
+        },
+        {
+          key: "location",
+          label: "5.1 Location",
+          hint: "Prints under 5.0 Locality and Location.",
+        },
+        {
+          key: "neighbourhood",
+          label: "5.2 Locality",
+          hint: "Prints under 5.0 Locality and Location. Immediate locality only.",
+        },
+        {
+          key: "servicesAmenities",
+          label: "2.3 Particulars of Land — Utilities",
+          hint: "Prints in 2.3 Particulars of Land.",
+        },
+      ]
+    : [
     {
       key: "instructions",
-      label: "Instructions from the client (1.1)",
+      label: "1.1 Instructions",
       hint: "Section 1.1. Built from the inspection-form instructions and instructing-party fields. Manual text is kept.",
     },
     {
       key: "brief",
-      label: "Brief description (valuation summary)",
-      hint: "Appears on the summary page DESCRIPTION and sets the tone of the report.",
+      label: "Brief Description of the Property",
+      hint: "Prints on the valuation summary.",
     },
     {
       key: "location",
-      label: "Location (5.1)",
-      hint: "Distance and direction from the CBD or nearest main town. Measured from the subject map coordinates. Do not describe the locality here.",
+      label: "5.1 Location",
+      hint: "Distance and direction from the CBD or nearest main town. Do not describe the locality here.",
     },
     {
       key: "neighbourhood",
-      label: "Neighbourhood (5.2)",
-      hint: "Immediate locality and neighbouring development, including recorded positive or negative features. No CBD distances, site shape, services or zoning.",
+      label: "5.2 Neighbourhood",
+      hint: "Immediate locality and neighbouring development. No CBD distances, site shape, services or zoning.",
     },
     {
       key: "sitePhysical",
-      label: "Physical description of the allotment (6.1)",
-      hint: "Section 6.1 — allotment shape, lot position, topography, dimensions and related site fields.",
+      label: "6.1 Physical Description",
+      hint: "Allotment shape, lot position, topography, dimensions and related site fields.",
     },
     {
       key: "servicesAmenities",
-      label: "Services / amenities (6.2)",
-      hint: "Section 6.2 — site services. Saved or edited text is not overwritten by AI.",
+      label: "6.2 Services/Amenities",
+      hint: "Site services. Saved or edited text is not overwritten by AI.",
     },
     {
       key: "improvements",
-      label: murray
-        ? "Improvements — general description (7.1)"
-        : "Improvements — general description (7.1)",
-      hint: murray
-        ? "Section 7.1 General Description under Improvements."
-        : "Section 7.1 of the report.",
+      label: "7.1 General Description",
+      hint: "Prints under 7. Improvements.",
     },
     {
       key: "accommodation",
-      label: murray
-        ? "Accommodation details (7.3)"
-        : "Accommodation narrative (8)",
+      label: murray ? "7.4 Accommodation Details" : "8. Accommodation – Fixtures and Fittings",
       hint: murray
-        ? "Section 7.3 Accommodation Details under Improvements."
-        : "Section 8 — accommodation, car accommodation and general.",
+        ? "Prints under 7. Improvements."
+        : "Prints as section 8.",
     },
     {
       key: "conditionImprovements",
-      label: murray
-        ? "Condition of improvements (7.5)"
-        : "Condition of improvements (9.2)",
+      label: murray ? "7.6 Condition of Improvements" : "9.2 Condition of Improvements",
       hint: murray
-        ? "Section 7.5 Condition of Improvements under Improvements."
-        : "Section 9.2 — component conditions and notes.",
+        ? "Prints under 7. Improvements."
+        : "Prints under 9. Improvements – Other Valuation Issues.",
     },
     {
       key: "highestBestUse",
-      label: murray ? "Highest and best use" : "Highest and best use (1.8)",
+      label: murray ? "Highest and Best Use" : "1.8 Highest and Best Use",
       hint: murray
-        ? "Prints under Basis of valuation. API definition plus the use recorded on the inspection. Manual text is kept."
-        : "Section 1.8 and Basis of valuation. API definition plus the use recorded on the inspection. Manual text is kept.",
+        ? "Prints under Basis of Valuation."
+        : "Prints under 1. Instructions and Purpose.",
     },
     {
       key: "remarks",
-      label: murray ? "Remarks (10)" : "Remarks (13)",
-      hint: murray
-        ? "Section 10 Remarks — structural/pest → brief → sales commentary → value → auction close."
-        : "Section 13 Remarks — Phil fixed sequence.",
+      label: murray ? "10. Remarks" : "13. Remarks",
+      hint: murray ? "Prints as section 10." : "Prints as section 13.",
     },
   ];
   return blocks;
