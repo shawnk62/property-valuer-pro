@@ -319,6 +319,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ) : null}
         <p className="exam-cover-meta">Prepared for {instructing}</p>
         <p className="exam-cover-meta">{propertyType}</p>
+        <p className="exam-cover-meta">
+          Basis of the valuation — {get(v, "insp_basis") || "Market value"}
+        </p>
+        <p className="exam-cover-meta">
+          Purpose of the report: {purpose || "—"}
+        </p>
         {student ? <p className="exam-cover-meta">Prepared by {student}</p> : null}
         {studentNo ? <p className="exam-cover-meta">Student number {studentNo}</p> : null}
         {get(v, "instr_from_email") ? (

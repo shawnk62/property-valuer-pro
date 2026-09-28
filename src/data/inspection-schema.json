@@ -291,6 +291,20 @@
           ]
         },
         {
+          "name": "insp_basis",
+          "label": "Basis of Valuation",
+          "type": "select",
+          "options": [
+            "Market value",
+            "Market rent",
+            "Fair value",
+            "Insurance replacement",
+            "Reinstatement",
+            "Going concern",
+            "Existing use"
+          ]
+        },
+        {
           "name": "instr_from_name",
           "label": "This report prepared as per instructions from (name)",
           "type": "text",
