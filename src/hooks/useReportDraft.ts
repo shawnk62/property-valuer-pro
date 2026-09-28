@@ -21,6 +21,7 @@ const storageKey = (id: string) => `report-draft:${id}`;
 
 function emptyNarrative(): ReportNarrative {
   return {
+    instructions: "",
     brief: "",
     location: "",
     neighbourhood: "",
@@ -39,6 +40,7 @@ function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): R
   const base = emptyNarrative();
   if (!raw || typeof raw !== "object") return base;
   return {
+    instructions: typeof raw.instructions === "string" ? raw.instructions : "",
     brief: typeof raw.brief === "string" ? raw.brief : "",
     ...(() => {
       const location = typeof raw.location === "string" ? raw.location : "";

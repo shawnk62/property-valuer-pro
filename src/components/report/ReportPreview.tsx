@@ -29,6 +29,7 @@ import {
   buildPhilRemarks,
   buildMurrayRemarks,
   buildSummaryDescription,
+  buildClientInstructions,
   executiveSummaryBriefText,
   isMurrayAssignment,
   section61PhysicalText,
@@ -1101,23 +1102,13 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 : "1.1  Instructions"
             }
           >
-            <Para>
-              {isJointFamilyLawPhilType(reportType.id)
-                ? get(v, "instr_from_name") || "As jointly instructed."
-                : [
-                    get(v, "instr_from_name")
-                      ? `This report prepared as per instructions from ${get(v, "instr_from_name")}.`
-                      : "",
-                    get(v, "instr_from_email")
-                      ? `Email: ${get(v, "instr_from_email")}`
-                      : "",
-                    get(v, "instr_from_mobile")
-                      ? `Mobile: ${get(v, "instr_from_mobile")}`
-                      : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ") || "As instructed."}
-            </Para>
+            {draft.narrative.instructions?.trim() ? (
+              <Prose text={draft.narrative.instructions} />
+            ) : isJointFamilyLawPhilType(reportType.id) ? (
+              <Para>{get(v, "instr_from_name") || "As jointly instructed."}</Para>
+            ) : (
+              <Prose text={buildClientInstructions(v)} />
+            )}
           </Sub>
           <Sub title="1.2  Purpose of Valuation">
             <Prose text={purposeOfValuation(get(v, "prop_assignment"), v)} />

@@ -36,6 +36,11 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
     hint: string;
   }[] = [
     {
+      key: "instructions",
+      label: "Instructions from the client (1.1)",
+      hint: "Section 1.1. Built from the inspection-form instructions and instructing-party fields. Manual text is kept.",
+    },
+    {
       key: "brief",
       label: "Brief description (valuation summary)",
       hint: "Appears on the summary page DESCRIPTION and sets the tone of the report.",

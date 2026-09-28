@@ -247,6 +247,27 @@ export function buildBlockPrompt(
   const type = assignmentType(values);
 
   switch (blockKey) {
+    case "instructions":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write section 1.1 Instructions from the client for a ${type} valuation report.
+
+Use only these recorded facts:
+Instructing party name: ${typeof values["instr_from_name"] === "string" ? values["instr_from_name"] : ""}
+Email: ${typeof values["instr_from_email"] === "string" ? values["instr_from_email"] : ""}
+Mobile: ${typeof values["instr_from_mobile"] === "string" ? values["instr_from_mobile"] : ""}
+Client instructions: ${typeof values["instr_client"] === "string" ? values["instr_client"] : ""}
+Purpose: ${typeof values["insp_purpose"] === "string" ? values["insp_purpose"] : type}
+Address fields:
+${sectionAnswers(values, ["1"])}
+
+Rules:
+- One or two short paragraphs.
+- Open with who instructed the valuation and of which property.
+- Include the client's instructions when recorded. Do not invent a scope of work.
+- Do not repeat the heading "Instructions".
+- Do not invent contact details.`,
+      };
     case "site":
       return {
         system: BASE_RULES,

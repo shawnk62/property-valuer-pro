@@ -2,6 +2,7 @@ import type { ReactElement, ReactNode } from "react";
 import { australianiseSpelling } from "@/lib/report/australianEnglish";
 import { stripLeadingHeading } from "@/lib/report/printText";
 import {
+  buildClientInstructions,
   executiveSummaryBriefText,
   section61PhysicalText,
 } from "@/lib/report/narrative";
@@ -392,12 +393,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <Lead id="exam-1" title="1.0 Basis of Value">
       <Keep>
       <H2>1.1 Instructions</H2>
-      <Para>
-        Instructions were received from {instructing} to assess
-        {addressLine ? ` ${addressLine}` : " the subject property"} on the basis of market value
-        {purpose ? ` for ${purpose}` : ""}. The property was inspected and this report prepared in
-        accordance with those instructions.
-      </Para>
+      <Prose
+        text={
+          draft.narrative.instructions?.trim() ||
+          buildClientInstructions(v)
+        }
+      />
       </Keep>
       </Lead>
 

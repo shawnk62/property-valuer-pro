@@ -5,6 +5,7 @@ import { displayValue, hasValue, joinValues } from "./schema";
 import type { InspectionValues, ReportNarrative } from "./types";
 import { australianiseSpelling } from "./australianEnglish";
 import { buildRiskAnalysis } from "./propertyRiskRatings";
+import { purposeOfValuation } from "./reportTypes";
 
 /**
  * Mock narrative generator. Composes QLD residential prose from the subject
@@ -20,6 +21,27 @@ function sentence(parts: (string | false | undefined)[]): string {
   const body = parts.filter(Boolean).join(" ");
   if (!body) return "";
   return body.endsWith(".") ? body : `${body}.`;
+}
+
+export function buildClientInstructions(values: InspectionValues): string {
+  const notes = v(values, "instr_client");
+  const name = v(values, "instr_from_name");
+  const email = v(values, "instr_from_email");
+  const mobile = v(values, "instr_from_mobile");
+  const addr = fullAddress(values);
+  const purpose = purposeOfValuation(v(values, "prop_assignment"), values);
+  const open = sentence([
+    "Instructions were received from",
+    name || "the instructing party",
+    "to prepare a valuation of",
+    addr || "the subject property",
+    purpose ? `for the purpose of ${purpose}` : "",
+  ]);
+  const contact = sentence([
+    email && `Email ${email}`,
+    mobile && `Mobile ${mobile}`,
+  ]);
+  return [open, notes, contact].filter(Boolean).join("\n\n");
 }
 
 function fullAddress(values: InspectionValues): string {
@@ -1080,6 +1102,7 @@ export function generateNarrative(
     buildBrief(values) ||
     sentence(["The subject property is located at", fullAddress(values)]);
   const raw: ReportNarrative = {
+    instructions: buildClientInstructions(values),
     brief,
     location: buildLocation(values, opts?.locationSentence),
     neighbourhood: buildNeighbourhood(values),

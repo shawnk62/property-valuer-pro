@@ -217,6 +217,8 @@ export function salesHeldBack(sales: ComparableSale[] | null | undefined): Compa
 }
 
 export interface ReportNarrative {
+  /** §1.1 Instructions from the client. */
+  instructions: string;
   brief: string;
   /** §5.1 Location — distance and direction from CBD / nearest centre. */
   location: string;

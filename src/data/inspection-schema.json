@@ -312,6 +312,12 @@
           "placeholder": "04xx xxx xxx"
         },
         {
+          "name": "instr_client",
+          "label": "Instructions from the client",
+          "type": "textarea",
+          "placeholder": "What the client asked the valuer to do. Used as the basis for section 1.1."
+        },
+        {
           "name": "prop_address",
           "label": "Property Address",
           "type": "text",
