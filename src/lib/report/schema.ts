@@ -82,6 +82,19 @@ export function get(values: InspectionValues, name: string): string {
   return displayValue(values[name]);
 }
 
+/** Inspection Property Rights, for every report type. */
+export function propertyRightsText(values: InspectionValues): string {
+  return get(values, "prop_rights");
+}
+
+/** Phrase used in the valuation certificate. */
+export function valuedInterestPhrase(values: InspectionValues): string {
+  const raw = propertyRightsText(values).trim();
+  if (!raw || /^fee simple$/i.test(raw)) return "unencumbered fee simple interest";
+  if (/^leasehold$/i.test(raw)) return "leasehold interest";
+  return `${raw} interest`;
+}
+
 /** Returns present values only, in the order requested. */
 export function pick(
   values: InspectionValues,

@@ -12,6 +12,7 @@ import {
   labelFor,
   pick,
   PROPERTY_PLANNING_FIELDS,
+  valuedInterestPhrase,
 } from "@/lib/report/schema";
 import { A4DocumentAnnex } from "@/components/report/A4DocumentAnnex";
 import { AdjustmentGridPrint } from "@/components/report/AdjustmentGridPrint";
@@ -971,7 +972,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                   {/retrospective/i.test(reportType.id)
                     ? "retrospective market value"
                     : "market value"}{" "}
-                  of the freehold interest therein is assessed
+                  of the {valuedInterestPhrase(v)} therein is assessed
                   {m.valueDate
                     ? ` as of the ${formatCoverDate(m.valueDate)}`
                     : " as of the date of valuation"}{" "}
@@ -1946,7 +1947,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           <>
             <Para>
               Having regard to the foregoing, I am of the opinion that the market value of the
-              unencumbered fee simple interest in the subject property
+              {valuedInterestPhrase(v)} in the subject property
               {addressLine ? `, ${addressLine},` : ""} as at{" "}
               {m.valueDate || "the date of valuation"} is:
             </Para>

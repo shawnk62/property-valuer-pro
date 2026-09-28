@@ -23,7 +23,7 @@ import { buildPhilRemarks, buildMurrayRemarks, buildSummaryDescription } from "@
 import { annexureById, resolveAnnexures } from "@/lib/report/annexures";
 import { parseOverlayList } from "@/lib/report/overlays";
 import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
-import { formatHbuVacant, formatPropertyType, formatUsableSiteAreaIfDifferent, get, hasValue, joinValues, labelFor, PROPERTY_PLANNING_FIELDS } from "@/lib/report/schema";
+import { formatHbuVacant, formatPropertyType, formatUsableSiteAreaIfDifferent, get, hasValue, joinValues, labelFor, PROPERTY_PLANNING_FIELDS, valuedInterestPhrase } from "@/lib/report/schema";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
 
@@ -922,7 +922,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   children.push(sectionHeading("16.", "Valuation Statement"));
   children.push(
     p(
-      `Having regard to the foregoing, I am of the opinion that the market value of the unencumbered fee simple interest in the subject property${addr ? `, ${addr},` : ""} as at ${m.valueDate || "the date of valuation"} is:`,
+      `Having regard to the foregoing, I am of the opinion that the market value of the ${valuedInterestPhrase(v)} in the subject property${addr ? `, ${addr},` : ""} as at ${m.valueDate || "the date of valuation"} is:`,
     ),
   );
   if (m.valueAmount) {

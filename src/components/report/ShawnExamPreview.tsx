@@ -12,6 +12,7 @@ import {
   formatUsableSiteAreaIfDifferent,
   get,
   joinValues,
+  valuedInterestPhrase,
 } from "@/lib/report/schema";
 import {
   MAP_SLOTS,
@@ -340,6 +341,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           { label: "Property Address", value: addressLine },
           { label: "Real Property Description", value: lotPlan },
           { label: "Property Type", value: propertyType },
+          { label: "Property rights", value: get(v, "prop_rights") },
           { label: "Instructing Party", value: instructing },
           { label: "Valuation Purpose", value: purpose },
           {
@@ -697,7 +699,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         <H2>8.4 Valuation result</H2>
         <Para>
           Having regard to the sales evidence and market conditions at the date of valuation, the
-          market value of the unencumbered fee simple interest in the subject property
+          market value of the {valuedInterestPhrase(v)} in the subject property
           {addressLine ? `, ${addressLine},` : ""} as at {m.valueDate || "the date of valuation"} is:
         </Para>
         {m.valueAmount ? (

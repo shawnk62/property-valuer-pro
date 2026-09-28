@@ -119,7 +119,7 @@ export const ADJUSTMENT_FEATURES: AdjustmentFeature[] = [
   { id: "concessions", label: "Concessions" },
   { id: "dateOfSale", label: "Date of Sale/Time" },
   { id: "location", label: "Location" },
-  { id: "leasehold", label: "Leasehold/Fee Simple" },
+  { id: "leasehold", label: "Property rights", subjectKeys: ["prop_rights"] },
   { id: "site", label: "Site", subjectKeys: ["prop_usable_sitearea", "prop_sitearea", "prop_areaunit", "prop_shape", "prop_lot_position"] },
   { id: "topography", label: "Topography", subjectKeys: ["topo"] },
   { id: "view", label: "View" },
