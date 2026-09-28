@@ -1,6 +1,6 @@
 {
   "form_name": "Queensland Subject Property Inspection Form",
-  "version": 47,
+  "version": 48,
   "purpose": "Digital inspection form for QLD Registered Valuers. Structured for automatic narrative export into valuation reports.",
   "condition_scale": [
     "Poor",
@@ -150,9 +150,65 @@
           "type": "text"
         },
         {
+          "name": "exam_acid_sulphate",
+          "label": "Acid sulphate soils (exam §4.1)",
+          "type": "textarea",
+          "placeholder": "Overlay presence, AHD, whether it affects value."
+        },
+        {
+          "name": "exam_amenities",
+          "label": "Amenities near the subject (exam §5.1)",
+          "type": "textarea",
+          "placeholder": "Walk distances to shops, parks, schools, transport."
+        },
+        {
+          "name": "exam_destinations",
+          "label": "Popular destinations table (exam §5.2)",
+          "type": "textarea",
+          "placeholder": "One destination per line: Place — distance — time — walk/vehicle"
+        },
+        {
           "name": "exam_market_commentary",
-          "label": "Market commentary",
+          "label": "Market commentary (or use the four parts below)",
           "type": "textarea"
+        },
+        {
+          "name": "exam_market_australia",
+          "label": "Market commentary — Australia (exam §6.1)",
+          "type": "textarea"
+        },
+        {
+          "name": "exam_market_state",
+          "label": "Market commentary — State (exam §6.2)",
+          "type": "textarea"
+        },
+        {
+          "name": "exam_market_region",
+          "label": "Market commentary — Region / city (exam §6.3)",
+          "type": "textarea"
+        },
+        {
+          "name": "exam_market_local",
+          "label": "Market commentary — Suburb / estate (exam §6.4)",
+          "type": "textarea"
+        },
+        {
+          "name": "exam_on_market",
+          "label": "On-the-market listings (exam §8.2)",
+          "type": "textarea",
+          "placeholder": "Listings considered but not settled. Note they are not sales evidence."
+        },
+        {
+          "name": "exam_sales_analysis",
+          "label": "Sales analysis (exam §8.3)",
+          "type": "textarea",
+          "placeholder": "Which comps are superior / inferior and why the adopted value sits where it does."
+        },
+        {
+          "name": "exam_individual_commentary",
+          "label": "Individual commentary (exam §11)",
+          "type": "textarea",
+          "placeholder": "Personal reflection on the assignment. Prints as section 11.0."
         },
         {
           "name": "exam_assumptions",

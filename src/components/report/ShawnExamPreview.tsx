@@ -222,6 +222,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const marketRisk = RISK_CATEGORIES.filter((c) => c.group === "market");
 
   const toc = [
+    "Executive Summary",
     "1.0 Basis of Value",
     "2.0 Title and Property Details",
     "3.0 Planning Controls",
@@ -230,9 +231,16 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     "6.0 Market Commentary",
     "7.0 Risk Assessment",
     "8.0 Valuation Approach",
-    "9.0 Assumptions, limitations and references",
+    "9.0 References",
     "10.0 Appendices",
+    "11.0 Individual Commentary",
   ];
+  const hasMarketParts = Boolean(
+    get(v, "exam_market_australia") ||
+      get(v, "exam_market_state") ||
+      get(v, "exam_market_region") ||
+      get(v, "exam_market_local"),
+  );
 
   return (
     <article
@@ -376,6 +384,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           { label: "Topography", value: get(v, "topo") },
           { label: "Access / street frontage", value: get(v, "prop_access") || get(v, "access") },
           { label: "Utilities", value: servicesText },
+          { label: "Easements, encumbrances and restrictions", value: get(v, "prop_rights") },
         ]}
       />
 
@@ -402,11 +411,23 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         overlays noted. The valuation assumes there are no environmental issues other than those set
         out below.
       </Para>
-      <H2>4.1 Soil assessment</H2>
-      <Para>
-        {get(v, "prop_adverse_site") ||
-          "No soil survey was sighted. Comment is limited to matters recorded on inspection or title."}
-      </Para>
+      <H2>4.1 Acid sulphate soils</H2>
+      <Prose
+        text={
+          get(v, "exam_acid_sulphate") ||
+          get(v, "plan_overlay_notes") ||
+          get(v, "prop_adverse_site") ||
+          ""
+        }
+      />
+      {!get(v, "exam_acid_sulphate") &&
+      !get(v, "plan_overlay_notes") &&
+      !get(v, "prop_adverse_site") ? (
+        <Para>
+          Comment is limited to planning overlays and matters recorded on inspection or title. If
+          an acid sulphate soils overlay applies, record whether it affects development or value.
+        </Para>
+      ) : null}
       <H2>4.2 Flood assessment</H2>
       <Para>
         {[get(v, "prop_flood"), get(v, "prop_flood_map")].filter(Boolean).join(". ") ||
@@ -426,15 +447,59 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       ) : null}
       <H2>5.2 Locality</H2>
       <Prose text={draft.narrative.neighbourhood?.trim() || get(v, "nbhd_description") || ""} />
+      {get(v, "exam_amenities") ? (
+        <>
+          <H2>5.3 Amenities</H2>
+          <Prose text={get(v, "exam_amenities")} />
+        </>
+      ) : null}
+      {get(v, "exam_destinations") ? (
+        <>
+          <H2>5.4 Popular destinations</H2>
+          <Prose text={get(v, "exam_destinations")} />
+        </>
+      ) : null}
 
       <H1 id="exam-6">6.0 Market Commentary</H1>
-      <Prose text={get(v, "exam_market_commentary") || draft.narrative.remarks?.trim() || ""} />
-      {!get(v, "exam_market_commentary") && !draft.narrative.remarks?.trim() ? (
-        <Para>
-          Record macro and local market conditions, supply and demand, and the price range of similar
-          vacant lots in the locality.
-        </Para>
-      ) : null}
+      {hasMarketParts ? (
+        <>
+          {get(v, "exam_market_australia") ? (
+            <>
+              <H2>6.1 Australia</H2>
+              <Prose text={get(v, "exam_market_australia")} />
+            </>
+          ) : null}
+          {get(v, "exam_market_state") ? (
+            <>
+              <H2>6.2 State</H2>
+              <Prose text={get(v, "exam_market_state")} />
+            </>
+          ) : null}
+          {get(v, "exam_market_region") ? (
+            <>
+              <H2>6.3 Region</H2>
+              <Prose text={get(v, "exam_market_region")} />
+            </>
+          ) : null}
+          {get(v, "exam_market_local") ? (
+            <>
+              <H2>6.4 Locality</H2>
+              <Prose text={get(v, "exam_market_local")} />
+            </>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <Prose text={get(v, "exam_market_commentary") || ""} />
+          {!get(v, "exam_market_commentary") ? (
+            <Para>
+              Record national, state, regional and suburb conditions, supply and demand, and the
+              price range of similar vacant lots. Use the four part-fields on the inspection form
+              for the 6.1–6.4 structure used in the sample reports.
+            </Para>
+          ) : null}
+        </>
+      )}
 
       <H1 id="exam-7">7.0 Risk Assessment</H1>
       <Para>
@@ -538,7 +603,23 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             </div>
           </div>
         )}
-        <H2>8.5 Valuation result</H2>
+        {get(v, "exam_on_market") ? (
+          <>
+            <H2>8.2 On-the-market listings</H2>
+            <Para>
+              The following listings were considered. They are not settled sales and are not used as
+              primary evidence.
+            </Para>
+            <Prose text={get(v, "exam_on_market")} />
+          </>
+        ) : null}
+        {get(v, "exam_sales_analysis") ? (
+          <>
+            <H2>8.3 Analysis</H2>
+            <Prose text={get(v, "exam_sales_analysis")} />
+          </>
+        ) : null}
+        <H2>8.4 Valuation result</H2>
         <Para>
           Having regard to the sales evidence and market conditions at the date of valuation, the
           market value of the unencumbered fee simple interest in the subject property
@@ -552,29 +633,28 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ) : null}
       </section>
 
-      <H1 id="exam-9">9.0 Assumptions, limitations and references</H1>
-      <H2>Assumptions or special conditions</H2>
-      <Prose text={get(v, "exam_assumptions")} />
-      {!get(v, "exam_assumptions") ? (
+      {get(v, "exam_limitations") ? (
+        <div className="mt-4">
+          <H2>Disclaimer</H2>
+          <Prose text={get(v, "exam_limitations")} />
+        </div>
+      ) : (
         <Para>
-          This valuation assumes the information disclosed by the instructing party is complete and
-          correct. If any assumption is not correct, the report should be referred back before
-          reliance.
+          This valuation has been prepared for the stated purpose and the instructing party only.
+          It may not be used for any other purpose without written authorisation.
         </Para>
+      )}
+      {get(v, "exam_assumptions") ? (
+        <div className="mt-4">
+          <H2>Assumptions</H2>
+          <Prose text={get(v, "exam_assumptions")} />
+        </div>
       ) : null}
-      <H2>Limitations or disclaimers</H2>
-      <Prose text={get(v, "exam_limitations")} />
-      {!get(v, "exam_limitations") ? (
-        <Para>
-          This report may be relied upon only by the instructing party for the stated purpose.
-          Figures are exclusive of GST unless otherwise stated. The valuer is not a geo-technical
-          expert.
-        </Para>
-      ) : null}
-      <H2>References</H2>
+
+      <H1 id="exam-9">9.0 References</H1>
       <Prose text={get(v, "exam_references")} />
       {!get(v, "exam_references") ? (
-        <Para>List sources used for the market commentary and planning searches.</Para>
+        <Para>List sources used for the market commentary, planning searches and sales evidence.</Para>
       ) : null}
 
       <H1 id="exam-10">10.0 Appendices</H1>
@@ -648,6 +728,15 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             ))}
           </div>
         </section>
+      ) : null}
+
+      <H1 id="exam-11">11.0 Individual Commentary</H1>
+      <Prose text={get(v, "exam_individual_commentary")} />
+      {!get(v, "exam_individual_commentary") ? (
+        <Para>
+          Record a personal reflection on the assignment: method, sources, what would be done
+          differently, and confidence in the adopted value.
+        </Para>
       ) : null}
     </article>
   );
