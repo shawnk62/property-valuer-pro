@@ -396,6 +396,9 @@
 .risk-ratings-print tbody td {
   height: 7.5mm;
 }
+.risk-ratings-print td.is-filled {
+  background: #7ec8d9;
+}
 
 /* File number — top left of valuation summary (PDF page 2) */
 .report-file-no {
@@ -1282,4 +1285,78 @@
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
+
+  .report-type-exam .risk-ratings-print thead th {
+    background: #1b2a4a !important;
+    color: #fff !important;
+    border-color: #1b2a4a !important;
+  }
+  .report-type-exam .risk-ratings-print td.is-filled {
+    background: #6b7c8d !important;
+  }
+}
+
+/* Shawn Exam and future Shawn-* reports — Style-3 specimen */
+.report-type-exam {
+  --exam-navy: #1b2a4a;
+  --exam-slate: #5c6b7a;
+  --exam-muted: #6b7280;
+  --exam-ink: #1c1c1c;
+  --exam-rule: #d0d5dc;
+  --exam-stripe: #f3f4f6;
+  color: var(--exam-ink);
+  font-family: "Avenir Next", "Segoe UI", Arial, Helvetica, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.5;
+}
+.report-type-exam .report-h2,
+.report-type-exam .report-heading-lead {
+  color: var(--exam-navy) !important;
+  border-color: var(--exam-rule) !important;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+.report-type-exam .exam-cover {
+  border: 0;
+  padding: 0;
+  color: var(--exam-navy);
+}
+.report-type-exam .exam-cover-photo {
+  max-width: 100%;
+  margin: 0 auto 1.25rem;
+}
+.report-type-exam .exam-cover-photo img {
+  border: 0;
+}
+.report-type-exam .exam-cover-kicker {
+  margin: 1.25rem 0 0.35rem;
+  color: var(--exam-slate);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.report-type-exam .exam-cover-address {
+  margin: 0.15rem 0 0.75rem;
+  color: var(--exam-navy);
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.report-type-exam .exam-cover-meta {
+  margin: 0.2rem 0;
+  color: var(--exam-slate);
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+.report-type-exam .report-fact-table {
+  border-color: var(--exam-rule);
+}
+.report-type-exam .report-fact-table th {
+  color: var(--exam-navy);
+  font-weight: 600;
+}
+.report-type-exam .sales-evidence-item thead th {
+  background: var(--exam-navy) !important;
+  color: #fff !important;
 }

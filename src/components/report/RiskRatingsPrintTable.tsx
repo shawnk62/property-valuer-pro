@@ -17,8 +17,6 @@ const PRINT_LABEL: Record<RiskCategoryId, string> = {
   segment: "Market segment conditions",
 };
 
-const FILL = "#7ec8d9";
-
 /**
  * PropertyPRO-style print table. Working-screen RiskRatingsPanel is unchanged.
  * Cells 1 through the selected score are shaded; empty if no score is recorded.
@@ -56,10 +54,8 @@ export function RiskRatingsPrintTable({ values }: { values: InspectionValues }) 
                 {RISK_SCALE.map((col) => (
                   <td
                     key={col.score}
-                    style={
-                      selected && col.score <= selected
-                        ? { background: FILL }
-                        : undefined
+                    className={
+                      selected && col.score <= selected ? "is-filled" : undefined
                     }
                   />
                 ))}

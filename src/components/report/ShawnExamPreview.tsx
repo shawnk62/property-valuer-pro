@@ -33,12 +33,13 @@ import { purposeOfValuation } from "@/lib/report/reportTypes";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { buildRiskAnalysis } from "@/lib/report/propertyRiskRatings";
 import { RiskRatingsPrintTable } from "@/components/report/RiskRatingsPrintTable";
+import { SHAWN_EXAM_STYLE as EXAM } from "@/lib/report/shawnExamStyle";
 
 
 
-const TEAL = "#1a6b73";
-const STRIPE = "#d7eaf3";
-const RULE = "#8eb8c6";
+const TEAL = EXAM.navy;
+const STRIPE = EXAM.stripe;
+const RULE = EXAM.rule;
 
 const IVSC_MARKET_VALUE =
   "Market Value is the estimated amount for which an asset or liability should exchange on the date of valuation between a willing buyer and a willing seller in an arm’s-length transaction after proper marketing where the parties had each acted knowledgeably, prudently and without compulsion. (IVS 2025)";
@@ -264,27 +265,24 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       id="report-preview-sheet"
       className="report-sheet report-type-exam mx-auto max-w-[52rem] px-8 py-10 shadow-sm sm:px-12 sm:py-14"
     >
-      <section className="exam-cover break-after-page border p-6 text-center" style={{ borderColor: RULE }}>
+      <section className="exam-cover break-after-page text-center">
         {frontPhoto?.url ? (
-          <figure className="mx-auto max-w-xl">
+          <figure className="exam-cover-photo mx-auto">
             <img
               src={frontPhoto.url}
               alt={addressLine || "Subject property"}
               className="w-full object-contain"
-              style={{ border: `1px solid ${RULE}` }}
             />
           </figure>
         ) : null}
-        <h1 className="mt-6 text-3xl font-normal" style={{ color: TEAL }}>
-          Valuation Report
-        </h1>
-        <p className="mt-3 text-lg">Prepared for {instructing}</p>
-        <p className="mt-2">{propertyType}</p>
-        <p className="mt-1 font-medium">{addressLine || "—"}</p>
-        {student ? <p className="mt-4 text-sm">Prepared by {student}</p> : null}
-        {studentNo ? <p className="text-sm">Student number {studentNo}</p> : null}
+        <h1 className="exam-cover-kicker">Valuation Report</h1>
+        <p className="exam-cover-address">{addressLine || "—"}</p>
+        <p className="exam-cover-meta">Prepared for {instructing}</p>
+        <p className="exam-cover-meta">{propertyType}</p>
+        {student ? <p className="exam-cover-meta">Prepared by {student}</p> : null}
+        {studentNo ? <p className="exam-cover-meta">Student number {studentNo}</p> : null}
         {get(v, "instr_from_email") ? (
-          <p className="text-sm">Email: {get(v, "instr_from_email")}</p>
+          <p className="exam-cover-meta">Email: {get(v, "instr_from_email")}</p>
         ) : null}
       </section>
 
