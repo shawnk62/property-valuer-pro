@@ -60,6 +60,7 @@ function PhotoCard({
   onLabelChange,
   onOpenPasteMenu,
   onOmitFromReport,
+  acceptDocument = false,
 }: {
   photo: ReportPhoto | undefined;
   slotLabel: string;
