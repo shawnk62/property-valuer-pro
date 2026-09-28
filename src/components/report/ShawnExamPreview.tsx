@@ -98,6 +98,29 @@ function Prose({ text }: { text: string }) {
   );
 }
 
+function RiskAnalysisProse({ text }: { text: string }) {
+  if (!text.trim()) return null;
+  return (
+    <>
+      {australianiseSpelling(text)
+        .split(/\n{2,}/)
+        .map((block) => block.trim())
+        .filter(Boolean)
+        .map((block, i) => {
+          const match = block.match(/^(.+?\.)\s*([\s\S]*)$/);
+          const lead = match?.[1] ?? block;
+          const rest = match?.[2]?.trim() ?? "";
+          return (
+            <p key={i} className="text-left leading-relaxed">
+              <strong className="font-bold">{lead}</strong>
+              {rest ? ` ${rest}` : ""}
+            </p>
+          );
+        })}
+    </>
+  );
+}
+
 function H1({ id, children }: { id?: string; children: React.ReactNode }) {
   return (
     <h2
@@ -595,7 +618,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <RiskRatingsPrintTable values={v} />
       </Keep>
       <div className="mt-4">
-        <Prose text={buildRiskAnalysis(v) || get(v, "exam_risk_commentary") || ""} />
+        <RiskAnalysisProse
+          text={buildRiskAnalysis(v) || get(v, "exam_risk_commentary") || ""}
+        />
       </div>
 
       <section id="sec-sales" className="report-section report-section-sales">
