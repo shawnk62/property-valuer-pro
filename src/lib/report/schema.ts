@@ -82,6 +82,11 @@ export function get(values: InspectionValues, name: string): string {
   return displayValue(values[name]);
 }
 
+/** Assigned lot/plan, or proposed lot/plan when title is not yet issued. */
+export function coverLotPlan(values: InspectionValues): string {
+  return get(values, "prop_lotplan") || get(values, "prop_proposed_lotplan");
+}
+
 /** Inspection Property Rights, for every report type. */
 export function propertyRightsText(values: InspectionValues): string {
   return get(values, "prop_rights");

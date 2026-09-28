@@ -519,6 +519,25 @@ Rules:
 - If vacant land is recorded, treat Improvements as vacant-land risk, not a dwelling.
 - Do not write percentages.`,
       };
+    case "individualCommentary":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write section 10 Individual Commentary for a ${type} valuation report (student / exam style).
+
+Use only recorded facts:
+Address: ${typeof values["prop_address"] === "string" ? values["prop_address"] : ""}
+Purpose: ${typeof values["prop_assignment"] === "string" ? values["prop_assignment"] : type}
+Property type fields from the inspection.
+${sectionAnswers(values, ["1", "3", "5"])}
+
+Write two to four short paragraphs:
+- Approach used and why it was appropriate.
+- Sources relied on (sales, planning, title) without inventing searches that were not recorded.
+- Limitations or what would be checked if more time or information were available.
+- A measured statement of confidence in the adopted figure if a value is recorded.
+
+Do not invent sales, overlays, or a value. Do not repeat section headings.`,
+      };
     case "remarks": {
       const isPhil = type.toLowerCase().includes("phil");
       const isJointFamilyPhil =

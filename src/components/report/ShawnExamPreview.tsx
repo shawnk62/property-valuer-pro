@@ -7,6 +7,7 @@ import {
   section61PhysicalText,
 } from "@/lib/report/narrative";
 import {
+  coverLotPlan,
   formatHbuVacant,
   formatPropertyType,
   formatUsableSiteAreaIfDifferent,
@@ -279,8 +280,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     "7.0 Risk Assessment",
     "8.0 Valuation Approach",
     "9.0 References",
-    "10.0 Appendices",
-    "11.0 Individual Commentary",
+    "10.0 Individual Commentary",
+    "11.0 Appendices",
   ];
   const hasMarketParts = Boolean(
     get(v, "exam_market_australia") ||
@@ -313,6 +314,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ) : null}
         <h1 className="exam-cover-kicker">Valuation Report</h1>
         <p className="exam-cover-address">{addressLine || "—"}</p>
+        {coverLotPlan(v) ? (
+          <p className="exam-cover-meta">{coverLotPlan(v)}</p>
+        ) : null}
         <p className="exam-cover-meta">Prepared for {instructing}</p>
         <p className="exam-cover-meta">{propertyType}</p>
         {student ? <p className="exam-cover-meta">Prepared by {student}</p> : null}
@@ -737,28 +741,40 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep>
       </Lead>
 
-      <Lead id="exam-10" title="10.0 Appendices">
+      <Lead id="exam-10" title="10.0 Individual Commentary">
+      <Keep>
+      <Prose
+        text={
+          draft.narrative.individualCommentary?.trim() ||
+          get(v, "exam_individual_commentary")
+        }
+      />
+      {!draft.narrative.individualCommentary?.trim() &&
+      !get(v, "exam_individual_commentary") ? (
+        <Para>
+          Record a personal reflection on the assignment: method, sources, what would be done
+          differently, and confidence in the adopted value.
+        </Para>
+      ) : null}
+      </Keep>
+      </Lead>
+
+      <Lead id="exam-11" title="11.0 Appendices">
       <ol className="ml-5 list-decimal space-y-0.5 text-sm">
+        {annexurePhotos.length > 0 ? <li>Subject photographs</li> : null}
+        {printedSales.some((s) => s.photoUrl) ? <li>Comparable sale photographs</li> : null}
+        {mapPhotos.length > 0 ? <li>Maps</li> : null}
         {titlePages.length > 0 ? <li>Certificate of Title</li> : null}
         {surveyPages.length > 0 ? <li>Survey Plan</li> : null}
         {extraAnnexGroups.map((g) => (
           <li key={g.id}>{g.title}</li>
         ))}
-        {annexurePhotos.length > 0 ? <li>Site images</li> : null}
-        {printedSales.some((s) => s.photoUrl) ? <li>Comparable sale photographs</li> : null}
-        {mapPhotos.length > 0 ? <li>Locality and planning maps</li> : null}
       </ol>
       </Lead>
 
-      <A4DocumentAnnex heading="Appendix — Certificate of Title" pages={titlePages} />
-      <A4DocumentAnnex heading="Appendix — Survey Plan" pages={surveyPages} />
-      {extraAnnexGroups.map((g) => (
-        <A4DocumentAnnex key={g.id} heading={`Appendix — ${g.title}`} pages={g.pages} />
-      ))}
-
       {annexurePhotos.length > 0 ? (
         <section className="report-annexure report-annexure-subject mt-12">
-          <PhotoAnnexPages heading="Appendix — Site images">
+          <PhotoAnnexPages heading="Appendix — Subject photographs">
             {annexurePhotos.map((photo) => (
               <figure key={photo.id} className="report-photo-figure">
                 <img
@@ -817,17 +833,11 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </section>
       ) : null}
 
-      <Lead id="exam-11" title="11.0 Individual Commentary">
-      <Keep>
-      <Prose text={get(v, "exam_individual_commentary")} />
-      {!get(v, "exam_individual_commentary") ? (
-        <Para>
-          Record a personal reflection on the assignment: method, sources, what would be done
-          differently, and confidence in the adopted value.
-        </Para>
-      ) : null}
-      </Keep>
-      </Lead>
+      <A4DocumentAnnex heading="Appendix — Certificate of Title" pages={titlePages} />
+      <A4DocumentAnnex heading="Appendix — Survey Plan" pages={surveyPages} />
+      {extraAnnexGroups.map((g) => (
+        <A4DocumentAnnex key={g.id} heading={`Appendix — ${g.title}`} pages={g.pages} />
+      ))}
     </article>
   );
 }

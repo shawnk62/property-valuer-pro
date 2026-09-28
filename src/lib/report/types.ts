@@ -235,6 +235,8 @@ export interface ReportNarrative {
   /** Highest and best use — editable; prints in 1.8 / Basis of valuation. */
   highestBestUse: string;
   remarks: string;
+  /** Shawn Exam — individual commentary (prints before appendices). */
+  individualCommentary: string;
   /** PropertyPRO risk analysis — one paragraph per heading. */
   riskAnalysis: string;
 }

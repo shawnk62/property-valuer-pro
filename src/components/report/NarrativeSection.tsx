@@ -71,6 +71,11 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           label: "2.3 Particulars of Land — Utilities",
           hint: "Prints in 2.3 Particulars of Land.",
         },
+        {
+          key: "individualCommentary",
+          label: "10.0 Individual Commentary",
+          hint: "Prints as section 10, before the appendices. Manual text is kept.",
+        },
       ]
     : [
     {

@@ -3,6 +3,7 @@ import { australianiseSpelling } from "@/lib/report/australianEnglish";
 import { stripLeadingHeading } from "@/lib/report/printText";
 import { BOILERPLATE } from "@/lib/report/boilerplate";
 import {
+  coverLotPlan,
   formatHbuVacant,
   formatPropertyType,
   formatUsableSiteAreaIfDifferent,
@@ -893,6 +894,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               : "RESIDENTIAL PROPERTY SITUATED AT"}
           </p>
           {addressLine ? <p>{addressLine}</p> : null}
+          {coverLotPlan(v) ? <p>{coverLotPlan(v)}</p> : null}
         </div>
       </div>
 

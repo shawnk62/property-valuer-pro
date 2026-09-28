@@ -348,6 +348,13 @@
           "multiline": false
         },
         {
+          "name": "prop_proposed_lotplan",
+          "label": "Proposed Lot / Plan",
+          "type": "text",
+          "multiline": false,
+          "help": "Used on the cover when Lot / Plan has not been assigned."
+        },
+        {
           "name": "prop_title",
           "label": "Title Reference",
           "type": "text",

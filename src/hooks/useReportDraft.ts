@@ -32,6 +32,7 @@ function emptyNarrative(): ReportNarrative {
     conditionImprovements: "",
     highestBestUse: "",
     remarks: "",
+    individualCommentary: "",
     riskAnalysis: "",
   };
 }
@@ -64,6 +65,8 @@ function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): R
       typeof raw.conditionImprovements === "string" ? raw.conditionImprovements : "",
     highestBestUse: typeof raw.highestBestUse === "string" ? raw.highestBestUse : "",
     remarks: typeof raw.remarks === "string" ? raw.remarks : "",
+    individualCommentary:
+      typeof raw.individualCommentary === "string" ? raw.individualCommentary : "",
     riskAnalysis: typeof raw.riskAnalysis === "string" ? raw.riskAnalysis : "",
   };
 }
