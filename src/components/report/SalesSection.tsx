@@ -31,7 +31,11 @@ import type { ReportDraftController } from "@/hooks/useReportDraft";
 import { extractComparableSales, generateSaleNarrative } from "@/lib/ai/ai.functions";
 import { isAiConfigured, loadAiSettings } from "@/lib/ai/settings";
 import {
-  ADJUSTMENT_FEATURES,
+  adjustmentFeaturesForProperty,
+  adjustmentRowPrints,
+  printAdjustmentGridEnabled,
+  printSalesEvidenceEnabled,
+  setAdjustmentRowPrint,
   RELATIVITY_OPTIONS,
   adjustmentAmountClass,
   adjustmentRowClass,
@@ -99,6 +103,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const sales = draft.sales.map(ensureSaleAdjustments);
   const gridSales = salesOnReport(sales);
   const heldSales = salesHeldBack(sales);
+  const visibleAdjFeatures = useMemo(
+    () => adjustmentFeaturesForProperty(draft.values).filter((f) => f.id !== "dateOfSale"),
+    [draft.values],
+  );
   const subjectFrontPhoto = draft.photos.find((p) => p.slot === "front");
   const subjectGridAddress = addressLines(
     [draft.values["prop_address"], draft.values["prop_suburb"]].filter(Boolean).join(", "),
@@ -1289,6 +1297,24 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       >
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-foreground">Sales comparison grid (URAR)</h3>
+          <div className="mt-2 flex flex-wrap gap-4 text-sm text-foreground">
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                checked={printSalesEvidenceEnabled(draft.reportMeta)}
+                onChange={(e) => setMeta({ printSalesEvidence: e.target.checked })}
+              />
+              Print sales evidence table
+            </label>
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                checked={printAdjustmentGridEnabled(draft.reportMeta)}
+                onChange={(e) => setMeta({ printAdjustmentGrid: e.target.checked })}
+              />
+              Print adjustment grid
+            </label>
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">
             Shared across all report types. Import a CMA to add sales. A later extract is
             appended — CMA card numbers 1–4 are not used as identity. Same address + sale
@@ -2050,7 +2076,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                         </tr>
 
                         {/* ---- URAR VALUE ADJUSTMENTS: Description | $ side by side ---- */}
-                        {ADJUSTMENT_FEATURES.filter((feature) => feature.id !== "dateOfSale").map((feature, featureIdx) => {
+                        {visibleAdjFeatures.map((feature, featureIdx) => {
                           const isSite = feature.id === "site";
                           const isGla = feature.id === "grossLivingArea";
                           const isAreaRateRow = isSite || isGla;
@@ -2068,7 +2094,23 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                           return (
                           <tr key={feature.id} className={`border-b border-border ${rowBg}`}>
                             <td className={`sticky left-0 z-10 px-1.5 py-1 text-xs font-medium text-foreground ${rowBg}`}>
-                              {feature.label}
+                              <label className="flex items-center gap-1.5">
+                                <input
+                                  type="checkbox"
+                                  title="Include this row on the printed adjustment grid"
+                                  checked={adjustmentRowPrints(draft.reportMeta, feature.id)}
+                                  onChange={(e) =>
+                                    setMeta({
+                                      omitAdjustmentPrintRows: setAdjustmentRowPrint(
+                                        draft.reportMeta,
+                                        feature.id,
+                                        e.target.checked,
+                                      ),
+                                    })
+                                  }
+                                />
+                                <span>{feature.label}</span>
+                              </label>
                             </td>
                             <td className="px-1 py-1 text-[0.7rem] text-muted-foreground align-top">
                               {feature.id === "other1" || feature.id === "other2" ? (

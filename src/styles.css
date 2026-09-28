@@ -1425,3 +1425,27 @@
 .report-type-exam .risk-ratings-print tr.is-stripe td.is-filled {
   background: #6e867e;
 }
+.adjustment-print-grid table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.adjustment-print-grid th,
+.adjustment-print-grid td {
+  border: 0.4pt solid #c5d0c0;
+  padding: 3pt 4pt;
+  vertical-align: top;
+}
+.adjustment-print-grid thead th {
+  background: #324758;
+  color: #fff;
+  font-weight: 600;
+  text-align: left;
+}
+.adjustment-print-grid tbody th {
+  text-align: left;
+  font-weight: 600;
+}
+.adjustment-print-grid tr.is-stripe th,
+.adjustment-print-grid tr.is-stripe td {
+  background: #e6e9e2;
+}

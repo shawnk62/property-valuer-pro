@@ -28,7 +28,12 @@ import {
   type ReportDraft,
 } from "@/lib/report/types";
 import { A4DocumentAnnex } from "@/components/report/A4DocumentAnnex";
+import { AdjustmentGridPrint } from "@/components/report/AdjustmentGridPrint";
 import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
+import {
+  printAdjustmentGridEnabled,
+  printSalesEvidenceEnabled,
+} from "@/lib/report/adjustmentGrid";
 import { purposeOfValuation } from "@/lib/report/reportTypes";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { buildRiskAnalysis } from "@/lib/report/propertyRiskRatings";
@@ -654,12 +659,22 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 />
               </div>
             ) : null}
+            {printSalesEvidenceEnabled(draft.reportMeta) ? (
             <SalesEvidenceSchedule
               sales={printedSales}
               headerStyle={{ background: TEAL, color: "#fff" }}
               cellBorderClassName="border"
               cellStyle={{ borderColor: RULE }}
             />
+            ) : null}
+            {printAdjustmentGridEnabled(draft.reportMeta) ? (
+              <AdjustmentGridPrint
+                sales={printedSales}
+                values={v}
+                meta={draft.reportMeta}
+                subjectAddress={addressLine}
+              />
+            ) : null}
           </div>
         )}
         </Keep>

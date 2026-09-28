@@ -14,7 +14,12 @@ import {
   PROPERTY_PLANNING_FIELDS,
 } from "@/lib/report/schema";
 import { A4DocumentAnnex } from "@/components/report/A4DocumentAnnex";
+import { AdjustmentGridPrint } from "@/components/report/AdjustmentGridPrint";
 import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
+import {
+  printAdjustmentGridEnabled,
+  printSalesEvidenceEnabled,
+} from "@/lib/report/adjustmentGrid";
 import { MAP_SLOTS, PHOTO_SLOTS, extraAnnexGroupsOnReport, isExtraAnnexPhoto, isMapAnnexPhoto, isSurveyAnnexPhoto, isTitleAnnexPhoto, photoIsOnReport, salesOnReport, surveyPhotosOnReport, titlePhotosOnReport, type ReportDraft } from "@/lib/report/types";
 import {
   getReportTypeConfig,
@@ -1847,10 +1852,20 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               </div>
             ) : null}
 
+            {printSalesEvidenceEnabled(draft.reportMeta) ? (
             <SalesEvidenceSchedule
               sales={printedSales}
               headerClassName="bg-[var(--page-foreground)]/5"
             />
+            ) : null}
+            {printAdjustmentGridEnabled(draft.reportMeta) ? (
+              <AdjustmentGridPrint
+                sales={printedSales}
+                values={v}
+                meta={draft.reportMeta}
+                subjectAddress={addressLine}
+              />
+            ) : null}
           </div>
         )}
       </Section>

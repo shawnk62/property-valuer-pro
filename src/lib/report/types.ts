@@ -274,7 +274,12 @@ export interface ReportMeta {
   /** Geocoded subject coordinates used for Location distances. */
   subjectLat?: number;
   subjectLng?: number;
-  /** Editable pin set used to rebuild the Google sales map. */
+  /** When false, the sales-evidence table is omitted from the PDF. Default true. */
+  printSalesEvidence?: boolean;
+  /** When false, the adjustment grid is omitted from the PDF. Default true. */
+  printAdjustmentGrid?: boolean;
+  /** Feature ids the valuer has unticked for print. Default none (all visible rows print). */
+  omitAdjustmentPrintRows?: string[];
   salesMapPins?: Array<{
     id: string;
     label: string;

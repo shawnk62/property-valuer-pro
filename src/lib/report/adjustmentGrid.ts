@@ -4,8 +4,9 @@
  *
  * Shared across all report types; only report *output* differs by type.
  */
+import { isCommercialType, isMixedUseCommercial, isVacantLand } from "@/lib/inspection/visibility";
 import { parseMoney } from "./salesRelativity";
-import type { ComparableSale, InspectionValues } from "./types";
+import type { ComparableSale, InspectionValues, ReportMeta } from "./types";
 
 export const RELATIVITY_OPTIONS = [
   "inferior",
@@ -144,6 +145,60 @@ export const ADJUSTMENT_FEATURES: AdjustmentFeature[] = [
   { id: "other1", label: "Other" },
   { id: "other2", label: "Other" },
 ];
+
+const VACANT_FEATURE_IDS = new Set([
+  "saleOrFinancing",
+  "concessions",
+  "dateOfSale",
+  "location",
+  "leasehold",
+  "site",
+  "topography",
+  "view",
+  "other1",
+  "other2",
+]);
+
+/** Working-grid and print rows that apply to this property type. */
+export function adjustmentFeaturesForProperty(
+  values: InspectionValues,
+): AdjustmentFeature[] {
+  if (isVacantLand(values)) {
+    return ADJUSTMENT_FEATURES.filter((f) => VACANT_FEATURE_IDS.has(f.id));
+  }
+  if (isCommercialType(values) && !isMixedUseCommercial(values)) {
+    return ADJUSTMENT_FEATURES.filter(
+      (f) => f.id !== "basement" && f.id !== "aboveGradeRoomCount" && f.id !== "porchPatioDeck",
+    );
+  }
+  return ADJUSTMENT_FEATURES.filter((f) => f.id !== "basement");
+}
+
+export function printSalesEvidenceEnabled(meta: ReportMeta | undefined): boolean {
+  return meta?.printSalesEvidence !== false;
+}
+
+export function printAdjustmentGridEnabled(meta: ReportMeta | undefined): boolean {
+  return meta?.printAdjustmentGrid !== false;
+}
+
+export function adjustmentRowPrints(
+  meta: ReportMeta | undefined,
+  featureId: string,
+): boolean {
+  return !(meta?.omitAdjustmentPrintRows ?? []).includes(featureId);
+}
+
+export function setAdjustmentRowPrint(
+  meta: ReportMeta,
+  featureId: string,
+  print: boolean,
+): string[] {
+  const current = new Set(meta.omitAdjustmentPrintRows ?? []);
+  if (print) current.delete(featureId);
+  else current.add(featureId);
+  return [...current];
+}
 
 /** Legacy ids from earlier AU-oriented grid → current URAR ids (draft migration). */
 const LEGACY_FEATURE_MAP: Record<string, string> = {
