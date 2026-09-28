@@ -426,7 +426,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
 
       <Keep>
       <H2>2.3 Particulars of Land</H2>
-      <StripeTable>
+      <StripeTable
         rows={[
           { label: "Area", value: siteArea },
           { label: "Estimated usable site area", value: usableSiteArea },
