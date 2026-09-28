@@ -72,8 +72,18 @@ function PhotoCard({
   labelEditable?: boolean;
   onLabelChange?: (label: string) => void;
   onOpenPasteMenu?: (e: React.MouseEvent, onFile: (file: File) => void) => void;
+  /** Title / survey tiles accept a PDF as well as images. */
+  acceptDocument?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+
+  function droppedAnnexFile(list: FileList | File[]): File | null {
+    const files = Array.from(list);
+    if (acceptDocument) {
+      return files.find((f) => isPdfFile(f)) ?? files.find((f) => isImageFile(f)) ?? null;
+    }
+    return files.find((f) => isImageFile(f)) ?? null;
+  }
 
   return (
     <div className="rounded-md border border-border bg-card p-3">
@@ -154,11 +164,15 @@ function PhotoCard({
           (e.currentTarget as HTMLElement).focus?.();
           onOpenPasteMenu?.(e, onFile);
         }}
-        onDragOver={(e) => e.preventDefault()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "copy";
+        }}
         onDrop={(e) => {
           e.preventDefault();
+          e.stopPropagation();
           if (uploading) return;
-          const file = Array.from(e.dataTransfer.files ?? []).find((f) => isImageFile(f));
+          const file = droppedAnnexFile(e.dataTransfer.files ?? []);
           if (file) onFile(file);
         }}
         className="relative flex aspect-4/3 w-full cursor-pointer items-center justify-center overflow-hidden rounded-md border-2 border-dashed border-border bg-muted/50 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
@@ -185,7 +199,7 @@ function PhotoCard({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept={acceptDocument ? "application/pdf,image/*" : "image/*"}
         className="hidden"
         disabled={uploading}
         onChange={(e) => {
@@ -656,11 +670,29 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
         </span>
       </div>
 
-      <div className="rounded-md border border-border bg-card p-4">
+      <div
+        className="rounded-md border-2 border-dashed border-border bg-card p-4"
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "copy";
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const files = Array.from(e.dataTransfer.files ?? []);
+          const pdf = files.find((f) => isPdfFile(f));
+          if (pdf) {
+            void onTitleFile(pdf);
+            return;
+          }
+          const images = files.filter((f) => isImageFile(f));
+          for (const img of images) void onTitleFile(img);
+        }}
+      >
         <h3 className="text-sm font-semibold text-foreground">Certificate of Title</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Drop the title-search PDF (or page images). Each page prints in the annex as Certificate
-          of Title. Empty slot does not print.
+          Drag and drop the title-search PDF (or page images) here, or use the button. Each page
+          prints in the annex. Empty slot does not print.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <button
@@ -692,15 +724,20 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
               slotLabel={photo.caption || `Certificate of Title — page ${index + 1}`}
               photo={photo}
               uploading={uploadingIds.has(photo.id)}
-              onFile={(file) =>
+              acceptDocument
+              onFile={(file) => {
+                if (isPdfFile(file)) {
+                  void onTitleFile(file);
+                  return;
+                }
                 void attachPhoto({
                   file,
                   slot: null,
                   caption: photo.caption || `Certificate of Title — page ${index + 1}`,
                   replaceId: photo.id,
                   kind: "title",
-                })
-              }
+                });
+              }}
               onCaption={(caption) =>
                 setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, caption } : p)))
               }
@@ -712,11 +749,29 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
         </div>
       ) : null}
 
-      <div className="rounded-md border border-border bg-card p-4">
+      <div
+        className="rounded-md border-2 border-dashed border-border bg-card p-4"
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "copy";
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const files = Array.from(e.dataTransfer.files ?? []);
+          const pdf = files.find((f) => isPdfFile(f));
+          if (pdf) {
+            void onSurveyFile(pdf);
+            return;
+          }
+          const images = files.filter((f) => isImageFile(f));
+          for (const img of images) void onSurveyFile(img);
+        }}
+      >
         <h3 className="text-sm font-semibold text-foreground">Survey Plan</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Attach the registered survey plan PDF (or map images). Multi-page plans print page by
-          page in the annex, after the Certificate of Title. Empty slot does not print.
+          Drag and drop the survey plan PDF (or map images) here, or use the button. Multi-page
+          plans print after the Certificate of Title. Empty slot does not print.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <button
@@ -748,15 +803,20 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
               slotLabel={photo.caption || `Survey Plan — page ${index + 1}`}
               photo={photo}
               uploading={uploadingIds.has(photo.id)}
-              onFile={(file) =>
+              acceptDocument
+              onFile={(file) => {
+                if (isPdfFile(file)) {
+                  void onSurveyFile(file);
+                  return;
+                }
                 void attachPhoto({
                   file,
                   slot: null,
                   caption: photo.caption || `Survey Plan — page ${index + 1}`,
                   replaceId: photo.id,
                   kind: "survey",
-                })
-              }
+                });
+              }}
               onCaption={(caption) =>
                 setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, caption } : p)))
               }
