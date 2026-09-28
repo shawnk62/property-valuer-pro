@@ -105,12 +105,15 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
       document.title = previousTitle;
       pageStyle.remove();
       window.removeEventListener("afterprint", restore);
+      window.removeEventListener("pageshow", restore);
+      lock.endPrint();
       setPrinting(false);
     };
     window.addEventListener("afterprint", restore);
+    window.addEventListener("pageshow", restore);
 
+    lock.beginPrint();
     window.print();
-    window.setTimeout(restore, 4000);
   }
 
   const heading =

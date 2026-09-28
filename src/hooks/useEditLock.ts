@@ -18,6 +18,10 @@ export type EditLockState = {
   setupRequired: boolean;
   takeOver: () => Promise<void>;
   refresh: () => Promise<void>;
+  /** Call immediately before window.print() so pagehide does not drop the lock. */
+  beginPrint: () => void;
+  /** Call on afterprint / pageshow. Re-acquires if pagehide already released. */
+  endPrint: () => void;
 };
 
 /**
@@ -30,6 +34,7 @@ export function useEditLock(inspectionId: string | undefined): EditLockState {
   const [heldBy, setHeldBy] = useState<EditLockInfo | null>(null);
   const [setupRequired, setSetupRequired] = useState(false);
   const heldRef = useRef(false);
+  const printSessionRef = useRef(false);
   const idRef = useRef(inspectionId);
   idRef.current = inspectionId;
 
@@ -86,7 +91,7 @@ export function useEditLock(inspectionId: string | undefined): EditLockState {
 
     const heartbeat = window.setInterval(() => {
       const id = idRef.current;
-      if (!id) return;
+      if (!id || printSessionRef.current) return;
       if (heldRef.current) {
         void (async () => {
           await inspectionStore.heartbeatEditLock(id);
@@ -105,7 +110,9 @@ export function useEditLock(inspectionId: string | undefined): EditLockState {
 
     // Release only when leaving the page (not on camera / app switch — visibility
     // alone would unlock while the valuer is still on the job).
+    // iOS Safari also fires pagehide when opening the print sheet.
     const release = () => {
+      if (printSessionRef.current) return;
       const id = idRef.current;
       if (!id || !heldRef.current) return;
       heldRef.current = false;
@@ -120,7 +127,27 @@ export function useEditLock(inspectionId: string | undefined): EditLockState {
     };
   }, [inspectionId, acquire]);
 
-  return { checking, canEdit, heldBy, setupRequired, takeOver, refresh };
+  const beginPrint = useCallback(() => {
+    printSessionRef.current = true;
+  }, []);
+
+  const endPrint = useCallback(() => {
+    printSessionRef.current = false;
+    if (!heldRef.current) {
+      void acquire(false);
+    }
+  }, [acquire]);
+
+  return {
+    checking,
+    canEdit,
+    heldBy,
+    setupRequired,
+    takeOver,
+    refresh,
+    beginPrint,
+    endPrint,
+  };
 }
 
 export { formatLockAge, getDeviceId };
