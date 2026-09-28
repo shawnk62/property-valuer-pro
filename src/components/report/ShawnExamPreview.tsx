@@ -78,7 +78,7 @@ function amountInWords(raw: string): string {
 
 function Para({ children }: { children: React.ReactNode }) {
   if (!children) return null;
-  return <p className="text-justify leading-relaxed">{children}</p>;
+  return <p className="text-left leading-relaxed">{children}</p>;
 }
 
 function Prose({ text }: { text: string }) {
@@ -90,7 +90,7 @@ function Prose({ text }: { text: string }) {
         .map((line) => line.trim())
         .filter(Boolean)
         .map((line, i) => (
-          <p key={i} className="text-justify leading-relaxed">
+          <p key={i} className="text-left leading-relaxed">
             {line}
           </p>
         ))}
@@ -265,7 +265,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       id="report-preview-sheet"
       className="report-sheet report-type-exam mx-auto max-w-[52rem] px-8 py-10 shadow-sm sm:px-12 sm:py-14"
     >
-      <section className="exam-cover break-after-page text-center">
+      <section className="exam-cover break-after-page text-left">
         <header className="exam-wordmark">
           <img
             src={EXAM.logoSrc}
@@ -326,7 +326,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ]}
       />
       {m.valueAmount ? (
-        <div className="mt-4 text-center">
+        <div className="mt-4 text-left">
           <p>The Market Valuation of {addressLine || "the subject property"} is:</p>
           <p className="mt-2 text-xl font-semibold">${formatCurrencyDisplay(m.valueAmount)}</p>
           {valueWords ? <p className="mt-1">({valueWords})</p> : null}
@@ -661,7 +661,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           {addressLine ? `, ${addressLine},` : ""} as at {m.valueDate || "the date of valuation"} is:
         </Para>
         {m.valueAmount ? (
-          <p className="py-3 text-center text-lg font-semibold">
+          <p className="py-3 text-left text-lg font-semibold">
             ${formatCurrencyDisplay(m.valueAmount)}
             {valueWords ? ` (${valueWords})` : ""}
           </p>
@@ -727,7 +727,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                   loading="eager"
                   decoding="sync"
                 />
-                <figcaption className="mt-1.5 text-center text-sm">{photo.caption}</figcaption>
+                <figcaption className="mt-1.5 text-left text-sm">{photo.caption}</figcaption>
               </figure>
             ))}
           </PhotoAnnexPages>
@@ -748,7 +748,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                     loading="eager"
                     decoding="sync"
                   />
-                  <figcaption className="mt-1.5 text-center text-sm font-medium">
+                  <figcaption className="mt-1.5 text-left text-sm font-medium">
                     Comparable {idx + 1}
                     {s.address ? ` — ${s.address}` : ""}
                   </figcaption>
@@ -761,14 +761,14 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
 
       {mapPhotos.length > 0 ? (
         <section className="report-annexure mt-12">
-          <h2 className="text-center text-base font-semibold" style={{ color: TEAL }}>
+          <h2 className="text-left text-base font-semibold" style={{ color: TEAL }}>
             Appendix — Maps
           </h2>
           <div className="mt-6">
             {mapPhotos.map((photo) => (
               <figure key={photo.id} className="report-map-figure">
                 <img src={photo.url} alt={photo.caption || "Map"} />
-                <figcaption className="mt-1.5 text-center text-sm">{photo.caption}</figcaption>
+                <figcaption className="mt-1.5 text-left text-sm">{photo.caption}</figcaption>
               </figure>
             ))}
           </div>

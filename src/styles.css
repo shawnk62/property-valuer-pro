@@ -1351,13 +1351,14 @@
 }
 .report-type-exam .exam-wordmark-logo {
   display: block;
-  width: min(22rem, 88%);
+  width: 100%;
+  max-width: none;
   height: auto;
-  margin: 0 auto;
+  margin: 0;
 }
 .report-type-exam .exam-cover-photo {
   max-width: 100%;
-  margin: 0 auto 1.25rem;
+  margin: 0 0 1.25rem;
 }
 .report-type-exam .exam-cover-photo img {
   border: 0;
@@ -1368,6 +1369,7 @@
   font-size: 0.8rem;
   font-weight: 500;
   letter-spacing: 0.22em;
+  text-align: left;
   text-transform: uppercase;
 }
 .report-type-exam .exam-cover-address {
@@ -1376,6 +1378,7 @@
   font-size: 1.35rem;
   font-weight: 700;
   line-height: 1.25;
+  text-align: left;
 }
 .report-type-exam .exam-cover-meta {
   margin: 0.2rem 0;
@@ -1393,4 +1396,27 @@
 .report-type-exam .sales-evidence-item thead th {
   background: var(--exam-navy) !important;
   color: #fff !important;
+}
+.report-type-exam .risk-ratings-print thead th {
+  background: #324758;
+  color: #fff;
+  border-color: #c5d0c0;
+  text-align: center;
+}
+.report-type-exam .risk-ratings-print thead th:first-child {
+  text-align: left;
+}
+.report-type-exam .risk-ratings-print th,
+.report-type-exam .risk-ratings-print td {
+  border-color: #c5d0c0;
+}
+.report-type-exam .risk-ratings-print td.is-filled {
+  background: #6e867e;
+}
+.report-type-exam .risk-ratings-print tr.is-stripe th,
+.report-type-exam .risk-ratings-print tr.is-stripe td {
+  background: #e6e9e2;
+}
+.report-type-exam .risk-ratings-print tr.is-stripe td.is-filled {
+  background: #6e867e;
 }

@@ -7,7 +7,7 @@ import {
 import type { InspectionValues } from "@/lib/inspection/types";
 
 const PRINT_LABEL: Record<RiskCategoryId, string> = {
-  location: "Location/neighbourhood",
+  location: "Location / Neighbourhood",
   land: "Land (including planning & title)",
   environment: "Environmental issues",
   improvements: "Improvements",
@@ -18,12 +18,12 @@ const PRINT_LABEL: Record<RiskCategoryId, string> = {
 };
 
 /**
- * PropertyPRO-style print table. Working-screen RiskRatingsPanel is unchanged.
- * Cells 1 through the selected score are shaded; empty if no score is recorded.
+ * Kelly Style-3 print table. Working-screen panel is unchanged.
+ * Shade 1 through the selected score using brand fill.
  */
 export function RiskRatingsPrintTable({ values }: { values: InspectionValues }) {
   return (
-    <div className="report-table-keep risk-ratings-print">
+    <div className="report-table-keep risk-ratings-print risk-ratings-print--style3">
       <table>
         <colgroup>
           <col className="risk-print-label" />
@@ -33,23 +33,17 @@ export function RiskRatingsPrintTable({ values }: { values: InspectionValues }) 
         </colgroup>
         <thead>
           <tr>
-            <th colSpan={6}>Property Risk Ratings</th>
-          </tr>
-          <tr>
-            <th>Risk rating</th>
+            <th>Risk Rating Category</th>
             {RISK_SCALE.map((col) => (
-              <th key={col.score}>
-                <span className="risk-print-num">{col.score}.</span>
-                <span className="risk-print-band-label">{col.label.toLowerCase()}</span>
-              </th>
+              <th key={col.score}>{col.score}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {RISK_CATEGORIES.map((cat) => {
+          {RISK_CATEGORIES.map((cat, i) => {
             const selected = parseRiskScore(values[cat.field]);
             return (
-              <tr key={cat.id}>
+              <tr key={cat.id} className={i % 2 === 0 ? "is-stripe" : undefined}>
                 <th scope="row">{PRINT_LABEL[cat.id]}</th>
                 {RISK_SCALE.map((col) => (
                   <td
