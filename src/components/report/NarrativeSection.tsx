@@ -74,6 +74,11 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           hint: "Prints under 3.0 Planning Controls.",
         },
         {
+          key: "valuationApproach",
+          label: "8.0 Valuation Approach",
+          hint: "Prints at the start of 8.0 Valuation Approach. Saved text is not overwritten on reopen.",
+        },
+        {
           key: "location",
           label: "5.1 Location",
           hint: "Prints under 5.0 Locality and Location.",
@@ -150,6 +155,11 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
       hint: murray
         ? "Prints under Basis of Valuation."
         : "Prints under 1. Instructions and Purpose.",
+    },
+    {
+      key: "valuationApproach",
+      label: "Valuation Approach",
+      hint: "Direct Comparison Approach and the points of difference considered. Saved text is not overwritten on reopen.",
     },
     {
       key: "remarks",
@@ -1007,7 +1017,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             shawnExam) ? (
             <div className="mt-2 space-y-2 rounded-md border border-amber-300/80 bg-amber-50 p-3 dark:bg-amber-950/30">
               <p className="text-xs font-medium text-foreground">
-                Suburb notes (trial). Search first, tick the lines you accept, then rewrite the
+                Suburb notes. Search first, tick the lines you accept, then rewrite the
                 paragraph. Unticked lines stay in this working box and do not print.
               </p>
               <label className="block text-xs text-foreground">

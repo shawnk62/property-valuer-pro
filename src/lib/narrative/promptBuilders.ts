@@ -514,6 +514,22 @@ ${conditionOfImprovementsAnswers(values)}
 
 Murray sample style: 1–2 short sentences, e.g. "The subject property appears to be in good condition with a level of wear and tear to be expected given the age of the improvements." Reflect overall_cond and component notes only; do not invent defects or engineering conclusions.`,
       };
+    case "valuationApproach":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write the Valuation Approach section for a ${type} valuation report.
+
+State that market value has been assessed by the Direct Comparison Approach unless the inspection records a different method. Then describe how sales are analysed and which points of difference are adjusted for THIS property type (vacant land vs improved residential vs commercial).
+
+Inspection data:
+${sectionAnswers(values, ["1", "2"])}
+
+Rules:
+- Two short paragraphs. Formal valuation English.
+- Do not invent a method other than Direct Comparison unless the inspection records one.
+- Do not quote a dollar value.
+- Do not repeat the heading.`,
+      };
     case "highestBestUse":
       return {
         system: BASE_RULES + styleGuide(type),

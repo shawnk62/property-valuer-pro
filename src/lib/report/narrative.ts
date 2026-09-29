@@ -1173,6 +1173,29 @@ export function section61PhysicalText(opts: {
   ]);
 }
 
+function buildValuationApproach(values: InspectionValues): string {
+  const vacant = isVacantLand(values);
+  const commercial = isCommercialType(values) && !isMixedUseCommercial(values);
+  const factors = vacant
+    ? "date of sale, land area and usable area, shape and position, topography and zoning, location and proximity to amenities, aspect and views, and surrounding development"
+    : commercial
+      ? "date of sale, net lettable or building area, occupancy and lease terms, parking and access, construction and presentation, location and exposure, zoning and overlays"
+      : "date of sale, accommodation, living area, land area, condition and presentation, location, and ancillary improvements";
+  return [
+    sentence([
+      "The market value of the subject property has been determined using the Direct Comparison Approach",
+    ]),
+    sentence([
+      "Recent sales of similar properties are analysed and adjusted for points of difference",
+      vacant
+        ? `For vacant land those factors typically include ${factors}`
+        : `Those factors typically include ${factors}`,
+    ]),
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 export function generateNarrative(
   values: InspectionValues,
   opts?: NarrativeGenerateOptions,
@@ -1205,6 +1228,7 @@ export function generateNarrative(
     highestBestUse: buildHighestBestUse(values),
     individualCommentary: "",
     riskAnalysis: "",
+    valuationApproach: buildValuationApproach(values),
     remarks: buildRemarks(values, {
       salesCount: opts?.salesCount,
       valueAmount: opts?.valueAmount,

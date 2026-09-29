@@ -23,6 +23,8 @@ const SECTION_KEYS: NarrativeSectionKey[] = [
   "improvements",
   "accommodation",
   "conditionImprovements",
+  "highestBestUse",
+  "valuationApproach",
   "remarks",
 ];
 

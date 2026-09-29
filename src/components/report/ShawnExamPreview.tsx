@@ -736,6 +736,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <section id="sec-sales" className="report-section report-section-sales">
         <Lead id="exam-8" title="8.0 Valuation Approach">
         <Keep>
+        {narrativePrints(m, "valuationApproach") && draft.narrative.valuationApproach?.trim() ? (
+          <Prose text={draft.narrative.valuationApproach} />
+        ) : narrativePrints(m, "valuationApproach") ? (
         <Para>
           The market value of the subject property has been determined using the Direct Comparison
           Approach. Recent sales of similar properties are analysed and adjusted for points of
@@ -743,6 +746,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           area and shape, topography and zoning, location and proximity to amenities, aspect and
           views, and surrounding development.
         </Para>
+        ) : null}
         </Keep>
         </Lead>
         <Keep>

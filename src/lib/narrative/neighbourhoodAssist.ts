@@ -1,10 +1,6 @@
 import type { ReportMeta, ReportNarrative } from "@/lib/report/types";
 
-/**
- * Trial switch. Set to false to restore the previous neighbourhood writer
- * with no web-search pass and no claim panel.
- */
-export const NBHD_ASSIST_TRIAL = true;
+/** Shawn reports collect suburb, amenity, transport and estate notes before writing locality. */
 
 export type NbhdClaimKind =
   | "city"
@@ -40,7 +36,7 @@ export function isShawnReportAssignment(assignment: string | null | undefined): 
 }
 
 export function neighbourhoodAssistEnabled(assignment: string | null | undefined): boolean {
-  return NBHD_ASSIST_TRIAL && isShawnReportAssignment(assignment);
+  return isShawnReportAssignment(assignment);
 }
 
 export function narrativePrints(

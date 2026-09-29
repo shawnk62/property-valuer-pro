@@ -35,6 +35,7 @@ function emptyNarrative(): ReportNarrative {
     remarks: "",
     individualCommentary: "",
     riskAnalysis: "",
+    valuationApproach: "",
   };
 }
 
@@ -71,6 +72,7 @@ function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): R
     individualCommentary:
       typeof raw.individualCommentary === "string" ? raw.individualCommentary : "",
     riskAnalysis: typeof raw.riskAnalysis === "string" ? raw.riskAnalysis : "",
+    valuationApproach: typeof raw.valuationApproach === "string" ? raw.valuationApproach : "",
   };
 }
 

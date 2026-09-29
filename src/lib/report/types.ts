@@ -251,6 +251,8 @@ export interface ReportNarrative {
   individualCommentary: string;
   /** PropertyPRO risk analysis — one paragraph per heading. */
   riskAnalysis: string;
+  /** Direct comparison / valuation approach narrative. */
+  valuationApproach: string;
 }
 
 export interface ReportMeta {
