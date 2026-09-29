@@ -225,9 +225,10 @@ export const searchNeighbourhoodFacts = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const settings = asAiSettings(data.settings);
     const place = [data.suburb, data.city, "Queensland", "Australia"].filter(Boolean).join(", ");
+    const estateHint = data.estate?.trim();
     const prompt = `Search the public web for factual suburb-profile notes about ${place}${
       data.address ? ` (property near ${data.address})` : ""
-    }${data.estate ? ` including any estate named ${data.estate}` : ""}.
+    }${estateHint ? ` including any estate named ${estateHint}` : ""}. Also identify the named housing estate or masterplanned community that contains or adjoins the address if sources name one.
 
 Return ONLY a JSON array of as many supported facts as you find (aim for 10–25 items). Each item:
 {"kind":"city"|"population"|"gentrification"|"estate"|"character"|"amenities"|"transport"|"other","text":"one sentence","source":"url or publisher"}
@@ -244,8 +245,19 @@ Collect, do not filter for the valuer:
 
 Do not invent numbers or names. Do not omit a sourced fact because it might be unused. If a source conflicts, include both lines with their sources.`;
 
+    const estatePrompt = `Search the public web for the named housing estate, residential estate or masterplanned community at or next to ${
+      data.address || place
+    } in ${place}.
+${estateHint ? `The inspection may refer to ${estateHint}. Confirm and expand from official or developer pages.` : "If the address sits in a named estate, identify that estate."}
+
+Return ONLY a JSON array. Each item:
+{"kind":"estate","text":"one sentence","source":"url or publisher"}
+
+Include every sourced detail you find: estate name, developer, stages, dwelling yield, completion or expected population, lot size character, and adjoining estates. Prefer council, developer and Queensland Government pages. Do not invent names or figures. Do not omit a named estate because you already described the suburb.`;
+
     const base = (settings.baseUrl || "https://api.x.ai/v1").replace(/\/$/, "");
-    if (settings.provider === "xai") {
+
+    async function xaiSearch(userPrompt: string): Promise<string> {
       const res = await fetch(`${base}/responses`, {
         method: "POST",
         headers: {
@@ -254,7 +266,7 @@ Do not invent numbers or names. Do not omit a sourced fact because it might be u
         },
         body: JSON.stringify({
           model: settings.model,
-          input: [{ role: "user", content: prompt }],
+          input: [{ role: "user", content: userPrompt }],
           tools: [{ type: "web_search" }],
         }),
       });
@@ -275,12 +287,23 @@ Do not invent numbers or names. Do not omit a sourced fact because it might be u
         .map((part) => part.text ?? "")
         .join("\n")
         .trim();
-      const raw =
+      return (
         json.output_text?.trim() ||
         fromOutput ||
         json.choices?.[0]?.message?.content?.trim() ||
-        "[]";
-      return { raw };
+        "[]"
+      );
+    }
+
+    if (settings.provider === "xai") {
+      const suburbRaw = await xaiSearch(prompt);
+      let estateRaw = "[]";
+      try {
+        estateRaw = await xaiSearch(estatePrompt);
+      } catch {
+        /* suburb notes still usable */
+      }
+      return { raw: `${suburbRaw}\n${estateRaw}` };
     }
 
     const model = createModel(settings);

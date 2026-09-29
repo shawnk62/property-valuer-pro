@@ -484,6 +484,8 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
           `M1 motorway exit near ${near}`,
           `railway station near ${near}`,
           `shopping centre near ${near}`,
+          `housing estate near ${near}`,
+          `master planned community near ${near}`,
         ]) {
         try {
           const m1 = await fetchPlaceTextSearch({
@@ -494,7 +496,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             const d = claimDistanceKm(origin, { lat: hit.lat, lng: hit.lng });
             claims.push(
               measuredClaim(
-                /shop/i.test(q) ? "amenities" : "transport",
+                /shop/i.test(q) ? "amenities" : /estate|planned/i.test(q) ? "estate" : "transport",
                 `${hit.name} is approximately ${d.label} ${d.dir} of the property.`,
               ),
             );

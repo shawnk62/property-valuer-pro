@@ -56,43 +56,65 @@ export function newClaimId(): string {
   return `nbhd_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
+function rowToClaim(row: unknown): NbhdClaim | null {
+  if (!row || typeof row !== "object") return null;
+  const r = row as Record<string, unknown>;
+  const t = String(r.text ?? "").trim();
+  if (!t) return null;
+  const kindRaw = String(r.kind ?? "other");
+  const kind: NbhdClaimKind =
+    kindRaw === "population" ||
+    kindRaw === "gentrification" ||
+    kindRaw === "estate" ||
+    kindRaw === "character" ||
+    kindRaw === "city" ||
+    kindRaw === "amenities" ||
+    kindRaw === "transport"
+      ? kindRaw
+      : "other";
+  return {
+    id: newClaimId(),
+    kind,
+    text: t,
+    source: typeof r.source === "string" ? r.source : undefined,
+    accepted: true,
+  };
+}
+
 export function parseNbhdClaims(raw: string): NbhdClaim[] {
   const text = raw.trim();
-  const start = text.indexOf("[");
-  const end = text.lastIndexOf("]");
-  if (start < 0 || end <= start) return [];
-  try {
-    const parsed = JSON.parse(text.slice(start, end + 1)) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .map((row) => {
-        if (!row || typeof row !== "object") return null;
-        const r = row as Record<string, unknown>;
-        const t = String(r.text ?? "").trim();
-        if (!t) return null;
-        const kindRaw = String(r.kind ?? "other");
-        const kind: NbhdClaimKind =
-          kindRaw === "population" ||
-          kindRaw === "gentrification" ||
-          kindRaw === "estate" ||
-          kindRaw === "character" ||
-          kindRaw === "city" ||
-          kindRaw === "amenities" ||
-          kindRaw === "transport"
-            ? kindRaw
-            : "other";
-        return {
-          id: newClaimId(),
-          kind,
-          text: t,
-          source: typeof r.source === "string" ? r.source : undefined,
-          accepted: true,
-        };
-      })
-      .filter((c): c is NbhdClaim => Boolean(c));
-  } catch {
-    return [];
+  const out: NbhdClaim[] = [];
+  let from = 0;
+  while (from < text.length) {
+    const start = text.indexOf("[", from);
+    if (start < 0) break;
+    let depth = 0;
+    let end = -1;
+    for (let i = start; i < text.length; i++) {
+      if (text[i] === "[") depth += 1;
+      if (text[i] === "]") {
+        depth -= 1;
+        if (depth === 0) {
+          end = i;
+          break;
+        }
+      }
+    }
+    if (end < 0) break;
+    try {
+      const parsed = JSON.parse(text.slice(start, end + 1)) as unknown;
+      if (Array.isArray(parsed)) {
+        for (const row of parsed) {
+          const claim = rowToClaim(row);
+          if (claim) out.push(claim);
+        }
+      }
+    } catch {
+      /* next block */
+    }
+    from = end + 1;
   }
+  return out;
 }
 
 const COMPASS = [
