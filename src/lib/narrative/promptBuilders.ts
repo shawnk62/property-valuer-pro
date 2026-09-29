@@ -406,7 +406,7 @@ Rules:
 - Name positive or negative features only if they appear in the data.
 - ${
   type.toLowerCase().includes("shawn")
-    ? "Shawn: write a complete locality section (typically 6–10 short paragraphs). Brevity rules for Murray or Phil do not apply."
+    ? "Shawn: write a complete locality section of at least six paragraphs when amenities, transport or estate facts are accepted. Brevity rules for Murray or Phil do not apply. If a unique accepted name, distance or official figure is missing, the draft is incomplete."
     : "Murray: 1–3 short sentences. Phil Stamp Duty: one tight paragraph if data exists."
 }
 - No marketing language.`,

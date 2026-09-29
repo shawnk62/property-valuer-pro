@@ -207,3 +207,52 @@ export function mergeNbhdClaims(existing: NbhdClaim[], incoming: NbhdClaim[]): N
   }
   return out;
 }
+
+const STOP = new Set([
+  "about",
+  "approximately",
+  "property",
+  "subject",
+  "suburb",
+  "locality",
+  "estate",
+  "within",
+  "there",
+  "their",
+  "which",
+  "where",
+  "from",
+  "with",
+  "that",
+  "this",
+  "recorded",
+  "nearest",
+  "includes",
+  "including",
+]);
+
+function claimTokens(text: string): string[] {
+  const nums = text.match(/\d[\d,]*(?:\.\d+)?/g) ?? [];
+  const words = text
+    .toLowerCase()
+    .replace(/[^a-z0-9.\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length >= 5 && !STOP.has(w));
+  return [...nums.map((n) => n.replace(/,/g, "")), ...words];
+}
+
+export function claimCoveredByProse(prose: string, claim: NbhdClaim): boolean {
+  const hay = prose.toLowerCase().replace(/,/g, "");
+  const tokens = claimTokens(claim.text);
+  if (tokens.length === 0) return hay.includes(claim.text.toLowerCase().slice(0, 24));
+  const hit = tokens.filter((t) => hay.includes(t.toLowerCase())).length;
+  return hit >= Math.min(2, tokens.length);
+}
+
+/** Append any accepted fact the model left out. */
+export function ensureAcceptedFactsInProse(prose: string, claims: NbhdClaim[]): string {
+  const missing = claims.filter((c) => c.accepted && !claimCoveredByProse(prose, c));
+  if (!missing.length) return prose.trim();
+  const extra = missing.map((c) => c.text.replace(/\s+/g, " ").trim()).join(" ");
+  return `${prose.trim()}\n\n${extra}`;
+}

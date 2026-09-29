@@ -26,6 +26,7 @@ import {
   claimDistanceKm,
   measuredClaim,
   mergeNbhdClaims,
+  ensureAcceptedFactsInProse,
   NBHD_CLAIM_GROUPS,
   neighbourhoodAssistEnabled,
   narrativePrints,
@@ -779,8 +780,15 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                 ? String((result as { text: unknown }).text ?? "")
                 : "";
 
-          if (text.trim()) next[key] = text.trim();
-          else applyInspectionFill([key]);
+          if (text.trim()) {
+            next[key] =
+              key === "neighbourhood"
+                ? ensureAcceptedFactsInProse(
+                    text.trim(),
+                    (draft.reportMeta.nbhdClaims as NbhdClaim[] | undefined) ?? [],
+                  )
+                : text.trim();
+          } else applyInspectionFill([key]);
         } catch (err) {
           console.error("[narrative AI]", key, err);
           const message =
