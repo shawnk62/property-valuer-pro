@@ -18,6 +18,7 @@ import {
   WidthType,
 } from "docx";
 import { australianiseSpelling } from "@/lib/report/australianEnglish";
+import { formatNarrativeDate, formatNarrativeDateOr } from "@/lib/report/dates";
 import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { buildPhilRemarks, buildMurrayRemarks, buildSummaryDescription } from "@/lib/report/narrative";
 import { annexureById, resolveAnnexures } from "@/lib/report/annexures";
@@ -345,7 +346,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     children.push(p(`Market Value: $${formatCurrencyDisplay(m.valueAmount)}`, { center: true, bold: true, size: 28, before: 120, after: 60 }));
   }
   if (m.valueDate) {
-    children.push(p(`As at ${m.valueDate}`, { center: true, size: 18, after: 200 }));
+    children.push(p(`As at ${formatNarrativeDate(m.valueDate)}`, { center: true, size: 18, after: 200 }));
   }
 
   push(
@@ -369,8 +370,8 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
             .filter(Boolean)
             .join("  ·  "),
         },
-        { label: "Date of inspection", value: m.inspectionDate },
-        { label: "Date of valuation", value: m.valueDate },
+        { label: "Date of inspection", value: formatNarrativeDate(m.inspectionDate) },
+        { label: "Date of valuation", value: formatNarrativeDate(m.valueDate) },
         { label: "Valuer", value: m.valuerName },
         { label: "Prepared by", value: m.firmName },
       ],
@@ -388,7 +389,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   children.push(p(m.valuerName || get(v, "insp_valuer") || "", { bold: true, after: 40, before: 200 }));
   if (get(v, "sign_member")) children.push(p(get(v, "sign_member"), { size: 18, after: 40 }));
   children.push(p(m.firmName || get(v, "insp_firm") || "PETERSON PROPERTY VALUATIONS PTY LTD", { size: 18, after: 40 }));
-  if (m.valueDate) children.push(p(m.valueDate, { size: 18, after: 200 }));
+  if (m.valueDate) children.push(p(formatNarrativeDate(m.valueDate), { size: 18, after: 200 }));
 
   // ---- TOC (same visibility rules as Preview) ----
   const tocVisible = TOC_ENTRIES.filter((e) => sectionHasContent(e, draft));
@@ -423,8 +424,8 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
       draft,
       ["prop_assignment", "prop_rights", "insp_purpose"],
       [
-        { label: "Date of inspection", value: m.inspectionDate },
-        { label: "Date of valuation", value: m.valueDate },
+        { label: "Date of inspection", value: formatNarrativeDate(m.inspectionDate) },
+        { label: "Date of valuation", value: formatNarrativeDate(m.valueDate) },
       ],
     ),
   );
@@ -931,7 +932,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   children.push(sectionHeading("16.", "Valuation Statement"));
   children.push(
     p(
-      `Having regard to the foregoing, I am of the opinion that the market value of the ${valuedInterestPhrase(v)} in the subject property${addr ? `, ${addr},` : ""} as at ${m.valueDate || "the date of valuation"} is:`,
+      `Having regard to the foregoing, I am of the opinion that the market value of the ${valuedInterestPhrase(v)} in the subject property${addr ? `, ${addr},` : ""} as at ${formatNarrativeDateOr(m.valueDate, "the date of valuation")} is:`,
     ),
   );
   if (m.valueAmount) {

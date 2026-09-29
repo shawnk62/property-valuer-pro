@@ -1,5 +1,6 @@
 import { Children, type ReactElement, type ReactNode } from "react";
 import { australianiseSpelling } from "@/lib/report/australianEnglish";
+import { formatNarrativeDate, formatNarrativeDateOr } from "@/lib/report/dates";
 import { stripLeadingHeading } from "@/lib/report/printText";
 import { BOILERPLATE } from "@/lib/report/boilerplate";
 import {
@@ -911,7 +912,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               {/retrospective/i.test(reportType.id)
                 ? "RETROSPECTIVELY DATED"
                 : "DATED"}{" "}
-              {formatCoverDate(m.valueDate || m.inspectionDate)}
+              {formatNarrativeDate(m.valueDate || m.inspectionDate)}
             </p>
           ) : null}
           <p>
@@ -994,7 +995,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                   The abovementioned land and the permanent improvements thereon were
                   inspected
                   {m.inspectionDate
-                    ? ` on the ${formatCoverDate(m.inspectionDate)}`
+                    ? ` on ${formatNarrativeDate(m.inspectionDate)}`
                     : ""}
                   , and the{" "}
                   {/retrospective/i.test(reportType.id)
@@ -1002,7 +1003,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                     : "market value"}{" "}
                   of the {valuedInterestPhrase(v)} therein is assessed
                   {m.valueDate
-                    ? ` as of the ${formatCoverDate(m.valueDate)}`
+                    ? ` as at ${formatNarrativeDate(m.valueDate)}`
                     : " as of the date of valuation"}{" "}
                   at:
                 </p>
@@ -1066,7 +1067,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               Market Value: {m.valueAmount ? `$${formatCurrencyDisplay(m.valueAmount)}` : "—"}
             </p>
             {m.valueDate ? (
-              <p className="mt-1 text-sm">As at {m.valueDate}</p>
+              <p className="mt-1 text-sm">As at {formatNarrativeDate(m.valueDate)}</p>
             ) : null}
           </div>
 
@@ -1083,8 +1084,8 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                   label: "CONTACT DETAILS",
                   value: contactDetailsLine(v),
                 },
-                { label: "Date of inspection", value: m.inspectionDate },
-                { label: "Date of valuation", value: m.valueDate },
+                { label: "Date of inspection", value: formatNarrativeDate(m.inspectionDate) },
+                { label: "Date of valuation", value: formatNarrativeDate(m.valueDate) },
                 { label: "Valuer", value: m.valuerName },
                 { label: "Prepared by", value: m.firmName },
               ]}
@@ -1151,10 +1152,10 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             <Para>{BOILERPLATE.natureOfInterest}</Para>
           </Sub>
           <Sub title="1.4  Date of Inspection">
-            <Para>{m.inspectionDate || "—"}</Para>
+            <Para>{formatNarrativeDate(m.inspectionDate) || "—"}</Para>
           </Sub>
           <Sub title="1.5  Date of Valuation">
-            <Para>{m.valueDate || "—"}</Para>
+            <Para>{formatNarrativeDate(m.valueDate) || "—"}</Para>
           </Sub>
           <Sub title="1.6  Basis of Valuation">
             <Para>{BOILERPLATE.basisOfValuation}</Para>
@@ -1180,8 +1181,8 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             fields={["prop_assignment", "prop_rights"]}
             extra={[
               { label: "Purpose of valuation", value: purposeOfValuation(get(v, "prop_assignment"), v) },
-              { label: "Date of inspection", value: m.inspectionDate },
-              { label: "Date of valuation", value: m.valueDate },
+              { label: "Date of inspection", value: formatNarrativeDate(m.inspectionDate) },
+              { label: "Date of valuation", value: formatNarrativeDate(m.valueDate) },
             ]}
           />
           <Para>{BOILERPLATE.natureOfInterest}</Para>
@@ -1980,7 +1981,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               Having regard to the foregoing, the assessed values and apportionments for the
               subject property
               {addressLine ? `, ${addressLine},` : ""} as at{" "}
-              {m.valueDate || "the date of valuation"} are set out in the Remarks section of
+              {formatNarrativeDateOr(m.valueDate, "the date of valuation")} are set out in the Remarks section of
               this report.
             </Para>
             <p className="py-3 text-center text-lg font-bold uppercase tracking-wide">
@@ -1993,7 +1994,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               Having regard to the foregoing, I am of the opinion that the market value of the
               {valuedInterestPhrase(v)} in the subject property
               {addressLine ? `, ${addressLine},` : ""} as at{" "}
-              {m.valueDate || "the date of valuation"} is:
+              {formatNarrativeDateOr(m.valueDate, "the date of valuation")} is:
             </Para>
             {m.valueAmount ? (
               <p className="py-3 text-center text-xl font-bold">

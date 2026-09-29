@@ -1,5 +1,6 @@
 import { useEffect, type ReactElement, type ReactNode } from "react";
 import { australianiseSpelling } from "@/lib/report/australianEnglish";
+import { formatNarrativeDate, formatNarrativeDateOr } from "@/lib/report/dates";
 import { stripLeadingHeading } from "@/lib/report/printText";
 import {
   buildClientInstructions,
@@ -451,8 +452,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             value: String(draft.narrative.brief ?? "").trim(),
           },
           { label: "Zoning", value: get(v, "prop_zoning") },
-          { label: "Date of Inspection", value: m.inspectionDate },
-          { label: "Date of Valuation", value: m.valueDate },
+          { label: "Date of Inspection", value: formatNarrativeDate(m.inspectionDate) },
+          { label: "Date of Valuation", value: formatNarrativeDate(m.valueDate) },
         ]}
       />
       {m.valueAmount ? (
@@ -504,8 +505,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <Keep>
       <H2>1.4 Date of Valuation / Liability</H2>
       <Para>
-        The subject property was inspected on {m.inspectionDate || "the date recorded in this report"}.
-        The valuation is effective as at {m.valueDate || "the date of valuation"} only. The concluded
+        The subject property was inspected on {formatNarrativeDateOr(m.inspectionDate, "the date recorded in this report")}.
+        The valuation is effective as at {formatNarrativeDateOr(m.valueDate, "the date of valuation")} only. The concluded
         value reflects market conditions at that date and may be affected by subsequent events,
         including market fluctuations, interest-rate movements and changes in broader economic
         conditions.
@@ -827,7 +828,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           Having regard to the sales evidence and market conditions at the date of valuation, it is
           my opinion that the market value of the unencumbered fee simple interest in the subject
           property located at {addressLine || "[property address]"} as at{" "}
-          {m.valueDate || "[date of valuation]"} is
+          {formatNarrativeDateOr(m.valueDate, "[date of valuation]")} is
           {m.valueAmount
             ? ` $${formatCurrencyDisplay(m.valueAmount)}${valueWords ? ` (${valueWords})` : ""}.`
             : " [value in numbers and words]."}
@@ -1005,7 +1006,9 @@ function ExamSignature({ draft }: { draft: ReportDraft }) {
       )}
       <p className="report-sig-name font-semibold">{name}</p>
       <p className="text-sm">Student Valuer</p>
-      {m.valueDate ? <p className="mt-1 text-sm">{m.valueDate}</p> : null}
+      {m.valueDate ? (
+        <p className="mt-1 text-sm">{formatNarrativeDate(m.valueDate)}</p>
+      ) : null}
     </div>
   );
 }
