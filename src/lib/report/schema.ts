@@ -174,7 +174,8 @@ export const PROP_TYPE_FIELDS = [
 
 export function formatPropertyType(values: InspectionValues): string {
   return pick(values, [...PROP_TYPE_FIELDS])
-    .map((row) => `${row.label}: ${row.value}`)
+    .map((row) => row.value)
+    .filter(Boolean)
     .join("; ");
 }
 

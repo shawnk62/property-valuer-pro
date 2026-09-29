@@ -13,6 +13,7 @@ import {
   labelFor,
   pick,
   PROPERTY_PLANNING_FIELDS,
+  PROP_TYPE_FIELDS,
   valuedInterestPhrase,
 } from "@/lib/report/schema";
 import { A4DocumentAnnex } from "@/components/report/A4DocumentAnnex";
@@ -620,7 +621,12 @@ function Facts({
   extra?: { label: string; value: string }[];
 }) {
   const rows = [
-    ...pick(values, fields).map((r) => ({ label: r.label, value: r.value })),
+    ...pick(values, fields).map((r) => ({
+      label: (PROP_TYPE_FIELDS as readonly string[]).includes(r.name)
+        ? "Property type"
+        : r.label,
+      value: r.value,
+    })),
     ...extra.filter((r) => r.value.trim()),
   ];
   if (rows.length === 0) return null;
