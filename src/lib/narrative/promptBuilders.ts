@@ -72,18 +72,19 @@ This is a Joint Family Law – Phil valuation. Match the Currimundi jointly-appo
   if (t.includes("shawn")) {
     return `
 This is a Shawn valuation report.
-Neighbourhood / locality is a full section, not a three-sentence summary.
+Neighbourhood / locality is a flowing valuation section, not a list of notes.
 Write from the largest area to the smallest, then amenities and transport:
 1. Country — Australia.
 2. State / region and city (or regional centre).
-3. Suburb — position in that city, established or developing character, accepted population or change.
+3. Suburb — one or two paragraphs covering position in the city, character, accepted population and change. Do not restate the same character in five sentences.
 4. Immediate locality and named estate if recorded.
 5. Neighbouring development in qualitative terms only.
-6. Amenities (schools, shopping) using every accepted amenity fact.
-7. Access to transport (station, bus, motorway, airport/port) using every accepted transport fact.
-Every accepted fact must appear in the prose. Do not drop distances, names or population figures that were accepted.
-Do not use numerical values for built-up extent or land use. Use predominantly, mainly, some, a few, limited.
-Plain Australian valuation English. Do not invent facts.`;
+6. Amenities (schools, shopping) — names and measured distances woven into one paragraph.
+7. Access to transport — station, bus, motorway, airport/port in one paragraph.
+Cover each distinct accepted fact once. Merge overlapping character lines. Do not drop unique names, distances or official population figures.
+Do not start consecutive sentences with the suburb name. Vary openings (The suburb / The locality / Neighbouring development / Services and amenities / Access).
+No brochure language (peaceful lifestyle, lush surroundings, family-friendly feel) unless that wording is the only accepted fact and then tone it down to valuation English.
+Do not use numerical values for built-up extent or land use. Use predominantly, mainly, some, a few, limited.`;
   }
   if (t.includes("stamp duty")) {
     return `
@@ -372,15 +373,15 @@ Rules:
 
 ${
   type.toLowerCase().includes("shawn")
-    ? `STRUCTURE (mandatory for Shawn reports). One paragraph per level that has data, then separate paragraphs for amenities and for transport:
+    ? `STRUCTURE (mandatory for Shawn reports). Synthesise the MUST INCLUDE list into connected paragraphs. Do not copy the list sentence-by-sentence.
 1. Country: Australia.
 2. State / city or regional centre.
-3. Suburb character, accepted population, accepted change.
-4. Immediate locality and named estate if recorded.
+3. Suburb: combine character, population and change into at most two paragraphs. If several notes repeat "leafy / hinterland / acreage / family", say that once.
+4. Immediate locality and named estate.
 5. Neighbouring development — qualitative land use only.
-6. Amenities — weave in every accepted amenities fact (school count, named centres, distances and directions).
-7. Transport — weave in every accepted transport fact (station, bus, M1, airport/port).
-Do not open with the street address. Do not compress this into three short paragraphs if accepted facts remain unused.`
+6. Amenities paragraph.
+7. Transport paragraph.
+Do not open with the street address. Do not begin every sentence with the suburb name.`
     : `Required content only:
 - the immediate locality, and
 - neighbouring development,
@@ -399,7 +400,7 @@ Rules:
 - Do not state CBD or town distances. That belongs under Location unless they appear under ACCEPTED FACTS.
 - Do not describe site shape, topography, access, services or zoning.
 - Use only qualitative phrases (predominantly, mainly, some, a few). Never quote land-use percentages, built-up percentages, or similar figures. An official suburb population may be used only if it is an ACCEPTED FACT.
-- MUST INCLUDE every item listed under ACCEPTED FACTS / MUST INCLUDE. Paraphrase allowed; omission is not.
+- MUST INCLUDE each distinct fact from ACCEPTED FACTS / MUST INCLUDE. Paraphrase into valuation prose. Merge duplicates. Do not paste the list.
 - Ignore unverified search notes that are not in that list.
 - Use GOOGLE / accepted amenity and transport wording as recorded (names, counts, distances, directions). Do not invent extras.
 - Name positive or negative features only if they appear in the data.
