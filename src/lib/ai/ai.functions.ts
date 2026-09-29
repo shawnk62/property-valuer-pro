@@ -229,17 +229,20 @@ export const searchNeighbourhoodFacts = createServerFn({ method: "POST" })
       data.address ? ` (property near ${data.address})` : ""
     }${data.estate ? ` including any estate named ${data.estate}` : ""}.
 
-Return ONLY a JSON array. Each item:
-{"kind":"city"|"population"|"gentrification"|"estate"|"character"|"other","text":"one sentence","source":"url or publisher"}
+Return ONLY a JSON array of as many supported facts as you find (aim for 10–25 items). Each item:
+{"kind":"city"|"population"|"gentrification"|"estate"|"character"|"amenities"|"transport"|"other","text":"one sentence","source":"url or publisher"}
 
-Rules:
-- city: where the suburb sits in the city (northern Gold Coast, Brisbane southside, growth corridor) and whether it is established or developing. No invented kilometre figures.
-- Population: current ABS or official figure only, with the year if given.
-- Estate: named estate and completion population only if a council or developer page states it.
-- Gentrification only if a reputable source uses that idea for this suburb.
-- Character: hinterland, beachside, family residential, industrial precinct — only if sources support it.
-- If nothing reliable is found, return [].
-- Do not invent numbers, exits, school counts or station names.`;
+Prefer ABS, QGSO, Queensland Government, the local council, and named official suburb or estate pages. Retail suburb-profile pages may be used if they cite a source.
+
+Collect, do not filter for the valuer:
+- city / region placement and whether the suburb is established, developing or in a growth corridor
+- census or official population and year
+- named estates and any stated completion population
+- gentrification or demographic change if a source discusses it
+- character (hinterland, beachside, family residential, industrial)
+- named shopping centres, town centres, schools, stations or motorways if a reputable page names them (no invented distances)
+
+Do not invent numbers or names. Do not omit a sourced fact because it might be unused. If a source conflicts, include both lines with their sources.`;
 
     const base = (settings.baseUrl || "https://api.x.ai/v1").replace(/\/$/, "");
     if (settings.provider === "xai") {

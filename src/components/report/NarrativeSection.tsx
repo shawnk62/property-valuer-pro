@@ -25,6 +25,7 @@ import { buildSubjectLocationMap } from "@/lib/maps/generateMaps";
 import {
   claimDistanceKm,
   measuredClaim,
+  mergeNbhdClaims,
   NBHD_CLAIM_GROUPS,
   neighbourhoodAssistEnabled,
   narrativePrints,
@@ -438,18 +439,21 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               ),
             );
           }
-          const shop = nearby.supermarket?.[0] || nearby.shopping_mall?.[0];
-          if (shop?.name && shop.lat != null && shop.lng != null) {
-            const d = claimDistanceKm(origin, { lat: shop.lat, lng: shop.lng });
-            claims.push(
-              measuredClaim(
-                "amenities",
-                `Nearest shopping is ${shop.name}, approximately ${d.label} ${d.dir} of the property.`,
-              ),
-            );
-          } else if (shop?.name) {
-            claims.push(measuredClaim("amenities", `Nearest shopping recorded is ${shop.name}.`));
-          }
+          const shops = [...(nearby.supermarket ?? []), ...(nearby.shopping_mall ?? [])].slice(0, 4);
+          shops.forEach((shop, i) => {
+            if (!shop.name) return;
+            if (shop.lat != null && shop.lng != null) {
+              const d = claimDistanceKm(origin, { lat: shop.lat, lng: shop.lng });
+              claims.push(
+                measuredClaim(
+                  "amenities",
+                  `${i === 0 ? "Nearest shopping" : "Shopping"} includes ${shop.name}, approximately ${d.label} ${d.dir} of the property.`,
+                ),
+              );
+            } else {
+              claims.push(measuredClaim("amenities", `Shopping recorded includes ${shop.name}.`));
+            }
+          });
           const station = nearby.train_station?.[0];
           if (station?.name && station.lat != null && station.lng != null) {
             const d = claimDistanceKm(origin, { lat: station.lat, lng: station.lng });
@@ -476,22 +480,28 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
 
         const key = loadGoogleMapsKey();
         const near = suburb || subjectAddressLine(draft.values) || "Queensland";
+        for (const q of [
+          `M1 motorway exit near ${near}`,
+          `railway station near ${near}`,
+          `shopping centre near ${near}`,
+        ]) {
         try {
           const m1 = await fetchPlaceTextSearch({
-            data: { apiKey: key, query: `M1 motorway exit near ${near}`, lat: origin.lat, lng: origin.lng },
+            data: { apiKey: key, query: q, lat: origin.lat, lng: origin.lng },
           });
           const hit = m1.results[0];
           if (hit?.name && hit.lat != null && hit.lng != null) {
             const d = claimDistanceKm(origin, { lat: hit.lat, lng: hit.lng });
             claims.push(
               measuredClaim(
-                "transport",
+                /shop/i.test(q) ? "amenities" : "transport",
                 `${hit.name} is approximately ${d.label} ${d.dir} of the property.`,
               ),
             );
           }
         } catch {
           /* text search optional */
+        }
         }
         if (industrial) {
           for (const q of [`airport near ${near}`, `port near ${near}`]) {
@@ -574,7 +584,12 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         }
       }
 
-      setMeta({ nbhdClaims: claims });
+      setMeta({
+        nbhdClaims: mergeNbhdClaims(
+          (draft.reportMeta.nbhdClaims as NbhdClaim[] | undefined) ?? [],
+          claims,
+        ),
+      });
       setLastStatus(
         claims.length
           ? `Prepared ${claims.length} suburb note(s). Tick to keep, then rewrite.`

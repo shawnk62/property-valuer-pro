@@ -86,7 +86,7 @@ export function parseNbhdClaims(raw: string): NbhdClaim[] {
           kind,
           text: t,
           source: typeof r.source === "string" ? r.source : undefined,
-          accepted: false,
+          accepted: true,
         };
       })
       .filter((c): c is NbhdClaim => Boolean(c));
@@ -137,4 +137,25 @@ export function measuredClaim(
   source = "Google Maps",
 ): NbhdClaim {
   return { id: newClaimId(), kind, text, source, accepted: true };
+}
+
+function claimKey(text: string): string {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+/** Keep earlier notes on a later search; copy the valuer's tick when the same line returns. */
+export function mergeNbhdClaims(existing: NbhdClaim[], incoming: NbhdClaim[]): NbhdClaim[] {
+  const out = [...existing];
+  const byKey = new Map(out.map((c) => [claimKey(c.text), c]));
+  for (const next of incoming) {
+    const key = claimKey(next.text);
+    const prev = byKey.get(key);
+    if (prev) {
+      if (next.source && !prev.source) prev.source = next.source;
+      continue;
+    }
+    out.push(next);
+    byKey.set(key, next);
+  }
+  return out;
 }

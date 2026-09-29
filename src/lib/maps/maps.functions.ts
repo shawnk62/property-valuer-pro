@@ -174,7 +174,7 @@ export const fetchNearbyAmenities = createServerFn({ method: "POST" })
           },
           body: JSON.stringify({
             includedTypes: [type],
-            maxResultCount: type === "school" ? 12 : 5,
+            maxResultCount: 20,
             locationRestriction: {
               circle: {
                 center: { latitude: data.lat, longitude: data.lng },
@@ -185,7 +185,7 @@ export const fetchNearbyAmenities = createServerFn({ method: "POST" })
         });
         const json = (await res.json()) as { places?: NewPlace[]; error?: { message?: string } };
         if (!res.ok) continue;
-        out[type] = mapNewPlaces(json.places, type === "school" ? 12 : 5);
+        out[type] = mapNewPlaces(json.places, 20);
       } catch {
         /* Places not enabled — skip this type */
       }
