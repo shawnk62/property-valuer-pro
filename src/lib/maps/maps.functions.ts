@@ -126,21 +126,22 @@ type PlaceHit = {
   lng?: number;
 };
 
-function mapPlaceResults(
-  results: Array<{
-    name?: string;
-    vicinity?: string;
-    formatted_address?: string;
-    geometry?: { location?: { lat: number; lng: number } };
-  }>,
-  limit: number,
-): PlaceHit[] {
-  return results.slice(0, limit).map((r) => ({
-    name: String(r.name ?? "").trim(),
-    vicinity: r.vicinity || r.formatted_address,
-    lat: r.geometry?.location?.lat,
-    lng: r.geometry?.location?.lng,
-  })).filter((r) => r.name);
+type NewPlace = {
+  displayName?: { text?: string };
+  formattedAddress?: string;
+  location?: { latitude?: number; longitude?: number };
+};
+
+function mapNewPlaces(places: NewPlace[] | undefined, limit: number): PlaceHit[] {
+  return (places ?? [])
+    .slice(0, limit)
+    .map((p) => ({
+      name: String(p.displayName?.text ?? "").trim(),
+      vicinity: p.formattedAddress,
+      lat: p.location?.latitude,
+      lng: p.location?.longitude,
+    }))
+    .filter((p) => p.name);
 }
 
 export const fetchNearbyAmenities = createServerFn({ method: "POST" })
@@ -163,23 +164,28 @@ export const fetchNearbyAmenities = createServerFn({ method: "POST" })
       transit_station: [],
     };
     for (const type of types) {
-      const url = new URL("https://maps.googleapis.com/maps/api/place/nearbysearch/json");
-      url.searchParams.set("location", `${data.lat},${data.lng}`);
-      url.searchParams.set("radius", String(data.radiusM));
-      url.searchParams.set("type", type);
-      url.searchParams.set("key", data.apiKey.trim());
       try {
-        const res = await fetch(url);
-        const json = (await res.json()) as {
-          status?: string;
-          results?: Array<{
-            name?: string;
-            vicinity?: string;
-            geometry?: { location?: { lat: number; lng: number } };
-          }>;
-        };
-        if (json.status !== "OK" && json.status !== "ZERO_RESULTS") continue;
-        out[type] = mapPlaceResults(json.results ?? [], type === "school" ? 12 : 5);
+        const res = await fetch("https://places.googleapis.com/v1/places:searchNearby", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": data.apiKey.trim(),
+            "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location",
+          },
+          body: JSON.stringify({
+            includedTypes: [type],
+            maxResultCount: type === "school" ? 12 : 5,
+            locationRestriction: {
+              circle: {
+                center: { latitude: data.lat, longitude: data.lng },
+                radius: data.radiusM,
+              },
+            },
+          }),
+        });
+        const json = (await res.json()) as { places?: NewPlace[]; error?: { message?: string } };
+        if (!res.ok) continue;
+        out[type] = mapNewPlaces(json.places, type === "school" ? 12 : 5);
       } catch {
         /* Places not enabled — skip this type */
       }
@@ -197,23 +203,25 @@ const TextSearchInput = z.object({
 export const fetchPlaceTextSearch = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => TextSearchInput.parse(input))
   .handler(async ({ data }) => {
-    const url = new URL("https://maps.googleapis.com/maps/api/place/textsearch/json");
-    url.searchParams.set("query", data.query);
-    url.searchParams.set("region", "au");
-    url.searchParams.set("key", data.apiKey.trim());
+    const body: Record<string, unknown> = { textQuery: data.query };
     if (data.lat != null && data.lng != null) {
-      url.searchParams.set("location", `${data.lat},${data.lng}`);
-      url.searchParams.set("radius", "15000");
+      body.locationBias = {
+        circle: {
+          center: { latitude: data.lat, longitude: data.lng },
+          radius: 15000,
+        },
+      };
     }
-    const res = await fetch(url);
-    const json = (await res.json()) as {
-      status?: string;
-      results?: Array<{
-        name?: string;
-        formatted_address?: string;
-        geometry?: { location?: { lat: number; lng: number } };
-      }>;
-    };
-    if (json.status !== "OK" && json.status !== "ZERO_RESULTS") return { results: [] as PlaceHit[] };
-    return { results: mapPlaceResults(json.results ?? [], 5) };
+    const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": data.apiKey.trim(),
+        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location",
+      },
+      body: JSON.stringify(body),
+    });
+    const json = (await res.json()) as { places?: NewPlace[] };
+    if (!res.ok) return { results: [] as PlaceHit[] };
+    return { results: mapNewPlaces(json.places, 5) };
   });
