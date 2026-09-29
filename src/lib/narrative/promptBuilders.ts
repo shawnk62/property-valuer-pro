@@ -439,9 +439,12 @@ Rules:
 ${extras?.locationContext?.trim() || "ACCEPTED FACTS: none."}
 
 Rules:
-- Synthesise ACCEPTED FACTS / MUST INCLUDE into connected professional paragraphs. Do not copy the list sentence-by-sentence.
-- MUST INCLUDE each distinct accepted fact. Paraphrase. Merge duplicates.
-- Do not invent rates, percentages, dollar movements or dates.
+- Synthesise ACCEPTED FACTS into connected professional paragraphs. Do not copy the list sentence-by-sentence.
+- When two or more sources give different figures for the same item (growth rate, median, days on market, clearance, yield, volume), cite ONE range that covers those figures. Example: if sources report 3.2%, 4% and 5.1%, write "about 3% to 5%" (or the actual low–high of the accepted figures). Do not list each source's statistic separately.
+- Same treatment for dollar values and dates that describe the same series.
+- You may name the type of sources in general terms (for example "major data providers") but do not stack rival percentages in one paragraph.
+- Include each distinct topic from the accepted facts. Merge duplicates and conflicting measures into ranges as above.
+- Do not invent rates, percentages, dollar movements or dates outside the accepted facts.
 - Do not describe the subject allotment, overlays, or comparable sales.
 - Do not write the 5.2 locality / estate / amenity description here.
 - Two to four paragraphs when enough facts exist. Australian spelling.

@@ -371,7 +371,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     const use = acceptedOnly ? claims.filter((c) => c.accepted) : claims;
     if (!use.length) return "ACCEPTED FACTS: none.";
     return [
-      `MUST INCLUDE all ${use.length} accepted fact(s) below. Do not omit any name, figure or date.`,
+      `ACCEPTED FACTS (${use.length}). Cover each topic. If several lines give different figures for the same measure, write one range from the lowest to the highest accepted figure — do not list the figures separately.`,
       ...use.map(
         (c, i) => `${i + 1}. [${c.kind}] ${c.text}${c.source ? ` (${c.source})` : ""}`,
       ),
@@ -951,16 +951,13 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                 : "";
 
           if (text.trim()) {
-            const marketRow = marketAssistFor(key);
             next[key] =
               key === "neighbourhood"
                 ? ensureAcceptedFactsInProse(
                     text.trim(),
                     (draft.reportMeta.nbhdClaims as NbhdClaim[] | undefined) ?? [],
                   )
-                : marketRow
-                  ? ensureAcceptedFactsInProse(text.trim(), marketClaims(marketRow.scale))
-                  : text.trim();
+                : text.trim();
           } else applyInspectionFill([key]);
         } catch (err) {
           console.error("[narrative AI]", key, err);
