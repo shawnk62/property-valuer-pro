@@ -1,4 +1,4 @@
-import type { ReactElement, ReactNode } from "react";
+import { useEffect, type ReactElement, type ReactNode } from "react";
 import { australianiseSpelling } from "@/lib/report/australianEnglish";
 import { stripLeadingHeading } from "@/lib/report/printText";
 import {
@@ -37,6 +37,7 @@ import {
   printSalesEvidenceEnabled,
 } from "@/lib/report/adjustmentGrid";
 import { purposeOfValuation } from "@/lib/report/reportTypes";
+import { fillExamTocPages } from "@/lib/report/tocPages";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { buildRiskAnalysis } from "@/lib/report/propertyRiskRatings";
 import { RiskRatingsPrintTable } from "@/components/report/RiskRatingsPrintTable";
@@ -169,6 +170,36 @@ function Keep({ children }: { children: React.ReactNode }) {
   return <div className="report-keep-block">{children}</div>;
 }
 
+function ExamToc({
+  entries,
+}: {
+  entries: { id: string; label: string }[];
+}) {
+  useEffect(() => {
+    const run = () => fillExamTocPages();
+    run();
+    const t = window.setTimeout(run, 400);
+    window.addEventListener("beforeprint", run);
+    window.addEventListener("load", run);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener("beforeprint", run);
+      window.removeEventListener("load", run);
+    };
+  }, [entries]);
+  return (
+    <ol className="exam-toc mt-3 list-none space-y-1 text-sm" style={{ color: TEAL }}>
+      {entries.map((item) => (
+        <li key={item.id} className="exam-toc-row">
+          <a href={`#${item.id}`}>{item.label}</a>
+          <span className="exam-toc-leader" aria-hidden />
+          <span className="exam-toc-page" data-toc-id={item.id} />
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function StripeTable({ rows }: { rows: { label: string; value: string }[] }) {
   const shown = rows.filter((r) => r.value.trim());
   if (shown.length === 0) return null;
@@ -270,18 +301,18 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
  
 
   const toc = [
-    "Executive Summary",
-    "1.0 Basis of Value",
-    "2.0 Title and Property Details",
-    "3.0 Planning Controls",
-    "4.0 Environmental Issues",
-    "5.0 Locality and Location",
-    "6.0 Market Commentary",
-    "7.0 Risk Assessment",
-    "8.0 Valuation Approach",
-    "9.0 References",
-    "10.0 Individual Commentary",
-    "11.0 Appendices",
+    { id: "exam-summary", label: "Executive Summary" },
+    { id: "exam-1", label: "1.0 Basis of Value" },
+    { id: "exam-2", label: "2.0 Title and Property Details" },
+    { id: "exam-3", label: "3.0 Planning Controls" },
+    { id: "exam-4", label: "4.0 Environmental Issues" },
+    { id: "exam-5", label: "5.0 Locality and Location" },
+    { id: "exam-6", label: "6.0 Market Commentary" },
+    { id: "exam-7", label: "7.0 Risk Assessment" },
+    { id: "exam-8", label: "8.0 Valuation Approach" },
+    { id: "exam-9", label: "9.0 References" },
+    { id: "exam-10", label: "10.0 Individual Commentary" },
+    { id: "exam-11", label: "11.0 Appendices" },
   ];
   const hasMarketParts = Boolean(
     get(v, "exam_market_australia") ||
@@ -333,13 +364,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </section>
 
       <H1>Table of Contents</H1>
-      <ol className="mt-3 list-none space-y-1 text-sm" style={{ color: TEAL }}>
-        {toc.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ol>
+      <ExamToc entries={toc} />
 
-      <div className="report-exam-summary-sheet report-keep-block">
+      <div id="exam-summary" className="report-exam-summary-sheet report-keep-block">
       <H1>Executive Summary</H1>
       <Para>
         Instructions were received from {instructing} to prepare a valuation of

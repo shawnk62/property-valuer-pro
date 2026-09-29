@@ -17,6 +17,7 @@ import { useReportDraft } from "@/hooks/useReportDraft";
 import { inspectionStore } from "@/lib/inspection/storage";
 import { isAppliedSignature, SignaturePad } from "@/components/SignaturePad";
 import { get } from "@/lib/report/schema";
+import { fillExamTocPages } from "@/lib/report/tocPages";
 
 const TABS = [
   { id: "subject", label: "Subject & purpose" },
@@ -113,6 +114,7 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
     window.addEventListener("pageshow", restore);
 
     lock.beginPrint();
+    fillExamTocPages();
     window.print();
   }
 
