@@ -65,7 +65,9 @@ export function fieldKeys(field: InspectionField): string[] {
   switch (field.type) {
     case "checkbox_group": {
       const f = field as CheckboxGroupField;
-      return [f.name, f.condition_field, f.notes_field];
+      return [f.name, f.condition_field, f.notes_field].filter(
+        (k): k is string => typeof k === "string" && k.length > 0,
+      );
     }
     case "single_row": {
       const f = field as SingleRowField;

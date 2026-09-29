@@ -312,7 +312,9 @@ function CheckboxGroup({
               </div>
             ))}
           </div>
+          {field.condition_field || field.notes_field ? (
           <div className="grid gap-3 sm:grid-cols-3">
+            {field.condition_field ? (
             <div className="space-y-1.5">
               <FieldLabel
                 htmlFor={field.condition_field}
@@ -323,9 +325,11 @@ function CheckboxGroup({
               <ConditionSelect
                 id={field.condition_field}
                 value={asString(values[field.condition_field])}
-                onChange={(v) => onChange(field.condition_field, v)}
+                onChange={(v) => onChange(field.condition_field!, v)}
               />
             </div>
+            ) : null}
+            {field.notes_field ? (
             <div className="space-y-1.5 sm:col-span-2">
               <FieldLabel
                 htmlFor={field.notes_field}
@@ -337,10 +341,12 @@ function CheckboxGroup({
                 id={field.notes_field}
                 value={asString(values[field.notes_field])}
                 multiline
-                onChange={(v) => onChange(field.notes_field, v)}
+                onChange={(v) => onChange(field.notes_field!, v)}
               />
             </div>
+            ) : null}
           </div>
+          ) : null}
         </div>
       ) : null}
     </div>

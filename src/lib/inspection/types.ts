@@ -53,8 +53,8 @@ export interface CheckboxGroupField {
   label: string;
   type: "checkbox_group";
   items: CheckboxGroupItem[];
-  condition_field: string;
-  notes_field: string;
+  condition_field?: string;
+  notes_field?: string;
 }
 
 export interface SingleRowField {
