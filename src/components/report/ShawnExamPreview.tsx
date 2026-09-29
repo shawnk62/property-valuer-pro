@@ -170,10 +170,29 @@ function Keep({ children }: { children: React.ReactNode }) {
   return <div className="report-keep-block">{children}</div>;
 }
 
+function TocRows({ entries }: { entries: { id: string; label: string }[] }) {
+  if (entries.length === 0) return null;
+  return (
+    <ol className="exam-toc mt-3 list-none space-y-1 text-sm" style={{ color: TEAL }}>
+      {entries.map((item) => (
+        <li key={item.id} className="exam-toc-row">
+          <a href={`#${item.id}`}>{item.label}</a>
+          <span className="exam-toc-leader" aria-hidden />
+          <span className="exam-toc-page" data-toc-id={item.id} />
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function ExamToc({
   entries,
+  references,
+  annexures,
 }: {
   entries: { id: string; label: string }[];
+  references: { id: string; label: string }[];
+  annexures: { id: string; label: string }[];
 }) {
   useEffect(() => {
     const run = () => fillExamTocPages();
@@ -186,17 +205,21 @@ function ExamToc({
       window.removeEventListener("beforeprint", run);
       window.removeEventListener("load", run);
     };
-  }, [entries]);
+  }, [entries, references, annexures]);
   return (
-    <ol className="exam-toc mt-3 list-none space-y-1 text-sm" style={{ color: TEAL }}>
-      {entries.map((item) => (
-        <li key={item.id} className="exam-toc-row">
-          <a href={`#${item.id}`}>{item.label}</a>
-          <span className="exam-toc-leader" aria-hidden />
-          <span className="exam-toc-page" data-toc-id={item.id} />
-        </li>
-      ))}
-    </ol>
+    <>
+      <TocRows entries={entries} />
+      <p className="exam-toc-subhead">List of References</p>
+      <TocRows entries={references} />
+      <p className="exam-toc-subhead">List of Annexures</p>
+      {annexures.length > 0 ? (
+        <TocRows entries={annexures} />
+      ) : (
+        <p className="mt-2 text-sm" style={{ color: TEAL }}>
+          No annexures attached.
+        </p>
+      )}
+    </>
   );
 }
 
@@ -364,7 +387,29 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </section>
 
       <H1>Table of Contents</H1>
-      <ExamToc entries={toc} />
+      <ExamToc
+        entries={toc}
+        references={[{ id: "exam-9", label: "9.0 References" }]}
+        annexures={[
+          ...(annexurePhotos.length > 0
+            ? [{ id: "exam-annex-subject", label: "Subject photographs" }]
+            : []),
+          ...(printedSales.some((s) => s.photoUrl)
+            ? [{ id: "exam-annex-comps", label: "Comparable sale photographs" }]
+            : []),
+          ...(mapPhotos.length > 0 ? [{ id: "exam-annex-maps", label: "Maps" }] : []),
+          ...(titlePages.length > 0
+            ? [{ id: "exam-annex-title", label: "Certificate of Title" }]
+            : []),
+          ...(surveyPages.length > 0
+            ? [{ id: "exam-annex-survey", label: "Survey Plan" }]
+            : []),
+          ...extraAnnexGroups.map((g) => ({
+            id: `exam-annex-extra-${g.id}`,
+            label: g.title,
+          })),
+        ]}
+      />
 
       <div id="exam-summary" className="report-exam-summary-sheet report-keep-block">
       <H1>Executive Summary</H1>
@@ -806,7 +851,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Lead>
 
       {annexurePhotos.length > 0 ? (
-        <section className="report-annexure report-annexure-subject mt-12">
+        <section id="exam-annex-subject" className="report-annexure report-annexure-subject mt-12">
           <PhotoAnnexPages heading="Appendix — Subject photographs">
             {annexurePhotos.map((photo) => (
               <figure key={photo.id} className="report-photo-figure">
@@ -826,7 +871,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       ) : null}
 
       {printedSales.some((s) => s.photoUrl) ? (
-        <section className="report-annexure report-annexure-comps mt-12">
+        <section id="exam-annex-comps" className="report-annexure report-annexure-comps mt-12">
           <PhotoAnnexPages heading="Appendix — Comparable sale photographs">
             {printedSales.map((s, idx) =>
               s.photoUrl ? (
@@ -851,7 +896,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       ) : null}
 
       {mapPhotos.length > 0 ? (
-        <section className="report-annexure mt-12">
+        <section id="exam-annex-maps" className="report-annexure mt-12">
           <h2 className="text-left text-base font-semibold" style={{ color: TEAL }}>
             Appendix — Maps
           </h2>
@@ -866,10 +911,23 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </section>
       ) : null}
 
-      <A4DocumentAnnex heading="Appendix — Certificate of Title" pages={titlePages} />
-      <A4DocumentAnnex heading="Appendix — Survey Plan" pages={surveyPages} />
+      <A4DocumentAnnex
+        id="exam-annex-title"
+        heading="Appendix — Certificate of Title"
+        pages={titlePages}
+      />
+      <A4DocumentAnnex
+        id="exam-annex-survey"
+        heading="Appendix — Survey Plan"
+        pages={surveyPages}
+      />
       {extraAnnexGroups.map((g) => (
-        <A4DocumentAnnex key={g.id} heading={`Appendix — ${g.title}`} pages={g.pages} />
+        <A4DocumentAnnex
+          key={g.id}
+          id={`exam-annex-extra-${g.id}`}
+          heading={`Appendix — ${g.title}`}
+          pages={g.pages}
+        />
       ))}
     </article>
   );

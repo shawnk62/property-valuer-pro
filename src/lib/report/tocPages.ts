@@ -15,7 +15,8 @@ function mmToPx(mm: number): number {
 function isPageBreakBefore(el: Element): boolean {
   if (
     el.classList.contains("report-exam-summary-sheet") ||
-    el.classList.contains("report-a4-page")
+    el.classList.contains("report-a4-page") ||
+    el.classList.contains("report-annexure")
   ) {
     return true;
   }

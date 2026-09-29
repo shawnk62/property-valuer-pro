@@ -7,13 +7,15 @@ import type { ReportPhoto } from "@/lib/report/types";
 export function A4DocumentAnnex({
   heading,
   pages,
+  id,
 }: {
   heading: string;
   pages: ReportPhoto[];
+  id?: string;
 }) {
   if (pages.length === 0) return null;
   return (
-    <section className="report-annexure report-a4-annex">
+    <section id={id} className="report-annexure report-a4-annex">
       {pages.map((photo) => (
         <figure key={photo.id} className="report-a4-page">
           <h2 className="photo-annex-heading">{heading}</h2>

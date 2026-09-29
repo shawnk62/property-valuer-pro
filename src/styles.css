@@ -1382,6 +1382,13 @@
   line-height: 1.25;
   text-align: left;
 }
+.report-type-exam .exam-toc-subhead {
+  margin: 14pt 0 0;
+  font-size: 11pt;
+  font-weight: 700;
+  color: #324758;
+  text-align: left;
+}
 .report-type-exam .exam-toc-row {
   display: flex;
   align-items: baseline;
