@@ -316,6 +316,88 @@ Include every sourced detail you find: estate name, developer, stages, dwelling 
     return { raw: `${first.text.trim()}\n\n${second.text.trim()}` };
   });
 
+const SearchMarketInput = z.object({
+  settings: SettingsInput,
+  scale: z.enum(["australia", "state", "region"]),
+  suburb: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  address: z.string().optional(),
+});
+
+export const searchMarketFacts = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => SearchMarketInput.parse(input))
+  .handler(async ({ data }) => {
+    const settings = asAiSettings(data.settings);
+    const state = (data.state || "Queensland").trim();
+    const city = (data.city || "").trim();
+    const suburb = (data.suburb || "").trim();
+    const place = [suburb, city, state, "Australia"].filter(Boolean).join(", ");
+    const scalePrompt =
+      data.scale === "australia"
+        ? `Search the public web for current Australian residential property market commentary suitable for a valuation report.
+Cover: national dwelling values and recent movement, credit / interest-rate conditions, housing supply and demand, and any official or widely cited outlook.
+Prefer RBA, ABS, CoreLogic, PropTrack, Treasury and major bank research.`
+        : data.scale === "state"
+          ? `Search the public web for current ${state} residential property market commentary suitable for a valuation report.
+Cover: state dwelling values and recent movement, supply, migration or population effects on housing, and any official or widely cited outlook.
+Prefer Queensland Government, QGSO, CoreLogic state pages and major bank state reports.`
+          : `Search the public web for current residential property market commentary for the region around ${place}.
+Cover: local or city-region dwelling values and recent movement, supply of similar land or dwellings, demand drivers, and any official or widely cited local outlook.
+Prefer council, CoreLogic suburb/city pages and state government regional notes.`;
+
+    const prompt = `${scalePrompt}
+
+Return ONLY a JSON array of as many supported facts as you find (aim for 8–20 items). Each item:
+{"kind":"${data.scale}","text":"one sentence","source":"url or publisher"}
+
+Do not invent numbers. Do not omit a sourced fact because it might be unused. If sources conflict, include both lines with their sources.
+Do not write suburb character, estate names or amenity distances unless a market source uses them as a demand driver.`;
+
+    const base = (settings.baseUrl || "https://api.x.ai/v1").replace(/\/$/, "");
+    if (settings.provider === "xai") {
+      const res = await fetch(`${base}/responses`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${settings.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: settings.model,
+          input: [{ role: "user", content: prompt }],
+          tools: [{ type: "web_search" }],
+        }),
+      });
+      const json = (await res.json()) as {
+        error?: { message?: string };
+        output_text?: string;
+        output?: Array<{
+          type?: string;
+          content?: Array<{ type?: string; text?: string }>;
+        }>;
+        choices?: Array<{ message?: { content?: string } }>;
+      };
+      if (!res.ok) {
+        throw new Error(json.error?.message || `Market search failed (${res.status})`);
+      }
+      const fromOutput = (json.output ?? [])
+        .flatMap((item) => item.content ?? [])
+        .map((part) => part.text ?? "")
+        .join("\n")
+        .trim();
+      return {
+        raw:
+          json.output_text?.trim() ||
+          fromOutput ||
+          json.choices?.[0]?.message?.content?.trim() ||
+          "[]",
+      };
+    }
+    const model = createModel(settings);
+    const result = await generateText({ model, prompt });
+    return { raw: result.text.trim() || "[]" };
+  });
+
 const SaleNarrativeInput = z.object({
   settings: SettingsInput,
   system: z.string().min(1),

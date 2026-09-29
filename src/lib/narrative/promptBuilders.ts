@@ -412,6 +412,37 @@ Rules:
 - No marketing language.`,
       };
     }
+    case "marketAustralia":
+    case "marketState":
+    case "marketRegion": {
+      const scale =
+        blockKey === "marketAustralia"
+          ? "6.1 Australia"
+          : blockKey === "marketState"
+            ? "6.2 State"
+            : "6.3 Region";
+      const focus =
+        blockKey === "marketAustralia"
+          ? "national Australian residential market conditions only"
+          : blockKey === "marketState"
+            ? "state residential market conditions only (Queensland unless the inspection records another state)"
+            : "the city or regional market that contains the subject suburb — not national commentary and not the street-level locality";
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write ${scale} market commentary for a ${type} valuation report. Confine the commentary to ${focus}.
+
+${extras?.locationContext?.trim() || "ACCEPTED FACTS: none."}
+
+Rules:
+- Synthesise ACCEPTED FACTS / MUST INCLUDE into connected professional paragraphs. Do not copy the list sentence-by-sentence.
+- MUST INCLUDE each distinct accepted fact. Paraphrase. Merge duplicates.
+- Do not invent rates, percentages, dollar movements or dates.
+- Do not describe the subject allotment, overlays, or comparable sales.
+- Do not write the 5.2 locality / estate / amenity description here.
+- Two to four paragraphs when enough facts exist. Australian spelling.
+- No marketing language.`,
+      };
+    }
         case "brief":
       return {
         system: BASE_RULES + styleGuide(type) + "\n\n" + IMPROVEMENTS_PROSE_RULES,

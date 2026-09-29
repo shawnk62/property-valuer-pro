@@ -12,6 +12,42 @@ export type NbhdClaimKind =
   | "character"
   | "other";
 
+export type MarketScale = "australia" | "state" | "region";
+
+export const MARKET_ASSIST: {
+  scale: MarketScale;
+  key: keyof ReportNarrative;
+  metaKey: "marketClaimsAustralia" | "marketClaimsState" | "marketClaimsRegion";
+  heading: string;
+  findLabel: string;
+  rewriteLabel: string;
+}[] = [
+  {
+    scale: "australia",
+    key: "marketAustralia",
+    metaKey: "marketClaimsAustralia",
+    heading: "Australia market notes. Search first, tick the lines you accept, then rewrite.",
+    findLabel: "Find Australia notes",
+    rewriteLabel: "Rewrite 6.1 with accepted facts",
+  },
+  {
+    scale: "state",
+    key: "marketState",
+    metaKey: "marketClaimsState",
+    heading: "State market notes. Search first, tick the lines you accept, then rewrite.",
+    findLabel: "Find State notes",
+    rewriteLabel: "Rewrite 6.2 with accepted facts",
+  },
+  {
+    scale: "region",
+    key: "marketRegion",
+    metaKey: "marketClaimsRegion",
+    heading: "Region market notes. Search first, tick the lines you accept, then rewrite.",
+    findLabel: "Find Region notes",
+    rewriteLabel: "Rewrite 6.3 with accepted facts",
+  },
+];
+
 export const NBHD_CLAIM_GROUPS: { kind: NbhdClaimKind; label: string }[] = [
   { kind: "city", label: "City / suburb" },
   { kind: "amenities", label: "Amenities" },

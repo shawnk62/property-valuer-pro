@@ -3,7 +3,11 @@ import { flushSync } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
-import { generateNarrativeBlock, searchNeighbourhoodFacts } from "@/lib/ai/ai.functions";
+import {
+  generateNarrativeBlock,
+  searchMarketFacts,
+  searchNeighbourhoodFacts,
+} from "@/lib/ai/ai.functions";
 import { isAiConfigured, loadAiSettings } from "@/lib/ai/settings";
 import {
   buildPhilRemarks,
@@ -27,11 +31,13 @@ import {
   measuredClaim,
   mergeNbhdClaims,
   ensureAcceptedFactsInProse,
+  MARKET_ASSIST,
   NBHD_CLAIM_GROUPS,
   neighbourhoodAssistEnabled,
   narrativePrints,
   parseNbhdClaims,
   isShawnReportAssignment,
+  type MarketScale,
   type NbhdClaim,
 } from "@/lib/narrative/neighbourhoodAssist";
 import { CannedCommentsBar } from "@/components/report/CannedCommentsBar";
@@ -348,6 +354,79 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       lines.push("ACCEPTED FACTS: none.");
     }
     return lines.filter(Boolean).join("\n");
+  }
+
+  function marketAssistFor(key: keyof ReportNarrative) {
+    return MARKET_ASSIST.find((row) => row.key === key);
+  }
+
+  function marketClaims(scale: MarketScale): NbhdClaim[] {
+    const row = MARKET_ASSIST.find((item) => item.scale === scale);
+    if (!row) return [];
+    return (draft.reportMeta[row.metaKey] as NbhdClaim[] | undefined) ?? [];
+  }
+
+  async function marketContext(scale: MarketScale, acceptedOnly: boolean): Promise<string> {
+    const claims = marketClaims(scale);
+    const use = acceptedOnly ? claims.filter((c) => c.accepted) : claims;
+    if (!use.length) return "ACCEPTED FACTS: none.";
+    return [
+      `MUST INCLUDE all ${use.length} accepted fact(s) below. Do not omit any name, figure or date.`,
+      ...use.map(
+        (c, i) => `${i + 1}. [${c.kind}] ${c.text}${c.source ? ` (${c.source})` : ""}`,
+      ),
+    ].join("\n");
+  }
+
+  async function runMarketSearch(scale: MarketScale) {
+    const row = MARKET_ASSIST.find((item) => item.scale === scale);
+    if (!row) return;
+    const settings = loadAiSettings();
+    if (!isAiConfigured(settings)) {
+      toast.error("AI is not configured", {
+        description: "Open Settings, add an API key, then search again.",
+      });
+      return;
+    }
+    setBusy(row.key);
+    setLastStatus(`Searching ${row.scale} market sources…`);
+    try {
+      const searched = await searchMarketFacts({
+        data: {
+          settings: {
+            provider: settings.provider,
+            model: settings.model,
+            apiKey: settings.apiKey,
+            ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
+          },
+          scale,
+          suburb: String(draft.values["prop_suburb"] ?? ""),
+          city: String(draft.values["prop_lga"] ?? ""),
+          state: String(draft.values["prop_state"] ?? "Queensland"),
+          address: subjectAddressLine(draft.values),
+        },
+      });
+      const incoming = parseNbhdClaims(searched.raw).map((claim) => ({
+        ...claim,
+        kind: (claim.kind === "other" ? scale : claim.kind) as NbhdClaim["kind"],
+      }));
+      const merged = mergeNbhdClaims(marketClaims(scale), incoming);
+      setMeta({ [row.metaKey]: merged });
+      setLastStatus(
+        merged.length
+          ? `${row.heading.split(".")[0]}: ${merged.length} on file. Untick what you do not want.`
+          : "No market notes were returned.",
+      );
+      toast.message(
+        incoming.length ? `Prepared ${incoming.length} ${scale} note(s)` : "No market notes found",
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setLastStatus(`Market search failed: ${message}`);
+      toast.error("Market search failed", { description: message });
+    } finally {
+      setBusy(null);
+    }
   }
 
   async function narrativeOpts() {
@@ -849,6 +928,15 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               ...(key === "neighbourhood"
                 ? { locationContext: await neighbourhoodContext(true) }
                 : {}),
+              ...(key === "marketAustralia"
+                ? { locationContext: await marketContext("australia", true) }
+                : {}),
+              ...(key === "marketState"
+                ? { locationContext: await marketContext("state", true) }
+                : {}),
+              ...(key === "marketRegion"
+                ? { locationContext: await marketContext("region", true) }
+                : {}),
             },
           });
 
@@ -860,13 +948,16 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                 : "";
 
           if (text.trim()) {
+            const marketRow = marketAssistFor(key);
             next[key] =
               key === "neighbourhood"
                 ? ensureAcceptedFactsInProse(
                     text.trim(),
                     (draft.reportMeta.nbhdClaims as NbhdClaim[] | undefined) ?? [],
                   )
-                : text.trim();
+                : marketRow
+                  ? ensureAcceptedFactsInProse(text.trim(), marketClaims(marketRow.scale))
+                  : text.trim();
           } else applyInspectionFill([key]);
         } catch (err) {
           console.error("[narrative AI]", key, err);
@@ -1162,6 +1253,62 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                 className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
               >
                 Rewrite neighbourhood with accepted facts
+              </button>
+            </div>
+          ) : null}
+          {marketAssistFor(block.key) &&
+          (neighbourhoodAssistEnabled(String(draft.values["prop_assignment"] ?? "")) ||
+            shawnExam) ? (
+            <div className="mt-2 space-y-2 rounded-md border border-amber-300/80 bg-amber-50 p-3 dark:bg-amber-950/30">
+              <p className="text-xs font-medium text-foreground">
+                {marketAssistFor(block.key)!.heading} Unticked lines stay in this working box
+                and do not print.
+              </p>
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => void runMarketSearch(marketAssistFor(block.key)!.scale)}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+              >
+                {busy === block.key
+                  ? "Searching…"
+                  : marketAssistFor(block.key)!.findLabel}
+              </button>
+              {marketClaims(marketAssistFor(block.key)!.scale).map((claim) => (
+                <label
+                  key={claim.id}
+                  className="flex items-start gap-2 rounded bg-amber-100/80 px-2 py-1.5 text-xs dark:bg-amber-900/40"
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 size-3.5 shrink-0 rounded border-input"
+                    checked={claim.accepted}
+                    onChange={(e) => {
+                      const row = marketAssistFor(block.key)!;
+                      setMeta({
+                        [row.metaKey]: marketClaims(row.scale).map((c) =>
+                          c.id === claim.id ? { ...c, accepted: e.target.checked } : c,
+                        ),
+                      });
+                    }}
+                  />
+                  <span>
+                    {claim.text}
+                    {claim.source ? (
+                      <span className="mt-0.5 block text-[10px] text-muted-foreground">
+                        {claim.source}
+                      </span>
+                    ) : null}
+                  </span>
+                </label>
+              ))}
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => void generateWithAi([block.key])}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+              >
+                {marketAssistFor(block.key)!.rewriteLabel}
               </button>
             </div>
           ) : null}

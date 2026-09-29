@@ -326,6 +326,27 @@ export interface ReportMeta {
     source?: string;
     accepted: boolean;
   }>;
+  marketClaimsAustralia?: Array<{
+    id: string;
+    kind: string;
+    text: string;
+    source?: string;
+    accepted: boolean;
+  }>;
+  marketClaimsState?: Array<{
+    id: string;
+    kind: string;
+    text: string;
+    source?: string;
+    accepted: boolean;
+  }>;
+  marketClaimsRegion?: Array<{
+    id: string;
+    kind: string;
+    text: string;
+    source?: string;
+    accepted: boolean;
+  }>;
   salesMapPins?: Array<{
     id: string;
     label: string;
