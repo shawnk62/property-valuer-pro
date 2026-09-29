@@ -114,6 +114,32 @@ export function parseNbhdClaims(raw: string): NbhdClaim[] {
     }
     from = end + 1;
   }
+  if (out.length === 0) {
+    const objectRe =
+      /\{\s*"(?:kind|text|source)"[\s\S]*?"(?:kind|text|source)"[\s\S]*?\}/g;
+    const matches = text.match(objectRe) ?? [];
+    for (const chunk of matches) {
+      try {
+        const claim = rowToClaim(JSON.parse(chunk));
+        if (claim) out.push(claim);
+      } catch {
+        /* skip */
+      }
+    }
+  }
+  if (out.length === 0) {
+    for (const line of text.split(/\n+/)) {
+      const t = line.replace(/^[\s*-]+/, "").trim();
+      if (t.length < 40) continue;
+      if (!/estate|master\s*plan|community|population|suburb|corridor/i.test(t)) continue;
+      out.push({
+        id: newClaimId(),
+        kind: /estate|master\s*plan/i.test(t) ? "estate" : "other",
+        text: t.replace(/^"+|"+$/g, ""),
+        accepted: true,
+      });
+    }
+  }
   return out;
 }
 

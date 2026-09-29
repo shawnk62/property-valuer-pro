@@ -287,9 +287,18 @@ Include every sourced detail you find: estate name, developer, stages, dwelling 
         .map((part) => part.text ?? "")
         .join("\n")
         .trim();
+      const walked: string[] = [];
+      const walk = (node: unknown) => {
+        if (!node) return;
+        if (typeof node === "string" && node.length > 20) walked.push(node);
+        else if (Array.isArray(node)) node.forEach(walk);
+        else if (typeof node === "object") Object.values(node as object).forEach(walk);
+      };
+      walk(json.output);
       return (
         json.output_text?.trim() ||
         fromOutput ||
+        walked.filter((s) => s.includes("kind") || s.includes("estate")).join("\n") ||
         json.choices?.[0]?.message?.content?.trim() ||
         "[]"
       );
@@ -297,21 +306,14 @@ Include every sourced detail you find: estate name, developer, stages, dwelling 
 
     if (settings.provider === "xai") {
       const suburbRaw = await xaiSearch(prompt);
-      let estateRaw = "[]";
-      try {
-        estateRaw = await xaiSearch(estatePrompt);
-      } catch {
-        /* suburb notes still usable */
-      }
-      return { raw: `${suburbRaw}\n${estateRaw}` };
+      const estateRaw = await xaiSearch(estatePrompt);
+      return { raw: `${suburbRaw}\n\n${estateRaw}` };
     }
 
     const model = createModel(settings);
-    const { text } = await generateText({
-      model,
-      prompt,
-    });
-    return { raw: text.trim() };
+    const first = await generateText({ model, prompt });
+    const second = await generateText({ model, prompt: estatePrompt });
+    return { raw: `${first.text.trim()}\n\n${second.text.trim()}` };
   });
 
 const SaleNarrativeInput = z.object({

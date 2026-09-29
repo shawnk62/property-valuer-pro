@@ -577,7 +577,9 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               suburb: suburb || String(draft.values["prop_address"] ?? "subject suburb"),
               city: String(draft.values["prop_lga"] ?? ""),
               address: subjectAddressLine(draft.values),
-              estate: String(draft.values["nbhd_estate"] ?? ""),
+              estate:
+                String(draft.reportMeta.nbhdEstateHint ?? "").trim() ||
+                String(draft.values["nbhd_estate"] ?? ""),
             },
           });
           claims.push(...parseNbhdClaims(searched.raw));
@@ -592,9 +594,14 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
           claims,
         ),
       });
+      const merged = mergeNbhdClaims(
+        (draft.reportMeta.nbhdClaims as NbhdClaim[] | undefined) ?? [],
+        claims,
+      );
+      const estateN = merged.filter((c) => c.kind === "estate").length;
       setLastStatus(
-        claims.length
-          ? `Prepared ${claims.length} suburb note(s). Tick to keep, then rewrite.`
+        merged.length
+          ? `Notes on file: ${merged.length}. Estate lines: ${estateN}. Untick what you do not want.`
           : "No suburb notes were returned.",
       );
       toast.message(
@@ -735,7 +742,9 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                   suburb: suburb || String(draft.values["prop_address"] ?? "subject suburb"),
                   city: String(draft.values["prop_lga"] ?? ""),
                   address: subjectAddressLine(draft.values),
-                  estate: String(draft.values["nbhd_estate"] ?? ""),
+                  estate:
+                String(draft.reportMeta.nbhdEstateHint ?? "").trim() ||
+                String(draft.values["nbhd_estate"] ?? ""),
                 },
               });
               const claims = parseNbhdClaims(searched.raw);
@@ -993,6 +1002,15 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                 Suburb notes (trial). Search first, tick the lines you accept, then rewrite the
                 paragraph. Unticked lines stay in this working box and do not print.
               </p>
+              <label className="block text-xs text-foreground">
+                Named estate (optional — improves the estate search)
+                <input
+                  value={String(draft.reportMeta.nbhdEstateHint ?? "")}
+                  onChange={(e) => setMeta({ nbhdEstateHint: e.target.value })}
+                  className="mt-1 w-full rounded-md border border-input bg-card px-2 py-1 text-xs"
+                  placeholder="e.g. Highland Reserve"
+                />
+              </label>
               <button
                 type="button"
                 disabled={busy !== null}

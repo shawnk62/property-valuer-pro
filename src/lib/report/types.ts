@@ -299,6 +299,8 @@ export interface ReportMeta {
    * False keeps the working text and omits it from the PDF.
    */
   printNarrative?: Partial<Record<keyof ReportNarrative, boolean>>;
+  /** Optional named estate used when collecting suburb notes. */
+  nbhdEstateHint?: string;
   /** Trial: web-search neighbourhood claims awaiting valuer sign-off. */
   nbhdClaims?: Array<{
     id: string;
