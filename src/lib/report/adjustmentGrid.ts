@@ -434,7 +434,44 @@ export function formatMoney(n: number | null | undefined): string {
   return "$0";
 }
 
-/** Print $ column: accounting, 0 decimals, +$ when positive, -$ when negative. */
+export function formatAreaWithSqm(raw: string | number | null | undefined): string {
+  const s = String(raw ?? "").replace(/\s+/g, " ").trim();
+  if (!s || s === "—") return "—";
+  if (/ha\b|hectare|acre/i.test(s)) return s;
+  if (/m\s*²/i.test(s) || /m²/.test(s)) return s.replace(/m\s*²/gi, "m²");
+  if (/m\s*2\b/i.test(s)) return s.replace(/m\s*2\b/gi, "m²");
+  return `${s} m²`;
+}
+
+export function subjectSiteSizeDisplay(values: InspectionValues): string {
+  const usable = values["prop_usable_sitearea"];
+  const area = String(usable ?? "").trim() || values["prop_sitearea"];
+  const unit = values["prop_areaunit"];
+  if (area === undefined || area === null || String(area).trim() === "") return "—";
+  const unitLabel =
+    unit === "m2" || unit === "m²" || !unit || String(unit).trim() === ""
+      ? "m²"
+      : String(unit);
+  if (unitLabel === "m²") return formatAreaWithSqm(area);
+  return `${String(area).trim()} ${unitLabel}`;
+}
+
+export function detailLooksLikeSaleDate(detail: string, saleDate?: string): boolean {
+  const a = detail.replace(/\s+/g, " ").trim().toLowerCase();
+  if (!a) return false;
+  const b = String(saleDate ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+  if (b && (a === b || a.includes(b) || b.includes(a))) return true;
+  if (/^\d{1,2}[./-]\d{1,2}[./-]\d{2,4}$/.test(a)) return true;
+  if (
+    /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/i.test(detail) &&
+    /\d{4}/.test(detail) &&
+    a.length <= 28
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export function formatAdjustmentMoney(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return "—";
   const formatted = Math.abs(Math.round(n)).toLocaleString("en-AU", {

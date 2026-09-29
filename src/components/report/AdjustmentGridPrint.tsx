@@ -1,11 +1,13 @@
 import { Fragment } from "react";
 import {
-  ADJUSTMENT_FEATURES,
   adjustmentFeaturesForProperty,
   adjustmentRowPrints,
   computeSaleAdjustmentTotals,
+  detailLooksLikeSaleDate,
   formatAdjustmentMoney,
+  formatAreaWithSqm,
   subjectFeatureDisplay,
+  subjectSiteSizeDisplay,
 } from "@/lib/report/adjustmentGrid";
 import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/types";
 
@@ -28,11 +30,13 @@ export function AdjustmentGridPrint({
   values,
   meta,
   subjectAddress,
+  saleNumber,
 }: {
   sales: ComparableSale[];
   values: InspectionValues;
   meta: ReportMeta;
   subjectAddress: string;
+  saleNumber?: (sale: ComparableSale, index: number) => number;
 }) {
   if (sales.length === 0) return null;
   const features = adjustmentFeaturesForProperty(values).filter(
@@ -55,27 +59,17 @@ export function AdjustmentGridPrint({
                 {chunk.map((sale, i) => (
                   <Fragment key={sale.id}>
                     <th>
-                      Sale {chunkIdx * COMPS_PER_BLOCK + i + 1}
+                      Sale {saleNumber ? saleNumber(sale, chunkIdx * COMPS_PER_BLOCK + i) : chunkIdx * COMPS_PER_BLOCK + i + 1}
                       {sale.address ? ` — ${sale.address}` : ""}
                     </th>
-                    <th className="adj-money">$</th>
+                    <th className="adj-money">Adjustment</th>
                   </Fragment>
                 ))}
               </tr>
             </thead>
             <tbody>
               <tr>
-                <th scope="row">Sale date</th>
-                <td>—</td>
-                {chunk.map((sale) => (
-                  <Fragment key={sale.id}>
-                    <td>{sale.saleDate || "—"}</td>
-                    <td className="adj-money">—</td>
-                  </Fragment>
-                ))}
-              </tr>
-              <tr className="is-stripe">
-                <th scope="row">Sale price</th>
+                <th scope="row">Sale Price</th>
                 <td>—</td>
                 {chunk.map((sale) => (
                   <Fragment key={sale.id}>
@@ -84,20 +78,12 @@ export function AdjustmentGridPrint({
                   </Fragment>
                 ))}
               </tr>
-              <tr>
-                <th scope="row">Land area</th>
-                <td>
-                  {subjectFeatureDisplay(
-                    ADJUSTMENT_FEATURES.find((f) => f.id === "site") ?? {
-                      id: "site",
-                      label: "Site",
-                    },
-                    values,
-                  ) || "—"}
-                </td>
+              <tr className="is-stripe">
+                <th scope="row">Date of Sale</th>
+                <td>—</td>
                 {chunk.map((sale) => (
                   <Fragment key={sale.id}>
-                    <td>{sale.landArea || "—"}</td>
+                    <td>{sale.saleDate || "—"}</td>
                     <td className="adj-money">—</td>
                   </Fragment>
                 ))}
@@ -110,14 +96,28 @@ export function AdjustmentGridPrint({
                       ? meta.subjectOther1 || "—"
                       : feature.id === "other2"
                         ? meta.subjectOther2 || "—"
-                        : subjectFeatureDisplay(feature, values) || "—"}
+                        : feature.id === "site"
+                          ? subjectSiteSizeDisplay(values)
+                          : subjectFeatureDisplay(feature, values) || "—"}
                   </td>
                   {chunk.map((sale) => {
                     const adj = adjOf(sale, feature.id);
-                    const detail = [adj?.detail, adj?.relativity].filter(Boolean).join(" · ");
+                    let detail = (adj?.detail ?? "").trim();
+                    if (feature.id === "site") {
+                      detail = formatAreaWithSqm(detail || sale.landArea);
+                    } else if (
+                      feature.id === "saleOrFinancing" &&
+                      detailLooksLikeSaleDate(detail, sale.saleDate)
+                    ) {
+                      detail = "";
+                    }
+                    const shown =
+                      feature.id === "site"
+                        ? detail
+                        : [detail, adj?.relativity].filter(Boolean).join(" · ") || "similar";
                     return (
                       <Fragment key={sale.id}>
-                        <td>{detail || "similar"}</td>
+                        <td>{shown}</td>
                         <td className="adj-money">{moneyCell(adj?.amount)}</td>
                       </Fragment>
                     );

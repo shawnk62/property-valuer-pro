@@ -1909,6 +1909,9 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 values={v}
                 meta={draft.reportMeta}
                 subjectAddress={addressLine}
+                saleNumber={(sale) =>
+                  Math.max(1, draft.sales.findIndex((s) => s.id === sale.id) + 1)
+                }
               />
             ) : null}
           </div>
