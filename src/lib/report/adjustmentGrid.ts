@@ -434,6 +434,18 @@ export function formatMoney(n: number | null | undefined): string {
   return "$0";
 }
 
+/** Print $ column: accounting, 0 decimals, +$ when positive, -$ when negative. */
+export function formatAdjustmentMoney(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return "—";
+  const formatted = Math.abs(Math.round(n)).toLocaleString("en-AU", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
+  if (n < 0) return `-$${formatted}`;
+  if (n > 0) return `+$${formatted}`;
+  return "$0";
+}
+
 export function formatPct(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return "—";
   const sign = n > 0 ? "+" : "";

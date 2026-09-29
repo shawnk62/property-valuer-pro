@@ -4,7 +4,7 @@ import {
   adjustmentFeaturesForProperty,
   adjustmentRowPrints,
   computeSaleAdjustmentTotals,
-  formatMoney,
+  formatAdjustmentMoney,
   subjectFeatureDisplay,
 } from "@/lib/report/adjustmentGrid";
 import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/types";
@@ -16,8 +16,8 @@ function adjOf(sale: ComparableSale, featureId: string) {
 }
 
 function moneyCell(amount: number | undefined): string {
-  if (!amount) return "—";
-  return formatMoney(amount);
+  if (amount == null || !Number.isFinite(amount)) return "—";
+  return formatAdjustmentMoney(amount);
 }
 
 /**
@@ -58,7 +58,7 @@ export function AdjustmentGridPrint({
                       Sale {chunkIdx * COMPS_PER_BLOCK + i + 1}
                       {sale.address ? ` — ${sale.address}` : ""}
                     </th>
-                    <th>$</th>
+                    <th className="adj-money">$</th>
                   </Fragment>
                 ))}
               </tr>
@@ -70,7 +70,7 @@ export function AdjustmentGridPrint({
                 {chunk.map((sale) => (
                   <Fragment key={sale.id}>
                     <td>{sale.saleDate || "—"}</td>
-                    <td>—</td>
+                    <td className="adj-money">—</td>
                   </Fragment>
                 ))}
               </tr>
@@ -80,7 +80,7 @@ export function AdjustmentGridPrint({
                 {chunk.map((sale) => (
                   <Fragment key={sale.id}>
                     <td>{sale.salePrice || "—"}</td>
-                    <td>—</td>
+                    <td className="adj-money">—</td>
                   </Fragment>
                 ))}
               </tr>
@@ -98,7 +98,7 @@ export function AdjustmentGridPrint({
                 {chunk.map((sale) => (
                   <Fragment key={sale.id}>
                     <td>{sale.landArea || "—"}</td>
-                    <td>—</td>
+                    <td className="adj-money">—</td>
                   </Fragment>
                 ))}
               </tr>
@@ -118,7 +118,7 @@ export function AdjustmentGridPrint({
                     return (
                       <Fragment key={sale.id}>
                         <td>{detail || "similar"}</td>
-                        <td>{moneyCell(adj?.amount)}</td>
+                        <td className="adj-money">{moneyCell(adj?.amount)}</td>
                       </Fragment>
                     );
                   })}
@@ -132,7 +132,7 @@ export function AdjustmentGridPrint({
                   return (
                     <Fragment key={sale.id}>
                       <td />
-                      <td>{formatMoney(t.netAdjustment)}</td>
+                      <td className="adj-money">{formatAdjustmentMoney(t.netAdjustment)}</td>
                     </Fragment>
                   );
                 })}
@@ -145,7 +145,7 @@ export function AdjustmentGridPrint({
                   return (
                     <Fragment key={sale.id}>
                       <td />
-                      <td>{formatMoney(t.grossAdjustment)}</td>
+                      <td className="adj-money">{formatAdjustmentMoney(t.grossAdjustment)}</td>
                     </Fragment>
                   );
                 })}
@@ -158,7 +158,7 @@ export function AdjustmentGridPrint({
                   return (
                     <Fragment key={sale.id}>
                       <td />
-                      <td>{formatMoney(t.adjustedSalePrice)}</td>
+                      <td className="adj-money">{formatAdjustmentMoney(t.adjustedSalePrice)}</td>
                     </Fragment>
                   );
                 })}

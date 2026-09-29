@@ -753,7 +753,10 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
   const printedSales = salesOnReport(draft.sales);
   const m = draft.reportMeta;
   const reportType = getReportTypeConfig(get(v, "prop_assignment"));
-  if (isShawnExamType(reportType.id)) {
+  if (
+    isShawnExamType(reportType.id) ||
+    /shawn/i.test(String(get(v, "prop_assignment") ?? ""))
+  ) {
     return <ShawnExamPreview draft={draft} />;
   }
   const murray = isMurrayReportType(reportType.id);

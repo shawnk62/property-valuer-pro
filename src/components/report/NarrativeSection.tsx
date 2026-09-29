@@ -31,6 +31,7 @@ import {
   neighbourhoodAssistEnabled,
   narrativePrints,
   parseNbhdClaims,
+  isShawnReportAssignment,
   type NbhdClaim,
 } from "@/lib/narrative/neighbourhoodAssist";
 import { CannedCommentsBar } from "@/components/report/CannedCommentsBar";
@@ -193,9 +194,9 @@ function serializableValues(
 export function NarrativeSection({ controller }: { controller: ReportDraftController }) {
   const { draft, setNarrative, setMeta, setPhotos, loaded } = controller;
   const murray = /murray/i.test(String(draft.values["prop_assignment"] ?? ""));
-  const shawnExam = isShawnExamType(
-    getReportTypeConfig(String(draft.values["prop_assignment"] ?? "")).id,
-  );
+  const shawnExam =
+    isShawnExamType(getReportTypeConfig(String(draft.values["prop_assignment"] ?? "")).id) ||
+    isShawnReportAssignment(String(draft.values["prop_assignment"] ?? ""));
   const BLOCKS = narrativeBlocks(murray, shawnExam);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [source, setSource] = useState<"template" | "ai" | null>(null);

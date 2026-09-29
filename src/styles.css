@@ -1467,7 +1467,12 @@
 .adjustment-print-grid td {
   border: 0.4pt solid #c5d0c0;
   padding: 3pt 4pt;
-  vertical-align: top;
+  vertical-align: bottom;
+}
+.adjustment-print-grid .adj-money {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 .adjustment-print-grid thead th {
   background: #324758;
