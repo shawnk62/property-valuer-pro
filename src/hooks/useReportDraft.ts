@@ -36,6 +36,19 @@ function emptyNarrative(): ReportNarrative {
     individualCommentary: "",
     riskAnalysis: "",
     valuationApproach: "",
+    envIntro: "",
+    acidSulphate: "",
+    floodAssessment: "",
+    noiseNuisances: "",
+    amenities: "",
+    popularDestinations: "",
+    marketAustralia: "",
+    marketState: "",
+    marketRegion: "",
+    marketLocality: "",
+    salesAnalysis: "",
+    disclaimer: "",
+    assumptions: "",
   };
 }
 
@@ -73,6 +86,19 @@ function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): R
       typeof raw.individualCommentary === "string" ? raw.individualCommentary : "",
     riskAnalysis: typeof raw.riskAnalysis === "string" ? raw.riskAnalysis : "",
     valuationApproach: typeof raw.valuationApproach === "string" ? raw.valuationApproach : "",
+    envIntro: typeof raw.envIntro === "string" ? raw.envIntro : "",
+    acidSulphate: typeof raw.acidSulphate === "string" ? raw.acidSulphate : "",
+    floodAssessment: typeof raw.floodAssessment === "string" ? raw.floodAssessment : "",
+    noiseNuisances: typeof raw.noiseNuisances === "string" ? raw.noiseNuisances : "",
+    amenities: typeof raw.amenities === "string" ? raw.amenities : "",
+    popularDestinations: typeof raw.popularDestinations === "string" ? raw.popularDestinations : "",
+    marketAustralia: typeof raw.marketAustralia === "string" ? raw.marketAustralia : "",
+    marketState: typeof raw.marketState === "string" ? raw.marketState : "",
+    marketRegion: typeof raw.marketRegion === "string" ? raw.marketRegion : "",
+    marketLocality: typeof raw.marketLocality === "string" ? raw.marketLocality : "",
+    salesAnalysis: typeof raw.salesAnalysis === "string" ? raw.salesAnalysis : "",
+    disclaimer: typeof raw.disclaimer === "string" ? raw.disclaimer : "",
+    assumptions: typeof raw.assumptions === "string" ? raw.assumptions : "",
   };
 }
 

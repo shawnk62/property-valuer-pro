@@ -253,6 +253,19 @@ export interface ReportNarrative {
   riskAnalysis: string;
   /** Direct comparison / valuation approach narrative. */
   valuationApproach: string;
+  envIntro: string;
+  acidSulphate: string;
+  floodAssessment: string;
+  noiseNuisances: string;
+  amenities: string;
+  popularDestinations: string;
+  marketAustralia: string;
+  marketState: string;
+  marketRegion: string;
+  marketLocality: string;
+  salesAnalysis: string;
+  disclaimer: string;
+  assumptions: string;
 }
 
 export interface ReportMeta {
@@ -301,6 +314,8 @@ export interface ReportMeta {
    * False keeps the working text and omits it from the PDF.
    */
   printNarrative?: Partial<Record<keyof ReportNarrative, boolean>>;
+  /** Keys the valuer edited. Auto-AI must not replace these. */
+  manualNarrative?: Partial<Record<keyof ReportNarrative, boolean>>;
   /** Optional named estate used when collecting suburb notes. */
   nbhdEstateHint?: string;
   /** Trial: web-search neighbourhood claims awaiting valuer sign-off. */

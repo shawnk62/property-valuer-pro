@@ -1173,6 +1173,46 @@ export function section61PhysicalText(opts: {
   ]);
 }
 
+function overlayIds(values: InspectionValues): string[] {
+  const raw = values["plan_overlay"];
+  if (Array.isArray(raw)) return raw.map(String);
+  if (typeof raw === "string" && raw.trim()) return [raw.trim()];
+  return [];
+}
+
+function buildEnvIntro(): string {
+  return "No separate contaminated-land search is assumed beyond the inspection record and any planning overlays noted. The valuation assumes there are no environmental issues other than those set out below.";
+}
+
+function buildAcidSulphate(values: InspectionValues): string {
+  const dedicated = v(values, "exam_acid_sulphate");
+  if (dedicated) return dedicated;
+  const ids = overlayIds(values);
+  const notes = v(values, "plan_overlay_notes");
+  const acidTick = ids.some((id) => /acid/i.test(id));
+  const acidNote = /acid\s*sulph/i.test(notes);
+  if (acidTick || acidNote) {
+    return sentence([
+      "An acid sulphate soils overlay is recorded against the subject",
+      acidNote ? notes : "the effect on development and value should be confirmed with a suitably qualified professional if works are proposed",
+    ]);
+  }
+  return "No acid sulphate soils overlay is recorded against the subject.";
+}
+
+function buildFloodAssessment(values: InspectionValues): string {
+  const parts = [v(values, "prop_flood"), v(values, "prop_flood_map")].filter(Boolean);
+  if (parts.length) return parts.join(". ");
+  return "No flood notation is recorded on the inspection.";
+}
+
+function buildNoiseNuisances(values: InspectionValues): string {
+  return (
+    v(values, "nbhd_adverse") ||
+    "No formal acoustic report has been obtained. Comment is limited to features recorded on the inspection."
+  );
+}
+
 function buildValuationApproach(values: InspectionValues): string {
   const vacant = isVacantLand(values);
   const commercial = isCommercialType(values) && !isMixedUseCommercial(values);
@@ -1229,6 +1269,21 @@ export function generateNarrative(
     individualCommentary: "",
     riskAnalysis: "",
     valuationApproach: buildValuationApproach(values),
+    envIntro: buildEnvIntro(),
+    acidSulphate: buildAcidSulphate(values),
+    floodAssessment: buildFloodAssessment(values),
+    noiseNuisances: buildNoiseNuisances(values),
+    amenities: v(values, "exam_amenities"),
+    popularDestinations: v(values, "exam_destinations"),
+    marketAustralia: v(values, "exam_market_australia"),
+    marketState: v(values, "exam_market_state"),
+    marketRegion: v(values, "exam_market_region"),
+    marketLocality: v(values, "exam_market_local"),
+    salesAnalysis: v(values, "exam_sales_analysis"),
+    disclaimer:
+      v(values, "exam_limitations") ||
+      "This valuation has been prepared for the stated purpose and the instructing party only. It may not be used for any other purpose without written authorisation.",
+    assumptions: v(values, "exam_assumptions"),
     remarks: buildRemarks(values, {
       salesCount: opts?.salesCount,
       valueAmount: opts?.valueAmount,

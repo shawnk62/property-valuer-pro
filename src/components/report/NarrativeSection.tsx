@@ -80,6 +80,26 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           hint: "Prints under 3.0 Planning Controls.",
         },
         {
+          key: "envIntro",
+          label: "4.0 Environmental Issues",
+          hint: "Prints as the opening of 4.0 Environmental Issues.",
+        },
+        {
+          key: "acidSulphate",
+          label: "4.1 Acid sulphate soils",
+          hint: "Acid sulphate soils only. Other overlays belong in their own sections.",
+        },
+        {
+          key: "floodAssessment",
+          label: "4.2 Flood assessment",
+          hint: "Prints under 4.2 Flood assessment.",
+        },
+        {
+          key: "noiseNuisances",
+          label: "4.3 Noise and other nuisances",
+          hint: "Prints under 4.3 Noise and other nuisances.",
+        },
+        {
           key: "location",
           label: "5.1 Location",
           hint: "Prints under 5.0 Locality and Location.",
@@ -90,9 +110,54 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           hint: "Prints under 5.0 Locality and Location. Immediate locality only.",
         },
         {
+          key: "amenities",
+          label: "5.3 Amenities",
+          hint: "Prints under 5.3 Amenities.",
+        },
+        {
+          key: "popularDestinations",
+          label: "5.4 Popular destinations",
+          hint: "Prints under 5.4 Popular destinations.",
+        },
+        {
+          key: "marketAustralia",
+          label: "6.1 Market commentary — Australia",
+          hint: "Prints under 6.1 Australia.",
+        },
+        {
+          key: "marketState",
+          label: "6.2 Market commentary — State",
+          hint: "Prints under 6.2 State.",
+        },
+        {
+          key: "marketRegion",
+          label: "6.3 Market commentary — Region",
+          hint: "Prints under 6.3 Region.",
+        },
+        {
+          key: "marketLocality",
+          label: "6.4 Market commentary — Locality",
+          hint: "Prints under 6.4 Locality.",
+        },
+        {
           key: "valuationApproach",
           label: "8.0 Valuation Approach",
-          hint: "Prints at the start of 8.0 Valuation Approach. Saved text is not overwritten on reopen.",
+          hint: "Prints at the start of 8.0 Valuation Approach.",
+        },
+        {
+          key: "salesAnalysis",
+          label: "8.3 Analysis",
+          hint: "Prints under 8.3 Analysis.",
+        },
+        {
+          key: "disclaimer",
+          label: "Disclaimer",
+          hint: "Prints after the valuation result.",
+        },
+        {
+          key: "assumptions",
+          label: "Assumptions",
+          hint: "Prints after the disclaimer.",
         },
       ]
     : [
@@ -327,6 +392,28 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       return;
     }
     autoStarted.current = true;
+    const alreadyWritten = (Object.keys(draft.narrative) as (keyof ReportNarrative)[]).some(
+      (k) => String(draft.narrative[k] ?? "").trim(),
+    );
+    if (alreadyWritten) {
+      void applyTemplateToEmptyKeys([
+        "envIntro",
+        "acidSulphate",
+        "floodAssessment",
+        "noiseNuisances",
+        "amenities",
+        "popularDestinations",
+        "marketAustralia",
+        "marketState",
+        "marketRegion",
+        "marketLocality",
+        "salesAnalysis",
+        "disclaimer",
+        "assumptions",
+        "valuationApproach",
+      ]);
+      return;
+    }
     // Remarks always from local builder when empty
     if (keys.includes("remarks")) {
       generateRemarksNow(false);
@@ -347,29 +434,6 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once after load when empty blocks exist
-  }, [loaded, draft.inspectionId]);
-
-  useEffect(() => {
-    if (!loaded) return;
-    const brief = String(narrativeRef.current.brief ?? "");
-    const location = String(narrativeRef.current.location ?? "");
-    const staleBrief = /vacant land\s*\(/i.test(brief);
-    const staleLocation =
-      /situated in a[^.]{0,40}%/i.test(location) ||
-      /built up over 75/i.test(location) ||
-      /built up under 25/i.test(location) ||
-      /built up 25%\s*to\s*75/i.test(location);
-    if (!staleBrief && !staleLocation) return;
-    void narrativeOpts().then((opts) => {
-      const full = generateNarrative(draft.values, opts);
-      const patch: Partial<ReportNarrative> = {};
-      if (staleBrief && full.brief) patch.brief = full.brief;
-      if (staleLocation && full.location) patch.location = full.location;
-      if (Object.keys(patch).length === 0) return;
-      setNarrative(patch);
-      narrativeRef.current = { ...narrativeRef.current, ...patch };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- rewrite known stale templates once after load
   }, [loaded, draft.inspectionId]);
 
   /** Always fills Remarks from local builder (Phil structure or generic template). */
@@ -670,9 +734,13 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     if (keys.includes("remarks")) {
       generateRemarksNow(overwrite);
     }
-    const remaining = keys.filter(
-      (k) => k !== "remarks" && k !== "riskAnalysis" && !skipAiNarrativeBlock(draft.values, k),
-    );
+    const remaining = keys.filter((k) => {
+      if (k === "remarks" || k === "riskAnalysis") return false;
+      if (skipAiNarrativeBlock(draft.values, k)) return false;
+      if (!overwrite && draft.reportMeta.manualNarrative?.[k]) return false;
+      if (!overwrite && String(narrativeRef.current[k] ?? "").trim()) return false;
+      return true;
+    });
     const skipped = keys.filter((k) => skipAiNarrativeBlock(draft.values, k));
     if (skipped.length > 0) {
       const skipPatch = await applyTemplateToEmptyKeys(skipped);
@@ -997,6 +1065,12 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               const val = e.target.value;
               if (block.key === "remarks") setLocalRemarks(val);
               setNarrative({ [block.key]: val });
+              setMeta({
+                manualNarrative: {
+                  ...(draft.reportMeta.manualNarrative ?? {}),
+                  [block.key]: true,
+                },
+              });
               const start = e.target.selectionStart ?? 0;
               const end = e.target.selectionEnd ?? 0;
               const sel = val.slice(start, end);

@@ -340,7 +340,11 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     { id: "exam-10", label: "10.0 Annexures" },
   ];
   const hasMarketParts = Boolean(
-    get(v, "exam_market_australia") ||
+    draft.narrative.marketAustralia?.trim() ||
+      draft.narrative.marketState?.trim() ||
+      draft.narrative.marketRegion?.trim() ||
+      draft.narrative.marketLocality?.trim() ||
+      get(v, "exam_market_australia") ||
       get(v, "exam_market_state") ||
       get(v, "exam_market_region") ||
       get(v, "exam_market_local"),
@@ -418,9 +422,21 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <div id="exam-summary" className="report-exam-summary-sheet report-keep-block">
       <H1>Executive Summary</H1>
       <Para>
-        Instructions were received from {instructing} to prepare a valuation of
-        {addressLine ? ` ${addressLine}` : " the subject property"}
-        {purpose ? ` for the purpose of ${purpose}` : ""}.
+        {draft.narrative.instructions?.trim() ||
+          [
+            "Instructions were received from",
+            instructing || "the instructing party",
+            "to prepare a valuation of",
+            addressLine || "the subject property",
+            purpose
+              ? /^to\s+/i.test(purpose.trim())
+                ? purpose.trim().replace(/\.+$/, "")
+                : `for the purpose of ${purpose.trim().replace(/\.+$/, "")}`
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .replace(/\s+/g, " ") + "."}
       </Para>
       <StripeTable
         rows={[
@@ -581,43 +597,32 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
 
       <Lead id="exam-4" title="4.0 Environmental Issues">
       <Keep>
-      <Para>
-        No separate contaminated-land search is assumed beyond the inspection record and any planning
-        overlays noted. The valuation assumes there are no environmental issues other than those set
-        out below.
-      </Para>
+      <Prose
+        text={
+          draft.narrative.envIntro?.trim() ||
+          "No separate contaminated-land search is assumed beyond the inspection record and any planning overlays noted. The valuation assumes there are no environmental issues other than those set out below."
+        }
+      />
       </Keep>
       </Lead>
       <Keep>
       <H2>4.1 Acid sulphate soils</H2>
-      <Prose
-        text={
-          get(v, "exam_acid_sulphate") ||
-          get(v, "plan_overlay_notes") ||
-          get(v, "prop_adverse_site") ||
-          ""
-        }
-      />
-      {!get(v, "exam_acid_sulphate") &&
-      !get(v, "plan_overlay_notes") &&
-      !get(v, "prop_adverse_site") ? (
-        <Para>
-          Comment is limited to planning overlays and matters recorded on inspection or title. If
-          an acid sulphate soils overlay applies, record whether it affects development or value.
-        </Para>
+      <Prose text={draft.narrative.acidSulphate?.trim() || ""} />
+      {!draft.narrative.acidSulphate?.trim() ? (
+        <Para>No acid sulphate soils overlay is recorded against the subject.</Para>
       ) : null}
       </Keep>
       <Keep>
       <H2>4.2 Flood assessment</H2>
       <Para>
-        {[get(v, "prop_flood"), get(v, "prop_flood_map")].filter(Boolean).join(". ") ||
+        {draft.narrative.floodAssessment?.trim() ||
           "No flood notation is recorded on the inspection."}
       </Para>
       </Keep>
       <Keep>
       <H2>4.3 Noise and other nuisances</H2>
       <Para>
-        {get(v, "nbhd_adverse") ||
+        {draft.narrative.noiseNuisances?.trim() ||
           "No formal acoustic report has been obtained. Comment is limited to features recorded on the inspection."}
       </Para>
       </Keep>
@@ -649,44 +654,60 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       />
       ) : null}
       </Keep>
-      {get(v, "exam_amenities") ? (
+      {draft.narrative.amenities?.trim() || get(v, "exam_amenities") ? (
         <Keep>
           <H2>5.3 Amenities</H2>
-          <Prose text={get(v, "exam_amenities")} />
+          <Prose text={draft.narrative.amenities?.trim() || get(v, "exam_amenities")} />
         </Keep>
       ) : null}
-      {get(v, "exam_destinations") ? (
+      {draft.narrative.popularDestinations?.trim() || get(v, "exam_destinations") ? (
         <Keep>
           <H2>5.4 Popular destinations</H2>
-          <Prose text={get(v, "exam_destinations")} />
+          <Prose
+            text={
+              draft.narrative.popularDestinations?.trim() || get(v, "exam_destinations")
+            }
+          />
         </Keep>
       ) : null}
 
       <Lead id="exam-6" title="6.0 Market Commentary">
       {hasMarketParts ? (
         <>
-          {get(v, "exam_market_australia") ? (
+          {draft.narrative.marketAustralia?.trim() || get(v, "exam_market_australia") ? (
             <Keep>
               <H2>6.1 Australia</H2>
-              <Prose text={get(v, "exam_market_australia")} />
+              <Prose
+                text={
+                  draft.narrative.marketAustralia?.trim() || get(v, "exam_market_australia")
+                }
+              />
             </Keep>
           ) : null}
-          {get(v, "exam_market_state") ? (
+          {draft.narrative.marketState?.trim() || get(v, "exam_market_state") ? (
             <Keep>
               <H2>6.2 State</H2>
-              <Prose text={get(v, "exam_market_state")} />
+              <Prose
+                text={draft.narrative.marketState?.trim() || get(v, "exam_market_state")}
+              />
             </Keep>
           ) : null}
-          {get(v, "exam_market_region") ? (
+          {draft.narrative.marketRegion?.trim() || get(v, "exam_market_region") ? (
             <Keep>
               <H2>6.3 Region</H2>
-              <Prose text={get(v, "exam_market_region")} />
+              <Prose
+                text={draft.narrative.marketRegion?.trim() || get(v, "exam_market_region")}
+              />
             </Keep>
           ) : null}
-          {get(v, "exam_market_local") ? (
+          {draft.narrative.marketLocality?.trim() || get(v, "exam_market_local") ? (
             <Keep>
               <H2>6.4 Locality</H2>
-              <Prose text={get(v, "exam_market_local")} />
+              <Prose
+                text={
+                  draft.narrative.marketLocality?.trim() || get(v, "exam_market_local")
+                }
+              />
             </Keep>
           ) : null}
         </>
@@ -718,7 +739,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep>
       <div className="mt-4">
         <RiskAnalysisProse
-          text={buildRiskAnalysis(v) || get(v, "exam_risk_commentary") || ""}
+          text={
+            draft.narrative.riskAnalysis?.trim() ||
+            buildRiskAnalysis(v) ||
+            get(v, "exam_risk_commentary") ||
+            ""
+          }
         />
       </div>
 
@@ -786,10 +812,14 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <Prose text={get(v, "exam_on_market")} />
           </>
         ) : null}
-        {get(v, "exam_sales_analysis") ? (
+        {draft.narrative.salesAnalysis?.trim() || get(v, "exam_sales_analysis") ? (
           <>
             <H2>8.3 Analysis</H2>
-            <Prose text={get(v, "exam_sales_analysis")} />
+            <Prose
+              text={
+                draft.narrative.salesAnalysis?.trim() || get(v, "exam_sales_analysis")
+              }
+            />
           </>
         ) : null}
         <H2>8.4 Valuation result</H2>
@@ -804,21 +834,22 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </Para>
       </section>
 
-      {get(v, "exam_limitations") ? (
-        <div className="mt-4">
-          <H2>Disclaimer</H2>
-          <Prose text={get(v, "exam_limitations")} />
-        </div>
-      ) : (
-        <Para>
-          This valuation has been prepared for the stated purpose and the instructing party only.
-          It may not be used for any other purpose without written authorisation.
-        </Para>
-      )}
-      {get(v, "exam_assumptions") ? (
+      <div className="mt-4">
+        <H2>Disclaimer</H2>
+        <Prose
+          text={
+            draft.narrative.disclaimer?.trim() ||
+            get(v, "exam_limitations") ||
+            "This valuation has been prepared for the stated purpose and the instructing party only. It may not be used for any other purpose without written authorisation."
+          }
+        />
+      </div>
+      {draft.narrative.assumptions?.trim() || get(v, "exam_assumptions") ? (
         <div className="mt-4">
           <H2>Assumptions</H2>
-          <Prose text={get(v, "exam_assumptions")} />
+          <Prose
+            text={draft.narrative.assumptions?.trim() || get(v, "exam_assumptions")}
+          />
         </div>
       ) : null}
 
