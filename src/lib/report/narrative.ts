@@ -797,18 +797,6 @@ function buildSitePhysical(values: InspectionValues): string {
   if (enc) {
     parts.push(sentence(["Encumbrances recorded:", enc.toLowerCase()]));
   }
-  const adjoining = v(values, "adj_props");
-  const adjoiningIf = v(values, "adj_props_interface");
-  const adjoiningNotes = v(values, "adj_props_notes");
-  if (adjoining || adjoiningIf || adjoiningNotes) {
-    parts.push(
-      sentence([
-        adjoining && `Adjoining properties include ${adjoining.toLowerCase()}`,
-        adjoiningIf && adjoiningIf.toLowerCase(),
-        adjoiningNotes,
-      ]),
-    );
-  }
   const overlays = v(values, "plan_overlay");
   if (overlays) {
     parts.push(sentence(["Planning overlays recorded:", overlays.toLowerCase()]));
@@ -828,6 +816,18 @@ function buildSitePhysical(values: InspectionValues): string {
   }
   if (topo) {
     parts.push(sentence(["Topography is described as", topo.toLowerCase()]));
+  }
+  const adjoining = v(values, "adj_props");
+  const adjoiningIf = v(values, "adj_props_interface");
+  const adjoiningNotes = v(values, "adj_props_notes");
+  if (adjoining || adjoiningIf || adjoiningNotes) {
+    parts.push(
+      sentence([
+        adjoining && `Adjoining properties include ${adjoining.toLowerCase()}`,
+        adjoiningIf && adjoiningIf.toLowerCase(),
+        adjoiningNotes,
+      ]),
+    );
   }
   if (view) {
     parts.push(sentence(["Views are", view.toLowerCase()]));
