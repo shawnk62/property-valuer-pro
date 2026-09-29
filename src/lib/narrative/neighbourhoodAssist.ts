@@ -12,12 +12,16 @@ export type NbhdClaimKind =
   | "character"
   | "other";
 
-export type MarketScale = "australia" | "state" | "region";
+export type MarketScale = "australia" | "state" | "region" | "locality";
 
 export const MARKET_ASSIST: {
   scale: MarketScale;
   key: keyof ReportNarrative;
-  metaKey: "marketClaimsAustralia" | "marketClaimsState" | "marketClaimsRegion";
+  metaKey:
+    | "marketClaimsAustralia"
+    | "marketClaimsState"
+    | "marketClaimsRegion"
+    | "marketClaimsLocality";
   heading: string;
   findLabel: string;
   rewriteLabel: string;
@@ -45,6 +49,14 @@ export const MARKET_ASSIST: {
     heading: "Region market notes. Search first, tick the lines you accept, then rewrite.",
     findLabel: "Find Region notes",
     rewriteLabel: "Rewrite 6.3 with accepted facts",
+  },
+  {
+    scale: "locality",
+    key: "marketLocality",
+    metaKey: "marketClaimsLocality",
+    heading: "Locality market notes. Search first, tick the lines you accept, then rewrite.",
+    findLabel: "Find Locality market notes",
+    rewriteLabel: "Rewrite 6.4 with accepted facts",
   },
 ];
 

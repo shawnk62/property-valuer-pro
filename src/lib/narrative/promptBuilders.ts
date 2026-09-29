@@ -414,19 +414,24 @@ Rules:
     }
     case "marketAustralia":
     case "marketState":
-    case "marketRegion": {
+    case "marketRegion":
+    case "marketLocality": {
       const scale =
         blockKey === "marketAustralia"
           ? "6.1 Australia"
           : blockKey === "marketState"
             ? "6.2 State"
-            : "6.3 Region";
+            : blockKey === "marketRegion"
+              ? "6.3 Region"
+              : "6.4 Locality";
       const focus =
         blockKey === "marketAustralia"
           ? "national Australian residential market conditions only"
           : blockKey === "marketState"
             ? "state residential market conditions only (Queensland unless the inspection records another state)"
-            : "the city or regional market that contains the subject suburb — not national commentary and not the street-level locality";
+            : blockKey === "marketRegion"
+              ? "the city or regional market that contains the subject suburb — not national commentary and not the street-level locality"
+              : "the suburb or immediate locality market only — prices, demand and supply for similar property, not the 5.2 physical locality description";
       return {
         system: BASE_RULES + styleGuide(type),
         prompt: `Write ${scale} market commentary for a ${type} valuation report. Confine the commentary to ${focus}.

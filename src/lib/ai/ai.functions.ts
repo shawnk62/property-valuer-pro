@@ -318,7 +318,7 @@ Include every sourced detail you find: estate name, developer, stages, dwelling 
 
 const SearchMarketInput = z.object({
   settings: SettingsInput,
-  scale: z.enum(["australia", "state", "region"]),
+  scale: z.enum(["australia", "state", "region", "locality"]),
   suburb: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -342,9 +342,16 @@ Prefer RBA, ABS, CoreLogic, PropTrack, Treasury and major bank research.`
           ? `Search the public web for current ${state} residential property market commentary suitable for a valuation report.
 Cover: state dwelling values and recent movement, supply, migration or population effects on housing, and any official or widely cited outlook.
 Prefer Queensland Government, QGSO, CoreLogic state pages and major bank state reports.`
-          : `Search the public web for current residential property market commentary for the region around ${place}.
+          : data.scale === "region"
+            ? `Search the public web for current residential property market commentary for the region around ${place}.
 Cover: local or city-region dwelling values and recent movement, supply of similar land or dwellings, demand drivers, and any official or widely cited local outlook.
-Prefer council, CoreLogic suburb/city pages and state government regional notes.`;
+Prefer council, CoreLogic suburb/city pages and state government regional notes.`
+            : `Search the public web for current residential property market commentary for the suburb or immediate locality of ${place}${
+                data.address ? ` (near ${data.address})` : ""
+              }.
+Cover: suburb or estate-level values and recent movement, days on market, supply of similar lots or dwellings, buyer demand, and any cited local price range.
+Prefer CoreLogic / PropTrack suburb pages, council and reputable local market notes.
+Do not write a physical locality description (character, amenities, transport distances) unless a market source uses it as a demand driver.`;
 
     const prompt = `${scalePrompt}
 

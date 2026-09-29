@@ -347,6 +347,13 @@ export interface ReportMeta {
     source?: string;
     accepted: boolean;
   }>;
+  marketClaimsLocality?: Array<{
+    id: string;
+    kind: string;
+    text: string;
+    source?: string;
+    accepted: boolean;
+  }>;
   salesMapPins?: Array<{
     id: string;
     label: string;
