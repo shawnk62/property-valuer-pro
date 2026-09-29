@@ -421,6 +421,51 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     }
   }
 
+  async function runNbhdSearch() {
+    const settings = loadAiSettings();
+    if (!isAiConfigured(settings)) {
+      toast.error("AI is not configured", {
+        description: "Open Settings and save an API key before searching suburb notes.",
+      });
+      return;
+    }
+    setBusy("neighbourhood");
+    setLastStatus("Searching suburb sources…");
+    try {
+      const suburb = String(draft.values["prop_suburb"] ?? "");
+      const searched = await searchNeighbourhoodFacts({
+        data: {
+          settings: {
+            provider: settings.provider,
+            model: settings.model,
+            apiKey: settings.apiKey,
+            ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
+          },
+          suburb: suburb || String(draft.values["prop_address"] ?? "subject suburb"),
+          city: String(draft.values["prop_lga"] ?? ""),
+          address: subjectAddressLine(draft.values),
+          estate: String(draft.values["nbhd_estate"] ?? ""),
+        },
+      });
+      const claims = parseNbhdClaims(searched.raw);
+      setMeta({ nbhdClaims: claims });
+      setLastStatus(
+        claims.length
+          ? `Found ${claims.length} suburb note(s) to review.`
+          : "Search returned no suburb notes.",
+      );
+      toast.message(
+        claims.length ? `Found ${claims.length} suburb note(s)` : "No suburb notes found",
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setLastStatus(`Suburb search failed: ${message}`);
+      toast.error("Suburb search failed", { description: message });
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function generateFromTemplate() {
     setBusy("template");
     setLastStatus(null);
@@ -798,14 +843,22 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             className="w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm leading-relaxed text-foreground outline-none focus:ring-2 focus:ring-ring"
           />
           {block.key === "neighbourhood" &&
-          neighbourhoodAssistEnabled(String(draft.values["prop_assignment"] ?? "")) &&
-          Array.isArray(draft.reportMeta.nbhdClaims) &&
-          draft.reportMeta.nbhdClaims.length > 0 ? (
+          (neighbourhoodAssistEnabled(String(draft.values["prop_assignment"] ?? "")) ||
+            shawnExam) ? (
             <div className="mt-2 space-y-2 rounded-md border border-amber-300/80 bg-amber-50 p-3 dark:bg-amber-950/30">
               <p className="text-xs font-medium text-foreground">
-                Web-search notes — accept before they can enter the printed neighbourhood paragraph.
+                Suburb notes (trial). Search first, tick the lines you accept, then rewrite the
+                paragraph. Unticked lines stay in this working box and do not print.
               </p>
-              {(draft.reportMeta.nbhdClaims as NbhdClaim[]).map((claim) => (
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => void runNbhdSearch()}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+              >
+                {busy === "neighbourhood" ? "Searching…" : "Find suburb notes"}
+              </button>
+              {((draft.reportMeta.nbhdClaims as NbhdClaim[] | undefined) ?? []).map((claim) => (
                 <label
                   key={claim.id}
                   className="flex items-start gap-2 rounded bg-amber-100/80 px-2 py-1.5 text-xs dark:bg-amber-900/40"
