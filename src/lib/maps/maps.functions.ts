@@ -119,16 +119,48 @@ const NearbyInput = z.object({
   radiusM: z.number().int().min(200).max(20000).default(5000),
 });
 
+type PlaceHit = {
+  name: string;
+  vicinity?: string;
+  lat?: number;
+  lng?: number;
+};
+
+function mapPlaceResults(
+  results: Array<{
+    name?: string;
+    vicinity?: string;
+    formatted_address?: string;
+    geometry?: { location?: { lat: number; lng: number } };
+  }>,
+  limit: number,
+): PlaceHit[] {
+  return results.slice(0, limit).map((r) => ({
+    name: String(r.name ?? "").trim(),
+    vicinity: r.vicinity || r.formatted_address,
+    lat: r.geometry?.location?.lat,
+    lng: r.geometry?.location?.lng,
+  })).filter((r) => r.name);
+}
+
 export const fetchNearbyAmenities = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => NearbyInput.parse(input))
   .handler(async ({ data }) => {
-    const types = ["school", "supermarket", "shopping_mall", "train_station", "bus_station"] as const;
-    const out: Record<(typeof types)[number], { name: string; vicinity?: string }[]> = {
+    const types = [
+      "school",
+      "supermarket",
+      "shopping_mall",
+      "train_station",
+      "bus_station",
+      "transit_station",
+    ] as const;
+    const out: Record<(typeof types)[number], PlaceHit[]> = {
       school: [],
       supermarket: [],
       shopping_mall: [],
       train_station: [],
       bus_station: [],
+      transit_station: [],
     };
     for (const type of types) {
       const url = new URL("https://maps.googleapis.com/maps/api/place/nearbysearch/json");
@@ -140,16 +172,48 @@ export const fetchNearbyAmenities = createServerFn({ method: "POST" })
         const res = await fetch(url);
         const json = (await res.json()) as {
           status?: string;
-          results?: Array<{ name?: string; vicinity?: string }>;
+          results?: Array<{
+            name?: string;
+            vicinity?: string;
+            geometry?: { location?: { lat: number; lng: number } };
+          }>;
         };
         if (json.status !== "OK" && json.status !== "ZERO_RESULTS") continue;
-        out[type] = (json.results ?? [])
-          .slice(0, type === "school" ? 12 : 5)
-          .map((r) => ({ name: String(r.name ?? "").trim(), vicinity: r.vicinity }))
-          .filter((r) => r.name);
+        out[type] = mapPlaceResults(json.results ?? [], type === "school" ? 12 : 5);
       } catch {
         /* Places not enabled — skip this type */
       }
     }
     return out;
+  });
+
+const TextSearchInput = z.object({
+  apiKey: z.string().min(8),
+  query: z.string().min(3),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
+});
+
+export const fetchPlaceTextSearch = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => TextSearchInput.parse(input))
+  .handler(async ({ data }) => {
+    const url = new URL("https://maps.googleapis.com/maps/api/place/textsearch/json");
+    url.searchParams.set("query", data.query);
+    url.searchParams.set("region", "au");
+    url.searchParams.set("key", data.apiKey.trim());
+    if (data.lat != null && data.lng != null) {
+      url.searchParams.set("location", `${data.lat},${data.lng}`);
+      url.searchParams.set("radius", "15000");
+    }
+    const res = await fetch(url);
+    const json = (await res.json()) as {
+      status?: string;
+      results?: Array<{
+        name?: string;
+        formatted_address?: string;
+        geometry?: { location?: { lat: number; lng: number } };
+      }>;
+    };
+    if (json.status !== "OK" && json.status !== "ZERO_RESULTS") return { results: [] as PlaceHit[] };
+    return { results: mapPlaceResults(json.results ?? [], 5) };
   });

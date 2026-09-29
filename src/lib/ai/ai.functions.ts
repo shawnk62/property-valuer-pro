@@ -230,15 +230,16 @@ export const searchNeighbourhoodFacts = createServerFn({ method: "POST" })
     }${data.estate ? ` including any estate named ${data.estate}` : ""}.
 
 Return ONLY a JSON array. Each item:
-{"kind":"population"|"gentrification"|"estate"|"character"|"other","text":"one sentence","source":"url or publisher"}
+{"kind":"city"|"population"|"gentrification"|"estate"|"character"|"other","text":"one sentence","source":"url or publisher"}
 
 Rules:
+- city: where the suburb sits in the city (northern Gold Coast, Brisbane southside, growth corridor) and whether it is established or developing. No invented kilometre figures.
 - Population: current ABS or official figure only, with the year if given.
-- Estate completion population only if a council or developer page states a number.
+- Estate: named estate and completion population only if a council or developer page states it.
 - Gentrification only if a reputable source uses that idea for this suburb.
-- Character: established / growth corridor / beachside only if sources support it.
+- Character: hinterland, beachside, family residential, industrial precinct — only if sources support it.
 - If nothing reliable is found, return [].
-- Do not invent numbers or names.`;
+- Do not invent numbers, exits, school counts or station names.`;
 
     const base = (settings.baseUrl || "https://api.x.ai/v1").replace(/\/$/, "");
     if (settings.provider === "xai") {

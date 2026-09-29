@@ -20,8 +20,12 @@ import {
 import { subjectAddressLine, type SalesMapPin } from "@/lib/maps/salesMapPins";
 import { skipAiNarrativeBlock } from "@/lib/inspection/visibility";
 import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
-import { fetchNearbyAmenities, geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
+import { fetchNearbyAmenities, fetchPlaceTextSearch, geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
+import { buildSubjectLocationMap } from "@/lib/maps/generateMaps";
 import {
+  claimDistanceKm,
+  measuredClaim,
+  NBHD_CLAIM_GROUPS,
   neighbourhoodAssistEnabled,
   narrativePrints,
   parseNbhdClaims,
@@ -175,7 +179,7 @@ function serializableValues(
 }
 
 export function NarrativeSection({ controller }: { controller: ReportDraftController }) {
-  const { draft, setNarrative, setMeta, loaded } = controller;
+  const { draft, setNarrative, setMeta, setPhotos, loaded } = controller;
   const murray = /murray/i.test(String(draft.values["prop_assignment"] ?? ""));
   const shawnExam = isShawnExamType(
     getReportTypeConfig(String(draft.values["prop_assignment"] ?? "")).id,
@@ -422,40 +426,185 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   }
 
   async function runNbhdSearch() {
-    const settings = loadAiSettings();
-    if (!isAiConfigured(settings)) {
-      toast.error("AI is not configured", {
-        description: "Open Settings and save an API key before searching suburb notes.",
-      });
-      return;
-    }
     setBusy("neighbourhood");
-    setLastStatus("Searching suburb sources…");
+    setLastStatus("Collecting suburb, amenity and transport notes…");
+    const claims: NbhdClaim[] = [];
     try {
+      const facts = await locationFactsResolved();
+      if (facts.sentence) {
+        claims.push(measuredClaim("city", facts.sentence, "Google geocode / measured centres"));
+      }
+
+      const lat = draft.reportMeta.subjectLat;
+      const lng = draft.reportMeta.subjectLng;
+      const origin =
+        lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng)
+          ? { lat, lng }
+          : subjectCoordsFromPins(
+              (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null,
+            );
       const suburb = String(draft.values["prop_suburb"] ?? "");
-      const searched = await searchNeighbourhoodFacts({
-        data: {
-          settings: {
-            provider: settings.provider,
-            model: settings.model,
-            apiKey: settings.apiKey,
-            ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
-          },
-          suburb: suburb || String(draft.values["prop_address"] ?? "subject suburb"),
-          city: String(draft.values["prop_lga"] ?? ""),
-          address: subjectAddressLine(draft.values),
-          estate: String(draft.values["nbhd_estate"] ?? ""),
-        },
-      });
-      const claims = parseNbhdClaims(searched.raw);
+      const industrial = Boolean(String(draft.values["prop_type_industrial"] ?? "").trim());
+
+      if (isGoogleMapsConfigured() && origin) {
+        try {
+          const nearby = await fetchNearbyAmenities({
+            data: { apiKey: loadGoogleMapsKey(), lat: origin.lat, lng: origin.lng, radiusM: 5000 },
+          });
+          const schools = nearby.school ?? [];
+          if (schools.length) {
+            const named = schools[0]?.name ? ` Nearest recorded is ${schools[0].name}.` : "";
+            claims.push(
+              measuredClaim(
+                "amenities",
+                `There are ${schools.length} school${schools.length === 1 ? "" : "s"} within about five kilometres of the property.${named}`,
+              ),
+            );
+          }
+          const shop = nearby.supermarket?.[0] || nearby.shopping_mall?.[0];
+          if (shop?.name && shop.lat != null && shop.lng != null) {
+            const d = claimDistanceKm(origin, { lat: shop.lat, lng: shop.lng });
+            claims.push(
+              measuredClaim(
+                "amenities",
+                `Nearest shopping is ${shop.name}, approximately ${d.label} ${d.dir} of the property.`,
+              ),
+            );
+          } else if (shop?.name) {
+            claims.push(measuredClaim("amenities", `Nearest shopping recorded is ${shop.name}.`));
+          }
+          const station = nearby.train_station?.[0];
+          if (station?.name && station.lat != null && station.lng != null) {
+            const d = claimDistanceKm(origin, { lat: station.lat, lng: station.lng });
+            claims.push(
+              measuredClaim(
+                "transport",
+                `${station.name} is approximately ${d.label} ${d.dir} of the property.`,
+              ),
+            );
+          }
+          const bus = nearby.bus_station?.[0] || nearby.transit_station?.[0];
+          if (bus?.name && bus.lat != null && bus.lng != null) {
+            const d = claimDistanceKm(origin, { lat: bus.lat, lng: bus.lng });
+            claims.push(
+              measuredClaim(
+                "transport",
+                `A bus stop at ${bus.name} is approximately ${d.label} ${d.dir} of the property.`,
+              ),
+            );
+          }
+        } catch {
+          /* Places optional */
+        }
+
+        const key = loadGoogleMapsKey();
+        const near = suburb || subjectAddressLine(draft.values) || "Queensland";
+        try {
+          const m1 = await fetchPlaceTextSearch({
+            data: { apiKey: key, query: `M1 motorway exit near ${near}`, lat: origin.lat, lng: origin.lng },
+          });
+          const hit = m1.results[0];
+          if (hit?.name && hit.lat != null && hit.lng != null) {
+            const d = claimDistanceKm(origin, { lat: hit.lat, lng: hit.lng });
+            claims.push(
+              measuredClaim(
+                "transport",
+                `${hit.name} is approximately ${d.label} ${d.dir} of the property.`,
+              ),
+            );
+          }
+        } catch {
+          /* text search optional */
+        }
+        if (industrial) {
+          for (const q of [`airport near ${near}`, `port near ${near}`]) {
+            try {
+              const found = await fetchPlaceTextSearch({
+                data: { apiKey: key, query: q, lat: origin.lat, lng: origin.lng },
+              });
+              const hit = found.results[0];
+              if (hit?.name && hit.lat != null && hit.lng != null) {
+                const d = claimDistanceKm(origin, { lat: hit.lat, lng: hit.lng });
+                claims.push(
+                  measuredClaim(
+                    "transport",
+                    `${hit.name} is approximately ${d.label} ${d.dir} of the property.`,
+                  ),
+                );
+              }
+            } catch {
+              /* optional */
+            }
+          }
+        }
+
+        const hasLocMap = draft.photos.some((p) => p.slot === "map_location" && p.url);
+        if (!hasLocMap) {
+          try {
+            const built = await buildSubjectLocationMap({
+              apiKey: key,
+              subject: {
+                id: "pin-subject",
+                label: subjectAddressLine(draft.values) || suburb || "Subject",
+                shortLabel: "S",
+                lat: origin.lat,
+                lng: origin.lng,
+                kind: "subject",
+              },
+            });
+            const dataUrl = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(String(reader.result ?? ""));
+              reader.onerror = () => reject(new Error("map read failed"));
+              reader.readAsDataURL(built.file);
+            });
+            setPhotos((prev) => [
+              ...prev.filter((p) => p.slot !== "map_location"),
+              {
+                id: "photo-map-location",
+                slot: "map_location",
+                caption: `Locality map — subject and ${built.centreName}`,
+                url: dataUrl,
+                kind: "map",
+              },
+            ]);
+          } catch {
+            /* map optional */
+          }
+        }
+      }
+
+      const settings = loadAiSettings();
+      if (isAiConfigured(settings)) {
+        try {
+          const searched = await searchNeighbourhoodFacts({
+            data: {
+              settings: {
+                provider: settings.provider,
+                model: settings.model,
+                apiKey: settings.apiKey,
+                ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
+              },
+              suburb: suburb || String(draft.values["prop_address"] ?? "subject suburb"),
+              city: String(draft.values["prop_lga"] ?? ""),
+              address: subjectAddressLine(draft.values),
+              estate: String(draft.values["nbhd_estate"] ?? ""),
+            },
+          });
+          claims.push(...parseNbhdClaims(searched.raw));
+        } catch (searchErr) {
+          console.warn("[nbhd search]", searchErr);
+        }
+      }
+
       setMeta({ nbhdClaims: claims });
       setLastStatus(
         claims.length
-          ? `Found ${claims.length} suburb note(s) to review.`
-          : "Search returned no suburb notes.",
+          ? `Prepared ${claims.length} suburb note(s). Tick to keep, then rewrite.`
+          : "No suburb notes were returned.",
       );
       toast.message(
-        claims.length ? `Found ${claims.length} suburb note(s)` : "No suburb notes found",
+        claims.length ? `Prepared ${claims.length} suburb note(s)` : "No suburb notes found",
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -858,7 +1007,17 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               >
                 {busy === "neighbourhood" ? "Searching…" : "Find suburb notes"}
               </button>
-              {((draft.reportMeta.nbhdClaims as NbhdClaim[] | undefined) ?? []).map((claim) => (
+              {NBHD_CLAIM_GROUPS.map((group) => {
+                const rows = ((draft.reportMeta.nbhdClaims as NbhdClaim[] | undefined) ?? []).filter(
+                  (c) => c.kind === group.kind,
+                );
+                if (!rows.length) return null;
+                return (
+                  <div key={group.kind} className="space-y-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {group.label}
+                    </p>
+                    {rows.map((claim) => (
                 <label
                   key={claim.id}
                   className="flex items-start gap-2 rounded bg-amber-100/80 px-2 py-1.5 text-xs dark:bg-amber-900/40"
@@ -885,7 +1044,10 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                     ) : null}
                   </span>
                 </label>
-              ))}
+                    ))}
+                  </div>
+                );
+              })}
               <button
                 type="button"
                 disabled={busy !== null}

@@ -7,11 +7,25 @@ import type { ReportMeta, ReportNarrative } from "@/lib/report/types";
 export const NBHD_ASSIST_TRIAL = true;
 
 export type NbhdClaimKind =
+  | "city"
+  | "amenities"
+  | "transport"
   | "population"
   | "gentrification"
   | "estate"
   | "character"
   | "other";
+
+export const NBHD_CLAIM_GROUPS: { kind: NbhdClaimKind; label: string }[] = [
+  { kind: "city", label: "City / suburb" },
+  { kind: "amenities", label: "Amenities" },
+  { kind: "transport", label: "Access to transport" },
+  { kind: "population", label: "Population" },
+  { kind: "estate", label: "Estate / completion" },
+  { kind: "gentrification", label: "Gentrification / change" },
+  { kind: "character", label: "Character" },
+  { kind: "other", label: "Other" },
+];
 
 export interface NbhdClaim {
   id: string;
@@ -61,7 +75,10 @@ export function parseNbhdClaims(raw: string): NbhdClaim[] {
           kindRaw === "population" ||
           kindRaw === "gentrification" ||
           kindRaw === "estate" ||
-          kindRaw === "character"
+          kindRaw === "character" ||
+          kindRaw === "city" ||
+          kindRaw === "amenities" ||
+          kindRaw === "transport"
             ? kindRaw
             : "other";
         return {
@@ -76,4 +93,48 @@ export function parseNbhdClaims(raw: string): NbhdClaim[] {
   } catch {
     return [];
   }
+}
+
+const COMPASS = [
+  "north",
+  "north-east",
+  "east",
+  "south-east",
+  "south",
+  "south-west",
+  "west",
+  "north-west",
+] as const;
+
+export function claimDistanceKm(
+  from: { lat: number; lng: number },
+  to: { lat: number; lng: number },
+): { km: number; dir: string; label: string } {
+  const R = 6371;
+  const dLat = ((to.lat - from.lat) * Math.PI) / 180;
+  const dLng = ((to.lng - from.lng) * Math.PI) / 180;
+  const lat1 = (from.lat * Math.PI) / 180;
+  const lat2 = (to.lat * Math.PI) / 180;
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  const km = 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+  const φ1 = (from.lat * Math.PI) / 180;
+  const φ2 = (to.lat * Math.PI) / 180;
+  const Δλ = ((to.lng - from.lng) * Math.PI) / 180;
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  const brng = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+  const dir = COMPASS[Math.round(brng / 45) % 8]!;
+  const label =
+    km < 0.1 ? `${Math.round(km * 1000)} metres` : `${km < 1 ? km.toFixed(2) : km.toFixed(1)} kilometres`;
+  return { km, dir, label };
+}
+
+export function measuredClaim(
+  kind: NbhdClaimKind,
+  text: string,
+  source = "Google Maps",
+): NbhdClaim {
+  return { id: newClaimId(), kind, text, source, accepted: true };
 }
