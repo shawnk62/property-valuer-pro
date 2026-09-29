@@ -393,13 +393,18 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     setNarrative({ references: referencesProse(items) });
   }
 
-  function collectReferencesNow() {
+  function refreshReferences(metaPatch?: Partial<typeof draft.reportMeta>) {
     const items = collectReportReferences(
-      draft.reportMeta,
+      { ...draft.reportMeta, ...(metaPatch ?? {}) },
       draft.values,
       (draft.reportMeta.reportReferences as ReportReference[] | undefined) ?? [],
     );
     applyReferences(items);
+    return items;
+  }
+
+  function collectReferencesNow() {
+    const items = refreshReferences();
     setLastStatus(
       items.length
         ? `References on file: ${items.length}. Untick any you do not want printed.`
@@ -444,6 +449,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       }));
       const merged = mergeNbhdClaims(marketClaims(scale), incoming);
       setMeta({ [row.metaKey]: merged });
+      refreshReferences({ [row.metaKey]: merged });
       setLastStatus(
         merged.length
           ? `${row.heading.split(".")[0]}: ${merged.length} on file. Untick what you do not want.`
@@ -775,19 +781,17 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         }
       }
 
-      setMeta({
-        nbhdClaims: mergeNbhdClaims(
-          (draft.reportMeta.nbhdClaims as NbhdClaim[] | undefined) ?? [],
-          claims,
-        ),
-      });
-      const merged = mergeNbhdClaims(
+      const mergedNbhd = mergeNbhdClaims(
         (draft.reportMeta.nbhdClaims as NbhdClaim[] | undefined) ?? [],
         claims,
       );
-      const estateN = merged.filter((c) => c.kind === "estate").length;
+      setMeta({
+        nbhdClaims: mergedNbhd,
+      });
+      refreshReferences({ nbhdClaims: mergedNbhd });
+      const estateN = mergedNbhd.filter((c) => c.kind === "estate").length;
       setLastStatus(
-        merged.length
+        mergedNbhd.length
           ? `Notes on file: ${merged.length}. Estate lines: ${estateN}. Untick what you do not want.`
           : "No suburb notes were returned.",
       );

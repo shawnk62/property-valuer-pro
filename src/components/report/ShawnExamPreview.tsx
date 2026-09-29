@@ -857,11 +857,19 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <Lead id="exam-9" title="9.0 References">
       <Keep>
       {narrativePrints(m, "references") ? (
-        <Prose
-          text={
-            draft.narrative.references?.trim() || get(v, "exam_references") || ""
-          }
-        />
+        draft.narrative.references?.trim() ? (
+          <div className="report-reference-list">
+            {draft.narrative.references
+              .split(/\n{1,}/)
+              .map((line) => line.trim())
+              .filter(Boolean)
+              .map((line, i) => (
+                <p key={`ref-${i}`}>{line}</p>
+              ))}
+          </div>
+        ) : get(v, "exam_references") ? (
+          <Prose text={get(v, "exam_references")} />
+        ) : null
       ) : null}
       {narrativePrints(m, "references") &&
       !draft.narrative.references?.trim() &&
