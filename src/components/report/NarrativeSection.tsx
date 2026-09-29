@@ -40,6 +40,11 @@ import {
   type MarketScale,
   type NbhdClaim,
 } from "@/lib/narrative/neighbourhoodAssist";
+import {
+  collectReportReferences,
+  referencesProse,
+  type ReportReference,
+} from "@/lib/report/references";
 import { CannedCommentsBar } from "@/components/report/CannedCommentsBar";
 import { RiskRatingsPanel } from "@/components/report/RiskRatingsPanel";
 import { isShawnExamType, getReportTypeConfig } from "@/lib/report/reportTypes";
@@ -164,6 +169,11 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           key: "assumptions",
           label: "Assumptions",
           hint: "Prints after the disclaimer.",
+        },
+        {
+          key: "references",
+          label: "9.0 References",
+          hint: "Prints under 9.0 References. Tick sources to include. APA 7th.",
         },
       ]
     : [
@@ -376,6 +386,28 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         (c, i) => `${i + 1}. [${c.kind}] ${c.text}${c.source ? ` (${c.source})` : ""}`,
       ),
     ].join("\n");
+  }
+
+  function applyReferences(items: ReportReference[]) {
+    setMeta({ reportReferences: items });
+    setNarrative({ references: referencesProse(items) });
+  }
+
+  function collectReferencesNow() {
+    const items = collectReportReferences(
+      draft.reportMeta,
+      draft.values,
+      (draft.reportMeta.reportReferences as ReportReference[] | undefined) ?? [],
+    );
+    applyReferences(items);
+    setLastStatus(
+      items.length
+        ? `References on file: ${items.length}. Untick any you do not want printed.`
+        : "No sources were found on the report notes yet.",
+    );
+    toast.message(
+      items.length ? `Collected ${items.length} reference(s)` : "No sources found",
+    );
   }
 
   async function runMarketSearch(scale: MarketScale) {
@@ -814,7 +846,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       generateRemarksNow(overwrite);
     }
     const remaining = keys.filter((k) => {
-      if (k === "remarks" || k === "riskAnalysis") return false;
+      if (k === "remarks" || k === "riskAnalysis" || k === "references") return false;
       if (skipAiNarrativeBlock(draft.values, k)) return false;
       if (!overwrite && draft.reportMeta.manualNarrative?.[k]) return false;
       if (!overwrite && String(narrativeRef.current[k] ?? "").trim()) return false;
@@ -1310,6 +1342,47 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               >
                 {marketAssistFor(block.key)!.rewriteLabel}
               </button>
+            </div>
+          ) : null}
+          {block.key === "references" &&
+          (neighbourhoodAssistEnabled(String(draft.values["prop_assignment"] ?? "")) ||
+            shawnExam) ? (
+            <div className="mt-2 space-y-2 rounded-md border border-amber-300/80 bg-amber-50 p-3 dark:bg-amber-950/30">
+              <p className="text-xs font-medium text-foreground">
+                Sources used in locality and market notes, formatted in APA 7th. Tick to
+                print. Unticked lines stay in this working box.
+              </p>
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={collectReferencesNow}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+              >
+                Collect sources from report
+              </button>
+              {(((draft.reportMeta.reportReferences as ReportReference[] | undefined) ??
+                []) as ReportReference[]).map((item) => (
+                <label
+                  key={item.id}
+                  className="flex items-start gap-2 rounded bg-amber-100/80 px-2 py-1.5 text-xs dark:bg-amber-900/40"
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 size-3.5 shrink-0 rounded border-input"
+                    checked={item.accepted}
+                    onChange={(e) => {
+                      const next = (
+                        (draft.reportMeta.reportReferences as ReportReference[] | undefined) ??
+                        []
+                      ).map((r) =>
+                        r.id === item.id ? { ...r, accepted: e.target.checked } : r,
+                      );
+                      applyReferences(next);
+                    }}
+                  />
+                  <span>{item.text}</span>
+                </label>
+              ))}
             </div>
           ) : null}
         </div>

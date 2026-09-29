@@ -1284,6 +1284,7 @@ export function generateNarrative(
       v(values, "exam_limitations") ||
       "This valuation has been prepared for the stated purpose and the instructing party only. It may not be used for any other purpose without written authorisation.",
     assumptions: v(values, "exam_assumptions"),
+    references: "",
     remarks: buildRemarks(values, {
       salesCount: opts?.salesCount,
       valueAmount: opts?.valueAmount,

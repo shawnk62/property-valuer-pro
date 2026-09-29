@@ -49,6 +49,7 @@ function emptyNarrative(): ReportNarrative {
     salesAnalysis: "",
     disclaimer: "",
     assumptions: "",
+    references: "",
   };
 }
 
@@ -99,6 +100,7 @@ function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): R
     salesAnalysis: typeof raw.salesAnalysis === "string" ? raw.salesAnalysis : "",
     disclaimer: typeof raw.disclaimer === "string" ? raw.disclaimer : "",
     assumptions: typeof raw.assumptions === "string" ? raw.assumptions : "",
+    references: typeof raw.references === "string" ? raw.references : "",
   };
 }
 

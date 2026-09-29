@@ -856,8 +856,16 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
 
       <Lead id="exam-9" title="9.0 References">
       <Keep>
-      <Prose text={get(v, "exam_references")} />
-      {!get(v, "exam_references") ? (
+      {narrativePrints(m, "references") ? (
+        <Prose
+          text={
+            draft.narrative.references?.trim() || get(v, "exam_references") || ""
+          }
+        />
+      ) : null}
+      {narrativePrints(m, "references") &&
+      !draft.narrative.references?.trim() &&
+      !get(v, "exam_references") ? (
         <Para>List sources used for the market commentary, planning searches and sales evidence.</Para>
       ) : null}
       </Keep>

@@ -266,6 +266,7 @@ export interface ReportNarrative {
   salesAnalysis: string;
   disclaimer: string;
   assumptions: string;
+  references: string;
 }
 
 export interface ReportMeta {
@@ -352,6 +353,12 @@ export interface ReportMeta {
     kind: string;
     text: string;
     source?: string;
+    accepted: boolean;
+  }>;
+  reportReferences?: Array<{
+    id: string;
+    text: string;
+    sourceRaw?: string;
     accepted: boolean;
   }>;
   salesMapPins?: Array<{
