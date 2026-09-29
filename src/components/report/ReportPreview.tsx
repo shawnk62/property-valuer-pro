@@ -1451,6 +1451,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 slot="map_aerial"
                 caption="Aerial view of subject site"
               />
+              <A4DocumentAnnex heading="Cadastral plan" pages={cadastralPages} />
               <InlineMap
                 photos={draft.photos}
                 slot="map_site_dimensions"
@@ -1586,6 +1587,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 slot="map_aerial"
                 caption="Aerial view of subject site"
               />
+              <A4DocumentAnnex heading="Cadastral plan" pages={cadastralPages} />
               <InlineMap
                 photos={draft.photos}
                 slot="map_site_dimensions"
@@ -2031,10 +2033,6 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       <A4DocumentAnnex
         heading={titleAnnex?.heading ?? "Annexure — Certificate of Title"}
         pages={titlePages}
-      />
-      <A4DocumentAnnex
-        heading="Annexure — Cadastral plan"
-        pages={cadastralPages}
       />
       <A4DocumentAnnex
         heading={surveyAnnex?.heading ?? "Annexure — Survey Plan"}

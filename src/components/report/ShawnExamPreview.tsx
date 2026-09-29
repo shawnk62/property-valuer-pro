@@ -333,9 +333,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     { id: "exam-6", label: "6.0 Market Commentary" },
     { id: "exam-7", label: "7.0 Risk Assessment" },
     { id: "exam-8", label: "8.0 Valuation Approach" },
-    { id: "exam-9", label: "List of References" },
-    { id: "exam-10", label: "10.0 Individual Commentary" },
-    { id: "exam-11", label: "11.0 Appendices" },
+    { id: "exam-9", label: "9.0 List of References" },
+    { id: "exam-10", label: "10.0 Appendices" },
   ];
   const hasMarketParts = Boolean(
     get(v, "exam_market_australia") ||
@@ -397,11 +396,11 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             ? [{ id: "exam-annex-comps", label: "Comparable sale photographs" }]
             : []),
           ...(mapPhotos.length > 0 ? [{ id: "exam-annex-maps", label: "Maps" }] : []),
-          ...(titlePages.length > 0
-            ? [{ id: "exam-annex-title", label: "Certificate of Title" }]
-            : []),
           ...(cadastralPages.length > 0
             ? [{ id: "exam-annex-cadastral", label: "Cadastral plan" }]
+            : []),
+          ...(titlePages.length > 0
+            ? [{ id: "exam-annex-title", label: "Certificate of Title" }]
             : []),
           ...(surveyPages.length > 0
             ? [{ id: "exam-annex-survey", label: "Survey Plan" }]
@@ -821,31 +820,13 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep>
       </Lead>
 
-      <Lead id="exam-10" title="10.0 Individual Commentary">
-      <Keep>
-      <Prose
-        text={
-          draft.narrative.individualCommentary?.trim() ||
-          get(v, "exam_individual_commentary")
-        }
-      />
-      {!draft.narrative.individualCommentary?.trim() &&
-      !get(v, "exam_individual_commentary") ? (
-        <Para>
-          Record a personal reflection on the assignment: method, sources, what would be done
-          differently, and confidence in the adopted value.
-        </Para>
-      ) : null}
-      </Keep>
-      </Lead>
-
-      <Lead id="exam-11" title="11.0 Appendices">
+      <Lead id="exam-10" title="10.0 Appendices">
       <ol className="ml-5 list-decimal space-y-0.5 text-sm">
         {annexurePhotos.length > 0 ? <li>Subject photographs</li> : null}
         {printedSales.some((s) => s.photoUrl) ? <li>Comparable sale photographs</li> : null}
         {mapPhotos.length > 0 ? <li>Maps</li> : null}
-        {titlePages.length > 0 ? <li>Certificate of Title</li> : null}
         {cadastralPages.length > 0 ? <li>Cadastral plan</li> : null}
+        {titlePages.length > 0 ? <li>Certificate of Title</li> : null}
         {surveyPages.length > 0 ? <li>Survey Plan</li> : null}
         {extraAnnexGroups.map((g) => (
           <li key={g.id}>{g.title}</li>
@@ -905,12 +886,36 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           </h2>
           <div className="mt-6">
             {mapPhotos.map((photo) => (
-              <figure key={photo.id} className="report-map-figure">
-                <img src={photo.url} alt={photo.caption || "Map"} />
-                <figcaption className="mt-1.5 text-left text-sm">{photo.caption}</figcaption>
-              </figure>
+              <div key={photo.id}>
+                <figure className="report-map-figure">
+                  <img src={photo.url} alt={photo.caption || "Map"} />
+                  <figcaption className="mt-1.5 text-left text-sm">{photo.caption}</figcaption>
+                </figure>
+                {photo.slot === "map_aerial" ? (
+                  <A4DocumentAnnex
+                    id="exam-annex-cadastral"
+                    heading="Cadastral plan"
+                    pages={cadastralPages}
+                  />
+                ) : null}
+              </div>
             ))}
+            {!mapPhotos.some((p) => p.slot === "map_aerial") && cadastralPages.length > 0 ? (
+              <A4DocumentAnnex
+                id="exam-annex-cadastral"
+                heading="Cadastral plan"
+                pages={cadastralPages}
+              />
+            ) : null}
           </div>
+        </section>
+      ) : cadastralPages.length > 0 ? (
+        <section id="exam-annex-maps" className="report-annexure mt-12">
+          <A4DocumentAnnex
+            id="exam-annex-cadastral"
+            heading="Cadastral plan"
+            pages={cadastralPages}
+          />
         </section>
       ) : null}
 
@@ -918,11 +923,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         id="exam-annex-title"
         heading="Appendix — Certificate of Title"
         pages={titlePages}
-      />
-      <A4DocumentAnnex
-        id="exam-annex-cadastral"
-        heading="Appendix — Cadastral plan"
-        pages={cadastralPages}
       />
       <A4DocumentAnnex
         id="exam-annex-survey"
