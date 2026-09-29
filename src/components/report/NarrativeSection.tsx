@@ -254,41 +254,18 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   }
 
   async function neighbourhoodContext(acceptedOnly: boolean): Promise<string> {
-    const facts = await locationFactsResolved();
     const lines: string[] = [];
-    if (facts.promptBlock) lines.push(facts.promptBlock);
-    const lat = draft.reportMeta.subjectLat;
-    const lng = draft.reportMeta.subjectLng;
-    if (isGoogleMapsConfigured() && lat != null && lng != null) {
-      try {
-        const nearby = await fetchNearbyAmenities({
-          data: { apiKey: loadGoogleMapsKey(), lat, lng, radiusM: 5000 },
-        });
-        const schoolN = nearby.school?.length ?? 0;
-        if (schoolN) {
-          lines.push(
-            `GOOGLE AMENITIES: ${schoolN} school(s) within about 5 km` +
-              (nearby.school?.[0]?.name ? ` (nearest ${nearby.school[0].name})` : "") +
-              ".",
-          );
-        }
-        const shop = nearby.supermarket?.[0] || nearby.shopping_mall?.[0];
-        if (shop?.name) lines.push(`GOOGLE AMENITIES: nearest shopping ${shop.name}.`);
-        const station = nearby.train_station?.[0];
-        if (station?.name) lines.push(`GOOGLE AMENITIES: nearest railway station ${station.name}.`);
-        const bus = nearby.bus_station?.[0];
-        if (bus?.name) lines.push(`GOOGLE AMENITIES: nearest bus station ${bus.name}.`);
-      } catch {
-        /* Places optional */
-      }
-    }
     const claims = (draft.reportMeta.nbhdClaims ?? []) as NbhdClaim[];
-    const use = acceptedOnly ? claims.filter((c) => c.accepted) : [];
+    const use = acceptedOnly ? claims.filter((c) => c.accepted) : claims;
     if (use.length) {
-      lines.push("ACCEPTED FACTS:");
-      for (const c of use) {
-        lines.push(`- [${c.kind}] ${c.text}${c.source ? ` (${c.source})` : ""}`);
-      }
+      lines.push(
+        `MUST INCLUDE all ${use.length} accepted fact(s) below. Do not omit any name, distance or figure.`,
+      );
+      use.forEach((c, i) => {
+        lines.push(
+          `${i + 1}. [${c.kind}] ${c.text}${c.source ? ` (${c.source})` : ""}`,
+        );
+      });
     } else {
       lines.push("ACCEPTED FACTS: none.");
     }

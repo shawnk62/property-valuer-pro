@@ -72,13 +72,18 @@ This is a Joint Family Law – Phil valuation. Match the Currimundi jointly-appo
   if (t.includes("shawn")) {
     return `
 This is a Shawn valuation report.
-Neighbourhood / locality must be written from the largest area to the smallest:
+Neighbourhood / locality is a full section, not a three-sentence summary.
+Write from the largest area to the smallest, then amenities and transport:
 1. Country — Australia.
 2. State / region and city (or regional centre).
-3. Suburb — position in that city, established or developing character, and accepted population or change only if supplied as an accepted fact.
-4. Immediate locality and, where recorded, the named estate.
-Do not use numerical values for built-up extent or land use (no percentages, no "75%"). Use qualitative terms only: predominantly, mainly, some, a few, limited.
-Separate paragraphs by scale. Plain Australian valuation English. Do not invent facts.`;
+3. Suburb — position in that city, established or developing character, accepted population or change.
+4. Immediate locality and named estate if recorded.
+5. Neighbouring development in qualitative terms only.
+6. Amenities (schools, shopping) using every accepted amenity fact.
+7. Access to transport (station, bus, motorway, airport/port) using every accepted transport fact.
+Every accepted fact must appear in the prose. Do not drop distances, names or population figures that were accepted.
+Do not use numerical values for built-up extent or land use. Use predominantly, mainly, some, a few, limited.
+Plain Australian valuation English. Do not invent facts.`;
   }
   if (t.includes("stamp duty")) {
     return `
@@ -367,13 +372,15 @@ Rules:
 
 ${
   type.toLowerCase().includes("shawn")
-    ? `STRUCTURE (mandatory for Shawn reports). Start at the largest scale and move inward. Use a new paragraph at each step that has data:
+    ? `STRUCTURE (mandatory for Shawn reports). One paragraph per level that has data, then separate paragraphs for amenities and for transport:
 1. Country: Australia.
 2. State / city or regional centre.
-3. Suburb: place within that city, established or developing character. Include accepted population or gentrification facts only if listed as ACCEPTED FACTS.
+3. Suburb character, accepted population, accepted change.
 4. Immediate locality and named estate if recorded.
-5. Neighbouring development and land-use character in qualitative terms only.
-Do not open with the street address or the allotment.`
+5. Neighbouring development — qualitative land use only.
+6. Amenities — weave in every accepted amenities fact (school count, named centres, distances and directions).
+7. Transport — weave in every accepted transport fact (station, bus, M1, airport/port).
+Do not open with the street address. Do not compress this into three short paragraphs if accepted facts remain unused.`
     : `Required content only:
 - the immediate locality, and
 - neighbouring development,
@@ -392,10 +399,15 @@ Rules:
 - Do not state CBD or town distances. That belongs under Location unless they appear under ACCEPTED FACTS.
 - Do not describe site shape, topography, access, services or zoning.
 - Use only qualitative phrases (predominantly, mainly, some, a few). Never quote land-use percentages, built-up percentages, or similar figures. An official suburb population may be used only if it is an ACCEPTED FACT.
-- Use ACCEPTED FACTS only if labelled accepted. Ignore unverified search notes.
-- Use GOOGLE AMENITIES only as recorded (counts and named places). Do not invent extra schools or stations.
+- MUST INCLUDE every item listed under ACCEPTED FACTS / MUST INCLUDE. Paraphrase allowed; omission is not.
+- Ignore unverified search notes that are not in that list.
+- Use GOOGLE / accepted amenity and transport wording as recorded (names, counts, distances, directions). Do not invent extras.
 - Name positive or negative features only if they appear in the data.
-- Murray: 1–3 short sentences. Phil Stamp Duty: one tight paragraph if data exists.
+- ${
+  type.toLowerCase().includes("shawn")
+    ? "Shawn: write a complete locality section (typically 6–10 short paragraphs). Brevity rules for Murray or Phil do not apply."
+    : "Murray: 1–3 short sentences. Phil Stamp Duty: one tight paragraph if data exists."
+}
 - No marketing language.`,
       };
     }
