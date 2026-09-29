@@ -242,7 +242,7 @@ Rules:
 
     const base = (settings.baseUrl || "https://api.x.ai/v1").replace(/\/$/, "");
     if (settings.provider === "xai") {
-      const res = await fetch(`${base}/chat/completions`, {
+      const res = await fetch(`${base}/responses`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -250,18 +250,33 @@ Rules:
         },
         body: JSON.stringify({
           model: settings.model,
-          messages: [{ role: "user", content: prompt }],
-          search_parameters: { mode: "on", return_citations: true },
+          input: [{ role: "user", content: prompt }],
+          tools: [{ type: "web_search" }],
         }),
       });
       const json = (await res.json()) as {
         error?: { message?: string };
+        output_text?: string;
+        output?: Array<{
+          type?: string;
+          content?: Array<{ type?: string; text?: string }>;
+        }>;
         choices?: Array<{ message?: { content?: string } }>;
       };
       if (!res.ok) {
         throw new Error(json.error?.message || `Neighbourhood search failed (${res.status})`);
       }
-      return { raw: json.choices?.[0]?.message?.content ?? "[]" };
+      const fromOutput = (json.output ?? [])
+        .flatMap((item) => item.content ?? [])
+        .map((part) => part.text ?? "")
+        .join("\n")
+        .trim();
+      const raw =
+        json.output_text?.trim() ||
+        fromOutput ||
+        json.choices?.[0]?.message?.content?.trim() ||
+        "[]";
+      return { raw };
     }
 
     const model = createModel(settings);
