@@ -15,7 +15,6 @@ import {
   formatUsableSiteAreaIfDifferent,
   get,
   joinValues,
-  valuedInterestPhrase,
 } from "@/lib/report/schema";
 import { surveyPlanAnnexureLabel } from "@/lib/report/annexures";
 import { narrativePrints } from "@/lib/narrative/neighbourhoodAssist";
@@ -808,16 +807,14 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ) : null}
         <H2>8.4 Valuation result</H2>
         <Para>
-          Having regard to the sales evidence and market conditions at the date of valuation, the
-          market value of the {valuedInterestPhrase(v)} in the subject property
-          {addressLine ? `, ${addressLine},` : ""} as at {m.valueDate || "the date of valuation"} is:
+          Having regard to the sales evidence and market conditions at the date of valuation, it is
+          my opinion that the market value of the unencumbered fee simple interest in the subject
+          property located at {addressLine || "[property address]"} as at{" "}
+          {m.valueDate || "[date of valuation]"} is
+          {m.valueAmount
+            ? ` $${formatCurrencyDisplay(m.valueAmount)}${valueWords ? ` (${valueWords})` : ""}.`
+            : " [value in numbers and words]."}
         </Para>
-        {m.valueAmount ? (
-          <p className="py-3 text-left text-lg font-semibold">
-            ${formatCurrencyDisplay(m.valueAmount)}
-            {valueWords ? ` (${valueWords})` : ""}
-          </p>
-        ) : null}
       </section>
 
       {get(v, "exam_limitations") ? (
