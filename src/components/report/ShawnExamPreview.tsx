@@ -333,7 +333,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     { id: "exam-6", label: "6.0 Market Commentary" },
     { id: "exam-7", label: "7.0 Risk Assessment" },
     { id: "exam-8", label: "8.0 Valuation Approach" },
-    { id: "exam-9", label: "9.0 References" },
+    { id: "exam-9", label: "List of References" },
     { id: "exam-10", label: "10.0 Individual Commentary" },
     { id: "exam-11", label: "11.0 Appendices" },
   ];
