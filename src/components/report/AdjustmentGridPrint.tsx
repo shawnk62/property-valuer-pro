@@ -30,13 +30,11 @@ export function AdjustmentGridPrint({
   values,
   meta,
   subjectAddress,
-  saleNumber,
 }: {
   sales: ComparableSale[];
   values: InspectionValues;
   meta: ReportMeta;
   subjectAddress: string;
-  saleNumber?: (sale: ComparableSale, index: number) => number;
 }) {
   if (sales.length === 0) return null;
   const features = adjustmentFeaturesForProperty(values).filter(
@@ -58,16 +56,23 @@ export function AdjustmentGridPrint({
                 <th>Subject</th>
                 {chunk.map((sale, i) => (
                   <Fragment key={sale.id}>
-                    <th>
-                      Sale {saleNumber ? saleNumber(sale, chunkIdx * COMPS_PER_BLOCK + i) : chunkIdx * COMPS_PER_BLOCK + i + 1}
-                      {sale.address ? ` — ${sale.address}` : ""}
-                    </th>
+                    <th>Sale {chunkIdx * COMPS_PER_BLOCK + i + 1}</th>
                     <th className="adj-money">Adjustment</th>
                   </Fragment>
                 ))}
               </tr>
             </thead>
             <tbody>
+              <tr>
+                <th scope="row">Address</th>
+                <td>{subjectAddress || "—"}</td>
+                {chunk.map((sale) => (
+                  <Fragment key={sale.id}>
+                    <td>{sale.address || "—"}</td>
+                    <td className="adj-money">—</td>
+                  </Fragment>
+                ))}
+              </tr>
               <tr>
                 <th scope="row">Sale Price</th>
                 <td>—</td>

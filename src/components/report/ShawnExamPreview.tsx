@@ -4,8 +4,6 @@ import { stripLeadingHeading } from "@/lib/report/printText";
 import {
   buildClientInstructions,
   buildSiteIdentification,
-  executiveSummaryBriefText,
-  section61PhysicalText,
 } from "@/lib/report/narrative";
 import {
   coverLotPlan,
@@ -433,10 +431,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           { label: "Instructing Party", value: instructing },
           { label: "Valuation Purpose", value: purpose },
           {
-            label: "Brief Description of the Property",
-            value: executiveSummaryBriefText({
-              brief: draft.narrative.brief,
-            }),
+            label: "Brief description of the subject property",
+            value: String(draft.narrative.brief ?? "").trim(),
           },
           { label: "Zoning", value: get(v, "prop_zoning") },
           { label: "Date of Inspection", value: m.inspectionDate },
@@ -504,15 +500,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <Keep>
       <H2>2.1 Property Description</H2>
       <Prose
-        text={section61PhysicalText({
-          sitePhysical: draft.narrative.sitePhysical,
-          values: v,
-        })}
+        text={String(draft.narrative.sitePhysical ?? "").trim()}
       />
-      {!section61PhysicalText({
-        sitePhysical: draft.narrative.sitePhysical,
-        values: v,
-      }) ? (
+      {!String(draft.narrative.sitePhysical ?? "").trim() ? (
         <Para>
           {siteArea ? `The subject allotment has an area of ${siteArea}. ` : ""}
           {usableSiteArea
@@ -781,9 +771,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 values={v}
                 meta={draft.reportMeta}
                 subjectAddress={addressLine}
-                saleNumber={(sale) =>
-                  Math.max(1, draft.sales.findIndex((s) => s.id === sale.id) + 1)
-                }
               />
             ) : null}
           </div>
