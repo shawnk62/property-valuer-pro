@@ -34,6 +34,7 @@ import {
   purposeOfValuation,
 } from "@/lib/report/reportTypes";
 import { annexureById, resolveAnnexures, surveyPlanAnnexureLabel } from "@/lib/report/annexures";
+import { narrativePrints } from "@/lib/narrative/neighbourhoodAssist";
 import {
   buildPhilRemarks,
   buildMurrayRemarks,
@@ -1340,7 +1341,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         {isPhilReportType(reportType.id) ? (
           <>
             <Sub title="5.1  Location">
-              {draft.narrative.location?.trim() ? (
+              {narrativePrints(draft.reportMeta, "location") && draft.narrative.location?.trim() ? (
                 <Prose text={stripLeadingHeading(draft.narrative.location, "Location")} />
               ) : (
                 <Para>
@@ -1349,7 +1350,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               )}
             </Sub>
             <Sub title="5.2  Neighbourhood">
-              {draft.narrative.neighbourhood?.trim() || get(v, "nbhd_description") ? (
+              {narrativePrints(draft.reportMeta, "neighbourhood") && (draft.narrative.neighbourhood?.trim() || get(v, "nbhd_description")) ? (
                 <Prose
                   text={
                     draft.narrative.neighbourhood?.trim() || get(v, "nbhd_description")
@@ -1378,13 +1379,14 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         ) : (
           <>
             <Sub title="Location">
-              {draft.narrative.location?.trim() ? (
+              {narrativePrints(draft.reportMeta, "location") && draft.narrative.location?.trim() ? (
                 <Prose text={stripLeadingHeading(draft.narrative.location, "Location")} />
               ) : addressLine ? (
                 <Para>{`The property is located at ${addressLine}.`}</Para>
               ) : null}
             </Sub>
             <Sub title="Neighbourhood">
+              {narrativePrints(draft.reportMeta, "neighbourhood") ? (
               <Prose
                 text={
                   draft.narrative.neighbourhood?.trim() ||
@@ -1392,6 +1394,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                   ""
                 }
               />
+              ) : null}
             </Sub>
             <Prose text={get(v, "nbhd_market_conditions")} />
             <Facts

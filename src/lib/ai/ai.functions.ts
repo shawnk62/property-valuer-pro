@@ -212,6 +212,66 @@ export const generateNarrativeBlock = createServerFn({ method: "POST" })
     }
   });
 
+const SearchNbhdInput = z.object({
+  settings: SettingsInput,
+  suburb: z.string(),
+  city: z.string().optional(),
+  address: z.string().optional(),
+  estate: z.string().optional(),
+});
+
+export const searchNeighbourhoodFacts = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => SearchNbhdInput.parse(input))
+  .handler(async ({ data }) => {
+    const settings = asAiSettings(data.settings);
+    const place = [data.suburb, data.city, "Queensland", "Australia"].filter(Boolean).join(", ");
+    const prompt = `Search the public web for factual suburb-profile notes about ${place}${
+      data.address ? ` (property near ${data.address})` : ""
+    }${data.estate ? ` including any estate named ${data.estate}` : ""}.
+
+Return ONLY a JSON array. Each item:
+{"kind":"population"|"gentrification"|"estate"|"character"|"other","text":"one sentence","source":"url or publisher"}
+
+Rules:
+- Population: current ABS or official figure only, with the year if given.
+- Estate completion population only if a council or developer page states a number.
+- Gentrification only if a reputable source uses that idea for this suburb.
+- Character: established / growth corridor / beachside only if sources support it.
+- If nothing reliable is found, return [].
+- Do not invent numbers or names.`;
+
+    const base = (settings.baseUrl || "https://api.x.ai/v1").replace(/\/$/, "");
+    if (settings.provider === "xai") {
+      const res = await fetch(`${base}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${settings.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: settings.model,
+          messages: [{ role: "user", content: prompt }],
+          search_parameters: { mode: "on", return_citations: true },
+        }),
+      });
+      const json = (await res.json()) as {
+        error?: { message?: string };
+        choices?: Array<{ message?: { content?: string } }>;
+      };
+      if (!res.ok) {
+        throw new Error(json.error?.message || `Neighbourhood search failed (${res.status})`);
+      }
+      return { raw: json.choices?.[0]?.message?.content ?? "[]" };
+    }
+
+    const model = createModel(settings);
+    const { text } = await generateText({
+      model,
+      prompt,
+    });
+    return { raw: text.trim() };
+  });
+
 const SaleNarrativeInput = z.object({
   settings: SettingsInput,
   system: z.string().min(1),

@@ -365,10 +365,14 @@ ${landUse || "No land-use mix recorded."}
 Inspection data (neighbourhood and character only):
 ${sectionAnswers(stripLandUsePercentages(values), ["1A"])}
 
+${extras?.locationContext?.trim() || ""}
+
 Rules:
-- Do not state CBD or town distances. That belongs under Location.
+- Do not state CBD or town distances. That belongs under Location unless they appear under ACCEPTED FACTS.
 - Do not describe site shape, topography, access, services or zoning.
-- Use only qualitative phrases (predominantly, mainly, some, a few). Never quote land-use percentages.
+- Use only qualitative phrases (predominantly, mainly, some, a few). Never quote land-use percentages unless an accepted fact supplies an official population figure.
+- Use ACCEPTED FACTS only if labelled accepted. Ignore unverified search notes.
+- Use GOOGLE AMENITIES only as recorded (counts and named places). Do not invent extra schools or stations.
 - Name positive or negative features only if they appear in the data.
 - Murray: 1–3 short sentences. Phil Stamp Duty: one tight paragraph if data exists.
 - No marketing language.`,

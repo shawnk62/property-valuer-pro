@@ -18,6 +18,7 @@ import {
   valuedInterestPhrase,
 } from "@/lib/report/schema";
 import { surveyPlanAnnexureLabel } from "@/lib/report/annexures";
+import { narrativePrints } from "@/lib/narrative/neighbourhoodAssist";
 import {
   MAP_SLOTS,
   PHOTO_SLOTS,
@@ -323,7 +324,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const valueWords = m.valueAmount ? amountInWords(m.valueAmount) : "";
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], " ");
   const usableSiteArea = formatUsableSiteAreaIfDifferent(v);
-  const servicesText = draft.narrative.servicesAmenities?.trim() || "";
+  const servicesText = narrativePrints(m, "servicesAmenities")
+    ? draft.narrative.servicesAmenities?.trim() || ""
+    : "";
  
 
   const toc = [
@@ -633,14 +636,19 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <Lead id="exam-5" title="5.0 Locality and Location">
       <Keep>
       <H2>5.1 Location</H2>
+      {narrativePrints(m, "location") ? (
+        <>
       <Prose text={stripLeadingHeading(draft.narrative.location?.trim() || "", "Location")} />
       {!draft.narrative.location?.trim() && addressLine ? (
         <Para>The property is located at {addressLine}.</Para>
+      ) : null}
+        </>
       ) : null}
       </Keep>
       </Lead>
       <Keep>
       <H2>5.2 Locality</H2>
+      {narrativePrints(m, "neighbourhood") ? (
       <Prose
         text={stripLeadingHeading(
           stripLeadingHeading(
@@ -650,6 +658,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           "Locality",
         )}
       />
+      ) : null}
       </Keep>
       {get(v, "exam_amenities") ? (
         <Keep>

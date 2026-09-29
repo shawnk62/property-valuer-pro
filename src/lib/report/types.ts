@@ -294,6 +294,19 @@ export interface ReportMeta {
   printAdjustmentGrid?: boolean;
   /** Feature ids the valuer has unticked for print. Default none (all visible rows print). */
   omitAdjustmentPrintRows?: string[];
+  /**
+   * Per-narrative-block print flags. Missing or true = print.
+   * False keeps the working text and omits it from the PDF.
+   */
+  printNarrative?: Partial<Record<keyof ReportNarrative, boolean>>;
+  /** Trial: web-search neighbourhood claims awaiting valuer sign-off. */
+  nbhdClaims?: Array<{
+    id: string;
+    kind: string;
+    text: string;
+    source?: string;
+    accepted: boolean;
+  }>;
   salesMapPins?: Array<{
     id: string;
     label: string;

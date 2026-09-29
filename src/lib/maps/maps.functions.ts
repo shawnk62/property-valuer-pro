@@ -111,3 +111,45 @@ export const fetchGoogleStaticMap = createServerFn({ method: "POST" })
       base64: buf.toString("base64"),
     };
   });
+
+const NearbyInput = z.object({
+  apiKey: z.string().min(8),
+  lat: z.number(),
+  lng: z.number(),
+  radiusM: z.number().int().min(200).max(20000).default(5000),
+});
+
+export const fetchNearbyAmenities = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => NearbyInput.parse(input))
+  .handler(async ({ data }) => {
+    const types = ["school", "supermarket", "shopping_mall", "train_station", "bus_station"] as const;
+    const out: Record<(typeof types)[number], { name: string; vicinity?: string }[]> = {
+      school: [],
+      supermarket: [],
+      shopping_mall: [],
+      train_station: [],
+      bus_station: [],
+    };
+    for (const type of types) {
+      const url = new URL("https://maps.googleapis.com/maps/api/place/nearbysearch/json");
+      url.searchParams.set("location", `${data.lat},${data.lng}`);
+      url.searchParams.set("radius", String(data.radiusM));
+      url.searchParams.set("type", type);
+      url.searchParams.set("key", data.apiKey.trim());
+      try {
+        const res = await fetch(url);
+        const json = (await res.json()) as {
+          status?: string;
+          results?: Array<{ name?: string; vicinity?: string }>;
+        };
+        if (json.status !== "OK" && json.status !== "ZERO_RESULTS") continue;
+        out[type] = (json.results ?? [])
+          .slice(0, type === "school" ? 12 : 5)
+          .map((r) => ({ name: String(r.name ?? "").trim(), vicinity: r.vicinity }))
+          .filter((r) => r.name);
+      } catch {
+        /* Places not enabled — skip this type */
+      }
+    }
+    return out;
+  });

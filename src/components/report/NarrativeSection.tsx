@@ -3,7 +3,7 @@ import { flushSync } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
-import { generateNarrativeBlock } from "@/lib/ai/ai.functions";
+import { generateNarrativeBlock, searchNeighbourhoodFacts } from "@/lib/ai/ai.functions";
 import { isAiConfigured, loadAiSettings } from "@/lib/ai/settings";
 import {
   buildPhilRemarks,
@@ -20,7 +20,13 @@ import {
 import { subjectAddressLine, type SalesMapPin } from "@/lib/maps/salesMapPins";
 import { skipAiNarrativeBlock } from "@/lib/inspection/visibility";
 import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
-import { geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
+import { fetchNearbyAmenities, geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
+import {
+  neighbourhoodAssistEnabled,
+  narrativePrints,
+  parseNbhdClaims,
+  type NbhdClaim,
+} from "@/lib/narrative/neighbourhoodAssist";
 import { CannedCommentsBar } from "@/components/report/CannedCommentsBar";
 import { RiskRatingsPanel } from "@/components/report/RiskRatingsPanel";
 import { isShawnExamType, getReportTypeConfig } from "@/lib/report/reportTypes";
@@ -241,6 +247,48 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       /* keep address-only facts */
     }
     return existing;
+  }
+
+  async function neighbourhoodContext(acceptedOnly: boolean): Promise<string> {
+    const facts = await locationFactsResolved();
+    const lines: string[] = [];
+    if (facts.promptBlock) lines.push(facts.promptBlock);
+    const lat = draft.reportMeta.subjectLat;
+    const lng = draft.reportMeta.subjectLng;
+    if (isGoogleMapsConfigured() && lat != null && lng != null) {
+      try {
+        const nearby = await fetchNearbyAmenities({
+          data: { apiKey: loadGoogleMapsKey(), lat, lng, radiusM: 5000 },
+        });
+        const schoolN = nearby.school?.length ?? 0;
+        if (schoolN) {
+          lines.push(
+            `GOOGLE AMENITIES: ${schoolN} school(s) within about 5 km` +
+              (nearby.school?.[0]?.name ? ` (nearest ${nearby.school[0].name})` : "") +
+              ".",
+          );
+        }
+        const shop = nearby.supermarket?.[0] || nearby.shopping_mall?.[0];
+        if (shop?.name) lines.push(`GOOGLE AMENITIES: nearest shopping ${shop.name}.`);
+        const station = nearby.train_station?.[0];
+        if (station?.name) lines.push(`GOOGLE AMENITIES: nearest railway station ${station.name}.`);
+        const bus = nearby.bus_station?.[0];
+        if (bus?.name) lines.push(`GOOGLE AMENITIES: nearest bus station ${bus.name}.`);
+      } catch {
+        /* Places optional */
+      }
+    }
+    const claims = (draft.reportMeta.nbhdClaims ?? []) as NbhdClaim[];
+    const use = acceptedOnly ? claims.filter((c) => c.accepted) : [];
+    if (use.length) {
+      lines.push("ACCEPTED FACTS:");
+      for (const c of use) {
+        lines.push(`- [${c.kind}] ${c.text}${c.source ? ` (${c.source})` : ""}`);
+      }
+    } else {
+      lines.push("ACCEPTED FACTS: none.");
+    }
+    return lines.filter(Boolean).join("\n");
   }
 
   async function narrativeOpts() {
@@ -480,6 +528,34 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         if (quotaHit) break;
         try {
           setLastStatus(`Generating “${key}”…`);
+          if (
+            key === "neighbourhood" &&
+            neighbourhoodAssistEnabled(String(draft.values["prop_assignment"] ?? "")) &&
+            !(draft.reportMeta.nbhdClaims ?? []).length
+          ) {
+            try {
+              setLastStatus("Searching suburb sources…");
+              const suburb = String(draft.values["prop_suburb"] ?? "");
+              const searched = await searchNeighbourhoodFacts({
+                data: {
+                  settings: {
+                    provider: settings.provider,
+                    model: settings.model,
+                    apiKey: settings.apiKey,
+                    ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
+                  },
+                  suburb: suburb || String(draft.values["prop_address"] ?? "subject suburb"),
+                  city: String(draft.values["prop_lga"] ?? ""),
+                  address: subjectAddressLine(draft.values),
+                  estate: String(draft.values["nbhd_estate"] ?? ""),
+                },
+              });
+              const claims = parseNbhdClaims(searched.raw);
+              setMeta({ nbhdClaims: claims });
+            } catch (searchErr) {
+              console.warn("[nbhd search]", searchErr);
+            }
+          }
           const result = await generateNarrativeBlock({
             data: {
               settings: {
@@ -492,6 +568,9 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               values,
               ...(key === "location"
                 ? { locationContext: (await locationFactsResolved()).promptBlock }
+                : {}),
+              ...(key === "neighbourhood"
+                ? { locationContext: await neighbourhoodContext(true) }
                 : {}),
             },
           });
@@ -652,6 +731,22 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
             <span className="text-sm font-medium text-foreground">{block.label}</span>
             <div className="flex flex-wrap items-center justify-end gap-1.5">
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={narrativePrints(draft.reportMeta, block.key)}
+                  onChange={(e) =>
+                    setMeta({
+                      printNarrative: {
+                        ...(draft.reportMeta.printNarrative ?? {}),
+                        [block.key]: e.target.checked,
+                      },
+                    })
+                  }
+                  className="size-3.5 rounded border-input"
+                />
+                Include in printed report
+              </label>
               <CannedCommentsBar
                 section={block.key}
                 currentText={blockText}
@@ -702,6 +797,52 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             rows={block.key === "remarks" ? 12 : 7}
             className="w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm leading-relaxed text-foreground outline-none focus:ring-2 focus:ring-ring"
           />
+          {block.key === "neighbourhood" &&
+          neighbourhoodAssistEnabled(String(draft.values["prop_assignment"] ?? "")) &&
+          Array.isArray(draft.reportMeta.nbhdClaims) &&
+          draft.reportMeta.nbhdClaims.length > 0 ? (
+            <div className="mt-2 space-y-2 rounded-md border border-amber-300/80 bg-amber-50 p-3 dark:bg-amber-950/30">
+              <p className="text-xs font-medium text-foreground">
+                Web-search notes — accept before they can enter the printed neighbourhood paragraph.
+              </p>
+              {(draft.reportMeta.nbhdClaims as NbhdClaim[]).map((claim) => (
+                <label
+                  key={claim.id}
+                  className="flex items-start gap-2 rounded bg-amber-100/80 px-2 py-1.5 text-xs dark:bg-amber-900/40"
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 size-3.5 shrink-0 rounded border-input"
+                    checked={claim.accepted}
+                    onChange={(e) =>
+                      setMeta({
+                        nbhdClaims: (draft.reportMeta.nbhdClaims as NbhdClaim[]).map((c) =>
+                          c.id === claim.id ? { ...c, accepted: e.target.checked } : c,
+                        ),
+                      })
+                    }
+                  />
+                  <span>
+                    <span className="font-medium capitalize">{claim.kind}. </span>
+                    {claim.text}
+                    {claim.source ? (
+                      <span className="mt-0.5 block text-[10px] text-muted-foreground">
+                        {claim.source}
+                      </span>
+                    ) : null}
+                  </span>
+                </label>
+              ))}
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => void generateWithAi(["neighbourhood"])}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+              >
+                Rewrite neighbourhood with accepted facts
+              </button>
+            </div>
+          ) : null}
         </div>
         );
       })}
