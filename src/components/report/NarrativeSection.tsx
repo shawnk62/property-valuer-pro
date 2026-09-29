@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -50,14 +50,14 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
   }[] = shawnExam
     ? [
         {
+          key: "brief",
+          label: "Executive Summary — Brief Description",
+          hint: "Prints in the Executive Summary.",
+        },
+        {
           key: "instructions",
           label: "1.1 Instructions",
           hint: "Prints under 1.0 Basis of Value.",
-        },
-        {
-          key: "brief",
-          label: "Brief Description of the Property",
-          hint: "Prints in the Executive Summary.",
         },
         {
           key: "sitePhysical",
@@ -66,18 +66,18 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
         },
         {
           key: "siteIdentification",
-          label: "How the site was identified",
+          label: "2.2 How the site was identified",
           hint: "Prints in 2.2 Title Particulars. Built from the Site identification ticks.",
+        },
+        {
+          key: "servicesAmenities",
+          label: "2.3 Particulars of Land — Utilities",
+          hint: "Prints in 2.3 Particulars of Land.",
         },
         {
           key: "highestBestUse",
           label: "3.2 Highest and Best Use",
           hint: "Prints under 3.0 Planning Controls.",
-        },
-        {
-          key: "valuationApproach",
-          label: "8.0 Valuation Approach",
-          hint: "Prints at the start of 8.0 Valuation Approach. Saved text is not overwritten on reopen.",
         },
         {
           key: "location",
@@ -90,9 +90,9 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           hint: "Prints under 5.0 Locality and Location. Immediate locality only.",
         },
         {
-          key: "servicesAmenities",
-          label: "2.3 Particulars of Land — Utilities",
-          hint: "Prints in 2.3 Particulars of Land.",
+          key: "valuationApproach",
+          label: "8.0 Valuation Approach",
+          hint: "Prints at the start of 8.0 Valuation Approach. Saved text is not overwritten on reopen.",
         },
       ]
     : [
@@ -935,15 +935,17 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         </div>
       </div>
 
-      {shawnExam ? <RiskRatingsPanel controller={controller} /> : null}
-
       {BLOCKS.map((block) => {
         const blockText =
           block.key === "remarks"
             ? localRemarks
             : String(draft.narrative[block.key] ?? "");
         return (
-        <div key={block.key} className="block">
+        <Fragment key={block.key}>
+        {shawnExam && block.key === "valuationApproach" ? (
+          <RiskRatingsPanel controller={controller} />
+        ) : null}
+        <div className="block">
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
             <span className="text-sm font-medium text-foreground">{block.label}</span>
             <div className="flex flex-wrap items-center justify-end gap-1.5">
@@ -1090,6 +1092,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             </div>
           ) : null}
         </div>
+        </Fragment>
         );
       })}
     </div>
