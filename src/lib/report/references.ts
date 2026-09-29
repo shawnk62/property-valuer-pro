@@ -108,6 +108,27 @@ function sourceKey(raw: string): string {
   return raw.toLowerCase().replace(/\/+$/, "").replace(/^www\./, "").trim();
 }
 
+function sourcesFromClaim(claim: NbhdClaim): string[] {
+  const out: string[] = [];
+  const src = String(claim.source ?? "").trim();
+  if (src) out.push(src);
+  const text = String(claim.text ?? "");
+  for (const url of text.match(/https?:\/\/[^\s)]+/gi) ?? []) {
+    out.push(url.replace(/[.,;]+$/, ""));
+  }
+  const trailing = text.match(/\(([^)]{3,80})\)\s*$/);
+  if (trailing?.[1]) out.push(trailing[1].trim());
+  const dash = text.match(/\s[—–-]\s+([^—–-]{3,80})$/);
+  if (dash?.[1] && /gov|corelogic|proptrack|abs|rba|google|domain|qgso|treasury|api/i.test(dash[1])) {
+    out.push(dash[1].trim());
+  }
+  const blob = `${src} ${text}`.toLowerCase();
+  for (const [host, name] of Object.entries(HOST_AUTHOR)) {
+    if (blob.includes(host) || blob.includes(name.toLowerCase())) out.push(name);
+  }
+  return out;
+}
+
 export function collectReportReferences(
   meta: ReportMeta | undefined,
   values: InspectionValues,
@@ -115,8 +136,7 @@ export function collectReportReferences(
 ): ReportReference[] {
   const raws: string[] = [];
   for (const claim of claimLists(meta)) {
-    const src = String(claim.source ?? "").trim();
-    if (src) raws.push(src);
+    raws.push(...sourcesFromClaim(claim));
   }
   const exam = String(values["exam_references"] ?? "").trim();
   if (exam) {

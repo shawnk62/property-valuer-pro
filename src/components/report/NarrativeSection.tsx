@@ -389,8 +389,10 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   }
 
   function applyReferences(items: ReportReference[]) {
-    setMeta({ reportReferences: items });
-    setNarrative({ references: referencesProse(items) });
+    flushSync(() => {
+      setMeta({ reportReferences: items });
+      setNarrative({ references: referencesProse(items) });
+    });
   }
 
   function refreshReferences(metaPatch?: Partial<typeof draft.reportMeta>) {
@@ -1358,12 +1360,18 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               </p>
               <button
                 type="button"
-                disabled={busy !== null}
                 onClick={collectReferencesNow}
                 className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
               >
                 Collect sources from report
               </button>
+              {((draft.reportMeta.reportReferences as ReportReference[] | undefined) ?? [])
+                .length === 0 ? (
+                <p className="text-[11px] text-muted-foreground">
+                  No sources on file yet. Run Find notes on 5.2 or 6.1–6.4 first, then collect
+                  again. Publisher names in those notes are enough — a URL is not required.
+                </p>
+              ) : null}
               {(((draft.reportMeta.reportReferences as ReportReference[] | undefined) ??
                 []) as ReportReference[]).map((item) => (
                 <label

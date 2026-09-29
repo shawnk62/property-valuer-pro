@@ -120,7 +120,16 @@ function rowToClaim(row: unknown): NbhdClaim | null {
     id: newClaimId(),
     kind,
     text: t,
-    source: typeof r.source === "string" ? r.source : undefined,
+    source:
+      typeof r.source === "string"
+        ? r.source
+        : typeof r.Source === "string"
+          ? r.Source
+          : typeof r.publisher === "string"
+            ? r.publisher
+            : typeof r.url === "string"
+              ? r.url
+              : undefined,
     accepted: true,
   };
 }
