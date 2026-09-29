@@ -69,6 +69,17 @@ This is a Joint Family Law – Phil valuation. Match the Currimundi jointly-appo
 - Remarks follow the Joint Family Law – Phil sequence (pest recommendation first; no auction closer).
 - Use "allotment" for the site. Do not invent facts.`;
   }
+  if (t.includes("shawn")) {
+    return `
+This is a Shawn valuation report.
+Neighbourhood / locality must be written from the largest area to the smallest:
+1. Country — Australia.
+2. State / region and city (or regional centre).
+3. Suburb — position in that city, established or developing character, and accepted population or change only if supplied as an accepted fact.
+4. Immediate locality and, where recorded, the named estate.
+Do not use numerical values for built-up extent or land use (no percentages, no "75%"). Use qualitative terms only: predominantly, mainly, some, a few, limited.
+Separate paragraphs by scale. Plain Australian valuation English. Do not invent facts.`;
+  }
   if (t.includes("stamp duty")) {
     return `
 This is a Stamp Duty – Phil valuation: prefer concise wording.
@@ -352,12 +363,22 @@ Rules:
       const landUse = describeLandUseMix(values);
       return {
         system: BASE_RULES + styleGuide(type),
-        prompt: `Write section 5.2 Neighbourhood for a ${type} valuation report.
+        prompt: `Write section 5.2 Neighbourhood / Locality for a ${type} valuation report.
 
-Required content only:
+${
+  type.toLowerCase().includes("shawn")
+    ? `STRUCTURE (mandatory for Shawn reports). Start at the largest scale and move inward. Use a new paragraph at each step that has data:
+1. Country: Australia.
+2. State / city or regional centre.
+3. Suburb: place within that city, established or developing character. Include accepted population or gentrification facts only if listed as ACCEPTED FACTS.
+4. Immediate locality and named estate if recorded.
+5. Neighbouring development and land-use character in qualitative terms only.
+Do not open with the street address or the allotment.`
+    : `Required content only:
 - the immediate locality, and
 - neighbouring development,
-drawing attention to recorded positive or negative features that may affect value or marketability, including significant demographic change if recorded.
+drawing attention to recorded positive or negative features that may affect value or marketability, including significant demographic change if recorded.`
+}
 
 LAND USE MIX (qualitative guide only — do not write percentages or figures):
 ${landUse || "No land-use mix recorded."}
@@ -370,7 +391,7 @@ ${extras?.locationContext?.trim() || ""}
 Rules:
 - Do not state CBD or town distances. That belongs under Location unless they appear under ACCEPTED FACTS.
 - Do not describe site shape, topography, access, services or zoning.
-- Use only qualitative phrases (predominantly, mainly, some, a few). Never quote land-use percentages unless an accepted fact supplies an official population figure.
+- Use only qualitative phrases (predominantly, mainly, some, a few). Never quote land-use percentages, built-up percentages, or similar figures. An official suburb population may be used only if it is an ACCEPTED FACT.
 - Use ACCEPTED FACTS only if labelled accepted. Ignore unverified search notes.
 - Use GOOGLE AMENITIES only as recorded (counts and named places). Do not invent extra schools or stations.
 - Name positive or negative features only if they appear in the data.

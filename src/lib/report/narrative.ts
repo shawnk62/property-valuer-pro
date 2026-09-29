@@ -664,6 +664,50 @@ function buildNeighbourhood(values: InspectionValues): string {
   if (hasValue(values["nbhd_description"])) {
     return v(values, "nbhd_description");
   }
+  if (/shawn/i.test(v(values, "prop_assignment"))) {
+    const country = "The subject property is in Australia";
+    const state = v(values, "prop_state") || "Queensland";
+    const lga = v(values, "prop_lga");
+    const suburb = v(values, "prop_suburb");
+    const character = v(values, "nbhd_character");
+    const location = v(values, "nbhd_location");
+    const paras: string[] = [sentence([country])];
+    paras.push(
+      sentence([
+        "It is in",
+        state,
+        lga && `within ${lga}`,
+      ]),
+    );
+    if (suburb) {
+      paras.push(
+        sentence([
+          suburb,
+          "is the suburb in which the property is located",
+          character && `and is characterised as ${character.toLowerCase()}`,
+        ]),
+      );
+    }
+    if (location) {
+      paras.push(sentence(["The immediate locality is", location.toLowerCase()]));
+    }
+    const builtup = v(values, "nbhd_builtup");
+    if (builtup) {
+      const density = builtup.toLowerCase();
+      const densityPhrase =
+        /over\s*75|75\s*%/.test(density)
+          ? "predominantly built up"
+          : /25\s*%\s*to\s*75|25\s*to\s*75/.test(density)
+            ? "moderately built up"
+            : /under\s*25/.test(density)
+              ? "sparsely built up"
+              : "of mixed built form";
+      paras.push(sentence(["Neighbouring development is", densityPhrase]));
+    }
+    const landUse = describeLandUseMix(values);
+    if (landUse) paras.push(landUse);
+    return paras.filter(Boolean).join("\n\n");
+  }
 
   const parts: string[] = [];
   const location = v(values, "nbhd_location");
