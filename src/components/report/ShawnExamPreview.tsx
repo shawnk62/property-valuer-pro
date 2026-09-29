@@ -3,6 +3,7 @@ import { australianiseSpelling } from "@/lib/report/australianEnglish";
 import { stripLeadingHeading } from "@/lib/report/printText";
 import {
   buildClientInstructions,
+  buildSiteIdentification,
   executiveSummaryBriefText,
   section61PhysicalText,
 } from "@/lib/report/narrative";
@@ -10,11 +11,13 @@ import {
   coverLotPlan,
   formatHbuVacant,
   formatPropertyType,
+  formatSiteDimensions,
   formatUsableSiteAreaIfDifferent,
   get,
   joinValues,
   valuedInterestPhrase,
 } from "@/lib/report/schema";
+import { surveyPlanAnnexureLabel } from "@/lib/report/annexures";
 import {
   MAP_SLOTS,
   PHOTO_SLOTS,
@@ -334,7 +337,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     { id: "exam-7", label: "7.0 Risk Assessment" },
     { id: "exam-8", label: "8.0 Valuation Approach" },
     { id: "exam-9", label: "9.0 List of References" },
-    { id: "exam-10", label: "10.0 Appendices" },
+    { id: "exam-10", label: "10.0 Annexures" },
   ];
   const hasMarketParts = Boolean(
     get(v, "exam_market_australia") ||
@@ -530,7 +533,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           { label: "Local government", value: get(v, "prop_lga") },
           { label: "Registered owner", value: get(v, "prop_owner") },
           { label: "Nature of interest", value: get(v, "prop_rights") },
-          { label: "How the site was identified", value: get(v, "exam_identification") },
+          {
+            label: "How the site was identified",
+            value:
+              draft.narrative.siteIdentification?.trim() ||
+              buildSiteIdentification(v),
+          },
           { label: "Date of title search", value: get(v, "exam_title_search_date") },
         ]}
       />
@@ -542,7 +550,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         rows={[
           { label: "Area", value: siteArea },
           { label: "Estimated usable site area", value: usableSiteArea },
-          { label: "Dimensions", value: get(v, "prop_dimensions") },
+          { label: "Dimensions", value: formatSiteDimensions(v, surveyPlanAnnexureLabel(draft)) },
           { label: "Frontage", value: get(v, "prop_frontage") },
           { label: "Allotment shape", value: get(v, "prop_shape") },
           { label: "Lot position", value: get(v, "prop_lot_position") },
@@ -823,7 +831,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep>
       </Lead>
 
-      <Lead id="exam-10" title="10.0 Appendices">
+      <Lead id="exam-10" title="10.0 Annexures">
       <ol className="ml-5 list-decimal space-y-0.5 text-sm">
         {annexurePhotos.length > 0 ? <li>Subject photographs</li> : null}
         {printedSales.some((s) => s.photoUrl) ? <li>Comparable sale photographs</li> : null}
@@ -839,7 +847,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
 
       {annexurePhotos.length > 0 ? (
         <section id="exam-annex-subject" className="report-annexure report-annexure-subject mt-12">
-          <PhotoAnnexPages heading="Appendix — Subject photographs">
+          <PhotoAnnexPages heading="Annexure — Subject photographs">
             {annexurePhotos.map((photo) => (
               <figure key={photo.id} className="report-photo-figure">
                 <img
@@ -859,7 +867,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
 
       {printedSales.some((s) => s.photoUrl) ? (
         <section id="exam-annex-comps" className="report-annexure report-annexure-comps mt-12">
-          <PhotoAnnexPages heading="Appendix — Comparable sale photographs">
+          <PhotoAnnexPages heading="Annexure — Comparable sale photographs">
             {printedSales.map((s, idx) =>
               s.photoUrl ? (
                 <figure key={s.id} className="report-photo-figure">
@@ -885,7 +893,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       {mapPhotos.length > 0 ? (
         <section id="exam-annex-maps" className="report-annexure mt-12">
           <h2 className="text-left text-base font-semibold" style={{ color: TEAL }}>
-            Appendix — Maps
+            Annexure — Maps
           </h2>
           <div className="mt-6">
             {mapPhotos.map((photo) => (
@@ -924,19 +932,19 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
 
       <A4DocumentAnnex
         id="exam-annex-title"
-        heading="Appendix — Certificate of Title"
+        heading="Annexure — Certificate of Title"
         pages={titlePages}
       />
       <A4DocumentAnnex
         id="exam-annex-survey"
-        heading="Appendix — Survey Plan"
+        heading="Annexure — Survey Plan"
         pages={surveyPages}
       />
       {extraAnnexGroups.map((g) => (
         <A4DocumentAnnex
           key={g.id}
           id={`exam-annex-extra-${g.id}`}
-          heading={`Appendix — ${g.title}`}
+          heading={`Annexure — ${g.title}`}
           pages={g.pages}
         />
       ))}

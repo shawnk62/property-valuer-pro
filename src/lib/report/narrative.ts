@@ -1,7 +1,7 @@
 import { describeLandUseMix } from "@/lib/narrative/landUseMix";
 import { isCommercialType, isMixedUseCommercial, isVacantLand } from "@/lib/inspection/visibility";
 import { BOILERPLATE } from "./boilerplate";
-import { displayValue, hasValue, joinValues } from "./schema";
+import { displayValue, formatSiteDimensions, hasValue, joinValues } from "./schema";
 import type { InspectionValues, ReportNarrative } from "./types";
 import { australianiseSpelling } from "./australianEnglish";
 import { buildRiskAnalysis } from "./propertyRiskRatings";
@@ -746,7 +746,6 @@ function buildSitePhysical(values: InspectionValues): string {
   const shape = v(values, "prop_shape");
   const lotPos = v(values, "prop_lot_position");
   const topo = v(values, "topo");
-  const dims = v(values, "prop_dimensions");
   const orient = v(values, "prop_orientation");
   const siteArea = hasValue(values["prop_sitearea"])
     ? `${v(values, "prop_sitearea")}${
@@ -786,8 +785,9 @@ function buildSitePhysical(values: InspectionValues): string {
     }
   }
 
-  if (dims) {
-    parts.push(sentence(["Dimensions are recorded as", dims]));
+  const dimText = formatSiteDimensions(values);
+  if (dimText) {
+    parts.push(sentence(["Dimensions are recorded as", dimText]));
   }
   const frontage = v(values, "prop_frontage");
   if (frontage) {
@@ -841,8 +841,31 @@ function buildSitePhysical(values: InspectionValues): string {
   if (exc) {
     parts.push(sentence(["Excavations / retaining:", exc.toLowerCase()]));
   }
-
   return parts.filter(Boolean).join("\n\n");
+}
+
+export function buildSiteIdentification(values: InspectionValues): string {
+  const methods = v(values, "site_ident");
+  const notes = v(values, "site_ident_notes");
+  const extra = v(values, "exam_identification");
+  if (!methods && !notes && !extra) {
+    return "The subject allotment was identified by street address.";
+  }
+  const methodPhrase = methods
+    ? methods
+        .replace(/^street address$/i, "street address")
+        .toLowerCase()
+    : "";
+  return [
+    sentence([
+      "The subject allotment was identified",
+      methodPhrase ? `by ${methodPhrase}` : false,
+    ]),
+    notes,
+    extra && extra !== methods ? extra : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 function buildServicesAmenities(values: InspectionValues): string {
@@ -1119,6 +1142,7 @@ export function generateNarrative(
     location: buildLocation(values, opts?.locationSentence),
     neighbourhood: buildNeighbourhood(values),
     sitePhysical: buildSitePhysical(values),
+    siteIdentification: buildSiteIdentification(values),
     servicesAmenities: buildServicesAmenities(values),
     improvements:
       isVacantLand(values) || (isCommercialType(values) && !isMixedUseCommercial(values))

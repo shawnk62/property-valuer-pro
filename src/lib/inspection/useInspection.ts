@@ -39,6 +39,9 @@ function applyMirrors(values: InspectionValues): InspectionValues {
   if (asText(next["prop_type_residential"]) === vacantResOld) {
     next = { ...next, prop_type_residential: "Vacant residential land" };
   }
+  if (!Array.isArray(next["site_ident"])) {
+    next = { ...next, site_ident: ["ident_street"] };
+  }
   return applyZoningToHbuVacant(next);
 }
 

@@ -111,7 +111,7 @@ export function cadastralPhotosOnReport(photos: ReportPhoto[] | null | undefined
 
 export function isExtraAnnexPhoto(photo: ReportPhoto): boolean {
   if (photo.kind === "annex") return true;
-  return /^appendix document/i.test(photo.caption || "");
+  return /^appendix document|^annexure document/i.test(photo.caption || "");
 }
 
 export function extraAnnexPhotosOnReport(photos: ReportPhoto[] | null | undefined): ReportPhoto[] {
@@ -139,7 +139,7 @@ export function extraAnnexGroupsOnReport(
       String(groupPages[0]?.caption ?? "")
         .replace(/\s+[—-]\s+page\s+\d+\s*$/i, "")
         .trim() ||
-      `Appendix document ${i + 1}`;
+      `Annexure document ${i + 1}`;
     return { id, title, pages: groupPages };
   });
 }
@@ -236,6 +236,8 @@ export interface ReportNarrative {
   neighbourhood: string;
   /** §6.1 Physical Description of the allotment (AI or template). */
   sitePhysical: string;
+  /** How the site was identified. */
+  siteIdentification: string;
   /** §6.2 Services/Amenities (AI or template). */
   servicesAmenities: string;
   improvements: string;

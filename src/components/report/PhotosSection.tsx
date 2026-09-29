@@ -528,7 +528,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
       const existing = photos.filter((p) => p.kind === "annex" && p.annexGroup === id);
       const title =
         existing[0]?.annexTitle?.trim() ||
-        `Appendix document ${existingGroups.filter((g) => g.id !== id).length + 1}`;
+        `Annexure document ${existingGroups.filter((g) => g.id !== id).length + 1}`;
       const start = existing.length;
       if (isPdfFile(file)) {
         toast.message(`${title} — ${pages.length} page${pages.length === 1 ? "" : "s"}`);
@@ -544,7 +544,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
         });
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not attach the appendix document");
+      toast.error(err instanceof Error ? err.message : "Could not attach the annexure document");
     }
   }
 
@@ -989,9 +989,9 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
           for (const img of images) void onAnnexFile(img);
         }}
       >
-        <h3 className="text-sm font-semibold text-foreground">Additional appendix documents</h3>
+        <h3 className="text-sm font-semibold text-foreground">Additional annexure documents</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Drop another PDF or images here. Each file becomes its own A4 appendix after the Survey
+          Drop another PDF or images here. Each file becomes its own A4 annexure after the Survey
           Plan. Multi-page PDFs keep every page. Empty slot does not print.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -1000,7 +1000,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
             onClick={() => annexInputRef.current?.click()}
             className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
           >
-            Attach appendix PDF
+            Attach annexure PDF
           </button>
           <input
             ref={annexInputRef}

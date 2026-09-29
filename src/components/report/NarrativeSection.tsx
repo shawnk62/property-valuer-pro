@@ -52,6 +52,11 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           hint: "Prints under 2.0 Title and Property Details.",
         },
         {
+          key: "siteIdentification",
+          label: "How the site was identified",
+          hint: "Prints in 2.2 Title Particulars. Built from the Site identification ticks.",
+        },
+        {
           key: "highestBestUse",
           label: "3.2 Highest and Best Use",
           hint: "Prints under 3.0 Planning Controls.",
@@ -97,6 +102,11 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
       key: "sitePhysical",
       label: "6.1 Physical Description",
       hint: "Allotment shape, lot position, topography, dimensions and related site fields.",
+    },
+    {
+      key: "siteIdentification",
+      label: "How the site was identified",
+      hint: "Prints with the site description. Built from the Site identification ticks.",
     },
     {
       key: "servicesAmenities",

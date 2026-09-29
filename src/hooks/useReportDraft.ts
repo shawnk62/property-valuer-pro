@@ -26,6 +26,7 @@ function emptyNarrative(): ReportNarrative {
     location: "",
     neighbourhood: "",
     sitePhysical: "",
+    siteIdentification: "",
     servicesAmenities: "",
     improvements: "",
     accommodation: "",
@@ -57,6 +58,8 @@ function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): R
       return { location: first, neighbourhood: parts.slice(1).join("\n\n") };
     })(),
     sitePhysical: typeof raw.sitePhysical === "string" ? raw.sitePhysical : "",
+    siteIdentification:
+      typeof raw.siteIdentification === "string" ? raw.siteIdentification : "",
     servicesAmenities:
       typeof raw.servicesAmenities === "string" ? raw.servicesAmenities : "",
     improvements: typeof raw.improvements === "string" ? raw.improvements : "",

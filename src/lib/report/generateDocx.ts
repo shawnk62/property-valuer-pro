@@ -23,7 +23,7 @@ import { buildPhilRemarks, buildMurrayRemarks, buildSummaryDescription } from "@
 import { annexureById, resolveAnnexures } from "@/lib/report/annexures";
 import { parseOverlayList } from "@/lib/report/overlays";
 import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
-import { formatHbuVacant, formatPropertyType, formatUsableSiteAreaIfDifferent, get, hasValue, joinValues, labelFor, PROPERTY_PLANNING_FIELDS, PROP_TYPE_FIELDS, valuedInterestPhrase } from "@/lib/report/schema";
+import { formatHbuVacant, formatPropertyType, formatSiteDimensions, formatUsableSiteAreaIfDifferent, get, hasValue, joinValues, labelFor, PROPERTY_PLANNING_FIELDS, PROP_TYPE_FIELDS, valuedInterestPhrase } from "@/lib/report/schema";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
 
@@ -111,12 +111,16 @@ function factsTable(
 ): Table | null {
   const rows: { label: string; value: string }[] = [];
   for (const name of fields) {
-    if (!hasValue(draft.values[name])) continue;
+    const value =
+      name === "prop_dimensions"
+        ? formatSiteDimensions(draft.values)
+        : get(draft.values, name);
+    if (!value) continue;
     rows.push({
       label: (PROP_TYPE_FIELDS as readonly string[]).includes(name)
         ? "Property type"
         : labelFor(name),
-      value: get(draft.values, name),
+      value,
     });
   }
   for (const e of extra) {

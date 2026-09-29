@@ -6,6 +6,7 @@ import {
   coverLotPlan,
   formatHbuVacant,
   formatPropertyType,
+  formatSiteDimensions,
   formatUsableSiteAreaIfDifferent,
   get,
   hasValue,
@@ -32,7 +33,7 @@ import {
   isShawnExamType,
   purposeOfValuation,
 } from "@/lib/report/reportTypes";
-import { annexureById, resolveAnnexures } from "@/lib/report/annexures";
+import { annexureById, resolveAnnexures, surveyPlanAnnexureLabel } from "@/lib/report/annexures";
 import {
   buildPhilRemarks,
   buildMurrayRemarks,
@@ -41,6 +42,7 @@ import {
   executiveSummaryBriefText,
   isMurrayAssignment,
   section61PhysicalText,
+  buildSiteIdentification,
 } from "@/lib/report/narrative";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { parseOverlayList } from "@/lib/report/overlays";
@@ -625,10 +627,19 @@ function Facts({
       label: (PROP_TYPE_FIELDS as readonly string[]).includes(r.name)
         ? "Property type"
         : r.label,
-      value: r.value,
+      value:
+        r.name === "prop_dimensions"
+          ? formatSiteDimensions(values) || r.value
+          : r.value,
     })),
     ...extra.filter((r) => r.value.trim()),
   ];
+  if (fields.includes("prop_dimensions")) {
+    const dim = formatSiteDimensions(values);
+    if (dim && !rows.some((r) => /dimension/i.test(r.label))) {
+      rows.push({ label: "Dimensions", value: dim });
+    }
+  }
   if (rows.length === 0) return null;
   return (
     <table className="w-full border-collapse">
@@ -1447,7 +1458,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                     get(v, "prop_shape"),
                     get(v, "prop_lot_position"),
                     get(v, "topo"),
-                    get(v, "prop_dimensions"),
+                    formatSiteDimensions(v, surveyPlanAnnexureLabel(draft)),
                     get(v, "prop_orientation") &&
                       `Orientation ${get(v, "prop_orientation")}`,
                   ]
@@ -1455,6 +1466,12 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                     .join(". ") || "—"}
                 </Para>
               )}
+              <Prose
+                text={
+                  draft.narrative.siteIdentification?.trim() ||
+                  buildSiteIdentification(v)
+                }
+              />
               <InlineMap
                 photos={draft.photos}
                 slot="map_aerial"
@@ -1591,6 +1608,12 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
               />
             </Sub>
             <Sub title="Aerial / site plan">
+              <Prose
+                text={
+                  draft.narrative.siteIdentification?.trim() ||
+                  buildSiteIdentification(v)
+                }
+              />
               <InlineMap
                 photos={draft.photos}
                 slot="map_aerial"

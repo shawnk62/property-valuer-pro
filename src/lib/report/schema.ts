@@ -172,6 +172,26 @@ export const PROP_TYPE_FIELDS = [
   "prop_type_specialised",
 ] as const;
 
+export function irregularAllotmentShape(values: InspectionValues): boolean {
+  const shape = get(values, "prop_shape").trim();
+  if (!shape) return false;
+  return !/^(rectangular|trapezoidal)$/i.test(shape);
+}
+
+/** Printed dimensions. Irregular shapes default to the Survey Plan annexure. */
+export function formatSiteDimensions(
+  values: InspectionValues,
+  surveyAnnexureLabel?: string,
+): string {
+  const other = get(values, "prop_dimensions_other").trim();
+  if (other) return other;
+  if (irregularAllotmentShape(values)) {
+    const ref = surveyAnnexureLabel?.trim() || "the annexures";
+    return `Refer to Survey Plan in ${ref}`;
+  }
+  return get(values, "prop_dimensions").trim();
+}
+
 export function formatPropertyType(values: InspectionValues): string {
   return pick(values, [...PROP_TYPE_FIELDS])
     .map((row) => row.value)

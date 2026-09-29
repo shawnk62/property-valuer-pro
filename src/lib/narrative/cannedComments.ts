@@ -18,6 +18,7 @@ const SECTION_KEYS: NarrativeSectionKey[] = [
   "brief",
   "location",
   "sitePhysical",
+  "siteIdentification",
   "servicesAmenities",
   "improvements",
   "accommodation",

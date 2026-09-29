@@ -412,6 +412,17 @@ Murray sample pattern (use when type includes Murray):
 Typically 2–4 short sentences. Use "allotment" not "lot". Include allotment shape, lot position, topography, dimensions/orientation, site area and property type/classification when recorded.
 If adjoining-property ticks or notes are recorded (adj_props, adj_props_interface, adj_props_notes), include one short sentence on neighbouring uses and any recorded impact (height, reserve, buffer, overlooking). Do not invent adjoining uses.`,
       };
+        case "siteIdentification":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write a short paragraph on how the subject allotment was identified for a ${type} valuation report.
+
+Inspection data:
+site_ident, site_ident_notes, exam_identification and address fields from:
+${sectionAnswers(values, ["1", "2"])}
+
+Open with "The subject allotment was identified…". Use only recorded methods (street address, lot and plan, survey pegs, neighbouring known addresses, title, survey plan, cadastral map, aerial imagery, GPS, occupier confirmation). Do not invent methods. One or two sentences.`,
+      };
         case "servicesAmenities":
       return {
         system: BASE_RULES + styleGuide(type),

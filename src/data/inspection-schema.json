@@ -461,6 +461,13 @@
           "multiline": false
         },
         {
+          "name": "prop_dimensions_other",
+          "label": "Dimensions — other (manual)",
+          "type": "text",
+          "multiline": true,
+          "placeholder": "Manual dimensions wording. Used instead of the Survey Plan referral when the allotment is not rectangular or trapezoidal."
+        },
+        {
           "name": "prop_frontage",
           "label": "Frontage (m)",
           "type": "text",
@@ -483,7 +490,8 @@
             "Triangular",
             "Irregular",
             "Hatchet shaped",
-            "Fan shaped"
+            "Fan shaped",
+            "Other"
           ]
         },
         {
@@ -1143,6 +1151,26 @@
       "id": "2",
       "title": "Site",
       "fields": [
+        {
+          "name": "site_ident",
+          "label": "How the site was identified",
+          "type": "checkbox_group",
+          "items": [
+            { "id": "ident_street", "label": "Street address" },
+            { "id": "ident_rpd", "label": "Real property description (lot and plan)" },
+            { "id": "ident_title", "label": "Certificate of Title" },
+            { "id": "ident_survey_plan", "label": "Survey plan" },
+            { "id": "ident_pegs", "label": "Survey pegs / boundary marks on inspection" },
+            { "id": "ident_between", "label": "Located between properties with known addresses" },
+            { "id": "ident_occupier", "label": "Occupier or owner confirmation" },
+            { "id": "ident_cadastral", "label": "Cadastral map / mapping" },
+            { "id": "ident_aerial", "label": "Aerial imagery" },
+            { "id": "ident_gps", "label": "GPS coordinates" },
+            { "id": "ident_letterbox", "label": "House number / letterbox" },
+            { "id": "ident_other", "label": "Other" }
+          ],
+          "notes_field": "site_ident_notes"
+        },
         {
           "name": "prop_view",
           "label": "View",

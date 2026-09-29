@@ -114,3 +114,9 @@ export function annexureById(
 ): AnnexureSpec | undefined {
   return annexures.find((a) => a.id === id);
 }
+
+/** "Annexure 3" when a Survey Plan is attached; otherwise "the annexures". */
+export function surveyPlanAnnexureLabel(draft: ReportDraft): string {
+  const spec = annexureById(resolveAnnexures(draft), "survey");
+  return spec ? `Annexure ${spec.number}` : "the annexures";
+}
