@@ -179,12 +179,14 @@ function photosFromCloud(extras: ReportExtras | null | undefined): ReportPhoto[]
           kind === "photo" ||
           kind === "title" ||
           kind === "survey" ||
+          kind === "cadastral" ||
           kind === "annex"
         ) {
           return { kind: kind as ReportPhoto["kind"] };
         }
         const cap = String(p.caption ?? "");
         if (/^certificate of title/i.test(cap)) return { kind: "title" as const };
+        if (/^cadastral plan/i.test(cap)) return { kind: "cadastral" as const };
         if (/^survey plan/i.test(cap)) return { kind: "survey" as const };
         if (/^appendix document/i.test(cap)) return { kind: "annex" as const };
         return {};

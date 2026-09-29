@@ -53,10 +53,11 @@ export interface ReportPhoto {
    * When slot is null: "map" = additional labeled map/overlay tile (annex maps);
    * "title" = Certificate of Title page (annex);
    * "survey" = Survey Plan page (annex);
+   * "cadastral" = Cadastral plan page (annex, A4, before survey);
    * "annex" = additional appendix PDF/image page (A4);
    * "photo" or omitted = additional subject photograph.
    */
-  kind?: "map" | "photo" | "title" | "survey" | "annex";
+  kind?: "map" | "photo" | "title" | "survey" | "cadastral" | "annex";
   /** Groups pages from one dropped appendix PDF. */
   annexGroup?: string;
   /** Heading for that appendix document. */
@@ -97,6 +98,15 @@ export function titlePhotosOnReport(photos: ReportPhoto[] | null | undefined): R
 
 export function surveyPhotosOnReport(photos: ReportPhoto[] | null | undefined): ReportPhoto[] {
   return photosOnReport(photos).filter(isSurveyAnnexPhoto);
+}
+
+export function isCadastralAnnexPhoto(photo: ReportPhoto): boolean {
+  if (photo.kind === "cadastral") return true;
+  return /^cadastral plan/i.test(photo.caption || "");
+}
+
+export function cadastralPhotosOnReport(photos: ReportPhoto[] | null | undefined): ReportPhoto[] {
+  return photosOnReport(photos).filter(isCadastralAnnexPhoto);
 }
 
 export function isExtraAnnexPhoto(photo: ReportPhoto): boolean {

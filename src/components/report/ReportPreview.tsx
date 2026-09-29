@@ -22,7 +22,7 @@ import {
   printAdjustmentGridEnabled,
   printSalesEvidenceEnabled,
 } from "@/lib/report/adjustmentGrid";
-import { MAP_SLOTS, PHOTO_SLOTS, extraAnnexGroupsOnReport, isExtraAnnexPhoto, isMapAnnexPhoto, isSurveyAnnexPhoto, isTitleAnnexPhoto, photoIsOnReport, salesOnReport, surveyPhotosOnReport, titlePhotosOnReport, type ReportDraft } from "@/lib/report/types";
+import { MAP_SLOTS, PHOTO_SLOTS, cadastralPhotosOnReport, extraAnnexGroupsOnReport, isCadastralAnnexPhoto, isExtraAnnexPhoto, isMapAnnexPhoto, isSurveyAnnexPhoto, isTitleAnnexPhoto, photoIsOnReport, salesOnReport, surveyPhotosOnReport, titlePhotosOnReport, type ReportDraft } from "@/lib/report/types";
 import {
   getReportTypeConfig,
   isJointFamilyLawPhilType,
@@ -759,6 +759,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         !isMapAnnexPhoto(p) &&
         !isTitleAnnexPhoto(p) &&
         !isSurveyAnnexPhoto(p) &&
+        !isCadastralAnnexPhoto(p) &&
         !isExtraAnnexPhoto(p) &&
         photoIsOnReport(p),
     ),
@@ -790,6 +791,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
   const surveyAnnex = annexureById(annexures, "survey");
   const titlePages = titlePhotosOnReport(draft.photos);
   const surveyPages = surveyPhotosOnReport(draft.photos);
+  const cadastralPages = cadastralPhotosOnReport(draft.photos);
   const extraAnnexGroups = extraAnnexGroupsOnReport(draft.photos);
 
   const frontPhoto = draft.photos.find((p) => p.slot === "front" && photoIsOnReport(p));
@@ -2029,6 +2031,10 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       <A4DocumentAnnex
         heading={titleAnnex?.heading ?? "Annexure — Certificate of Title"}
         pages={titlePages}
+      />
+      <A4DocumentAnnex
+        heading="Annexure — Cadastral plan"
+        pages={cadastralPages}
       />
       <A4DocumentAnnex
         heading={surveyAnnex?.heading ?? "Annexure — Survey Plan"}

@@ -3,12 +3,13 @@ import {
   PHOTO_SLOTS,
   extraAnnexPhotosOnReport,
   photoIsOnReport,
+  cadastralPhotosOnReport,
   surveyPhotosOnReport,
   titlePhotosOnReport,
   type ReportDraft,
 } from "@/lib/report/types";
 
-export type AnnexureId = "photos" | "maps" | "placeBased" | "title" | "survey" | "extraAnnex";
+export type AnnexureId = "photos" | "maps" | "placeBased" | "title" | "cadastral" | "survey" | "extraAnnex";
 
 export interface AnnexureSpec {
   id: AnnexureId;
@@ -79,6 +80,9 @@ export function resolveAnnexures(draft: ReportDraft): AnnexureSpec[] {
   }
   if (titlePhotosOnReport(draft.photos).length > 0) {
     filled.push({ id: "title", title: "Certificate of Title" });
+  }
+  if (cadastralPhotosOnReport(draft.photos).length > 0) {
+    filled.push({ id: "cadastral", title: "Cadastral plan" });
   }
   if (surveyPhotosOnReport(draft.photos).length > 0) {
     filled.push({ id: "survey", title: "Survey Plan" });

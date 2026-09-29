@@ -18,7 +18,9 @@ import {
 import {
   MAP_SLOTS,
   PHOTO_SLOTS,
+  cadastralPhotosOnReport,
   extraAnnexGroupsOnReport,
+  isCadastralAnnexPhoto,
   isExtraAnnexPhoto,
   isMapAnnexPhoto,
   isSurveyAnnexPhoto,
@@ -187,11 +189,9 @@ function TocRows({ entries }: { entries: { id: string; label: string }[] }) {
 
 function ExamToc({
   entries,
-  references,
   annexures,
 }: {
   entries: { id: string; label: string }[];
-  references: { id: string; label: string }[];
   annexures: { id: string; label: string }[];
 }) {
   useEffect(() => {
@@ -205,12 +205,10 @@ function ExamToc({
       window.removeEventListener("beforeprint", run);
       window.removeEventListener("load", run);
     };
-  }, [entries, references, annexures]);
+  }, [entries, annexures]);
   return (
     <>
       <TocRows entries={entries} />
-      <p className="exam-toc-subhead">List of References</p>
-      <TocRows entries={references} />
       <p className="exam-toc-subhead">List of Annexures</p>
       {annexures.length > 0 ? (
         <TocRows entries={annexures} />
@@ -301,6 +299,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         !isMapAnnexPhoto(p) &&
         !isTitleAnnexPhoto(p) &&
         !isSurveyAnnexPhoto(p) &&
+        !isCadastralAnnexPhoto(p) &&
         !isExtraAnnexPhoto(p) &&
         photoIsOnReport(p),
     ),
@@ -316,6 +315,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   ] as typeof draft.photos;
   const titlePages = titlePhotosOnReport(draft.photos);
   const surveyPages = surveyPhotosOnReport(draft.photos);
+  const cadastralPages = cadastralPhotosOnReport(draft.photos);
   const extraAnnexGroups = extraAnnexGroupsOnReport(draft.photos);
   const valueWords = m.valueAmount ? amountInWords(m.valueAmount) : "";
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], " ");
@@ -389,7 +389,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <H1>Table of Contents</H1>
       <ExamToc
         entries={toc}
-        references={[{ id: "exam-9", label: "9.0 References" }]}
         annexures={[
           ...(annexurePhotos.length > 0
             ? [{ id: "exam-annex-subject", label: "Subject photographs" }]
@@ -400,6 +399,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           ...(mapPhotos.length > 0 ? [{ id: "exam-annex-maps", label: "Maps" }] : []),
           ...(titlePages.length > 0
             ? [{ id: "exam-annex-title", label: "Certificate of Title" }]
+            : []),
+          ...(cadastralPages.length > 0
+            ? [{ id: "exam-annex-cadastral", label: "Cadastral plan" }]
             : []),
           ...(surveyPages.length > 0
             ? [{ id: "exam-annex-survey", label: "Survey Plan" }]
@@ -843,6 +845,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {printedSales.some((s) => s.photoUrl) ? <li>Comparable sale photographs</li> : null}
         {mapPhotos.length > 0 ? <li>Maps</li> : null}
         {titlePages.length > 0 ? <li>Certificate of Title</li> : null}
+        {cadastralPages.length > 0 ? <li>Cadastral plan</li> : null}
         {surveyPages.length > 0 ? <li>Survey Plan</li> : null}
         {extraAnnexGroups.map((g) => (
           <li key={g.id}>{g.title}</li>
@@ -915,6 +918,11 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         id="exam-annex-title"
         heading="Appendix — Certificate of Title"
         pages={titlePages}
+      />
+      <A4DocumentAnnex
+        id="exam-annex-cadastral"
+        heading="Appendix — Cadastral plan"
+        pages={cadastralPages}
       />
       <A4DocumentAnnex
         id="exam-annex-survey"
