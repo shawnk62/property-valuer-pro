@@ -409,7 +409,8 @@ ${sectionAnswers(values, ["1", "2"])}
 
 Murray sample pattern (use when type includes Murray):
 "The subject allotment is [area], [shape] and [inside/corner], facing [orientation]. [Topography sentence]. [Boundary / flood / creek only if recorded]."
-Typically 2–4 short sentences. Use "allotment" not "lot". Include allotment shape, lot position, topography, dimensions/orientation, site area and property type/classification when recorded. Do not invent facts.`,
+Typically 2–4 short sentences. Use "allotment" not "lot". Include allotment shape, lot position, topography, dimensions/orientation, site area and property type/classification when recorded.
+If adjoining-property ticks or notes are recorded (adj_props, adj_props_interface, adj_props_notes), include one short sentence on neighbouring uses and any recorded impact (height, reserve, buffer, overlooking). Do not invent adjoining uses.`,
       };
         case "servicesAmenities":
       return {

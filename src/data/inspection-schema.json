@@ -560,6 +560,44 @@
           "multiline": false
         },
         {
+          "name": "adj_props",
+          "label": "Description and impact of adjoining properties (if relevant)",
+          "type": "checkbox_group",
+          "items": [
+            { "id": "adj_vacant", "label": "Vacant land" },
+            { "id": "adj_single_storey", "label": "Single-storey dwellings" },
+            { "id": "adj_two_storey", "label": "Two-storey dwellings" },
+            { "id": "adj_highset", "label": "High-set / elevated dwellings" },
+            { "id": "adj_multi_unit", "label": "Townhouses / units / apartments" },
+            { "id": "adj_rural_res", "label": "Rural-residential / acreage" },
+            { "id": "adj_commercial", "label": "Commercial premises" },
+            { "id": "adj_industrial", "label": "Industrial / warehouse" },
+            { "id": "adj_school", "label": "School / childcare / community use" },
+            { "id": "adj_park", "label": "Park / reserve / public open space" },
+            { "id": "adj_bushland", "label": "Bushland / conservation reserve" },
+            { "id": "adj_drainage", "label": "Drainage reserve / waterway" },
+            { "id": "adj_rural_prod", "label": "Grazing / rural production" },
+            { "id": "adj_busy_road", "label": "Busy road / transport corridor" },
+            { "id": "adj_utility", "label": "Utility infrastructure (power lines, substation)" },
+            { "id": "adj_construction", "label": "Construction / development adjoining" }
+          ],
+          "notes_field": "adj_props_notes"
+        },
+        {
+          "name": "adj_props_interface",
+          "label": "Adjoining interface / impact",
+          "type": "checkbox_group",
+          "items": [
+            { "id": "adj_if_similar", "label": "Similar height and scale" },
+            { "id": "adj_if_taller", "label": "Taller development adjoining" },
+            { "id": "adj_if_lower", "label": "Lower development adjoining" },
+            { "id": "adj_if_overlook", "label": "Overlooking / reduced privacy" },
+            { "id": "adj_if_visual_buffer", "label": "Vegetation / visual buffer" },
+            { "id": "adj_if_acoustic", "label": "Acoustic buffer" },
+            { "id": "adj_if_none", "label": "No material impact recorded" }
+          ]
+        },
+        {
           "name": "plan_overlay",
           "label": "Planning overlays affecting the subject",
           "type": "checkbox_group",
