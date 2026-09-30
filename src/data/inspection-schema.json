@@ -504,6 +504,13 @@
           ]
         },
         {
+          "name": "prop_planning_scheme",
+          "label": "Planning scheme (name, version and date)",
+          "type": "text",
+          "multiline": false,
+          "help": "e.g. Gold Coast City Plan Version 11, amended July 2024. Filled from Landchecker when present."
+        },
+        {
           "name": "prop_zoning",
           "label": "Zoning Classification",
           "type": "text",
@@ -511,9 +518,9 @@
         },
         {
           "name": "prop_zoning_desc",
-          "label": "Zoning Description",
+          "label": "Zoning precinct and purpose",
           "type": "text",
-          "multiline": false
+          "multiline": true
         },
         {
           "name": "prop_zoning_comp",

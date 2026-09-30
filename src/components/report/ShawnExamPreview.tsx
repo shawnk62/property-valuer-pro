@@ -592,7 +592,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <H2>3.1 Planning Scheme and Zoning</H2>
       <StripeTable
         rows={[
-          { label: "Planning scheme", value: get(v, "exam_planning_scheme") },
+          {
+            label: "Planning scheme",
+            value: get(v, "exam_planning_scheme") || get(v, "prop_planning_scheme"),
+          },
           { label: "Zoning", value: get(v, "prop_zoning") },
           { label: "Zoning purpose / description", value: get(v, "prop_zoning_desc") },
           { label: "Zoning compliance", value: get(v, "prop_zoning_comp") },

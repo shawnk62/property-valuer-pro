@@ -68,6 +68,10 @@ import {
 } from "@/lib/report/importSalesCma";
 import { importSalesFromCsv } from "@/lib/report/importSalesCsv";
 import {
+  mergePlanningExtract,
+  parsePlanningFromReportText,
+} from "@/lib/report/parsePlanningExtract";
+import {
   buildSaleNarrativePrompt,
   loadAutoSaleNarratives,
   saleNarrativeFingerprint,
@@ -99,7 +103,7 @@ function parseAmountInput(raw: string): number | null {
 }
 
 export function SalesSection({ controller }: { controller: ReportDraftController }) {
-  const { draft, setSales, setMeta, setPhotos, loaded } = controller;
+  const { draft, setSales, setMeta, setPhotos, setValue, loaded } = controller;
   const sales = draft.sales.map(ensureSaleAdjustments);
   const gridSales = salesOnReport(sales);
   const heldSales = salesHeldBack(sales);
@@ -1074,6 +1078,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     try {
       const heuristicExtracts = parseCmaTextHeuristic(trimmed);
       let extracts: CmaSaleExtract[] = heuristicExtracts;
+      const planningPatch = mergePlanningExtract(
+        draft.values,
+        parsePlanningFromReportText(trimmed),
+      );
+      for (const [key, value] of Object.entries(planningPatch)) {
+        setValue(key, value);
+        if (key === "prop_planning_scheme") setValue("exam_planning_scheme", value);
+      }
 
       // Cotality cards are numbered "N Sold Price $…". If the heuristic recovered
       // fewer sales than Sold Price markers, ask AI to fill the gaps (no hard cap).

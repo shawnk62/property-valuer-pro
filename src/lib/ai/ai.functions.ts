@@ -634,6 +634,7 @@ Ignore sales history, nearby permits lists, school lists, and terms-and-conditio
       "prop_areaunit",
       "prop_dimensions",
       "prop_orientation",
+      "prop_planning_scheme",
       "prop_zoning",
       "prop_zoning_desc",
       "prop_flood",
@@ -654,8 +655,9 @@ Landchecker "Details" page (must capture when present):
 - LAND SIZE → prop_sitearea = numeric only (e.g. "1915" from "1,915m² Approx"); prop_areaunit = "m2" or "ha"
 - ORIENTATION → prop_orientation (e.g. "East")
 - FRONTAGE → include in prop_dimensions as "Frontage 26.87m" (strip "Approx")
-- ZONES → prop_zoning = the zone title as written (e.g. "Low Density Residential")
-- ZONES purpose paragraph on the Zones page ("The purpose of the Low density residential zone…") → prop_zoning_desc (full paragraph when present; else same as prop_zoning)
+- PLANNING SCHEME / CITY PLAN name, version number and amendment or commencement date → prop_planning_scheme (e.g. "Gold Coast City Plan Version 11, amended July 2024"). Combine name + version + date on one line. Do not invent a version.
+- ZONES / zoning precinct → prop_zoning = the zone title as written (e.g. "Low Density Residential")
+- ZONES purpose paragraph on the Zones page ("The purpose of the Low density residential zone…") → prop_zoning_desc (full purpose paragraph when present)
 - OVERLAYS list → prop_adverse_site as a concise semicolon-separated list of each overlay name that affects the subject (e.g. "Caloundra Obstacle Limitation Surface Area; Caloundra Obstacle Limitation Surface Contour; Land Above 5m Ahd And Below 20m Ahd; Moderate Hazard Area")
 - LOT/PLAN → prop_lotplan and prop_legal (e.g. "Lot 7 RP85297")
 - PropTrack HOUSE bed/bath/car icons → imp_beds, imp_baths (numbers only, e.g. "3", "1"). Ignore car count if no field for it.

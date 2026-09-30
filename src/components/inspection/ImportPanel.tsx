@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { extractPropertyData } from "@/lib/ai/ai.functions";
 import { extractTextFromPdf } from "@/lib/report/extractPdfText";
+import { parsePlanningFromReportText } from "@/lib/report/parsePlanningExtract";
 import { isAiConfigured, loadAiSettings } from "@/lib/ai/settings";
 import { labelForField } from "@/lib/inspection/schema";
 import type { InspectionValues } from "@/lib/inspection/types";
@@ -33,6 +34,7 @@ const TARGET_FIELDS = [
   "prop_areaunit",
   "prop_dimensions",
   "prop_orientation",
+  "prop_planning_scheme",
   "prop_zoning",
   "prop_zoning_desc",
   "prop_flood",
@@ -66,6 +68,10 @@ const FIELD_ALIASES: Record<string, (typeof TARGET_FIELDS)[number]> = {
   zone: "prop_zoning",
   zone_code: "prop_zoning",
   prop_zones: "prop_zoning",
+  planning_scheme: "prop_planning_scheme",
+  prop_plan_scheme: "prop_planning_scheme",
+  exam_planning_scheme: "prop_planning_scheme",
+  city_plan: "prop_planning_scheme",
   zoning_classification: "prop_zoning",
   zoning_description: "prop_zoning_desc",
   zone_description: "prop_zoning_desc",
@@ -345,6 +351,15 @@ function parseLandcheckerText(raw: string): Record<string, string> {
     if (m?.[0]) out.prop_zoning_desc = m[0].trim().slice(0, 4000);
   }
 
+  const planning = parsePlanningFromReportText(text);
+  if (planning.prop_planning_scheme && !out.prop_planning_scheme) {
+    out.prop_planning_scheme = planning.prop_planning_scheme;
+  }
+  if (planning.prop_zoning && !out.prop_zoning) out.prop_zoning = planning.prop_zoning;
+  if (planning.prop_zoning_desc && !out.prop_zoning_desc) {
+    out.prop_zoning_desc = planning.prop_zoning_desc;
+  }
+
   return out;
 }
 
@@ -430,6 +445,17 @@ export function ImportPanel({ values, onApply }: ImportPanelProps) {
             if (!patch[k] && v) patch[k] = v;
           }
         }
+        const planning = parsePlanningFromReportText(pdfText);
+        if (planning.prop_planning_scheme && !patch.prop_planning_scheme) {
+          patch.prop_planning_scheme = planning.prop_planning_scheme;
+        }
+        if (planning.prop_zoning && !patch.prop_zoning) patch.prop_zoning = planning.prop_zoning;
+        if (planning.prop_zoning_desc && !patch.prop_zoning_desc) {
+          patch.prop_zoning_desc = planning.prop_zoning_desc;
+        }
+      }
+      if (patch.prop_planning_scheme) {
+        patch.exam_planning_scheme = patch.prop_planning_scheme;
       }
 
       setCandidates(Object.keys(patch).length > 0 ? patch : null);
