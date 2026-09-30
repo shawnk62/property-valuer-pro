@@ -29,6 +29,14 @@ function afterLabel(text: string, labels: string[]): string | null {
   return null;
 }
 
+function looksLikeSchemeName(s: string): boolean {
+  if (s.length < 10) return false;
+  if (/superseded|of non-?\s*$|;\s*-/i.test(s)) return false;
+  return /(city plan|planning scheme|noosa plan|cairnsplan|\bversion\b|\bv\d+\b)/i.test(
+    s,
+  );
+}
+
 function composeSchemeName(text: string): string | undefined {
   const named =
     afterLabel(text, [
@@ -39,10 +47,11 @@ function composeSchemeName(text: string): string | undefined {
       "PLANNING INSTRUMENT",
     ]) ||
     text.match(
-      /((?:Gold Coast City Plan|Sunshine Coast Planning Scheme|Brisbane City Plan|Moreton Bay Planning Scheme|Logan Planning Scheme|Ipswich Planning Scheme|Redland City Plan|Toowoomba Regional Planning Scheme|Scenic Rim Planning Scheme|Noosa Plan|CairnsPlan|Townsville City Plan|Mackay Region Planning Scheme)[^\n]{0,80})/i,
+      /((?:Gold Coast City Plan|City of Gold Coast|Sunshine Coast Planning Scheme|Brisbane City Plan|Moreton Bay Planning Scheme|Logan Planning Scheme|Ipswich Planning Scheme|Redland City Plan|Toowoomba Regional Planning Scheme|Scenic Rim Planning Scheme|Noosa Plan|CairnsPlan|Townsville City Plan|Mackay Region Planning Scheme)[^\n]{0,80})/i,
     )?.[1];
   if (!named) return undefined;
   let scheme = cleanLine(named.replace(/\s*[:]\s*$/, ""));
+  if (!looksLikeSchemeName(scheme)) return undefined;
   const version =
     afterLabel(text, ["VERSION", "Version"]) ||
     text.match(/\bVersion\s+([0-9]+(?:\.[0-9]+)*)\b/i)?.[0];
@@ -89,6 +98,17 @@ export function parsePlanningFromReportText(raw: string): PlanningExtract {
   const purpose = zonePurpose(text);
   if (purpose) out.prop_zoning_desc = purpose;
   return out;
+}
+
+/** Inspection-form field wins. Ignore leftover extract fragments. */
+export function planningSchemeDisplay(values: Record<string, unknown>): string {
+  const form = String(values.prop_planning_scheme ?? "").trim();
+  const exam = String(values.exam_planning_scheme ?? "").trim();
+  const junk = (s: string) =>
+    s.length < 10 || /superseded|of non-?\s*$|;\s*-/i.test(s);
+  if (form && !junk(form)) return form;
+  if (exam && !junk(exam)) return exam;
+  return form || "";
 }
 
 export function mergePlanningExtract(

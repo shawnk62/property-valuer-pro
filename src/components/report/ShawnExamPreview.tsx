@@ -43,6 +43,7 @@ import {
   printSalesEvidenceEnabled,
 } from "@/lib/report/adjustmentGrid";
 import { purposeOfValuation } from "@/lib/report/reportTypes";
+import { planningSchemeDisplay } from "@/lib/report/parsePlanningExtract";
 import { fillExamTocPages } from "@/lib/report/tocPages";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { buildRiskAnalysis } from "@/lib/report/propertyRiskRatings";
@@ -603,7 +604,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         rows={[
           {
             label: "Planning scheme",
-            value: get(v, "exam_planning_scheme") || get(v, "prop_planning_scheme"),
+            value: planningSchemeDisplay(v),
           },
           { label: "Zoning", value: get(v, "prop_zoning") },
           { label: "Zoning purpose / description", value: get(v, "prop_zoning_desc") },

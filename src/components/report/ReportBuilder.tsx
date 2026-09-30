@@ -18,6 +18,9 @@ import { inspectionStore } from "@/lib/inspection/storage";
 import { isAppliedSignature, SignaturePad } from "@/components/SignaturePad";
 import { get } from "@/lib/report/schema";
 import { fillExamTocPages } from "@/lib/report/tocPages";
+import { isShawnReportAssignment } from "@/lib/narrative/neighbourhoodAssist";
+import { SHAWN_EXAM_STYLE } from "@/lib/report/shawnExamStyle";
+import { getReportTypeConfig, isShawnExamType } from "@/lib/report/reportTypes";
 
 const TABS = [
   { id: "subject", label: "Subject & purpose" },
@@ -167,31 +170,42 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
         ) : null}
       </div>
       <header className="no-print sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-3 sm:px-6">
-          <img
-            src="/ppv-logo.jpeg"
-            alt="Peterson Property Valuations"
-            className="h-10 w-auto object-contain"
-          />
+        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
+          {isShawnReportAssignment(String(draft.values["prop_assignment"] ?? "")) ||
+          isShawnExamType(
+            getReportTypeConfig(String(draft.values["prop_assignment"] ?? "")).id,
+          ) ? (
+            <img
+              src={SHAWN_EXAM_STYLE.logoSrc}
+              alt="Kelly & Company"
+              className="h-10 w-auto shrink-0 object-contain"
+            />
+          ) : (
+            <img
+              src="/ppv-logo.jpeg"
+              alt="Peterson Property Valuations"
+              className="h-10 w-auto shrink-0 object-contain"
+            />
+          )}
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+            <nav className="flex flex-wrap items-center gap-x-4 gap-y-0.5 text-sm">
               <Link
                 to="/reports"
-                className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                className="whitespace-nowrap text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
               >
                 &larr; Report workspace
               </Link>
               <Link
                 to="/inspect/$id"
                 params={{ id: inspectionId }}
-                className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                className="whitespace-nowrap text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
               >
                 Inspection form
               </Link>
-            </div>
+            </nav>
             <h1 className="truncate text-lg font-semibold text-foreground">{heading}</h1>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
             <span className="text-sm text-muted-foreground">
               {dirty
                 ? "Unsaved changes"
