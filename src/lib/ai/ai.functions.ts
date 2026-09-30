@@ -336,22 +336,59 @@ export const searchMarketFacts = createServerFn({ method: "POST" })
     const scalePrompt =
       data.scale === "australia"
         ? `Search the public web for current Australian residential property market commentary suitable for a valuation report.
-Cover: national dwelling values and recent movement, credit / interest-rate conditions, housing supply and demand, and any official or widely cited outlook.
+Collect sourced notes on, where available:
+- macro conditions: interest rates, credit / finance availability, inflation or other significant economic matters
+- national supply and demand (buyers' or sellers' market)
+- condition of the residential market versus the previous 12–24 months
+- buyer incentives or grants that affect demand (for example first-home buyer settings)
+- buyer profile at national level if a source states it (owner-occupier, investor, first-home buyer)
+- main national market drivers
+- any major environmental event (flood, cyclone, bushfire) cited as affecting the housing market
+- mortgagee or distressed-sale activity if a reputable source comments
 Prefer RBA, ABS, CoreLogic, PropTrack, Treasury and major bank research.`
         : data.scale === "state"
           ? `Search the public web for current ${state} residential property market commentary suitable for a valuation report.
-Cover: state dwelling values and recent movement, supply, migration or population effects on housing, and any official or widely cited outlook.
+Collect sourced notes on, where available:
+- state economic and housing-credit conditions
+- supply and demand / rate of sales
+- state market condition versus the previous 12–24 months
+- incentives or grants operating in the state
+- buyer profile if stated
+- state-level market drivers
+- environmental events cited as affecting the ${state} market
+- mortgagee-sale commentary if published
 Prefer Queensland Government, QGSO, CoreLogic state pages and major bank state reports.`
           : data.scale === "region"
             ? `Search the public web for current residential property market commentary for the region around ${place}.
-Cover: local or city-region dwelling values and recent movement, supply of similar land or dwellings, demand drivers, and any official or widely cited local outlook.
-Prefer council, CoreLogic suburb/city pages and state government regional notes.`
+Collect sourced notes on, where available:
+- regional supply and demand and rate of sales
+- market condition versus the previous 12–24 months
+- competing existing or planned estates in the region
+- buyer profile and main regional drivers (employment, transport, affordability)
+- price range of similar property in the region
+- volume of similar property advertised
+- incentives being offered
+- environmental events affecting regional demand
+- mortgagee-sale activity if reported
+Prefer council, CoreLogic city/region pages and state government regional notes.`
             : `Search the public web for current residential property market commentary for the suburb or immediate locality of ${place}${
                 data.address ? ` (near ${data.address})` : ""
               }.
-Cover: suburb or estate-level values and recent movement, days on market, supply of similar lots or dwellings, buyer demand, and any cited local price range.
-Prefer CoreLogic / PropTrack suburb pages, council and reputable local market notes.
-Do not write a physical locality description (character, amenities, transport distances) unless a market source uses it as a demand driver.`;
+Collect sourced notes on, where available:
+- local supply and demand and rate of sales in the suburb or named estate
+- market condition versus the previous 12–24 months
+- incentives (vendor, builder or government)
+- competing existing or planned estates nearby
+- stage and number of stages and expected completion of the subject estate if named
+- buyer profile in this segment
+- local market drivers (affordability, employment, transport)
+- environmental issues affecting local marketability
+- market price range of similar property
+- volume of similar property on the market
+- mortgagee sales if reported
+- what typical buyers in this locality are said to consider
+Prefer CoreLogic / PropTrack suburb pages, council, developer and reputable local market notes.
+Do not write a physical amenity tour. Estate names, stages and competing estates belong here when they affect the market.`;
 
     const prompt = `${scalePrompt}
 

@@ -439,15 +439,14 @@ Rules:
 ${extras?.locationContext?.trim() || "ACCEPTED FACTS: none."}
 
 Rules:
-- Synthesise ACCEPTED FACTS into connected professional paragraphs. Do not copy the list sentence-by-sentence.
-- When two or more sources give different figures for the same item (growth rate, median, days on market, clearance, yield, volume), cite ONE range that covers those figures. Example: if sources report 3.2%, 4% and 5.1%, write "about 3% to 5%" (or the actual low–high of the accepted figures). Do not list each source's statistic separately.
-- Same treatment for dollar values and dates that describe the same series.
-- You may name the type of sources in general terms (for example "major data providers") but do not stack rival percentages in one paragraph.
-- Include each distinct topic from the accepted facts. Merge duplicates and conflicting measures into ranges as above.
-- Do not invent rates, percentages, dollar movements or dates outside the accepted facts.
+- Synthesise ACCEPTED FACTS into connected professional paragraphs. Comprehensive, not lengthy. Do not copy the list sentence-by-sentence.
+- Cover every distinct accepted topic. Typical topics, only when present in the accepted facts: macro or micro economic conditions (interest rates, finance availability); supply and demand; state of this class of market versus earlier conditions; incentives; competing or planned estates; estate stages and expected completion; buyer profile; market drivers; environmental events affecting the market; local price range; volume of similar property on the market; mortgagee-sale activity; what typical buyers consider.
+- If an accepted fact is an agent's or developer's observation, attribute it as advice received, do not present it as the valuer's unaided opinion.
+- When two or more sources give different figures for the same item, cite ONE range from the lowest to the highest accepted figure. Do not list each source's statistic separately.
+- Do not invent rates, incentives, estate stages, mortgagee activity or buyer profiles that are not in the accepted facts.
 - Do not describe the subject allotment, overlays, or comparable sales.
-- Do not write the 5.2 locality / estate / amenity description here.
-- Two to four paragraphs when enough facts exist. Australian spelling.
+- Do not write the 5.2 physical locality / amenity tour here.
+- Two to five paragraphs when enough facts exist. Australian spelling.
 - No marketing language.`,
       };
     }
