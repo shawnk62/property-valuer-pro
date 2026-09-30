@@ -860,6 +860,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             ? ` $${formatCurrencyDisplay(m.valueAmount)}${valueWords ? ` (${valueWords})` : ""}.`
             : " [value in numbers and words]."}
         </Para>
+        <div className="mt-4">
+          <ExamSignature draft={draft} />
+        </div>
       </section>
 
       <div className="mt-4">
