@@ -170,7 +170,7 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
         ) : null}
       </div>
       <header className="no-print sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
+        <div className="mx-auto grid max-w-7xl grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
           {isShawnReportAssignment(String(draft.values["prop_assignment"] ?? "")) ||
           isShawnExamType(
             getReportTypeConfig(String(draft.values["prop_assignment"] ?? "")).id,
@@ -178,41 +178,41 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
             <img
               src={SHAWN_EXAM_STYLE.logoSrc}
               alt="Kelly & Company"
-              className="h-10 w-auto shrink-0 object-contain"
+              className="h-8 w-auto max-w-[11rem] object-contain object-left"
             />
           ) : (
             <img
               src="/ppv-logo.jpeg"
               alt="Peterson Property Valuations"
-              className="h-10 w-auto shrink-0 object-contain"
+              className="h-8 w-auto max-w-[7rem] object-contain object-left"
             />
           )}
-          <div className="min-w-0 flex-1">
-            <nav className="flex flex-wrap items-center gap-x-4 gap-y-0.5 text-sm">
+          <div className="min-w-0">
+            <nav className="flex items-center gap-x-4 text-sm">
               <Link
                 to="/reports"
-                className="whitespace-nowrap text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                className="shrink-0 whitespace-nowrap text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
               >
                 &larr; Report workspace
               </Link>
               <Link
                 to="/inspect/$id"
                 params={{ id: inspectionId }}
-                className="whitespace-nowrap text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                className="shrink-0 whitespace-nowrap text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
               >
                 Inspection form
               </Link>
             </nav>
             <h1 className="truncate text-lg font-semibold text-foreground">{heading}</h1>
           </div>
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-            <span className="text-sm text-muted-foreground">
+          <div className="flex items-center justify-end gap-2">
+            <span className="hidden max-w-[13rem] truncate text-sm text-muted-foreground xl:inline">
               {dirty
                 ? "Unsaved changes"
                 : savedAt
                   ? `Saved ${savedAt}`
                   : draft.photos.length || draft.sales.length || Object.values(draft.narrative).some((s) => String(s || "").trim())
-                    ? "Saved report — edit and re-export anytime"
+                    ? "Saved report"
                     : "New draft"}
             </span>
             <button
