@@ -5146,6 +5146,16 @@
           "label": "QLD Valuer Registration No.",
           "type": "text",
           "multiline": false
+        },
+        {
+          "name": "sign_student",
+          "label": "Student Valuer",
+          "type": "select",
+          "options": [
+            "No",
+            "Yes"
+          ],
+          "help": "Select Yes when the inspection or report is prepared by a student valuer."
         }
       ]
     }
