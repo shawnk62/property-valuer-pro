@@ -18,7 +18,7 @@ export const SHAWN_EXAM_STYLE = {
   muted: "#6e867e",
   ink: "#324758",
   page: "#FFFFFF",
-  logoSrc: "/kelly-company-logo.png?v=2",
+  logoSrc: "/kelly-company-logo.png?v=3",
   firmName: "KELLY & COMPANY",
   firmTrade: "REAL ESTATE VALUERS",
 } as const;
