@@ -955,6 +955,13 @@
     page-break-inside: auto !important;
   }
 
+  .report-section-references {
+    break-before: page !important;
+    page-break-before: always !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
   .report-section-sales > .report-h2 {
     break-after: avoid !important;
     page-break-after: avoid !important;

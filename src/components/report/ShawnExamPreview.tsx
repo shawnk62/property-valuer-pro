@@ -887,6 +887,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </div>
       ) : null}
 
+      <section className="report-section report-section-references">
       <Lead id="exam-9" title="9.0 References">
       <Keep>
       {narrativePrints(m, "references") ? (
@@ -911,6 +912,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       ) : null}
       </Keep>
       </Lead>
+      </section>
 
       <Lead id="exam-10" title="10.0 Annexures">
       <ol className="ml-5 list-decimal space-y-0.5 text-sm">
