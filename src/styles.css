@@ -540,6 +540,18 @@
     display: block !important;
   }
 
+  .report-type-exam .exam-cover-signature .report-signature {
+    margin-top: 4pt !important;
+  }
+  .report-type-exam .exam-cover-signature .report-sig-stage {
+    height: 2.25rem !important;
+  }
+  .report-type-exam .exam-cover-signature .report-sig-image {
+    height: 2.25rem !important;
+    bottom: 0 !important;
+    object-position: left bottom !important;
+  }
+
   main {
     padding: 0 !important;
     margin: 0 !important;
@@ -1421,6 +1433,20 @@
   padding: 0 !important;
   font-size: 9.5pt !important;
   line-height: 1.35 !important;
+}
+.report-type-exam .exam-cover-signature {
+  margin-top: 0.55rem;
+}
+.report-type-exam .exam-cover-signature .report-signature {
+  margin-top: 0;
+}
+.report-type-exam .exam-cover-signature .report-sig-stage {
+  height: 2.25rem;
+}
+.report-type-exam .exam-cover-signature .report-sig-image {
+  height: 2.25rem;
+  bottom: 0;
+  object-position: left bottom;
 }
 .report-type-exam .exam-cover-meta {
   margin: 0.2rem 0;
