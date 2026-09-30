@@ -72,6 +72,8 @@ async function loadPhotos(inspectionId: string): Promise<ReportPhoto[]> {
         ...(raw.storagePath ? { storagePath: String(raw.storagePath) } : {}),
         ...(raw.capturedAt ? { capturedAt: String(raw.capturedAt) } : {}),
         ...(raw.localBlobKey ? { localBlobKey: String(raw.localBlobKey) } : {}),
+        ...(raw.kind ? { kind: raw.kind as ReportPhoto["kind"] } : {}),
+        ...(raw.omitFromReport ? { omitFromReport: true } : {}),
       });
     }
     const merged = [...byId.values()];
@@ -101,6 +103,8 @@ async function persistPhotos(inspectionId: string, photos: ReportPhoto[]): Promi
       ...(p.storagePath ? { storagePath: p.storagePath } : {}),
       ...(p.capturedAt ? { capturedAt: p.capturedAt } : {}),
       ...(p.localBlobKey ? { localBlobKey: p.localBlobKey } : {}),
+      ...(p.kind ? { kind: p.kind } : {}),
+      ...(p.omitFromReport ? { omitFromReport: true } : {}),
     })),
   });
 }

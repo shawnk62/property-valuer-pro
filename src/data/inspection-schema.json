@@ -375,6 +375,12 @@
           "multiline": false
         },
         {
+          "name": "prop_title_search_date",
+          "label": "Date of title search",
+          "type": "date",
+          "help": "Filled from a Titles Queensland Current Title Search."
+        },
+        {
           "name": "prop_legal",
           "label": "Legal Description",
           "type": "text",

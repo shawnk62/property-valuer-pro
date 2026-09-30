@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Camera, Check, ChevronLeft, Save } from "lucide-
 import { toast } from "sonner";
 import { FieldRenderer } from "@/components/inspection/fields/FieldRenderer";
 import { ImportPanel } from "@/components/inspection/ImportPanel";
+import { TitleSearchImport } from "@/components/inspection/TitleSearchImport";
 import { InspectionPhotosPanel } from "@/components/inspection/InspectionPhotosPanel";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -267,6 +268,13 @@ function InspectionWizard() {
             {step === 0 ? (
               <div className="mb-6">
                 <ImportPanel values={values} onApply={(patch) => { for (const [k, v] of Object.entries(patch)) setValue(k, v); }} />
+                <TitleSearchImport
+                  inspectionId={id}
+                  values={values}
+                  onApply={(patch) => {
+                    for (const [k, v] of Object.entries(patch)) setValue(k, v);
+                  }}
+                />
               </div>
             ) : null}
 

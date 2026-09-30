@@ -318,6 +318,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     ),
   ] as typeof draft.photos;
   const titlePages = titlePhotosOnReport(draft.photos);
+  const titleAnnexLabel = titlePages.some((p) => /title search/i.test(p.caption || ""))
+    ? "Current Title Search"
+    : "Certificate of Title";
   const surveyPages = surveyPhotosOnReport(draft.photos);
   const cadastralPages = cadastralPhotosOnReport(draft.photos);
   const extraAnnexGroups = extraAnnexGroupsOnReport(draft.photos);
@@ -410,7 +413,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             ? [{ id: "exam-annex-cadastral", label: "Cadastral plan" }]
             : []),
           ...(titlePages.length > 0
-            ? [{ id: "exam-annex-title", label: "Certificate of Title" }]
+            ? [{ id: "exam-annex-title", label: titleAnnexLabel }]
             : []),
           ...(surveyPages.length > 0
             ? [{ id: "exam-annex-survey", label: "Survey Plan" }]
@@ -550,7 +553,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
               draft.narrative.siteIdentification?.trim() ||
               buildSiteIdentification(v),
           },
-          { label: "Date of title search", value: get(v, "exam_title_search_date") },
+          {
+            label: "Date of title search",
+            value: get(v, "exam_title_search_date") || get(v, "prop_title_search_date"),
+          },
           {
             label: "Legal access",
             value: narrativePrints(m, "legalAccess")
@@ -582,7 +588,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
               : "",
           },
           { label: "Utilities", value: servicesText },
-          { label: "Easements, encumbrances and restrictions", value: get(v, "prop_rights") },
+          {
+            label: "Easements, encumbrances and restrictions",
+            value: get(v, "enc_notes") || get(v, "enc") || "",
+          },
         ]}
       />
       </Keep>
@@ -901,7 +910,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {printedSales.some((s) => s.photoUrl) ? <li>Comparable sale photographs</li> : null}
         {mapPhotos.length > 0 ? <li>Maps</li> : null}
         {cadastralPages.length > 0 ? <li>Cadastral plan</li> : null}
-        {titlePages.length > 0 ? <li>Certificate of Title</li> : null}
+        {titlePages.length > 0 ? <li>{titleAnnexLabel}</li> : null}
         {surveyPages.length > 0 ? <li>Survey Plan</li> : null}
         {extraAnnexGroups.map((g) => (
           <li key={g.id}>{g.title}</li>
@@ -996,7 +1005,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
 
       <A4DocumentAnnex
         id="exam-annex-title"
-        heading="Annexure — Certificate of Title"
+        heading={`Annexure — ${titleAnnexLabel}`}
         pages={titlePages}
       />
       <A4DocumentAnnex
