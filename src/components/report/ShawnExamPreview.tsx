@@ -46,7 +46,7 @@ import { purposeOfValuation } from "@/lib/report/reportTypes";
 import { planningSchemeDisplay } from "@/lib/report/parsePlanningExtract";
 import { fillExamTocPages } from "@/lib/report/tocPages";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
-import { buildRiskAnalysis } from "@/lib/report/propertyRiskRatings";
+import { riskCommentsForPrint } from "@/lib/report/propertyRiskRatings";
 import { RiskRatingsPrintTable } from "@/components/report/RiskRatingsPrintTable";
 import { SHAWN_EXAM_STYLE as EXAM } from "@/lib/report/shawnExamStyle";
 
@@ -767,10 +767,11 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <div className="mt-4">
         <RiskAnalysisProse
           text={
-            draft.narrative.riskAnalysis?.trim() ||
-            buildRiskAnalysis(v) ||
-            get(v, "exam_risk_commentary") ||
-            ""
+            riskCommentsForPrint(
+              v,
+              draft.narrative.riskAnalysis,
+              draft.reportMeta.manualNarrative?.riskAnalysis === true,
+            ) || get(v, "exam_risk_commentary")
           }
         />
       </div>

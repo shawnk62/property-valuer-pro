@@ -639,7 +639,7 @@ Rules:
 - Name the rating number and label (Low through High) in each paragraph.
 - Explain the rating from the official criteria and only recorded facts (flood, overlays, title, condition, vacant land).
 - Do not invent market statistics or overlay names.
-- If a heading has no score, say that no rating was selected.
+- Omit a heading when no score and no comment are recorded. Do not write "no rating was selected".
 - If vacant land is recorded, treat Improvements as vacant-land risk, not a dwelling.
 - Do not write percentages.`,
       };

@@ -415,3 +415,16 @@ export function buildRiskAnalysis(values: InspectionValues): string {
   }
   return parts.join("\n\n");
 }
+
+/** Printed 7.1 comments. Live scores/notes win over a stale AI dump. */
+export function riskCommentsForPrint(
+  values: InspectionValues,
+  stored?: string | null,
+  manual?: boolean,
+): string {
+  const live = buildRiskAnalysis(values);
+  const text = String(stored ?? "").trim();
+  const stale = /no rating was selected/i.test(text);
+  if (manual && text && !stale) return text;
+  return live;
+}
