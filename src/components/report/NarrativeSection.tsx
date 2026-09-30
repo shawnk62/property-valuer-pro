@@ -81,6 +81,16 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           hint: "Prints in 2.2 Title Particulars. Built from the Site identification ticks.",
         },
         {
+          key: "legalAccess",
+          label: "2.2 Legal access",
+          hint: "Prints under 2.2 Title Particulars. How and where the allotment gains vehicular access, including any easement.",
+        },
+        {
+          key: "physicalAccess",
+          label: "2.3 Physical ingress / egress",
+          hint: "Prints under 2.3 only if ticked. Defaults off except industrial and commercial.",
+        },
+        {
           key: "servicesAmenities",
           label: "2.3 Particulars of Land — Utilities",
           hint: "Prints in 2.3 Particulars of Land.",
@@ -530,6 +540,8 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         "disclaimer",
         "assumptions",
         "valuationApproach",
+        "legalAccess",
+        "physicalAccess",
       ]);
       return;
     }
@@ -1149,7 +1161,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <input
                   type="checkbox"
-                  checked={narrativePrints(draft.reportMeta, block.key)}
+                  checked={narrativePrints(draft.reportMeta, block.key, draft.values)}
                   onChange={(e) =>
                     setMeta({
                       printNarrative: {

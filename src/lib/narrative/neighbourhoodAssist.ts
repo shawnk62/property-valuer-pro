@@ -1,4 +1,5 @@
-import type { ReportMeta, ReportNarrative } from "@/lib/report/types";
+import { isCommercialType, isIndustrialType } from "@/lib/inspection/visibility";
+import type { InspectionValues, ReportMeta, ReportNarrative } from "@/lib/report/types";
 
 /** Shawn reports collect suburb, amenity, transport and estate notes before writing locality. */
 
@@ -90,10 +91,15 @@ export function neighbourhoodAssistEnabled(assignment: string | null | undefined
 export function narrativePrints(
   meta: ReportMeta | null | undefined,
   key: keyof ReportNarrative,
+  values?: InspectionValues,
 ): boolean {
   const map = meta?.printNarrative;
-  if (!map || map[key] === undefined) return true;
-  return map[key] !== false;
+  if (map && map[key] !== undefined) return map[key] !== false;
+  if (key === "physicalAccess") {
+    if (!values) return false;
+    return isCommercialType(values) || isIndustrialType(values);
+  }
+  return true;
 }
 
 export function newClaimId(): string {

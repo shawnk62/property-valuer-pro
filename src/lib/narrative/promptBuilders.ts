@@ -500,6 +500,26 @@ ${sectionAnswers(values, ["1", "2"])}
 
 Open with "The subject allotment was identified…". Use only recorded methods (street address, lot and plan, survey pegs, neighbouring known addresses, title, survey plan, cadastral map, aerial imagery, GPS, occupier confirmation). Do not invent methods. One or two sentences.`,
       };
+    case "legalAccess":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write the legal access paragraph for section 2.2 of a ${type} valuation report.
+
+Inspection data (legal_access, legal_access_from, legal_access_notes, encumbrances, address):
+${sectionAnswers(values, ["1", "2"])}
+
+State how and where the allotment gains vehicular access. If a right of way easement or access handle is recorded, say so. Do not describe turning circles or pedestrian ease. One or two sentences. Do not invent an easement.`,
+      };
+    case "physicalAccess":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write the physical ingress/egress paragraph for section 2.3 of a ${type} valuation report.
+
+Inspection data (physical_access, physical_access_notes, vehicular access):
+${sectionAnswers(values, ["2", "2C", "5"])}
+
+Comment only on recorded vehicle or pedestrian ease of access. Particularly relevant to industrial and commercial property. If nothing relevant is recorded, return an empty string. Do not invent loading docks or B-double access.`,
+      };
         case "servicesAmenities":
       return {
         system: BASE_RULES + styleGuide(type),

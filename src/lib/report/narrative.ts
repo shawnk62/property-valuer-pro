@@ -1,5 +1,10 @@
 import { describeLandUseMix } from "@/lib/narrative/landUseMix";
-import { isCommercialType, isMixedUseCommercial, isVacantLand } from "@/lib/inspection/visibility";
+import {
+  isCommercialType,
+  isIndustrialType,
+  isMixedUseCommercial,
+  isVacantLand,
+} from "@/lib/inspection/visibility";
 import { BOILERPLATE } from "./boilerplate";
 import { displayValue, formatSiteDimensions, hasValue, joinValues } from "./schema";
 import type { InspectionValues, ReportNarrative } from "./types";
@@ -912,6 +917,66 @@ export function buildSiteIdentification(values: InspectionValues): string {
     .join(" ");
 }
 
+export function buildLegalAccess(values: InspectionValues): string {
+  const methods = v(values, "legal_access");
+  const from =
+    v(values, "legal_access_from") ||
+    v(values, "prop_address") ||
+    "the street frontage";
+  const notes = v(values, "legal_access_notes");
+  const enc = v(values, "enc");
+  const encNotes = v(values, "enc_notes");
+  const easement =
+    /right of way|easement/i.test(`${methods} ${enc} ${notes} ${encNotes}`);
+  const handle = /handle|hatchet|battle-axe|battle axe/i.test(`${methods} ${enc}`);
+  if (!methods && !notes && !easement && !handle) {
+    return sentence([
+      "Vehicular access to the subject allotment is obtained from",
+      from,
+      "via dedicated road frontage",
+    ]);
+  }
+  const via = methods
+    ? methods.replace(/^dedicated road frontage \/ street access$/i, "dedicated road frontage")
+    : handle
+      ? "an access handle"
+      : "the recorded access arrangement";
+  return [
+    sentence(["Vehicular access to the subject allotment is obtained from", from, "via", via]),
+    easement
+      ? sentence([
+          "Access is also available by right of way easement through the adjoining property",
+        ])
+      : "",
+    notes,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+export function buildPhysicalAccess(values: InspectionValues): string {
+  const methods = v(values, "physical_access");
+  const notes = v(values, "physical_access_notes");
+  const va = v(values, "va");
+  const vaNotes = v(values, "va_notes");
+  if (!methods && !notes) {
+    if ((isCommercialType(values) || isIndustrialType(values)) && (va || vaNotes)) {
+      return sentence([
+        "Physical ingress and egress is recorded as",
+        va || "adequate for the current use",
+        vaNotes,
+      ]);
+    }
+    return "";
+  }
+  return [
+    sentence(["Physical ingress and egress is recorded as", methods]),
+    notes,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 function buildServicesAmenities(values: InspectionValues): string {
   const listed = [
     serviceTypePhrase(v(values, "svc_water_type")),
@@ -1250,6 +1315,8 @@ export function generateNarrative(
     neighbourhood: buildNeighbourhood(values),
     sitePhysical: buildSitePhysical(values),
     siteIdentification: buildSiteIdentification(values),
+    legalAccess: buildLegalAccess(values),
+    physicalAccess: buildPhysicalAccess(values),
     servicesAmenities: buildServicesAmenities(values),
     improvements:
       isVacantLand(values) || (isCommercialType(values) && !isMixedUseCommercial(values))

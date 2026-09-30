@@ -1156,20 +1156,99 @@
           "label": "How the site was identified",
           "type": "checkbox_group",
           "items": [
-            { "id": "ident_street", "label": "Street address" },
-            { "id": "ident_rpd", "label": "Real property description (lot and plan)" },
-            { "id": "ident_title", "label": "Certificate of Title" },
-            { "id": "ident_survey_plan", "label": "Survey plan" },
-            { "id": "ident_pegs", "label": "Survey pegs / boundary marks on inspection" },
-            { "id": "ident_between", "label": "Located between properties with known addresses" },
-            { "id": "ident_occupier", "label": "Occupier or owner confirmation" },
-            { "id": "ident_cadastral", "label": "Cadastral map / mapping" },
-            { "id": "ident_aerial", "label": "Aerial imagery" },
-            { "id": "ident_gps", "label": "GPS coordinates" },
-            { "id": "ident_letterbox", "label": "House number / letterbox" },
-            { "id": "ident_other", "label": "Other" }
+            {
+              "id": "ident_street",
+              "label": "Street address"
+            },
+            {
+              "id": "ident_rpd",
+              "label": "Real property description (lot and plan)"
+            },
+            {
+              "id": "ident_title",
+              "label": "Certificate of Title"
+            },
+            {
+              "id": "ident_survey_plan",
+              "label": "Survey plan"
+            },
+            {
+              "id": "ident_pegs",
+              "label": "Survey pegs / boundary marks on inspection"
+            },
+            {
+              "id": "ident_between",
+              "label": "Located between properties with known addresses"
+            },
+            {
+              "id": "ident_occupier",
+              "label": "Occupier or owner confirmation"
+            },
+            {
+              "id": "ident_cadastral",
+              "label": "Cadastral map / mapping"
+            },
+            {
+              "id": "ident_aerial",
+              "label": "Aerial imagery"
+            },
+            {
+              "id": "ident_gps",
+              "label": "GPS coordinates"
+            },
+            {
+              "id": "ident_letterbox",
+              "label": "House number / letterbox"
+            },
+            {
+              "id": "ident_other",
+              "label": "Other"
+            }
           ],
           "notes_field": "site_ident_notes"
+        },
+        {
+          "name": "legal_access",
+          "label": "Legal access",
+          "type": "checkbox_group",
+          "help": "How the allotment lawfully gains vehicular access. Used in 2.2 Title Particulars.",
+          "items": [
+            {
+              "id": "la_road_frontage",
+              "label": "Dedicated road frontage / street access"
+            },
+            {
+              "id": "la_corner",
+              "label": "Corner access to two streets"
+            },
+            {
+              "id": "la_handle",
+              "label": "Access handle / hatchet stem"
+            },
+            {
+              "id": "la_row",
+              "label": "Right of way easement over adjoining land"
+            },
+            {
+              "id": "la_shared",
+              "label": "Shared access"
+            },
+            {
+              "id": "la_lane",
+              "label": "Rear lane access"
+            },
+            {
+              "id": "la_other",
+              "label": "Other"
+            }
+          ],
+          "notes_field": "legal_access_notes"
+        },
+        {
+          "name": "legal_access_from",
+          "label": "Access obtained from (street / boundary)",
+          "type": "text",
+          "help": "Street name or boundary the allotment is accessed from."
         },
         {
           "name": "prop_view",
@@ -1714,22 +1793,70 @@
           "label": "Description and impact of adjoining properties (if relevant)",
           "type": "checkbox_group",
           "items": [
-            { "id": "adj_vacant", "label": "Vacant land" },
-            { "id": "adj_single_storey", "label": "Single-storey dwellings" },
-            { "id": "adj_two_storey", "label": "Two-storey dwellings" },
-            { "id": "adj_highset", "label": "High-set / elevated dwellings" },
-            { "id": "adj_multi_unit", "label": "Townhouses / units / apartments" },
-            { "id": "adj_rural_res", "label": "Rural-residential / acreage" },
-            { "id": "adj_commercial", "label": "Commercial premises" },
-            { "id": "adj_industrial", "label": "Industrial / warehouse" },
-            { "id": "adj_school", "label": "School / childcare / community use" },
-            { "id": "adj_park", "label": "Park / reserve / public open space" },
-            { "id": "adj_bushland", "label": "Bushland / conservation reserve" },
-            { "id": "adj_drainage", "label": "Drainage reserve / waterway" },
-            { "id": "adj_rural_prod", "label": "Grazing / rural production" },
-            { "id": "adj_busy_road", "label": "Busy road / transport corridor" },
-            { "id": "adj_utility", "label": "Utility infrastructure (power lines, substation)" },
-            { "id": "adj_construction", "label": "Construction / development adjoining" }
+            {
+              "id": "adj_vacant",
+              "label": "Vacant land"
+            },
+            {
+              "id": "adj_single_storey",
+              "label": "Single-storey dwellings"
+            },
+            {
+              "id": "adj_two_storey",
+              "label": "Two-storey dwellings"
+            },
+            {
+              "id": "adj_highset",
+              "label": "High-set / elevated dwellings"
+            },
+            {
+              "id": "adj_multi_unit",
+              "label": "Townhouses / units / apartments"
+            },
+            {
+              "id": "adj_rural_res",
+              "label": "Rural-residential / acreage"
+            },
+            {
+              "id": "adj_commercial",
+              "label": "Commercial premises"
+            },
+            {
+              "id": "adj_industrial",
+              "label": "Industrial / warehouse"
+            },
+            {
+              "id": "adj_school",
+              "label": "School / childcare / community use"
+            },
+            {
+              "id": "adj_park",
+              "label": "Park / reserve / public open space"
+            },
+            {
+              "id": "adj_bushland",
+              "label": "Bushland / conservation reserve"
+            },
+            {
+              "id": "adj_drainage",
+              "label": "Drainage reserve / waterway"
+            },
+            {
+              "id": "adj_rural_prod",
+              "label": "Grazing / rural production"
+            },
+            {
+              "id": "adj_busy_road",
+              "label": "Busy road / transport corridor"
+            },
+            {
+              "id": "adj_utility",
+              "label": "Utility infrastructure (power lines, substation)"
+            },
+            {
+              "id": "adj_construction",
+              "label": "Construction / development adjoining"
+            }
           ],
           "notes_field": "adj_props_notes"
         },
@@ -1738,13 +1865,34 @@
           "label": "Adjoining interface / impact",
           "type": "checkbox_group",
           "items": [
-            { "id": "adj_if_similar", "label": "Similar height and scale" },
-            { "id": "adj_if_taller", "label": "Taller development adjoining" },
-            { "id": "adj_if_lower", "label": "Lower development adjoining" },
-            { "id": "adj_if_overlook", "label": "Overlooking / reduced privacy" },
-            { "id": "adj_if_visual_buffer", "label": "Vegetation / visual buffer" },
-            { "id": "adj_if_acoustic", "label": "Acoustic buffer" },
-            { "id": "adj_if_none", "label": "No material impact recorded" }
+            {
+              "id": "adj_if_similar",
+              "label": "Similar height and scale"
+            },
+            {
+              "id": "adj_if_taller",
+              "label": "Taller development adjoining"
+            },
+            {
+              "id": "adj_if_lower",
+              "label": "Lower development adjoining"
+            },
+            {
+              "id": "adj_if_overlook",
+              "label": "Overlooking / reduced privacy"
+            },
+            {
+              "id": "adj_if_visual_buffer",
+              "label": "Vegetation / visual buffer"
+            },
+            {
+              "id": "adj_if_acoustic",
+              "label": "Acoustic buffer"
+            },
+            {
+              "id": "adj_if_none",
+              "label": "No material impact recorded"
+            }
           ]
         },
         {
@@ -1961,6 +2109,47 @@
           ],
           "condition_field": "va_surface_cond",
           "notes_field": "va_surface_notes"
+        },
+        {
+          "name": "physical_access",
+          "label": "Physical ingress / egress",
+          "type": "checkbox_group",
+          "help": "Comment only if relevant. Defaults to print for industrial and commercial.",
+          "items": [
+            {
+              "id": "pa_vehicle_adequate",
+              "label": "Adequate vehicular access"
+            },
+            {
+              "id": "pa_vehicle_constrained",
+              "label": "Constrained vehicular access"
+            },
+            {
+              "id": "pa_ped_adequate",
+              "label": "Adequate pedestrian access"
+            },
+            {
+              "id": "pa_ped_constrained",
+              "label": "Constrained pedestrian access"
+            },
+            {
+              "id": "pa_heavy",
+              "label": "Suitable for heavy vehicles"
+            },
+            {
+              "id": "pa_loading",
+              "label": "Loading / unloading available"
+            },
+            {
+              "id": "pa_restricted",
+              "label": "Restricted hours, height or turning"
+            },
+            {
+              "id": "pa_other",
+              "label": "Other"
+            }
+          ],
+          "notes_field": "physical_access_notes"
         },
         {
           "name": "fence",

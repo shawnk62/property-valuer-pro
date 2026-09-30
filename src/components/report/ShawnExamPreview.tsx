@@ -4,6 +4,8 @@ import { formatNarrativeDate, formatNarrativeDateOr } from "@/lib/report/dates";
 import { stripLeadingHeading } from "@/lib/report/printText";
 import {
   buildClientInstructions,
+  buildLegalAccess,
+  buildPhysicalAccess,
   buildSiteIdentification,
 } from "@/lib/report/narrative";
 import {
@@ -549,6 +551,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
               buildSiteIdentification(v),
           },
           { label: "Date of title search", value: get(v, "exam_title_search_date") },
+          {
+            label: "Legal access",
+            value: narrativePrints(m, "legalAccess")
+              ? draft.narrative.legalAccess?.trim() || buildLegalAccess(v)
+              : "",
+          },
         ]}
       />
       </Keep>
@@ -567,7 +575,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           { label: "Adjoining properties", value: get(v, "adj_props") },
           { label: "Adjoining interface / impact", value: get(v, "adj_props_interface") },
           { label: "Adjoining notes", value: get(v, "adj_props_notes") },
-          { label: "Access / street frontage", value: get(v, "prop_access") || get(v, "access") },
+          {
+            label: "Physical ingress / egress",
+            value: narrativePrints(m, "physicalAccess", v)
+              ? draft.narrative.physicalAccess?.trim() || buildPhysicalAccess(v)
+              : "",
+          },
           { label: "Utilities", value: servicesText },
           { label: "Easements, encumbrances and restrictions", value: get(v, "prop_rights") },
         ]}

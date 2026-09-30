@@ -238,6 +238,10 @@ export interface ReportNarrative {
   sitePhysical: string;
   /** How the site was identified. */
   siteIdentification: string;
+  /** Legal access — 2.2 Title Particulars. */
+  legalAccess: string;
+  /** Physical ingress/egress — 2.3 Particulars of Land when relevant. */
+  physicalAccess: string;
   /** §6.2 Services/Amenities (AI or template). */
   servicesAmenities: string;
   improvements: string;
