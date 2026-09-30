@@ -527,11 +527,17 @@
   /* App chrome only — do NOT hide all <button> (breaks some browsers' print trees) */
   .no-print,
   .no-print *,
-  header,
+  header:not(.exam-wordmark),
   nav,
   [data-sonner-toaster],
   .hidden:not(.report-print-host) {
     display: none !important;
+  }
+
+  .report-type-exam .exam-wordmark,
+  .report-type-exam .exam-wordmark-logo,
+  .report-type-exam .exam-cover .report-signature {
+    display: block !important;
   }
 
   main {

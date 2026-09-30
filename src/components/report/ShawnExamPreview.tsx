@@ -363,13 +363,13 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       className="report-sheet report-type-exam mx-auto max-w-[52rem] px-8 py-10 shadow-sm sm:px-12 sm:py-14"
     >
       <section className="exam-cover break-after-page text-left">
-        <header className="exam-wordmark">
+        <div className="exam-wordmark">
           <img
             src={EXAM.logoSrc}
             alt={`${EXAM.firmName} ${EXAM.firmTrade}`}
             className="exam-wordmark-logo"
           />
-        </header>
+        </div>
         {frontPhoto?.url ? (
           <figure className="exam-cover-photo mx-auto">
             <img
@@ -397,6 +397,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {get(v, "instr_from_email") ? (
           <p className="exam-cover-meta">Email: {get(v, "instr_from_email")}</p>
         ) : null}
+        <div className="mt-6">
+          <p className="text-sm">Signature of Student Valuer</p>
+          <ExamSignature draft={draft} />
+        </div>
       </section>
 
       <H1>Table of Contents</H1>
