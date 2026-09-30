@@ -470,7 +470,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </div>
       ) : null}
       <div className="mt-4">
-        <p className="text-sm">Signature of Student Valuer</p>
         <ExamSignature draft={draft} />
       </div>
       </div>
