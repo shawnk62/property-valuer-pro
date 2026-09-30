@@ -397,9 +397,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {get(v, "instr_from_email") ? (
           <p className="exam-cover-meta">Email: {get(v, "instr_from_email")}</p>
         ) : null}
-        <div className="exam-cover-signature">
-          <ExamSignature draft={draft} />
-        </div>
       </section>
 
       <H1>Table of Contents</H1>
