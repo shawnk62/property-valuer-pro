@@ -170,42 +170,42 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
         ) : null}
       </div>
       <header className="no-print sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur">
-        <div className="mx-auto grid max-w-7xl grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
-          {isShawnReportAssignment(String(draft.values["prop_assignment"] ?? "")) ||
-          isShawnExamType(
-            getReportTypeConfig(String(draft.values["prop_assignment"] ?? "")).id,
-          ) ? (
-            <img
-              src={SHAWN_EXAM_STYLE.logoSrc}
-              alt="Kelly & Company"
-              className="h-8 w-auto max-w-[11rem] object-contain object-left"
-            />
-          ) : (
-            <img
-              src="/ppv-logo.jpeg"
-              alt="Peterson Property Valuations"
-              className="h-8 w-auto max-w-[7rem] object-contain object-left"
-            />
-          )}
-          <div className="min-w-0">
-            <nav className="flex items-center gap-x-4 text-sm">
-              <Link
-                to="/reports"
-                className="shrink-0 whitespace-nowrap text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-              >
-                &larr; Report workspace
-              </Link>
-              <Link
-                to="/inspect/$id"
-                params={{ id: inspectionId }}
-                className="shrink-0 whitespace-nowrap text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-              >
-                Inspection form
-              </Link>
-            </nav>
-            <h1 className="truncate text-lg font-semibold text-foreground">{heading}</h1>
-          </div>
-          <div className="flex items-center justify-end gap-2">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <div className="flex min-w-0 items-center gap-4">
+              {isShawnReportAssignment(String(draft.values["prop_assignment"] ?? "")) ||
+              isShawnExamType(
+                getReportTypeConfig(String(draft.values["prop_assignment"] ?? "")).id,
+              ) ? (
+                <img
+                  src={SHAWN_EXAM_STYLE.logoSrc}
+                  alt="Kelly & Company"
+                  className="h-8 w-auto max-w-[10rem] shrink-0 object-contain object-left"
+                />
+              ) : (
+                <img
+                  src="/ppv-logo.jpeg"
+                  alt="Peterson Property Valuations"
+                  className="h-8 w-auto max-w-[7rem] shrink-0 object-contain object-left"
+                />
+              )}
+              <nav className="flex items-center gap-x-4 text-sm">
+                <Link
+                  to="/reports"
+                  className="whitespace-nowrap text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                >
+                  &larr; Report workspace
+                </Link>
+                <Link
+                  to="/inspect/$id"
+                  params={{ id: inspectionId }}
+                  className="whitespace-nowrap text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                >
+                  Inspection form
+                </Link>
+              </nav>
+            </div>
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <span className="hidden max-w-[13rem] truncate text-sm text-muted-foreground xl:inline">
               {dirty
                 ? "Unsaved changes"
@@ -288,6 +288,8 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
               {downloading ? "Preparing Word…" : "Download Word"}
             </button>
           </div>
+          </div>
+          <h1 className="truncate text-lg font-semibold text-foreground">{heading}</h1>
         </div>
         <nav className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 sm:px-6">
           {TABS.map((t) => (
