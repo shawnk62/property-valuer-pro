@@ -98,7 +98,35 @@ export async function preparePhotoForReport(file: File): Promise<File> {
   }
 }
 
-/** Convert a File to a data URL so photos work in Preview/Word without Supabase Storage. */
+/**
+ * Copy a picked image immediately.
+ * iOS Safari invalidates the camera/library File if the input is cleared, or if
+ * the same File is read again after createObjectURL. That surfaces as
+ * "The I/O read operation failed" and can also start a PVP-….jpg download.
+ */
+export async function cloneImageFile(file: File): Promise<File> {
+  const name = file.name && file.name !== "image.jpg" ? file.name : "photo.jpg";
+  const type = file.type && file.type.startsWith("image/") ? file.type : "image/jpeg";
+
+  async function readOnce(): Promise<File> {
+    const blob = file.slice(0, file.size || undefined, type);
+    const buf = await blob.arrayBuffer();
+    if (!buf.byteLength) throw new Error("Photo file is empty");
+    return new File([buf], name, { type, lastModified: Date.now() });
+  }
+
+  try {
+    return await readOnce();
+  } catch (err) {
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    try {
+      return await readOnce();
+    } catch {
+      throw err instanceof Error ? err : new Error("Could not read photo");
+    }
+  }
+}
+
 export function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

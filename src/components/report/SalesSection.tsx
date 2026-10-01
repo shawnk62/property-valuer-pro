@@ -53,7 +53,7 @@ import {
   type Relativity,
 } from "@/lib/report/adjustmentGrid";
 import { extractTextFromPdf } from "@/lib/report/extractPdfText";
-import { dataUrlToFile, fileToDataUrl, preparePhotoForReport } from "@/lib/report/photo-data";
+import { cloneImageFile, dataUrlToFile, fileToDataUrl, preparePhotoForReport } from "@/lib/report/photo-data";
 import { deletePhotoBlob, photoBlobKey, putPhotoBlob } from "@/lib/report/photo-idb";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import {
@@ -801,11 +801,18 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       toast.error("Choose an image file for the front photo");
       return;
     }
+    let stable: File;
     try {
-      const previewUrl = URL.createObjectURL(file);
+      stable = await cloneImageFile(file);
+    } catch (err) {
+      toast.error("Could not read photo", {
+        description: err instanceof Error ? err.message : "Try another file",
+      });
+      return;
+    }
+    try {
+      const prepared = await preparePhotoForReport(stable);
       const localKey = photoBlobKey(draft.inspectionId, `sale-${saleId}-front`);
-      patchSale(saleId, { photoUrl: previewUrl, photoLocalKey: localKey });
-      const prepared = await preparePhotoForReport(file);
       await putPhotoBlob(localKey, prepared);
       const preparedUrl = URL.createObjectURL(prepared);
       patchSale(saleId, { photoUrl: preparedUrl, photoLocalKey: localKey });
@@ -1487,11 +1494,25 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         className="sr-only"
         onChange={(e) => {
           const file = e.target.files?.[0] ?? null;
-          e.target.value = "";
+          const input = e.target;
           const target = photoMenuTargetRef.current;
-          if (!file || !target) return;
-          if (target === "map") void onSalesMapFile(file);
-          else void onSalePhotoFile(target.saleId, file);
+          if (!file || !target) {
+            input.value = "";
+            return;
+          }
+          void (async () => {
+            try {
+              const stable = await cloneImageFile(file);
+              input.value = "";
+              if (target === "map") void onSalesMapFile(stable);
+              else void onSalePhotoFile(target.saleId, stable);
+            } catch (err) {
+              input.value = "";
+              toast.error("Could not read photo", {
+                description: err instanceof Error ? err.message : "Try another file",
+              });
+            }
+          })();
         }}
       />
       <PhotoSourceSheet
@@ -1538,11 +1559,25 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         className="sr-only"
         onChange={(e) => {
           const file = e.target.files?.[0] ?? null;
-          e.target.value = "";
+          const input = e.target;
           const target = photoMenuTargetRef.current;
-          if (!file || !target) return;
-          if (target === "map") void onSalesMapFile(file);
-          else void onSalePhotoFile(target.saleId, file);
+          if (!file || !target) {
+            input.value = "";
+            return;
+          }
+          void (async () => {
+            try {
+              const stable = await cloneImageFile(file);
+              input.value = "";
+              if (target === "map") void onSalesMapFile(stable);
+              else void onSalePhotoFile(target.saleId, stable);
+            } catch (err) {
+              input.value = "";
+              toast.error("Could not read photo", {
+                description: err instanceof Error ? err.message : "Try another file",
+              });
+            }
+          })();
         }}
       />
 
