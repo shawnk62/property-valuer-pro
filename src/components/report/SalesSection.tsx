@@ -1829,7 +1829,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                         {chunk.map((sale) => (
                           <Fragment key={sale.id}>
                             <col className="w-[5.5rem]" />
-                            <col className="w-[3.5rem]" />
+                            <col className="w-[6.5rem]" />
                           </Fragment>
                         ))}
                       </colgroup>
@@ -2118,15 +2118,16 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                 <td
                                   {...saleGridCellProps(
                                     sale.id,
-                                    "px-1 py-1 text-center text-muted-foreground",
+                                    "px-1 py-1 align-middle",
                                   )}
                                 >
                                   {row.key === "saleDate" ? (
                                     <input
                                       type="text"
-                                      inputMode="text"
-                                      placeholder="Adj $"
-                                      title="Dollar adjustment for sale date. Use a leading minus for a negative amount."
+                                      inputMode="decimal"
+                                      placeholder="0"
+                                      aria-label="Date of sale adjustment"
+                                      title="Dollar adjustment for this sale date. Leading minus for a negative amount."
                                       value={
                                         amountDrafts[`${sale.id}:dateOfSale`] !== undefined
                                           ? amountDrafts[`${sale.id}:dateOfSale`]
@@ -2157,9 +2158,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                           amount: parsed ?? 0,
                                         });
                                       }}
-                                      className={adjustmentAmountClass(
+                                      className={`${adjustmentAmountClass(
                                         sale.adjustments?.dateOfSale?.amount ?? 0,
-                                      )}
+                                      )} min-w-[4.5rem]`}
                                     />
                                   ) : (
                                     "—"
