@@ -62,8 +62,6 @@ import {
   mergeCmaExtracts,
   mergeIncomingSales,
   parseCmaTextHeuristic,
-  saleIdentityKey,
-  streetKey,
   type CmaSaleExtract,
 } from "@/lib/report/importSalesCma";
 import { importSalesFromCsv } from "@/lib/report/importSalesCsv";
@@ -252,21 +250,34 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   }
 
   function setOmitFromReport(id: string, omit: boolean) {
-    replaceSales(sales.map((s) => (s.id === id ? { ...s, omitFromReport: omit } : s)));
+    const list = salesRef.current.map((s) =>
+      s.id === id ? { ...s, omitFromReport: omit } : s,
+    );
+    if (omit) {
+      replaceSales(list);
+      return;
+    }
+    const sale = list.find((s) => s.id === id);
+    const rest = list.filter((s) => s.id !== id);
+    const onReport = rest.filter((s) => s.omitFromReport !== true);
+    const held = rest.filter((s) => s.omitFromReport === true);
+    replaceSales(sale ? [...onReport, sale, ...held] : list);
+    if (sale) {
+      toast.success(`Included on report as sale ${onReport.length + 1}`);
+    }
   }
 
   function replaceSales(next: ComparableSale[]) {
-    // Soft dedupe only for true address collisions. Uses unit-aware streetKey
-    // (24/31 vs 68/31 North Street must remain two sales). Prefer id when
-    // address is empty so placeholder rows are not collapsed together.
+    // Keep every distinct working-file row. Address dedupe is only for a
+    // row that has no id yet. A restored comparable must not be dropped
+    // because another sale shares a street key.
     const deduped: ComparableSale[] = [];
-    const seen = new Set<string>();
+    const seenId = new Set<string>();
     for (const s of next) {
-      const ident = saleIdentityKey(s);
-      const addr = (s.address || "").trim();
-      const key = ident || (addr ? streetKey(addr) || addr.toUpperCase() : `id:${s.id}`);
-      if (seen.has(key)) continue;
-      seen.add(key);
+      if (s.id) {
+        if (seenId.has(s.id)) continue;
+        seenId.add(s.id);
+      }
       deduped.push(s);
     }
     const ensured = deduped.map(ensureSaleAdjustments);
@@ -1798,6 +1809,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           }
           return (
             <div className="space-y-6">
+              <p className="text-sm text-muted-foreground">
+                {gridSales.length} comparable{gridSales.length === 1 ? "" : "s"} on the report.
+                Further sales continue in the next block below.
+              </p>
               {chunks.map((chunk, chunkIdx) => {
                 const startNum = chunkIdx * COMPS_PER_GRID;
                 return (
