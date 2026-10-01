@@ -89,7 +89,7 @@ export function AdjustmentGridPrint({
                 {chunk.map((sale) => (
                   <Fragment key={sale.id}>
                     <td>{sale.saleDate || "—"}</td>
-                    <td className="adj-money">—</td>
+                    <td className="adj-money">{moneyCell(adjOf(sale, "dateOfSale")?.amount)}</td>
                   </Fragment>
                 ))}
               </tr>

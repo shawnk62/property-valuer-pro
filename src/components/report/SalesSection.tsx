@@ -2121,7 +2121,49 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                     "px-1 py-1 text-center text-muted-foreground",
                                   )}
                                 >
-                                  —
+                                  {row.key === "saleDate" ? (
+                                    <input
+                                      type="text"
+                                      inputMode="text"
+                                      placeholder="0"
+                                      title="Dollar adjustment for sale date (use a leading − for negative). No superior/inferior mark."
+                                      value={
+                                        amountDrafts[`${sale.id}:dateOfSale`] !== undefined
+                                          ? amountDrafts[`${sale.id}:dateOfSale`]
+                                          : (sale.adjustments?.dateOfSale?.amount ?? 0) === 0
+                                            ? ""
+                                            : String(sale.adjustments?.dateOfSale?.amount ?? 0)
+                                      }
+                                      onChange={(e) => {
+                                        const raw = e.target.value;
+                                        const key = `${sale.id}:dateOfSale`;
+                                        setAmountDrafts((prev) => ({ ...prev, [key]: raw }));
+                                        const parsed = parseAmountInput(raw);
+                                        if (parsed !== null) {
+                                          patchAdjustment(sale.id, "dateOfSale", { amount: parsed });
+                                        }
+                                      }}
+                                      onBlur={(e) => {
+                                        const key = `${sale.id}:dateOfSale`;
+                                        const raw = e.currentTarget.value;
+                                        setAmountDrafts((prev) => {
+                                          if (prev[key] === undefined) return prev;
+                                          const next = { ...prev };
+                                          delete next[key];
+                                          return next;
+                                        });
+                                        const parsed = parseAmountInput(raw);
+                                        patchAdjustment(sale.id, "dateOfSale", {
+                                          amount: parsed ?? 0,
+                                        });
+                                      }}
+                                      className={adjustmentAmountClass(
+                                        sale.adjustments?.dateOfSale?.amount ?? 0,
+                                      )}
+                                    />
+                                  ) : (
+                                    "—"
+                                  )}
                                 </td>
                               </Fragment>
                             ))}
