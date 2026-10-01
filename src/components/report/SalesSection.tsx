@@ -106,7 +106,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const gridSales = salesOnReport(sales);
   const heldSales = salesHeldBack(sales);
   const visibleAdjFeatures = useMemo(
-    () => adjustmentFeaturesForProperty(draft.values),
+    () => adjustmentFeaturesForProperty(draft.values).filter((f) => f.id !== "dateOfSale"),
     [draft.values],
   );
   const subjectFrontPhoto = draft.photos.find((p) => p.slot === "front");
@@ -2025,7 +2025,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                 Description
                               </th>
                               <th {...saleGridCellProps(sale.id, "px-1 py-1 font-medium")}>
-                                +/− $
+                                Adjustment
                               </th>
                             </Fragment>
                           ))}
@@ -2058,13 +2058,6 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                               subject: () => "—",
                               read: (s: (typeof sales)[0]) => s.salePrice,
                               write: (id: string, v: string) => patchSale(id, { salePrice: v }),
-                            },
-                            {
-                              key: "saleDate",
-                              label: "Date of Sale",
-                              subject: () => "—",
-                              read: (s: (typeof sales)[0]) => s.saleDate,
-                              write: (id: string, v: string) => patchSale(id, { saleDate: v }),
                             },
                             {
                               key: "priceGla",
@@ -2118,58 +2111,82 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                 <td
                                   {...saleGridCellProps(
                                     sale.id,
-                                    "px-1 py-1 align-middle",
+                                    "px-1 py-1 text-center text-muted-foreground",
                                   )}
                                 >
-                                  {row.key === "saleDate" ? (
-                                    <input
-                                      type="text"
-                                      inputMode="decimal"
-                                      placeholder="0"
-                                      aria-label="Date of sale adjustment"
-                                      title="Dollar adjustment for this sale date. Leading minus for a negative amount."
-                                      value={
-                                        amountDrafts[`${sale.id}:dateOfSale`] !== undefined
-                                          ? amountDrafts[`${sale.id}:dateOfSale`]
-                                          : (sale.adjustments?.dateOfSale?.amount ?? 0) === 0
-                                            ? ""
-                                            : String(sale.adjustments?.dateOfSale?.amount ?? 0)
-                                      }
-                                      onChange={(e) => {
-                                        const raw = e.target.value;
-                                        const key = `${sale.id}:dateOfSale`;
-                                        setAmountDrafts((prev) => ({ ...prev, [key]: raw }));
-                                        const parsed = parseAmountInput(raw);
-                                        if (parsed !== null) {
-                                          patchAdjustment(sale.id, "dateOfSale", { amount: parsed });
-                                        }
-                                      }}
-                                      onBlur={(e) => {
-                                        const key = `${sale.id}:dateOfSale`;
-                                        const raw = e.currentTarget.value;
-                                        setAmountDrafts((prev) => {
-                                          if (prev[key] === undefined) return prev;
-                                          const next = { ...prev };
-                                          delete next[key];
-                                          return next;
-                                        });
-                                        const parsed = parseAmountInput(raw);
-                                        patchAdjustment(sale.id, "dateOfSale", {
-                                          amount: parsed ?? 0,
-                                        });
-                                      }}
-                                      className={`${adjustmentAmountClass(
-                                        sale.adjustments?.dateOfSale?.amount ?? 0,
-                                      )} min-w-[4.5rem]`}
-                                    />
-                                  ) : (
-                                    "—"
-                                  )}
+                                  —
                                 </td>
                               </Fragment>
                             ))}
                           </tr>
                         ))}
+
+                        <tr className="border-b border-border bg-card">
+                          <td className="sticky left-0 z-10 bg-card px-2 py-1.5 font-medium text-foreground">
+                            Date of Sale
+                          </td>
+                          <td className="px-2 py-1.5 text-muted-foreground">—</td>
+                          {chunk.map((sale) => (
+                            <Fragment key={sale.id}>
+                              <td
+                                {...saleGridCellProps(
+                                  sale.id,
+                                  "border-l border-border px-1 py-1 align-middle",
+                                )}
+                              >
+                                <input
+                                  value={sale.saleDate}
+                                  onChange={(e) => patchSale(sale.id, { saleDate: e.target.value })}
+                                  className="w-full rounded border border-transparent bg-transparent px-1 py-0.5 text-xs outline-none focus:border-input focus:bg-accent/40"
+                                />
+                              </td>
+                              <td
+                                {...saleGridCellProps(sale.id, "px-1 py-1 align-middle")}
+                              >
+                                <input
+                                  type="text"
+                                  inputMode="decimal"
+                                  placeholder="0"
+                                  aria-label="Date of sale adjustment"
+                                  title="Dollar adjustment for this sale date. Leading minus for a negative amount."
+                                  value={
+                                    amountDrafts[`${sale.id}:dateOfSale`] !== undefined
+                                      ? amountDrafts[`${sale.id}:dateOfSale`]
+                                      : (sale.adjustments?.dateOfSale?.amount ?? 0) === 0
+                                        ? ""
+                                        : String(sale.adjustments?.dateOfSale?.amount ?? 0)
+                                  }
+                                  onChange={(e) => {
+                                    const raw = e.target.value;
+                                    const key = `${sale.id}:dateOfSale`;
+                                    setAmountDrafts((prev) => ({ ...prev, [key]: raw }));
+                                    const parsed = parseAmountInput(raw);
+                                    if (parsed !== null) {
+                                      patchAdjustment(sale.id, "dateOfSale", { amount: parsed });
+                                    }
+                                  }}
+                                  onBlur={(e) => {
+                                    const key = `${sale.id}:dateOfSale`;
+                                    const raw = e.currentTarget.value;
+                                    setAmountDrafts((prev) => {
+                                      if (prev[key] === undefined) return prev;
+                                      const next = { ...prev };
+                                      delete next[key];
+                                      return next;
+                                    });
+                                    const parsed = parseAmountInput(raw);
+                                    patchAdjustment(sale.id, "dateOfSale", {
+                                      amount: parsed ?? 0,
+                                    });
+                                  }}
+                                  className={`${adjustmentAmountClass(
+                                    sale.adjustments?.dateOfSale?.amount ?? 0,
+                                  )} min-w-[4.5rem]`}
+                                />
+                              </td>
+                            </Fragment>
+                          ))}
+                        </tr>
 
                         <tr className="border-b border-border bg-muted/30">
                           <td
