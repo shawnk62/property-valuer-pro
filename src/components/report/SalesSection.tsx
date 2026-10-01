@@ -106,7 +106,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const gridSales = salesOnReport(sales);
   const heldSales = salesHeldBack(sales);
   const visibleAdjFeatures = useMemo(
-    () => adjustmentFeaturesForProperty(draft.values).filter((f) => f.id !== "dateOfSale"),
+    () => adjustmentFeaturesForProperty(draft.values),
     [draft.values],
   );
   const subjectFrontPhoto = draft.photos.find((p) => p.slot === "front");
@@ -2125,8 +2125,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                     <input
                                       type="text"
                                       inputMode="text"
-                                      placeholder="0"
-                                      title="Dollar adjustment for sale date (use a leading − for negative). No superior/inferior mark."
+                                      placeholder="Adj $"
+                                      title="Dollar adjustment for sale date. Use a leading minus for a negative amount."
                                       value={
                                         amountDrafts[`${sale.id}:dateOfSale`] !== undefined
                                           ? amountDrafts[`${sale.id}:dateOfSale`]
@@ -2311,6 +2311,11 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                     )}
                                   >
                                     <div className="flex min-w-0 flex-col gap-0.5">
+                                      {feature.id === "dateOfSale" ? (
+                                        <span className="px-1 text-[0.65rem] text-muted-foreground">
+                                          {sale.saleDate || "—"}
+                                        </span>
+                                      ) : (
                                       <input
                                         value={detail}
                                         onChange={(e) =>
@@ -2321,6 +2326,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                         placeholder="—"
                                         className="min-w-0 w-full rounded border border-input bg-card px-1 py-0.5 text-[0.65rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
                                       />
+                                      )}
+                                      {feature.id === "dateOfSale" ? null : (
                                       <select
                                         value={adj.relativity}
                                         onChange={(e) =>
@@ -2344,6 +2351,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                           </option>
                                         ))}
                                       </select>
+                                      )}
                                       {isAreaRateRow && adj.relativityManual ? (
                                         <button
                                           type="button"
