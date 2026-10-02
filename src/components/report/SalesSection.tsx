@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { SalesCommentaryWorkspace } from "@/components/report/SalesCommentaryWorkspace";
+import { SalesMapEditor } from "@/components/report/SalesMapEditor";
 import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
 import {
   buildComparableSalesMap,
