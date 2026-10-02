@@ -1347,6 +1347,8 @@ export function generateNarrative(
     marketRegion: v(values, "exam_market_region"),
     marketLocality: v(values, "exam_market_local"),
     salesAnalysis: v(values, "exam_sales_analysis"),
+    salesComments: "",
+    valueReconciliation: "",
     disclaimer:
       v(values, "exam_limitations") ||
       "This valuation has been prepared for the stated purpose and the instructing party only. It may not be used for any other purpose without written authorisation.",

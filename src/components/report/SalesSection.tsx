@@ -9,7 +9,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
-import { SalesMapEditor } from "@/components/report/SalesMapEditor";
+import { SalesCommentaryWorkspace } from "@/components/report/SalesCommentaryWorkspace";
 import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
 import {
   buildComparableSalesMap,
@@ -1309,6 +1309,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
 
     <div className="space-y-4">
+      <SalesCommentaryWorkspace controller={controller} />
       <div
         className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-4"
         onDragOver={(e) => {

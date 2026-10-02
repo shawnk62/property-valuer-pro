@@ -166,9 +166,19 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           hint: "Prints at the start of 8.0 Valuation Approach.",
         },
         {
+          key: "salesComments",
+          label: "8.2 Comments on comparable sales",
+          hint: "Prints once, immediately under the sales grids that are included.",
+        },
+        {
+          key: "valueReconciliation",
+          label: "8.3 Final reconciliation of value",
+          hint: "Prints immediately after the comments on comparable sales.",
+        },
+        {
           key: "salesAnalysis",
-          label: "8.3 Analysis",
-          hint: "Prints under 8.3 Analysis.",
+          label: "8.5 Analysis",
+          hint: "Prints under 8.5 Analysis.",
         },
         {
           key: "disclaimer",
@@ -252,6 +262,16 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
       key: "valuationApproach",
       label: "Valuation Approach",
       hint: "Direct Comparison Approach and the points of difference considered. Saved text is not overwritten on reopen.",
+    },
+    {
+      key: "salesComments",
+      label: "Comments on comparable sales",
+      hint: "Prints once, immediately under the sales grids that are included.",
+    },
+    {
+      key: "valueReconciliation",
+      label: "Final reconciliation of value",
+      hint: "Prints immediately after the comments on comparable sales.",
     },
     {
       key: "remarks",
@@ -865,6 +885,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     }
     const remaining = keys.filter((k) => {
       if (k === "remarks" || k === "riskAnalysis" || k === "references") return false;
+      if (k === "salesComments" || k === "valueReconciliation") return false;
       if (skipAiNarrativeBlock(draft.values, k)) return false;
       if (!overwrite && draft.reportMeta.manualNarrative?.[k]) return false;
       if (!overwrite && String(narrativeRef.current[k] ?? "").trim()) return false;
@@ -1183,6 +1204,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                   setNarrative({ [block.key]: next });
                 }}
               />
+              {block.key === "salesComments" || block.key === "valueReconciliation" ? null : (
               <button
                 type="button"
                 disabled={busy !== null}
@@ -1197,6 +1219,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               >
                 {busy === block.key ? "Generating…" : "AI this block"}
               </button>
+              )}
             </div>
           </div>
           <span className="mb-2 block text-sm text-muted-foreground">{block.hint}</span>
@@ -1227,7 +1250,13 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                 setSelectionByKey((prev) => ({ ...prev, [block.key]: sel }));
               }
             }}
-            rows={block.key === "remarks" ? 12 : 7}
+            rows={
+              block.key === "salesComments" || block.key === "valueReconciliation"
+                ? 16
+                : block.key === "remarks"
+                  ? 12
+                  : 7
+            }
             className="w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm leading-relaxed text-foreground outline-none focus:ring-2 focus:ring-ring"
           />
           {block.key === "neighbourhood" &&

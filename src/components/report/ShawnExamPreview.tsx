@@ -343,6 +343,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     { id: "exam-6", label: "6.0 Market Commentary" },
     { id: "exam-7", label: "7.0 Risk Assessment" },
     { id: "exam-8", label: "8.0 Valuation Approach" },
+    { id: "exam-8-2", label: "8.2 Comments on comparable sales" },
+    { id: "exam-8-3", label: "8.3 Final reconciliation of value" },
     { id: "exam-9", label: "9.0 List of References" },
     { id: "exam-10", label: "10.0 Annexures" },
   ];
@@ -829,9 +831,25 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           </div>
         )}
         </Keep>
+        {narrativePrints(m, "salesComments") ? (
+          <Keep>
+            <h3 id="exam-8-2" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
+              8.2 Comments on comparable sales
+            </h3>
+            <Prose text={draft.narrative.salesComments?.trim() || ""} />
+          </Keep>
+        ) : null}
+        {narrativePrints(m, "valueReconciliation") ? (
+          <Keep>
+            <h3 id="exam-8-3" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
+              8.3 Final reconciliation of value
+            </h3>
+            <Prose text={draft.narrative.valueReconciliation?.trim() || ""} />
+          </Keep>
+        ) : null}
         {get(v, "exam_on_market") ? (
           <>
-            <H2>8.2 On-the-market listings</H2>
+            <H2>8.4 On-the-market listings</H2>
             <Para>
               The following listings were considered. They are not settled sales and are not used as
               primary evidence.
@@ -841,7 +859,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ) : null}
         {draft.narrative.salesAnalysis?.trim() || get(v, "exam_sales_analysis") ? (
           <>
-            <H2>8.3 Analysis</H2>
+            <H2>8.5 Analysis</H2>
             <Prose
               text={
                 draft.narrative.salesAnalysis?.trim() || get(v, "exam_sales_analysis")
@@ -849,7 +867,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             />
           </>
         ) : null}
-        <H2>8.4 Valuation result</H2>
+        <H2>8.6 Valuation result</H2>
         <Para>
           Having regard to the sales evidence and market conditions at the date of valuation, it is
           my opinion that the market value of the unencumbered fee simple interest in the subject

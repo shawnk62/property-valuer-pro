@@ -893,6 +893,15 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
     }
   }
 
+  if (draft.narrative.salesComments?.trim()) {
+    children.push(subHeading("Comments on comparable sales"));
+    children.push(...prose(draft.narrative.salesComments));
+  }
+  if (draft.narrative.valueReconciliation?.trim()) {
+    children.push(subHeading("Final reconciliation of value"));
+    children.push(...prose(draft.narrative.valueReconciliation));
+  }
+
   // ---- 13 ----
   children.push(sectionHeading("13.", "Remarks"));
   {

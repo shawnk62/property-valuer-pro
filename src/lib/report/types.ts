@@ -268,6 +268,10 @@ export interface ReportNarrative {
   marketRegion: string;
   marketLocality: string;
   salesAnalysis: string;
+  /** Comments on the comparable sales. Prints under the sales grids. */
+  salesComments: string;
+  /** Final reconciliation of value. Prints after the sales comments. */
+  valueReconciliation: string;
   disclaimer: string;
   assumptions: string;
   references: string;

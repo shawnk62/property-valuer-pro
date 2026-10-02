@@ -1914,6 +1914,22 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
             ) : null}
           </div>
         )}
+        {narrativePrints(draft.reportMeta, "salesComments") ? (
+          <>
+            <h3 id="sec-sales-comments" className="report-h2 report-heading-lead mt-4 text-sm font-semibold">
+              Comments on comparable sales
+            </h3>
+            <Prose text={draft.narrative.salesComments?.trim() || ""} />
+          </>
+        ) : null}
+        {narrativePrints(draft.reportMeta, "valueReconciliation") ? (
+          <>
+            <h3 id="sec-sales-reconciliation" className="report-h2 report-heading-lead mt-4 text-sm font-semibold">
+              Final reconciliation of value
+            </h3>
+            <Prose text={draft.narrative.valueReconciliation?.trim() || ""} />
+          </>
+        ) : null}
       </Section>
 
       {/* ---- 13. Remarks ---- */}

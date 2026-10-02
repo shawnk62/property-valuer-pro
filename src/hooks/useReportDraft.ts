@@ -49,6 +49,8 @@ function emptyNarrative(): ReportNarrative {
     marketRegion: "",
     marketLocality: "",
     salesAnalysis: "",
+    salesComments: "",
+    valueReconciliation: "",
     disclaimer: "",
     assumptions: "",
     references: "",
@@ -102,6 +104,9 @@ function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): R
     marketRegion: typeof raw.marketRegion === "string" ? raw.marketRegion : "",
     marketLocality: typeof raw.marketLocality === "string" ? raw.marketLocality : "",
     salesAnalysis: typeof raw.salesAnalysis === "string" ? raw.salesAnalysis : "",
+    salesComments: typeof raw.salesComments === "string" ? raw.salesComments : "",
+    valueReconciliation:
+      typeof raw.valueReconciliation === "string" ? raw.valueReconciliation : "",
     disclaimer: typeof raw.disclaimer === "string" ? raw.disclaimer : "",
     assumptions: typeof raw.assumptions === "string" ? raw.assumptions : "",
     references: typeof raw.references === "string" ? raw.references : "",
