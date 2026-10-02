@@ -15,9 +15,9 @@ const COMPARABLE = "Overall comparable to the subject";
 
 const PHRASES = [INFERIOR, SUPERIOR, COMPARABLE];
 
-/** Matches trailing / embedded overall phrases so they can be replaced cleanly. */
+/** Matches every overall phrase so repeated copies can be removed. */
 const OVERALL_RE =
-  /\s*Overall\s+(?:inferior|superior|comparable)\s+to\s+the\s+subject\.?\s*/gi;
+  /\boverall\s+(?:inferior|superior|comparable)\s+to\s+the\s+subject\b\.?/gi;
 
 export function parseMoney(raw: string): number | null {
   if (!raw || !String(raw).trim()) return null;
@@ -51,7 +51,27 @@ export function stripRelativityPhrase(text: string): string {
   return String(text ?? "")
     .replace(OVERALL_RE, " ")
     .replace(/\s{2,}/g, " ")
+    .replace(/\s+([,.;])/g, "$1")
     .trim();
+}
+
+/** Collapse a source-notes field that has stacked the same overall phrase. Does not add one. */
+export function collapseRepeatedRelativity(text: string): string {
+  const raw = String(text ?? "");
+  const matches = raw.match(OVERALL_RE) ?? [];
+  if (matches.length <= 1) return raw;
+  const base = stripRelativityPhrase(raw);
+  const phrase = canonicalPhrase(matches[matches.length - 1] ?? "");
+  if (!phrase) return base;
+  return base ? `${base} ${phrase}` : phrase;
+}
+
+function canonicalPhrase(raw: string): string | null {
+  const cleaned = raw.replace(/\.$/, "").replace(/\s+/g, " ").trim().toLowerCase();
+  if (cleaned === INFERIOR.toLowerCase()) return INFERIOR;
+  if (cleaned === SUPERIOR.toLowerCase()) return SUPERIOR;
+  if (cleaned === COMPARABLE.toLowerCase()) return COMPARABLE;
+  return null;
 }
 
 /**
@@ -198,21 +218,24 @@ export type SaleWithRelativityFields = {
 };
 
 /**
- * Apply overall superior/inferior/comparable from sale price vs valuation
- * to both comments and narrative (when present).
+ * Source notes stay as imported or typed text. Do not append the overall
+ * phrase here — that rewrite was stacking the same sentence on each save.
+ * Repeated copies already stored are collapsed to one.
  */
 export function applyRelativityToSales<T extends SaleWithRelativityFields>(
   sales: T[],
   valueAmount: string,
 ): T[] {
   return sales.map((s) => {
-    const comments = withRelativityComment(s.comments, s.salePrice, valueAmount);
-    const next: T = { ...s, comments };
+    const comments = collapseRepeatedRelativity(s.comments);
+    const next: T = comments === s.comments ? s : { ...s, comments };
     // Manual narratives are not rewritten while typing (prevents cursor jumps /
     // letter-spacing sanitiser fighting the keyboard).
     if (s.narrativeManual) return next;
     if (typeof s.narrative === "string" && s.narrative.trim()) {
-      next.narrative = withRelativityNarrative(s.narrative, s.salePrice, valueAmount);
+      const narrative = withRelativityNarrative(s.narrative, s.salePrice, valueAmount);
+      if (narrative === s.narrative) return next;
+      return { ...next, narrative };
     }
     return next;
   });

@@ -76,7 +76,7 @@ import {
   saleNarrativeFingerprint,
   saveAutoSaleNarratives,
 } from "@/lib/report/saleNarrative";
-import { formatCurrencyDisplay, withRelativityNarrative } from "@/lib/report/salesRelativity";
+import { formatCurrencyDisplay, withRelativityNarrative, applyRelativityToSales } from "@/lib/report/salesRelativity";
 import type { ComparableSale, FeatureAdjustment } from "@/lib/report/types";
 import { salesHeldBack, salesOnReport } from "@/lib/report/types";
 
@@ -156,6 +156,19 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const salesRef = useRef(sales);
   salesRef.current = sales;
+  const commentsHealed = useRef(false);
+  useEffect(() => {
+    commentsHealed.current = false;
+  }, [draft.inspectionId]);
+  useEffect(() => {
+    if (!loaded || commentsHealed.current) return;
+    commentsHealed.current = true;
+    const current = salesRef.current;
+    const next = applyRelativityToSales(current, draft.reportMeta.valueAmount);
+    if (next.some((sale, index) => sale.comments !== current[index]?.comments)) {
+      setSales(next);
+    }
+  }, [loaded, draft.inspectionId, draft.reportMeta.valueAmount, setSales]);
 
   useEffect(() => {
     const blockBrowserOpen = (e: DragEvent) => {
