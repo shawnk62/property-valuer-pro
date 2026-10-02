@@ -120,6 +120,10 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
     const isPropertyType = (TYPE_KEYS as readonly string[]).includes(field.name);
     const isHbuVacant = field.name === "prop_hbu_vacant";
     const zoning = asString(values["prop_zoning"]).trim();
+    const storedAssignment = asString(values[field.name]);
+    const assignmentDisplay = /^shawn\s*exam$/i.test(storedAssignment)
+      ? "Shawn full"
+      : storedAssignment;
     const storedHbu = asString(values[field.name]).trim();
     const hbuIsOther = /^other$/i.test(storedHbu);
     const hbuDisplay = isHbuVacant
@@ -145,7 +149,7 @@ export function FieldRenderer({ field, values, showErrors, onChange }: Props) {
         </FieldLabel>
         <SelectInput
           id={field.name}
-          value={isHbuVacant ? hbuDisplay : asString(values[field.name])}
+          value={isAssignment ? assignmentDisplay : isHbuVacant ? hbuDisplay : asString(values[field.name])}
           options={selectOptions}
           invalid={invalid}
           onChange={(v) => onChange(field.name, v)}

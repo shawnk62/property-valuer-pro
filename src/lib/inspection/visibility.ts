@@ -122,7 +122,7 @@ export function sectionIsVisible(section: InspectionSection, values: InspectionV
 }
 
 function isShawnExamAssignment(values: InspectionValues): boolean {
-  return /shawn\s*exam/i.test(str(values, "prop_assignment"));
+  return /shawn\s*(exam|full)/i.test(str(values, "prop_assignment"));
 }
 
 export function fieldIsVisible(field: InspectionField, values: InspectionValues): boolean {

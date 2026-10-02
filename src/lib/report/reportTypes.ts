@@ -175,7 +175,7 @@ export const REPORT_TYPE_CONFIGS: ReportTypeConfig[] = [
   },
   {
     id: "shawn-exam",
-    match: ["Shawn Exam", "Shawn exam", "SHAWN EXAM"],
+    match: ["Shawn full", "Shawn Full", "SHAWN FULL", "Shawn Exam", "Shawn exam", "SHAWN EXAM"],
     coverSubtitle: "Valuation of vacant residential land",
     defaultPurpose: "Valuation for mortgage security purposes.",
     instructionsTitle: "Purpose of the Report",

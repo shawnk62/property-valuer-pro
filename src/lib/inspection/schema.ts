@@ -42,7 +42,7 @@ function assignmentOptionsFromSchema(): string[] {
     "CGT - Murray Apportionment",
     "Family Law - Murray",
     "Singly Appointed Family Law - Murray",
-    "Shawn Exam",
+    "Shawn full",
   ];
 }
 
