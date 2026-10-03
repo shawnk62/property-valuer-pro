@@ -10,6 +10,7 @@ import {
   type CannedComment,
   type NarrativeSectionKey,
 } from "@/lib/narrative/cannedComments";
+import { confirmDelete } from "@/lib/confirmDelete";
 
 export function CannedCommentsBar({
   section,
@@ -80,7 +81,8 @@ export function CannedCommentsBar({
     }
   }
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: string, label: string) {
+    if (!confirmDelete(label.trim() || "this canned comment")) return;
     await deleteCannedComment(id);
     await refresh();
   }
@@ -208,7 +210,7 @@ export function CannedCommentsBar({
                     key={item.id}
                     item={item}
                     onRename={(label) => void handleRename(item.id, label)}
-                    onDelete={() => void handleDelete(item.id)}
+                    onDelete={() => void handleDelete(item.id, item.label)}
                   />
                 ))}
               </ul>

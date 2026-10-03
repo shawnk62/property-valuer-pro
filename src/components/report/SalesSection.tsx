@@ -79,6 +79,7 @@ import {
 import { formatCurrencyDisplay, withRelativityNarrative, applyRelativityToSales } from "@/lib/report/salesRelativity";
 import type { ComparableSale, FeatureAdjustment } from "@/lib/report/types";
 import { salesHeldBack, salesOnReport } from "@/lib/report/types";
+import { confirmDelete } from "@/lib/confirmDelete";
 
 function emptySale(): ComparableSale {
   return ensureSaleAdjustments({
@@ -565,6 +566,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   }
 
   async function clearSalesMap() {
+    if (!confirmDelete("the sales map")) return;
     const path = draft.reportMeta.salesMapStoragePath;
     if (path) {
       try {
@@ -880,6 +882,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
   async function clearSalePhoto(saleId: string) {
     const existing = sales.find((s) => s.id === saleId);
+    if (!confirmDelete(existing?.address?.trim() ? `the photo for ${existing.address.trim()}` : "this comparable photo")) return;
     if (existing?.photoStoragePath) {
       try {
         await deleteReportPhoto(existing.photoStoragePath);
@@ -2002,9 +2005,11 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                     ) : null}
                                     <button
                                       type="button"
-                                      onClick={() =>
-                                        replaceSales(sales.filter((s) => s.id !== sale.id))
-                                      }
+                                      onClick={() => {
+                                        const label = sale.address.trim() || "this comparable";
+                                        if (!confirmDelete(label)) return;
+                                        replaceSales(sales.filter((s) => s.id !== sale.id));
+                                      }}
                                       className="text-muted-foreground hover:text-destructive"
                                       aria-label="Remove sale from working file"
                                       title="Delete from working file"
@@ -2730,7 +2735,11 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                   </button>
                   <button
                     type="button"
-                    onClick={() => replaceSales(sales.filter((s) => s.id !== sale.id))}
+                    onClick={() => {
+                      const label = sale.address.trim() || "this comparable";
+                      if (!confirmDelete(label)) return;
+                      replaceSales(sales.filter((s) => s.id !== sale.id));
+                    }}
                     className="rounded-md border border-input px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-destructive"
                   >
                     Delete

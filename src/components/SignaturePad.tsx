@@ -6,6 +6,7 @@ import {
   type SavedSignature,
 } from "@/lib/signatures/savedSignatures";
 import { trimSignatureDataUrl } from "@/lib/signatures/trimSignature";
+import { confirmDelete } from "@/lib/confirmDelete";
 
 type Props = {
   value?: string;
@@ -164,6 +165,7 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
   }
 
   function clear() {
+    if (value?.startsWith("data:image") && !confirmDelete("the signature on this report")) return;
     onChange("");
     setHasInk(false);
     setError(null);
@@ -233,7 +235,8 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
     }
   }
 
-  async function handleDeleteSaved(id: string) {
+  async function handleDeleteSaved(id: string, label: string) {
+    if (!confirmDelete(label.trim() || "this saved signature")) return;
     await deleteSavedSignature(id);
     await refreshSaved();
   }
@@ -382,7 +385,7 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
                   </button>
                   <button
                     type="button"
-                    onClick={() => void handleDeleteSaved(sig.id)}
+                    onClick={() => void handleDeleteSaved(sig.id, sig.label)}
                     className="rounded-md border border-input px-2.5 py-1.5 text-xs font-medium text-foreground"
                   >
                     Delete

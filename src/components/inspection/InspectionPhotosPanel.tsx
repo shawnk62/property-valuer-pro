@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { inspectionStore } from "@/lib/inspection/storage";
 import { fileToDataUrl, preparePhotoForReport } from "@/lib/report/photo-data";
+import { confirmDelete } from "@/lib/confirmDelete";
 import { deletePhotoBlob, objectUrlFromPhotoBlob, photoBlobKey, putPhotoBlob } from "@/lib/report/photo-idb";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import { formatPhotoTimestamp, nowPhotoTimestamp } from "@/lib/inspection/photoRequirements";
@@ -324,6 +325,8 @@ export function InspectionPhotosPanel({
   }
 
   async function removePhoto(photo: ReportPhoto) {
+    const label = photo.caption?.trim() || "this photo";
+    if (!confirmDelete(label)) return;
     try {
       if (photo.storagePath) {
         await deleteReportPhoto(photo.storagePath).catch(() => undefined);
