@@ -44,6 +44,7 @@ import {
   printSalesEvidenceEnabled,
 } from "@/lib/report/adjustmentGrid";
 import { purposeOfValuation } from "@/lib/report/reportTypes";
+import { buildExecutiveSummaryLead } from "@/lib/report/narrative";
 import { planningSchemeDisplay } from "@/lib/report/parsePlanningExtract";
 import { fillExamTocPages } from "@/lib/report/tocPages";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
@@ -433,21 +434,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <div id="exam-summary" className="report-exam-summary-sheet report-keep-block">
       <H1>Executive Summary</H1>
       <Para>
-        {draft.narrative.instructions?.trim() ||
-          [
-            "Instructions were received from",
-            instructing || "the instructing party",
-            "to prepare a valuation of",
-            addressLine || "the subject property",
-            purpose
-              ? /^to\s+/i.test(purpose.trim())
-                ? purpose.trim().replace(/\.+$/, "")
-                : `for the purpose of ${purpose.trim().replace(/\.+$/, "")}`
-              : "",
-          ]
-            .filter(Boolean)
-            .join(" ")
-            .replace(/\s+/g, " ") + "."}
+        {draft.narrative.executiveSummary?.trim() || buildExecutiveSummaryLead(v)}
       </Para>
       <StripeTable
         rows={[

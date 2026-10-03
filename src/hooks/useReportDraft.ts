@@ -23,6 +23,7 @@ function emptyNarrative(): ReportNarrative {
   return {
     instructions: "",
     brief: "",
+    executiveSummary: "",
     location: "",
     neighbourhood: "",
     sitePhysical: "",
@@ -63,6 +64,7 @@ function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): R
   return {
     instructions: typeof raw.instructions === "string" ? raw.instructions : "",
     brief: typeof raw.brief === "string" ? raw.brief : "",
+    executiveSummary: typeof raw.executiveSummary === "string" ? raw.executiveSummary : "",
     ...(() => {
       const location = typeof raw.location === "string" ? raw.location : "";
       const neighbourhood = typeof raw.neighbourhood === "string" ? raw.neighbourhood : "";

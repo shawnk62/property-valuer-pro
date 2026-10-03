@@ -239,6 +239,8 @@ export interface ReportNarrative {
   /** §1.1 Instructions from the client. */
   instructions: string;
   brief: string;
+  /** Shawn Exam executive summary paragraph above the particulars grid. Independent of §1.1. */
+  executiveSummary: string;
   /** §5.1 Location — distance and direction from CBD / nearest centre. */
   location: string;
   /** §5.2 Neighbourhood — locality and neighbouring development only. */

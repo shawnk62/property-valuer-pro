@@ -1209,6 +1209,32 @@ function buildHighestBestUse(values: InspectionValues): string {
   return [definition, conclusion].filter(Boolean).join("\n\n");
 }
 
+
+/** Shawn Exam executive-summary lead, printed above the particulars grid. */
+export function buildExecutiveSummaryLead(values: InspectionValues): string {
+  const instructing =
+    v(values, "instr_from_name") || v(values, "prop_owner") || "the instructing party";
+  const addressLine = fullAddress(values);
+  const purpose = purposeOfValuation(v(values, "prop_assignment"), values);
+  const purposeBit = purpose
+    ? /^to\s+/i.test(purpose.trim())
+      ? purpose.trim().replace(/\.+$/, "")
+      : `for the purpose of ${purpose.trim().replace(/\.+$/, "")}`
+    : "";
+  return (
+    [
+      "Instructions were received from",
+      instructing,
+      "to prepare a valuation of",
+      addressLine || "the subject property",
+      purposeBit,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .replace(/\s+/g, " ") + "."
+  );
+}
+
 /** Executive / valuation-summary brief line. Always the Brief description narrative. */
 export function executiveSummaryBriefText(opts: { brief?: string }): string {
   return String(opts.brief ?? "").trim();
@@ -1311,6 +1337,7 @@ export function generateNarrative(
   const raw: ReportNarrative = {
     instructions: buildClientInstructions(values),
     brief,
+    executiveSummary: buildExecutiveSummaryLead(values),
     location: buildLocation(values, opts?.locationSentence),
     neighbourhood: buildNeighbourhood(values),
     sitePhysical: buildSitePhysical(values),

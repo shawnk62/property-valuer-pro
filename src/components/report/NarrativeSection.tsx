@@ -10,6 +10,7 @@ import {
 } from "@/lib/ai/ai.functions";
 import { isAiConfigured, loadAiSettings } from "@/lib/ai/settings";
 import {
+  buildExecutiveSummaryLead,
   buildPhilRemarks,
   generateNarrative,
   isPhilAssignment,
@@ -61,14 +62,19 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
   }[] = shawnExam
     ? [
         {
+          key: "executiveSummary",
+          label: "Executive Summary — opening paragraph",
+          hint: "Prints above the Executive Summary grid only. Does not change 1.1 Instructions.",
+        },
+        {
           key: "brief",
           label: "Executive Summary — Brief Description",
-          hint: "Prints in the Executive Summary.",
+          hint: "Prints in the Brief description row of the Executive Summary grid.",
         },
         {
           key: "instructions",
           label: "1.1 Instructions",
-          hint: "Prints under 1.0 Basis of Value.",
+          hint: "Prints under 1.0 Basis of Value only.",
         },
         {
           key: "sitePhysical",
@@ -325,6 +331,18 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     setLocalRemarks(String(draft.narrative.remarks ?? ""));
   }, [draft.narrative.remarks, draft.inspectionId]);
   const autoStarted = useRef(false);
+  const summarySeeded = useRef(false);
+  useEffect(() => {
+    if (!loaded || !shawnExam || summarySeeded.current) return;
+    if (String(draft.narrative.executiveSummary ?? "").trim()) {
+      summarySeeded.current = true;
+      return;
+    }
+    const lead = buildExecutiveSummaryLead(draft.values);
+    if (!lead.trim()) return;
+    summarySeeded.current = true;
+    setNarrative({ executiveSummary: lead });
+  }, [loaded, shawnExam, draft.inspectionId, draft.narrative.executiveSummary, draft.values, setNarrative]);
   const narrativeRef = useRef(draft.narrative);
   narrativeRef.current = draft.narrative;
 
