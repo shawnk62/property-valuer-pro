@@ -5,7 +5,7 @@ import { fileToDataUrl, preparePhotoForReport } from "@/lib/report/photo-data";
 import { deletePhotoBlob, photoBlobKey, putPhotoBlob } from "@/lib/report/photo-idb";
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import { nowPhotoTimestamp } from "@/lib/inspection/photoRequirements";
-import { extraAnnexGroupsOnReport, mapSlotsForImport, photoSlotsForJob, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
+import { extraAnnexGroupsOnReport, annexPageLabel, mapSlotsForImport, photoSlotsForJob, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
 import { isPdfFile, rasterizePdfPages } from "@/lib/report/rasterizePdfPages";
 import { isVacantLand } from "@/lib/inspection/visibility";
 
@@ -61,6 +61,7 @@ function PhotoCard({
   onOpenPasteMenu,
   onOmitFromReport,
   acceptDocument = false,
+  captionEditable = true,
 }: {
   photo: ReportPhoto | undefined;
   slotLabel: string;
@@ -75,6 +76,8 @@ function PhotoCard({
   onOpenPasteMenu?: (e: React.MouseEvent, onFile: (file: File) => void) => void;
   /** Title / survey tiles accept a PDF as well as images. */
   acceptDocument?: boolean;
+  /** Annexure pages take their label from the document, not a per-page field. */
+  captionEditable?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -210,6 +213,7 @@ function PhotoCard({
         }}
       />
 
+      {captionEditable ? (
       <input
         value={photo?.caption ?? (labelEditable ? "" : slotLabel)}
         onChange={(e) => {
@@ -219,6 +223,7 @@ function PhotoCard({
         placeholder={labelEditable ? "Label this map (e.g. Coastal hazard overlay)" : "Caption"}
         className="mt-3 w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
       />
+      ) : null}
       {photo?.url && onOmitFromReport ? (
         <label
           className="mt-2 flex items-start gap-1.5 text-[0.7rem] text-foreground"
@@ -528,6 +533,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
       const existing = photos.filter((p) => p.kind === "annex" && p.annexGroup === id);
       const title =
         existing[0]?.annexTitle?.trim() ||
+        file.name.replace(/\.pdf$/i, "").replace(/[_-]+/g, " ").trim() ||
         `Annexure document ${existingGroups.filter((g) => g.id !== id).length + 1}`;
       const start = existing.length;
       if (isPdfFile(file)) {
@@ -537,7 +543,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
         await attachPhoto({
           file: pages[i],
           slot: null,
-          caption: `${title} — page ${start + i + 1}`,
+          caption: annexPageLabel(title, start + i),
           kind: "annex",
           annexGroup: id,
           annexTitle: title,
@@ -1025,18 +1031,21 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
             <input
               className="min-w-[16rem] flex-1 rounded-md border border-input bg-background px-2 py-1.5 text-sm"
               value={group.title}
+              placeholder="Document label, e.g. Developer brochure"
               onChange={(e) => {
                 const title = e.target.value;
+                const pageIds = group.pages.map((page) => page.id);
                 setPhotos((prev) =>
-                  prev.map((p) =>
-                    p.annexGroup === group.id
-                      ? {
-                          ...p,
-                          annexTitle: title,
-                          caption: p.caption.replace(/^.*?(?=\s+[—-]\s+page\s+\d+)/i, title) || title,
-                        }
-                      : p,
-                  ),
+                  prev.map((p) => {
+                    const index = pageIds.indexOf(p.id);
+                    if (index < 0) return p;
+                    return {
+                      ...p,
+                      annexGroup: group.id.startsWith("title:") ? p.annexGroup || group.id : group.id,
+                      annexTitle: title,
+                      caption: annexPageLabel(title, index),
+                    };
+                  }),
                 );
               }}
             />
@@ -1055,7 +1064,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
             {group.pages.map((photo, index) => (
               <PhotoCard
                 key={photo.id}
-                slotLabel={photo.caption || `${group.title} — page ${index + 1}`}
+                slotLabel={annexPageLabel(group.title, index)}
                 photo={photo}
                 uploading={uploadingIds.has(photo.id)}
                 acceptDocument
@@ -1067,16 +1076,15 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
                   void attachPhoto({
                     file,
                     slot: null,
-                    caption: photo.caption || `${group.title} — page ${index + 1}`,
+                    caption: annexPageLabel(group.title, index),
                     replaceId: photo.id,
                     kind: "annex",
                     annexGroup: group.id,
                     annexTitle: group.title,
                   });
                 }}
-                onCaption={(caption) =>
-                  setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, caption } : p)))
-                }
+                onCaption={() => undefined}
+                captionEditable={false}
                 onRemove={() => void removePhoto(photo)}
                 onOpenPasteMenu={openPasteMenu}
                 onOmitFromReport={(omit) => setOmitFromReport(photo.id, omit)}

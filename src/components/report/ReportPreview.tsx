@@ -25,7 +25,7 @@ import {
   printAdjustmentGridEnabled,
   printSalesEvidenceEnabled,
 } from "@/lib/report/adjustmentGrid";
-import { MAP_SLOTS, PHOTO_SLOTS, cadastralPhotosOnReport, extraAnnexGroupsOnReport, isCadastralAnnexPhoto, isExtraAnnexPhoto, isMapAnnexPhoto, isSurveyAnnexPhoto, isTitleAnnexPhoto, photoIsOnReport, salesOnReport, surveyPhotosOnReport, titlePhotosOnReport, type ReportDraft } from "@/lib/report/types";
+import { MAP_SLOTS, PHOTO_SLOTS, annexPageLabel, cadastralPhotosOnReport, extraAnnexGroupsOnReport, isCadastralAnnexPhoto, isExtraAnnexPhoto, isMapAnnexPhoto, isSurveyAnnexPhoto, isTitleAnnexPhoto, photoIsOnReport, salesOnReport, surveyPhotosOnReport, titlePhotosOnReport, type ReportDraft } from "@/lib/report/types";
 import {
   getReportTypeConfig,
   isJointFamilyLawPhilType,
@@ -2095,7 +2095,12 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         pages={surveyPages}
       />
       {extraAnnexGroups.map((g) => (
-        <A4DocumentAnnex key={g.id} heading={`Annexure — ${g.title}`} pages={g.pages} />
+        <A4DocumentAnnex
+          key={g.id}
+          heading={g.title}
+          pages={g.pages}
+          pageHeading={(_page, index) => annexPageLabel(g.title, index)}
+        />
       ))}
 
       {/* ---- Maps annexure (only filled map slots) ---- */}

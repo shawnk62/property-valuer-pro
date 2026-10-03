@@ -118,6 +118,19 @@ export function extraAnnexPhotosOnReport(photos: ReportPhoto[] | null | undefine
   return photosOnReport(photos).filter(isExtraAnnexPhoto);
 }
 
+function annexDocumentTitle(page: ReportPhoto): string {
+  const titled = page.annexTitle?.trim();
+  if (titled) return titled;
+  return String(page.caption ?? "")
+    .replace(/\s+[—-]\s+page\s+\d+\s*$/i, "")
+    .replace(/\s+page\s+\d+\s*$/i, "")
+    .trim();
+}
+
+export function annexPageLabel(title: string, index: number): string {
+  return `${title} Page ${index + 1}`;
+}
+
 export function extraAnnexGroupsOnReport(
   photos: ReportPhoto[] | null | undefined,
 ): { id: string; title: string; pages: ReportPhoto[] }[] {
@@ -125,7 +138,8 @@ export function extraAnnexGroupsOnReport(
   const order: string[] = [];
   const map = new Map<string, ReportPhoto[]>();
   for (const page of pages) {
-    const id = page.annexGroup || page.id;
+    const title = annexDocumentTitle(page);
+    const id = page.annexGroup || (title ? `title:${title.toLowerCase()}` : page.id);
     if (!map.has(id)) {
       map.set(id, []);
       order.push(id);
@@ -134,12 +148,7 @@ export function extraAnnexGroupsOnReport(
   }
   return order.map((id, i) => {
     const groupPages = map.get(id) ?? [];
-    const title =
-      groupPages.find((p) => p.annexTitle?.trim())?.annexTitle?.trim() ||
-      String(groupPages[0]?.caption ?? "")
-        .replace(/\s+[—-]\s+page\s+\d+\s*$/i, "")
-        .trim() ||
-      `Annexure document ${i + 1}`;
+    const title = annexDocumentTitle(groupPages[0] ?? {}) || `Annexure document ${i + 1}`;
     return { id, title, pages: groupPages };
   });
 }

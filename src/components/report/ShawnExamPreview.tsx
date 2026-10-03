@@ -33,6 +33,7 @@ import {
   salesOnReport,
   surveyPhotosOnReport,
   titlePhotosOnReport,
+  annexPageLabel,
   type ReportDraft,
 } from "@/lib/report/types";
 import { A4DocumentAnnex } from "@/components/report/A4DocumentAnnex";
@@ -1042,8 +1043,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         <A4DocumentAnnex
           key={g.id}
           id={`exam-annex-extra-${g.id}`}
-          heading={`Annexure — ${g.title}`}
+          heading={g.title}
           pages={g.pages}
+          pageHeading={(_page, index) => annexPageLabel(g.title, index)}
         />
       ))}
     </article>
