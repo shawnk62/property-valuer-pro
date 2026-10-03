@@ -1057,6 +1057,15 @@
     widows: 3;
   }
 
+  #report-preview-sheet .report-prose-para {
+    margin: 0 0 10pt !important;
+    white-space: pre-line !important;
+  }
+
+  #report-preview-sheet .report-prose-para:last-child {
+    margin-bottom: 0 !important;
+  }
+
   #report-preview-sheet li {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
@@ -1506,4 +1515,13 @@
   padding-left: 1.5rem;
   text-indent: -1.5rem;
   text-align: left;
+}
+
+/* Working-report blank lines become the gap between printed paragraphs. */
+#report-preview-sheet .report-prose-para {
+  margin: 0 0 0.9em;
+  white-space: pre-line;
+}
+#report-preview-sheet .report-prose-para:last-child {
+  margin-bottom: 0;
 }

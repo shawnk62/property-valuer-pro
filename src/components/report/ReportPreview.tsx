@@ -510,12 +510,13 @@ function Prose({ text }: { text: string }) {
   return (
     <>
       {australianiseSpelling(text)
-        .split(/\n{1,}/)
-        .map((line) => line.trim())
+        .replace(/\r\n/g, "\n")
+        .split(/\n{2,}/)
+        .map((block) => block.replace(/[ \t]+\n/g, "\n").trim())
         .filter(Boolean)
-        .map((line, i) => (
-          <p key={i} className="text-justify">
-            {line}
+        .map((block, i) => (
+          <p key={i} className="report-prose-para text-justify whitespace-pre-line">
+            {block}
           </p>
         ))}
     </>

@@ -90,10 +90,11 @@ function subHeading(title: string) {
 
 function prose(body: string): Paragraph[] {
   return australianiseSpelling(body)
-    .split(/\n+/)
-    .map((line) => line.trim())
+    .replace(/\r\n/g, "\n")
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
     .filter(Boolean)
-    .map((line) => p(line));
+    .map((block) => p(block.replace(/\n+/g, " "), { after: 240 }));
 }
 
 function thinBorder() {
