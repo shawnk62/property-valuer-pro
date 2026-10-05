@@ -43,6 +43,11 @@ import {
   printAdjustmentGridEnabled,
   printSalesEvidenceEnabled,
 } from "@/lib/report/adjustmentGrid";
+import {
+  apaRetrieved,
+  referencesForPrint,
+  referenceStyleOf,
+} from "@/lib/report/references";
 import { purposeOfValuation } from "@/lib/report/reportTypes";
 import { buildExecutiveSummaryLead } from "@/lib/report/narrative";
 import { planningSchemeDisplay } from "@/lib/report/parsePlanningExtract";
@@ -1037,22 +1042,38 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       {show9 ? <Lead id="exam-9" title={t(major[8], "References")}>
       <Keep>
       {narrativePrints(m, "references") ? (
-        draft.narrative.references?.trim() ? (
+        referencesForPrint(m, draft.narrative.references, v).length ? (
           <div className="report-reference-list">
-            {draft.narrative.references
-              .split(/\n{1,}/)
-              .map((line) => line.trim())
-              .filter(Boolean)
-              .map((line, i) => (
-                <p key={`ref-${i}`}>{line}</p>
-              ))}
+            {referencesForPrint(m, draft.narrative.references, v).map((ref, i) => {
+              const style = referenceStyleOf(m);
+              const titled = ref.title && ref.title.toLowerCase() !== ref.author.toLowerCase();
+              const site = ref.site && ref.site.toLowerCase() !== ref.author.toLowerCase();
+              return (
+                <p key={`ref-${ref.url || ref.author}-${i}`}>
+                  {style === "apa" ? (
+                    <>
+                      {ref.author}. ({ref.year}).{" "}
+                      {titled ? <><em>{ref.title}</em>. </> : null}
+                      {site ? <>{ref.site}. </> : null}
+                      {ref.url ? <>{ref.year === "n.d." ? `Retrieved ${apaRetrieved()}, from ` : ""}{ref.url}</> : null}
+                    </>
+                  ) : (
+                    <>
+                      {ref.author} ({ref.year})
+                      {titled ? <> <em>{ref.title}</em></> : null}
+                      {ref.url ? <>, {ref.site || ref.author}, viewed {ref.accessed}, <{ref.url}>.</> : "."}
+                    </>
+                  )}
+                </p>
+              );
+            })}
           </div>
         ) : get(v, "exam_references") ? (
           <Prose text={get(v, "exam_references")} />
         ) : null
       ) : null}
       {narrativePrints(m, "references") &&
-      !draft.narrative.references?.trim() &&
+      !referencesForPrint(m, draft.narrative.references, v).length &&
       !get(v, "exam_references") ? (
         <Para>List sources used for the market commentary, planning searches and sales evidence.</Para>
       ) : null}

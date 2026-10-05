@@ -18,6 +18,7 @@ const HOST_AUTHOR: Record<string, string> = {
   "brisbane.qld.gov.au": "Brisbane City Council",
   "corelogic.com.au": "CoreLogic",
   "corelogic.com": "CoreLogic",
+  "cotality.com": "Cotality",
   "proptrack.com.au": "PropTrack",
   "domain.com.au": "Domain",
   "realestate.com.au": "REA Group",
@@ -29,35 +30,156 @@ const HOST_AUTHOR: Record<string, string> = {
   "ivsc.org": "International Valuation Standards Council",
   "apra.gov.au": "Australian Prudential Regulation Authority",
   "housing.gov.au": "Australian Government Department of Housing",
+  "yourinvestmentpropertymag.com.au": "Your Investment Property",
+  "jacksonclarkerealestate.com.au": "Jackson Clark Real Estate",
+  "plantationhomes.com.au": "Plantation Homes",
+  "frasersproperty.com.au": "Frasers Property",
+  "heatmaps.com.au": "Heatmaps",
+  "view.com.au": "View",
+  "aussie.com.au": "Aussie",
+  "property.com.au": "realestate.com.au",
+  "andreamonti.com.au": "Andrea Monti",
+  "landchecker.com.au": "Landchecker",
+  "homely.com.au": "Homely",
+  "inthesuburbs.com.au": "In the Suburbs",
+  "goldcoastinfo.net": "Gold Coast Info",
+  "wikipedia.org": "Wikipedia",
+  "en.wikipedia.org": "Wikipedia",
+  "westpac.com.au": "Westpac",
+  "commbank.com.au": "Commonwealth Bank of Australia",
+  "nab.com.au": "National Australia Bank",
+  "kpmg.com": "KPMG",
+  "htw.com.au": "Herron Todd White",
+  "airdna.co": "AirDNA",
+  "macrobusiness.com.au": "MacroBusiness",
+  "propertycouncil.com.au": "Property Council of Australia",
+  "prd.com.au": "PRD",
+  "eliteagent.com": "Elite Agent",
+  "theguardian.com": "The Guardian",
+  "reuters.com": "Reuters",
+  "areasearch.com.au": "AreaSearch",
+  "gchaveyoursay.com.au": "City of Gold Coast",
 };
+
+const AUTHOR_ALIASES: Record<string, string> = {
+  abs: "Australian Bureau of Statistics",
+  rba: "Reserve Bank of Australia",
+  qgso: "Queensland Government Statistician's Office",
+  "rea group": "REA Group",
+  "realestate.com.au": "REA Group",
+  commbank: "Commonwealth Bank of Australia",
+  "commonwealth bank": "Commonwealth Bank of Australia",
+  nab: "National Australia Bank",
+  htw: "Herron Todd White",
+  "herron todd white": "Herron Todd White",
+  cotality: "Cotality",
+  corelogic: "CoreLogic",
+  proptrack: "PropTrack",
+  wikipedia: "Wikipedia",
+};
+
+const COMPOUND_SUFFIXES = new Set(["au", "uk", "nz", "za"]);
+const SECOND_LEVEL = new Set(["com", "gov", "org", "edu", "net", "asn", "id", "co"]);
 
 function newId(): string {
   return `ref_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
-function hostAuthor(host: string): string {
-  const h = host.replace(/^www\./i, "").toLowerCase();
+function cleanHost(host: string): string {
+  return host.replace(/^www\./i, "").toLowerCase();
+}
+
+function knownAuthorForHost(host: string): string {
+  const h = cleanHost(host);
   if (HOST_AUTHOR[h]) return HOST_AUTHOR[h];
+  const parts = h.split(".");
+  for (let i = 1; i < parts.length - 1; i++) {
+    const suffix = parts.slice(i).join(".");
+    if (HOST_AUTHOR[suffix]) return HOST_AUTHOR[suffix];
+  }
+  return "";
+}
+
+function registrableLabel(host: string): string {
+  const h = cleanHost(host);
+  const known = knownAuthorForHost(h);
+  if (known) return known;
   const parts = h.split(".").filter(Boolean);
-  const core = parts.length >= 2 ? parts[parts.length - 2]! : h;
+  let core = parts[0] ?? h;
+  if (parts.length >= 3 && COMPOUND_SUFFIXES.has(parts[parts.length - 1]!) && SECOND_LEVEL.has(parts[parts.length - 2]!)) {
+    core = parts[parts.length - 3]!;
+  } else if (parts.length >= 2) {
+    core = parts[parts.length - 2]!;
+  }
   return core
     .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
+}
+
+function hostAuthor(host: string): string {
+  return registrableLabel(host);
+}
+
+function expandAuthor(raw: string): string {
+  const cleaned = raw
+    .replace(/\(\s*(n\.d\.|\d{4}(?:\s*[,–-]\s*\d{4})?)\s*\)/gi, "")
+    .replace(/\.\s*$/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleaned || /^(com|web source|source|n\.d)$/i.test(cleaned)) return "";
+  const alias = AUTHOR_ALIASES[cleaned.toLowerCase()];
+  if (alias) return alias;
+  if (/^abs\b/i.test(cleaned) && cleaned.length < 12) return "Australian Bureau of Statistics";
+  return cleaned;
+}
+
+function sentenceCase(raw: string): string {
+  const proper = new Map<string, string>([
+    ["gold coast", "Gold Coast"],
+    ["gold coasts", "Gold Coast's"],
+    ["queensland", "Queensland"],
+    ["australia", "Australia"],
+    ["worongary", "Worongary"],
+    ["skyridge", "SkyRidge"],
+    ["nerang", "Nerang"],
+    ["mudgeeraba", "Mudgeeraba"],
+    ["brisbane", "Brisbane"],
+    ["robina", "Robina"],
+    ["wikipedia", "Wikipedia"],
+    ["rea group", "REA Group"],
+  ]);
+  const words = raw
+    .replace(/[_+]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean);
+  if (!words.length) return "";
+  let text = words
+    .map((word, index) => (index === 0 ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : word.toLowerCase()))
+    .join(" ");
+  for (const [key, value] of proper) {
+    text = text.replace(new RegExp(`\\b${key}\\b`, "ig"), value);
+  }
+  const suburb = text.match(/^(\d{4})\s+([A-Za-z].+)$/);
+  if (suburb) return `${suburb[2]} ${suburb[1]}`;
+  return text;
 }
 
 function titleFromUrl(url: string): string {
   try {
-    const u = new URL(url);
-    const last = u.pathname.split("/").filter(Boolean).pop() ?? "";
-    const cleaned = decodeURIComponent(last)
-      .replace(/\.[a-z0-9]{2,4}$/i, "")
-      .replace(/[-_]+/g, " ")
-      .trim();
-    if (cleaned.length >= 4 && !/^(index|home|default)$/i.test(cleaned)) {
-      return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
-    }
-    return u.hostname.replace(/^www\./i, "");
+    const parsed = new URL(url);
+    const segments = parsed.pathname.split("/").filter(Boolean).map((part) => decodeURIComponent(part));
+    const generic = /^(index|home|default|latest|latest-release|release|\d+)$/i;
+    const chosen = [...segments].reverse().find((part) => {
+      const bare = part.replace(/\.[a-z0-9]{2,4}$/i, "");
+      return bare.length >= 4 && !generic.test(bare);
+    }) ?? segments[segments.length - 1] ?? "";
+    const cleaned = chosen.replace(/\.[a-z0-9]{2,4}$/i, "").replace(/[-_]+/g, " ").trim();
+    if (cleaned.length >= 4) return sentenceCase(cleaned);
+    return sentenceCase(registrableLabel(parsed.hostname));
   } catch {
     return "Web page";
   }
@@ -73,53 +195,109 @@ function accessedLabel(date = new Date()): string {
   });
 }
 
-function referenceParts(raw: string): { author: string; title: string; url: string } {
-  const s = raw.replace(/\s+/g, " ").trim().replace(/[.,;]+$/, "");
-  if (/^https?:\/\//i.test(s)) {
-    let host = "";
-    try {
-      host = new URL(s).hostname.replace(/^www\./i, "");
-    } catch {
-      host = "";
-    }
-    return { author: host ? hostAuthor(host) : "Web source", title: titleFromUrl(s), url: s };
-  }
-  const url = s.match(/https?:\/\/\S+/i)?.[0] ?? "";
-  const label = s.replace(url, "").trim().replace(/[.,;]+$/, "");
-  if (url && label) {
-    let author = label.replace(/\(\s*(n\.d\.|\d{4})\s*\)/, "").trim();
-    if (!author) {
-      try {
-        author = hostAuthor(new URL(url).hostname);
-      } catch {
-        author = "Web source";
-      }
-    }
-    return { author, title: titleFromUrl(url), url };
-  }
-  return { author: s || "Source", title: s || "Source", url: "" };
+export function apaRetrieved(date = new Date()): string {
+  return date.toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
 
-/** APA 7th webpage: Author. (n.d.). Title. URL */
+export interface ReferenceParts {
+  author: string;
+  year: string;
+  title: string;
+  site: string;
+  url: string;
+  accessed: string;
+}
+
+function referenceParts(raw: string, accessed = accessedLabel()): ReferenceParts {
+  const s = raw.replace(/\s+/g, " ").trim();
+  const url = s.match(/https?:\/\/\S+/i)?.[0]?.replace(/[.,;>)]+$/, "") ?? "";
+  let author = "";
+  let site = "";
+  let title = "";
+  let year = "n.d.";
+  const yearMatch = s.match(/\((\d{4}|n\.d\.)\)/i);
+  if (yearMatch?.[1] && yearMatch[1].toLowerCase() !== "n.d.") year = yearMatch[1];
+  if (url) {
+    try {
+      const host = new URL(url).hostname;
+      author = hostAuthor(host);
+      site = author;
+    } catch {
+      author = "Web source";
+      site = author;
+    }
+    title = titleFromUrl(url);
+  }
+  const label = s
+    .replace(url, "")
+    .replace(/\(\s*(n\.d\.|\d{4})\s*\)/gi, "")
+    .replace(/\b(available at|retrieved|viewed|accessed)\b.*$/i, "")
+    .replace(/[.,;:\s]+$/g, "")
+    .trim();
+  const expanded = expandAuthor(label.split(". ")[0] ?? label);
+  if (!author && expanded) author = expanded;
+  if (!url && label && !/^com\.?$/i.test(label)) {
+    const candidate = sentenceCase(label.replace(/^[^.]+?\.\s+/, ""));
+    const candidateAuthor = expandAuthor(candidate);
+    if (
+      candidate &&
+      candidate.toLowerCase() !== author.toLowerCase() &&
+      candidateAuthor.toLowerCase() !== author.toLowerCase()
+    ) {
+      title = candidate;
+    }
+  }
+  if (!title) title = author || "Source";
+  if (!author) author = "Source";
+  if (!site) site = author;
+  return { author, year, title, site, url, accessed };
+}
+
+function sameName(a: string, b: string): boolean {
+  return a.replace(/\.$/, "").toLowerCase() === b.replace(/\.$/, "").toLowerCase();
+}
+
+/** APA 7th webpage. Title is italicised by the print renderer. */
 export function formatApaReference(raw: string): string {
   const parts = referenceParts(raw);
-  if (!parts.author) return "";
-  if (parts.url) return `${parts.author}. (n.d.). ${parts.title}. ${parts.url}`;
-  return `${parts.author}. (n.d.). ${parts.title}. Publisher: ${parts.author}.`;
+  const title = sameName(parts.title, parts.author) ? "" : parts.title;
+  const site = parts.site && !sameName(parts.site, parts.author) ? `${parts.site}. ` : "";
+  const retrieved = parts.url && parts.year === "n.d." ? `Retrieved ${apaRetrieved()}, from ` : "";
+  if (parts.url) {
+    return `${parts.author}. (${parts.year}). ${title ? `${title}. ` : ""}${site}${retrieved}${parts.url}`;
+  }
+  return `${parts.author}. (${parts.year}).${title ? ` ${title}.` : ""}`;
 }
 
-/** Harvard (author-date): Author (n.d.) Title. Available at: URL (Accessed: date). */
+/** Australian Harvard author-date webpage. Title is italicised by the print renderer. */
 export function formatHarvardReference(raw: string, accessed = accessedLabel()): string {
-  const parts = referenceParts(raw);
-  if (!parts.author) return "";
+  const parts = referenceParts(raw, accessed);
+  const title = sameName(parts.title, parts.author) ? "" : parts.title;
   if (parts.url) {
-    return `${parts.author} (n.d.) ${parts.title}. Available at: ${parts.url} (Accessed: ${accessed}).`;
+    const site = parts.site || parts.author;
+    return `${parts.author} (${parts.year}) ${title ? `${title}, ` : ""}${site}, viewed ${parts.accessed}, <${parts.url}>.`;
   }
-  return `${parts.author} (n.d.) ${parts.title}. Publisher: ${parts.author}.`;
+  return `${parts.author} (${parts.year})${title ? ` ${title}.` : "."}`;
 }
 
 export function formatReference(raw: string, style: ReferenceStyle = "harvard"): string {
   return style === "apa" ? formatApaReference(raw) : formatHarvardReference(raw);
+}
+
+export function referenceKey(parts: ReferenceParts): string {
+  if (parts.url) {
+    try {
+      const u = new URL(parts.url);
+      return `${cleanHost(u.hostname)}${u.pathname.replace(/\/+$/, "")}`.toLowerCase();
+    } catch {
+      return parts.url.toLowerCase();
+    }
+  }
+  return `${parts.author}|${parts.title}`.toLowerCase();
 }
 
 function claimLists(meta: ReportMeta | undefined): NbhdClaim[] {
@@ -140,21 +318,18 @@ function sourceKey(raw: string): string {
 function sourcesFromClaim(claim: NbhdClaim): string[] {
   const out: string[] = [];
   const src = String(claim.source ?? "").trim();
-  if (src) out.push(src);
   const text = String(claim.text ?? "");
-  for (const url of text.match(/https?:\/\/[^\s)]+/gi) ?? []) {
-    out.push(url.replace(/[.,;]+$/, ""));
+  const urls = [
+    ...(src.match(/https?:\/\/\S+/gi) ?? []),
+    ...(text.match(/https?:\/\/[^\s)]+/gi) ?? []),
+  ].map((url) => url.replace(/[.,;]+$/, ""));
+  if (urls.length) {
+    out.push(...urls);
+    return out;
   }
+  if (src) out.push(src);
   const trailing = text.match(/\(([^)]{3,80})\)\s*$/);
-  if (trailing?.[1]) out.push(trailing[1].trim());
-  const dash = text.match(/\s[—–-]\s+([^—–-]{3,80})$/);
-  if (dash?.[1] && /gov|corelogic|proptrack|abs|rba|google|domain|qgso|treasury|api/i.test(dash[1])) {
-    out.push(dash[1].trim());
-  }
-  const blob = `${src} ${text}`.toLowerCase();
-  for (const [host, name] of Object.entries(HOST_AUTHOR)) {
-    if (blob.includes(host) || blob.includes(name.toLowerCase())) out.push(name);
-  }
+  if (trailing?.[1] && !/n\.d\./i.test(trailing[1])) out.push(trailing[1].trim());
   return out;
 }
 
@@ -224,6 +399,50 @@ export function reformatReferences(
     ...item,
     text: formatReference(item.sourceRaw || item.text, style) || item.text,
   }));
+}
+
+
+export function referencesForPrint(
+  meta: ReportMeta | undefined,
+  narrative: string | undefined,
+  values: InspectionValues,
+): ReferenceParts[] {
+  const style: ReferenceStyle = meta?.referenceStyle === "apa" ? "apa" : "harvard";
+  const raws: string[] = [];
+  for (const item of meta?.reportReferences ?? []) {
+    const raw = String(item.sourceRaw || item.text || "").trim();
+    if (item.accepted !== false && raw) raws.push(raw);
+  }
+  const prose = String(narrative ?? "").trim();
+  if (prose) {
+    for (const line of prose.split(/\n+/)) {
+      const t = line.replace(/^[\s*\-]+/, "").trim();
+      if (t.length > 4) raws.push(t);
+    }
+  }
+  const exam = String(values["exam_references"] ?? "").trim();
+  if (exam) {
+    for (const line of exam.split(/\n+/)) {
+      const t = line.replace(/^[\s*\-]+/, "").trim();
+      if (t.length > 4) raws.push(t);
+    }
+  }
+  const seen = new Set<string>();
+  const out: ReferenceParts[] = [];
+  for (const raw of raws) {
+    const parts = referenceParts(raw);
+    if (!parts.author || parts.author === "Source" && !parts.url) continue;
+    const key = referenceKey(parts);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(parts);
+  }
+  out.sort((a, b) => a.author.localeCompare(b.author, "en") || a.title.localeCompare(b.title, "en"));
+  return out.map((parts) => ({ ...parts, year: parts.year || "n.d." }));
+}
+
+export function referenceStyleOf(meta: ReportMeta | undefined): ReferenceStyle {
+  return meta?.referenceStyle === "apa" ? "apa" : "harvard";
 }
 
 export function referencesProse(items: ReportReference[] | undefined): string {
