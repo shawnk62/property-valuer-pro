@@ -1110,6 +1110,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             draft.narrative.marketRegion,
             draft.narrative.marketLocality,
             draft.narrative.salesComments,
+            draft.narrative.marketAustralia,
+            draft.narrative.marketState,
+            draft.narrative.marketRegion,
+            draft.narrative.marketLocality,
           ].join("\n"),
         ).length ? (
           <div className="report-reference-list">
@@ -1123,6 +1127,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 draft.narrative.marketRegion,
                 draft.narrative.marketLocality,
             draft.narrative.salesComments,
+            draft.narrative.marketAustralia,
+            draft.narrative.marketState,
+            draft.narrative.marketRegion,
+            draft.narrative.marketLocality,
               ].join("\n"),
             ).map((ref, i) => {
               const style = "harvard";

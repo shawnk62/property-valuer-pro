@@ -87,10 +87,8 @@ export function fillExamTocPages(): void {
       el.classList.contains("report-table-keep");
     if (avoid && used > 1 && h > 0 && h <= pageH && used + h > pageH) newPage();
     mark(el);
-    el.querySelectorAll<HTMLElement>("[id]").forEach((node) => {
-      if (node.closest(".report-annexure, .photo-annex-page, .report-a4-page") === el) mark(node);
-      else if (!node.closest(".report-annexure, .photo-annex-page, .report-a4-page")) mark(node);
-    });
+    const heading = el.querySelector(":scope > h2[id], :scope > h3[id]");
+    if (heading) mark(heading);
     if (h <= 0) return;
     if (used + h <= pageH + 0.5) {
       used += h;
@@ -121,6 +119,7 @@ export function fillExamTocPages(): void {
       placePageBlock(el);
       return;
     }
+    // A break-before after a break-after is one printed page, not two.
     if (startsPage(el) && used > 1) newPage();
     const blocks = Array.from(el.querySelectorAll<HTMLElement>(".photo-annex-page, .report-a4-page"));
     if (blocks.length > 0) {
@@ -141,7 +140,9 @@ export function fillExamTocPages(): void {
       return;
     }
     flow(el);
-    if (endsPage(el)) newPage();
+    if (endsPage(el)) {
+      newPage();
+    }
   };
 
   Array.from(sheet.children).forEach((child) => {
