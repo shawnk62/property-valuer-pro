@@ -1,4 +1,4 @@
-import { Children, useEffect, type ReactElement, type ReactNode } from "react";
+import { Children, isValidElement, useEffect, type ReactElement, type ReactNode } from "react";
 import { australianiseSpelling } from "@/lib/report/australianEnglish";
 import { formatNarrativeDate, formatNarrativeDateOr } from "@/lib/report/dates";
 import { stripLeadingHeading } from "@/lib/report/printText";
@@ -94,25 +94,29 @@ function amountInWords(raw: string): string {
   return body ? body.charAt(0).toUpperCase() + body.slice(1) + " dollars" : "";
 }
 
+function proseParagraphs(text: string): string[] {
+  return australianiseSpelling(text)
+    .replace(/\r\n/g, "\n")
+    .split(/\n{2,}/)
+    .map((block) => block.replace(/[ \t]+\n/g, "\n").trim())
+    .filter(Boolean);
+}
+
 function Para({ children }: { children: React.ReactNode }) {
   if (!children) return null;
   return <p className="text-left leading-relaxed">{children}</p>;
 }
 
 function Prose({ text }: { text: string }) {
-  if (!text.trim()) return null;
+  const blocks = proseParagraphs(text);
+  if (blocks.length === 0) return null;
   return (
     <>
-      {australianiseSpelling(text)
-        .replace(/\r\n/g, "\n")
-        .split(/\n{2,}/)
-        .map((block) => block.replace(/[ \t]+\n/g, "\n").trim())
-        .filter(Boolean)
-        .map((block, i) => (
-          <p key={i} className="report-prose-para text-left leading-relaxed whitespace-pre-line">
-            {block}
-          </p>
-        ))}
+      {blocks.map((block, i) => (
+        <p key={i} className="report-prose-para text-left leading-relaxed whitespace-pre-line">
+          {block}
+        </p>
+      ))}
     </>
   );
 }
@@ -160,6 +164,36 @@ function H2({ children }: { children: React.ReactNode }) {
   );
 }
 
+function openWithFirstSubsection(node: ReactNode): { head: ReactNode; tail: ReactNode } {
+  if (!isValidElement(node)) return { head: node, tail: null };
+  const inner = Children.toArray((node.props as { children?: ReactNode }).children).filter(
+    (child) => child != null && child !== false,
+  );
+  const heading = inner.find((child) => isValidElement(child) && child.type === H2);
+  if (!heading) return { head: node, tail: null };
+  const prose = inner.find(
+    (child) => isValidElement(child) && child.type === Prose,
+  ) as ReactElement<{ text?: string }> | undefined;
+  const paras = proseParagraphs(prose?.props.text || "");
+  const other = inner.filter((child) => child !== heading && child !== prose);
+  return {
+    head: (
+      <>
+        {heading}
+        {paras[0] ? (
+          <p className="report-prose-para text-left leading-relaxed whitespace-pre-line">{paras[0]}</p>
+        ) : null}
+      </>
+    ),
+    tail: (
+      <>
+        {paras.length > 1 ? <Prose text={paras.slice(1).join("\n\n")} /> : null}
+        {other}
+      </>
+    ),
+  };
+}
+
 function Lead({
   id,
   title,
@@ -171,12 +205,14 @@ function Lead({
 }) {
   const items = Children.toArray(children).filter((child) => child != null && child !== false);
   const [first, ...rest] = items;
+  const opened = openWithFirstSubsection(first);
   return (
     <>
       <div className="report-h-block">
         <H1 id={id}>{title}</H1>
-        {first}
+        {opened.head}
       </div>
+      {opened.tail}
       {rest}
     </>
   );

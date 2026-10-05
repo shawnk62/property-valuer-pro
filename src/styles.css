@@ -1005,12 +1005,19 @@
   }
 
   #report-preview-sheet .report-h-block {
+    display: block !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
     break-after: auto !important;
     page-break-after: auto !important;
     break-before: auto !important;
     page-break-before: auto !important;
+  }
+
+  /* A nested keep must not jump to the next page and leave the heading. */
+  #report-preview-sheet .report-h-block .report-keep-block {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
   }
 
   /*
