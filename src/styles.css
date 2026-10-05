@@ -363,7 +363,9 @@
 .sales-evidence-item .sales-col-rate { width: 18mm; white-space: nowrap; }
 .sales-evidence-item .sales-col-date { width: 20mm; white-space: nowrap; }
 .sales-evidence-item .report-prose-para {
-  margin: 0 0 0.75rem;
+  display: block;
+  margin: 0 0 0.85rem;
+  padding: 0;
 }
 .sales-evidence-item .report-prose-para:last-child {
   margin-bottom: 0;
@@ -1098,8 +1100,10 @@
   }
 
   #report-preview-sheet .report-prose-para {
-    margin: 0 0 10pt !important;
-    white-space: pre-line !important;
+    display: block !important;
+    margin: 0 0 12pt !important;
+    padding: 0 0 2pt !important;
+    white-space: normal !important;
   }
 
   #report-preview-sheet .report-prose-para:last-child {

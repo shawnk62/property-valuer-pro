@@ -104,8 +104,8 @@ function amountInWords(raw: string): string {
 function proseParagraphs(text: string): string[] {
   return australianiseSpelling(text)
     .replace(/\r\n/g, "\n")
-    .split(/\n{2,}/)
-    .map((block) => block.replace(/[ \t]+\n/g, "\n").trim())
+    .split(/\n+/)
+    .map((block) => block.replace(/[ \t]+/g, " ").trim())
     .filter(Boolean);
 }
 
@@ -997,12 +997,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <h3 id="exam-8-2" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
               {`${major[7]}.${n8[1]} Comments on comparable sales`}
             </h3>
-            <Prose
-              text={withoutSourceNotes(draft.narrative.salesComments || "", printedSales).replace(
-                /\r\n/g,
-                "\n",
-              ).replace(/\n/g, "\n\n")}
-            />
+            <Prose text={withoutSourceNotes(draft.narrative.salesComments || "", printedSales)} />
           </Keep>
         ) : null}
         {narrativePrints(m, "valueReconciliation") ? (

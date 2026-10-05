@@ -38,9 +38,17 @@ export function withoutSourceNotes(text: string, sales: ComparableSale[]): strin
   const blobs = sourceNoteBlobs(sales);
   if (!text.trim() || blobs.length === 0) return text;
   const kept = text
-    .split(/(?<=[.!?])\s+/)
-    .filter((sentence) => !fromSourceNotes(sentence, blobs));
-  return kept.join(" ").replace(/[ \t]{2,}/g, " ").trim();
+    .split(/\n{2,}/)
+    .map((paragraph) =>
+      paragraph
+        .split(/(?<=[.!?])\s+/)
+        .filter((sentence) => !fromSourceNotes(sentence, blobs))
+        .join(" ")
+        .replace(/[ \t]{2,}/g, " ")
+        .trim(),
+    )
+    .filter(Boolean);
+  return kept.join("\n\n");
 }
 
 /** Printed sale comment. Never the source-note or working-note field. */
