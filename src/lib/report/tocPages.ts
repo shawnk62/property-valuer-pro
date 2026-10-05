@@ -1,8 +1,8 @@
 /**
  * Write contents page numbers for every report type.
- * The number is text, not a browser page counter, so Safari and Chrome match.
- * Page 1 is the cover. A contents block, summary sheet, sales section,
- * reference section and each annexure page start a new page.
+ * The number is text, so Safari and Chrome show the same figure.
+ * Page 1 is the cover. A break-after followed by a break-before is one page.
+ * Each contents target is numbered on the page where that heading starts.
  */
 const PAGE_MM = 297;
 const MARGIN_TOP_MM = 14;
@@ -20,21 +20,6 @@ function isPhotoPage(el: Element): boolean {
 
 function isA4Page(el: Element): boolean {
   return el.classList.contains("report-a4-page");
-}
-
-function photoPageBreaksAfter(el: Element): boolean {
-  if (!isPhotoPage(el)) return false;
-  const parent = el.parentElement;
-  const last = parent?.lastElementChild === el;
-  if (
-    last &&
-    parent &&
-    (parent.classList.contains("report-annexure-subject") ||
-      parent.classList.contains("report-annexure-comps"))
-  ) {
-    return false;
-  }
-  return true;
 }
 
 function startsPage(el: Element): boolean {
@@ -79,74 +64,40 @@ export function fillExamTocPages(): void {
     used = 0;
   };
 
-  const flow = (el: Element) => {
-    const h = Math.max(el.scrollHeight, el.getBoundingClientRect().height);
-    const avoid =
-      el.classList.contains("report-section-open") ||
-      el.classList.contains("report-keep-block") ||
-      el.classList.contains("report-table-keep");
-    if (avoid && used > 1 && h > 0 && h <= pageH && used + h > pageH) newPage();
-    mark(el);
-    const heading = el.querySelector(":scope > h2[id], :scope > h3[id]");
-    if (heading) mark(heading);
-    if (h <= 0) return;
-    if (used + h <= pageH + 0.5) {
-      used += h;
-      return;
+  const consume = (height: number) => {
+    if (height <= 0) return;
+    if (used > 1 && used + height > pageH) newPage();
+    used += height;
+    while (used > pageH) {
+      used -= pageH;
+      page += 1;
     }
-    if (avoid && h <= pageH) {
-      newPage();
-      mark(el);
-      used = h;
-      return;
-    }
-    const total = used + h;
-    page += Math.floor(total / pageH);
-    used = total % pageH;
   };
 
-  const placePageBlock = (el: Element) => {
-    if (used > 1) newPage();
-    const owner = el.closest("[id]");
-    if (owner) mark(owner);
-    mark(el);
-    used = pageH;
-    if (isPhotoPage(el) && photoPageBreaksAfter(el)) newPage();
-  };
-
-  const place = (el: Element) => {
+  const walk = (el: Element) => {
     if (isPhotoPage(el) || isA4Page(el)) {
-      placePageBlock(el);
-      return;
-    }
-    // A break-before after a break-after is one printed page, not two.
-    if (startsPage(el) && used > 1) newPage();
-    const blocks = Array.from(el.querySelectorAll<HTMLElement>(".photo-annex-page, .report-a4-page"));
-    if (blocks.length > 0) {
+      if (used > 1) newPage();
       mark(el);
-      let cursor: ChildNode | null = el.firstChild;
-      blocks.forEach((block) => {
-        const before: Element[] = [];
-        while (cursor && cursor !== block) {
-          if (cursor instanceof Element && !cursor.querySelector(".photo-annex-page, .report-a4-page")) {
-            before.push(cursor);
-          }
-          cursor = cursor.nextSibling;
-        }
-        before.forEach(flow);
-        placePageBlock(block);
-        cursor = block.nextSibling;
-      });
+      el.querySelectorAll<HTMLElement>("[id]").forEach(mark);
+      used = pageH;
+      if (isPhotoPage(el)) newPage();
       return;
     }
-    flow(el);
-    if (endsPage(el)) {
-      newPage();
+    if (startsPage(el) && used > 1) newPage();
+    mark(el);
+    const nested = Array.from(el.children).filter(
+      (child) => child.querySelector("[id]") || child.id,
+    );
+    if (nested.length === 0) {
+      consume(el.getBoundingClientRect().height);
+    } else {
+      nested.forEach(walk);
     }
+    if (endsPage(el)) newPage();
   };
 
   Array.from(sheet.children).forEach((child) => {
-    if (child instanceof Element) place(child);
+    if (child instanceof Element) walk(child);
   });
 
   document.querySelectorAll<HTMLElement>("[data-toc-id]").forEach((slot) => {
