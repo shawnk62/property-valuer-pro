@@ -45,6 +45,14 @@ export function formatNarrativeDate(raw: string | undefined | null): string {
     return fromParts(day, monthIndex, year) || s;
   }
 
+  const shortMonth = s.match(
+    /^(\d{1,2})[/-](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[/-](\d{2,4})$/i,
+  );
+  if (shortMonth) {
+    const monthIndex = MONTHS.findIndex((m) => m.toLowerCase().startsWith(shortMonth[2]!.toLowerCase()));
+    return fromParts(parseInt(shortMonth[1]!, 10), monthIndex, parseInt(shortMonth[3]!, 10)) || s;
+  }
+
   const dmy = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
   if (dmy) {
     return fromParts(parseInt(dmy[1]!, 10), parseInt(dmy[2]!, 10) - 1, parseInt(dmy[3]!, 10)) || s;

@@ -661,6 +661,7 @@ Rules:
 - Name the rating number and label (Low through High) in each paragraph.
 - Explain the rating from the official criteria and only recorded facts (flood, overlays, title, condition, vacant land).
 - Do not invent market statistics or overlay names.
+- Flood commentary must be a complete sentence and must name the flood layer actually checked.
 - If an overlay affects the subject, add one sentence on what a mortgagee would do about that overlay.
 - Omit a heading when no score and no comment are recorded. Do not write "no rating was selected".
 - If vacant land is recorded, treat Improvements as vacant-land risk, not a dwelling.

@@ -764,10 +764,11 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           { label: "Utilities", value: servicesText },
           {
             label: "Easements, encumbrances and restrictions",
-            value:
+            value: australianiseSpelling(
               (narrativePrints(m, "encumbrancesSummary")
                 ? draft.narrative.encumbrancesSummary?.trim()
                 : "") || buildEncumbrancesSummary(v),
+            ),
           },
         ]}
       />
@@ -823,8 +824,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       {show42 ? <Keep>
       <H2>{subTitle(major[3], n4[1], "Flood assessment")}</H2>
       <Para>
-        {draft.narrative.floodAssessment?.trim() ||
-          "No flood notation is recorded on the inspection."}
+        {/^no\.?\s/i.test(draft.narrative.floodAssessment || "")
+          ? `No flood affectation is recorded for the subject on the flood layer checked (${draft.narrative.floodAssessment?.replace(/^no\.?\s*/i, "").replace(/\.$/, "") || "the planning flood layer"}).`
+          : draft.narrative.floodAssessment?.trim() ||
+            "No flood notation is recorded on the inspection."}
       </Para>
       </Keep> : null}
       {show43 ? <Keep>

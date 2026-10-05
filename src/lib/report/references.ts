@@ -443,14 +443,16 @@ export function referencesForPrint(
   const cleaned = out.filter((item) => {
     if (/^com\.?$/i.test(item.author)) return false;
     if (!item.url && authorsWithUrl.has(item.author.toLowerCase())) return false;
-    const thin =
-      !item.title &&
-      (!item.year || item.year === "n.d.") &&
-      /prd\.com\.au|propertycouncil\.com\.au|proptrack|wikipedia/i.test(
-        `${item.author} ${item.site} ${item.url}`,
-      );
-    if (thin) return false;
-    if (!item.title || !item.year || item.year === "n.d.") return false;
+    const blob = `${item.author} ${item.title} ${item.site} ${item.url}`.toLowerCase();
+    if (/\bvia\b/.test(blob)) return false;
+    if (item.year === "n.d." || !item.year) return false;
+    if (
+      /airdna|andreamonti|areasearch|prd\.com\.au|propertycouncil|proptrack|wikipedia|qld\.gov\.au/.test(blob) &&
+      (!item.title || item.title.toLowerCase() === item.author.toLowerCase())
+    ) {
+      return false;
+    }
+    if (!item.title || item.title.toLowerCase() === item.author.toLowerCase()) return false;
     return true;
   });
   cleaned.sort((a, b) => a.author.localeCompare(b.author, "en") || a.title.localeCompare(b.title, "en"));

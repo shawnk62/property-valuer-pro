@@ -308,7 +308,9 @@ export function unregisteredDealingsDisplay(values: InspectionValues): string {
       /UNREGISTERED DEALINGS\s*\n([\s\S]{0,2000}?)(?=\n\s*(?:END OF (?:CURRENT )?TITLE SEARCH|COPYRIGHT|ADMINISTRATIVE ADVICES)\b|$)/i,
     )?.[1] ?? "";
   const cleaned = cleanUnregistered(fromSearch || stored);
-  if (!cleaned || /^nil$|^none recorded$/i.test(cleaned)) return "NIL";
+  if (!cleaned || /^nil$|^none recorded$/i.test(cleaned) || /caution|order of priority/i.test(cleaned)) {
+    return "NIL";
+  }
   return cleaned;
 }
 

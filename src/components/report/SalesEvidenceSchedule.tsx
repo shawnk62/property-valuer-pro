@@ -5,6 +5,7 @@ import {
 } from "@/lib/report/adjustmentGrid";
 import { cleanSaleProse, formatSalePrice } from "@/lib/report/salesRelativity";
 import { printedSaleComment } from "@/lib/report/sourceNotes";
+import { formatNarrativeDateOr } from "@/lib/report/dates";
 import type { ComparableSale } from "@/lib/report/types";
 
 const HEADERS = [
@@ -17,6 +18,22 @@ const HEADERS = [
   "Rating",
 ] as const;
 
+function printedAddress(raw: string): string {
+  const text = raw.replace(/\s+/g, " ").trim();
+  if (!text) return "—";
+  if (text !== text.toUpperCase()) return text;
+  return text
+    .toLowerCase()
+    .replace(/\b([a-z])/g, (letter) => letter.toUpperCase())
+    .replace(/\bQld\b/g, "QLD");
+}
+
+function printedComment(raw: string): string {
+  return raw
+    .replace(/\bsquare meters\b/gi, "square metres")
+    .replace(/\bsquare meter\b/gi, "square metres")
+    .replace(/\b(\d+)\s*m2\b/gi, "$1 m²");
+}
 function saleRating(sale: ComparableSale): string {
   const chosen = sale.printRating?.trim();
   if (chosen) return chosen;
@@ -57,7 +74,7 @@ export function SalesEvidenceSchedule({
         const commentParagraphs = comment
           .replace(/\r\n/g, "\n")
           .split(/\n+/)
-          .map((part) => cleanSaleProse(part))
+          .map((part) => printedComment(cleanSaleProse(part)))
           .filter(Boolean);
         return (
           <table
@@ -92,7 +109,7 @@ export function SalesEvidenceSchedule({
                   {idx + 1}
                 </td>
                 <td className={cell} style={cellStyle}>
-                  {s.address || "—"}
+                  {printedAddress(s.address)}
                 </td>
                 <td className={`${cell} whitespace-nowrap`} style={cellStyle}>
                   {site.area}
@@ -104,7 +121,7 @@ export function SalesEvidenceSchedule({
                   {site.rate}
                 </td>
                 <td className={`${cell} sales-date-cell`} style={cellStyle}>
-                  {s.saleDate || "—"}
+                  {formatNarrativeDateOr(s.saleDate, s.saleDate || "—")}
                 </td>
                 <td className={`${cell} whitespace-nowrap`} style={cellStyle}>
                   {saleRating(s)}

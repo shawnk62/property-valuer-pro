@@ -1310,9 +1310,16 @@ function buildAcidSulphate(values: InspectionValues): string {
 }
 
 function buildFloodAssessment(values: InspectionValues): string {
-  const parts = [v(values, "prop_flood"), v(values, "prop_flood_map")].filter(Boolean);
-  if (parts.length) return parts.join(". ");
-  return "No flood notation is recorded on the inspection.";
+  const status = v(values, "prop_flood");
+  const source = v(values, "prop_flood_map");
+  if (!status && !source) return "No flood notation is recorded on the inspection.";
+  if (/^no\.?$/i.test(status) && source) {
+    return `No flood affectation is recorded for the subject on the flood layer checked (${source}).`;
+  }
+  if (status && source) {
+    return `Flood status is recorded as ${status}. The layer checked was ${source}.`;
+  }
+  return status || `The flood layer checked was ${source}.`;
 }
 
 function buildNoiseNuisances(values: InspectionValues): string {

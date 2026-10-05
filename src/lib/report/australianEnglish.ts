@@ -41,6 +41,8 @@ const PAIRS: [string, string][] = [
   ["defense", "defence"],
   ["acknowledgment", "acknowledgement"],
   ["practicing", "practising"],
+  ["square meters", "square metres"],
+  ["square meter", "square metres"],
   ["kilometers", "kilometres"],
   ["kilometer", "kilometre"],
 ];

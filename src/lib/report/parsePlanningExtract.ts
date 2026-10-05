@@ -128,11 +128,15 @@ function schemeDate(raw: string): Date | null {
   const named = raw.match(
     /(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})/i,
   );
-  if (!named) return null;
-  const months = "january,february,march,april,may,june,july,august,september,october,november,december".split(",");
-  const month = months.indexOf(named[2]!.toLowerCase());
-  if (month < 0) return null;
-  return new Date(Number(named[3]), month, Number(named[1]));
+  if (named) {
+    const months = "january,february,march,april,may,june,july,august,september,october,november,december".split(",");
+    const month = months.indexOf(named[2]!.toLowerCase());
+    if (month >= 0) return new Date(Number(named[3]), month, Number(named[1]));
+  }
+  const numeric = raw.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/);
+  if (!numeric) return null;
+  const year = Number(numeric[3]) < 100 ? 2000 + Number(numeric[3]) : Number(numeric[3]);
+  return new Date(year, Number(numeric[2]) - 1, Number(numeric[1]));
 }
 
 /** Drop a scheme version that commenced after the valuation date. */
@@ -141,15 +145,20 @@ export function planningSchemeInForce(
   valueDate: string | null | undefined,
 ): string {
   const display = planningSchemeDisplay(values);
-  const valuation = schemeDate(String(valueDate ?? ""));
-  if (!display || !valuation) return display;
+  if (!display) return "";
+  const valuation = schemeDate(String(valueDate ?? values["exam_value_date"] ?? ""));
   const effective = schemeDate(display);
-  if (!effective || effective.getTime() <= valuation.getTime()) return display;
+  const future = Boolean(valuation && effective && effective.getTime() > valuation.getTime());
+  if (!future) return display;
   return display
+    .replace(/,?\s*version\s+\d+\b/i, "")
     .replace(/,?\s*(?:amended|commenced|effective)\s+\d{1,2}\s+[A-Za-z]+\s+\d{4}/i, "")
     .replace(/\s+/g, " ")
+    .replace(/\s+,/g, ",")
     .trim();
 }
+
+export function mergePlanningExtract(
   existing: Record<string, unknown>,
   incoming: PlanningExtract,
 ): Record<string, string> {
