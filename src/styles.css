@@ -1004,22 +1004,19 @@
     page-break-before: avoid !important;
   }
 
-  /* Section heading plus the start of its first subsection. Short on purpose
-     so print cannot leave the heading at the foot of a page. */
+  /* Two headings only. No overflow clip, so a page edge cannot cut the title. */
   #report-preview-sheet .report-section-open {
-    display: inline-block !important;
-    width: 100% !important;
-    overflow: hidden !important;
+    display: block !important;
+    overflow: visible !important;
+    width: auto !important;
     margin: 0 !important;
     padding: 0 !important;
     border: 0 !important;
     background: transparent !important;
-    font-size: inherit !important;
-    color: inherit !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
-    break-after: auto !important;
-    page-break-after: auto !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
     break-before: auto !important;
     page-break-before: auto !important;
   }
