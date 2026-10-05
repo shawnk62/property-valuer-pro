@@ -49,6 +49,7 @@ import {
   formatPct,
   relativitySelectClass,
   salePricePerGla,
+  subjectAskingPriceDisplay,
   subjectFeatureDisplay,
   subjectSiteAreaRaw,
   subjectTopographyDisplay,
@@ -2076,7 +2077,11 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                             {
                               key: "salePrice",
                               label: "Sale Price",
-                              subject: () => "—",
+                              subject: () =>
+                                subjectAskingPriceDisplay(
+                                  draft.values,
+                                  draft.reportMeta.subjectAskingPrice,
+                                ),
                               read: (s: (typeof sales)[0]) => s.salePrice,
                               write: (id: string, v: string) => patchSale(id, { salePrice: v }),
                             },
@@ -2115,7 +2120,22 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                             <td className={`sticky left-0 z-10 px-2 py-1.5 font-medium text-foreground ${adjustmentRowClass(metaRowIdx)}`}>
                               {row.label}
                             </td>
-                            <td className="px-2 py-1.5 text-muted-foreground">{row.subject()}</td>
+                            <td className="px-2 py-1.5 text-muted-foreground">
+                              {row.key === "salePrice" ? (
+                                <input
+                                  value={subjectAskingPriceDisplay(
+                                    draft.values,
+                                    draft.reportMeta.subjectAskingPrice,
+                                  )}
+                                  onChange={(e) => setMeta({ subjectAskingPrice: e.target.value })}
+                                  placeholder="Asking price"
+                                  title="Subject asking price. Filled from the inspection listing when one is recorded, and can be edited."
+                                  className="w-full min-w-0 rounded border border-input bg-card px-1 py-0.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
+                                />
+                              ) : (
+                                row.subject()
+                              )}
+                            </td>
                             {chunk.map((sale) => (
                               <Fragment key={sale.id}>
                                 <td

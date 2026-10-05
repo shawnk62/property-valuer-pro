@@ -484,7 +484,19 @@ export function computeSaleAdjustmentTotals(sale: ComparableSale): SaleAdjustmen
   };
 }
 
-export function formatMoney(n: number | null | undefined): string {
+export function subjectAskingPriceDisplay(
+  values: InspectionValues,
+  override?: string,
+): string {
+  if (override != null) return override;
+  const offered = String(values["prop_offered"] ?? "").trim().toLowerCase();
+  if (offered === "no") return "";
+  const contract = String(values["prop_contract_price"] ?? "").trim();
+  const details = String(values["prop_offer_details"] ?? "");
+  const listed = details.match(/\$?\s*\d[\d,]*(?:\.\d+)?/)?.[0]?.trim() ?? "";
+  if (offered !== "yes" && !contract && !listed) return "";
+  return contract || listed;
+}
   if (n == null || !Number.isFinite(n)) return "—";
   const abs = Math.abs(n);
   const formatted = abs.toLocaleString("en-AU", {

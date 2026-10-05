@@ -6,6 +6,7 @@ import {
   detailLooksLikeSaleDate,
   formatAdjustmentMoney,
   formatAreaWithSqm,
+  subjectAskingPriceDisplay,
   subjectFeatureDisplay,
   subjectSiteSizeDisplay,
   subjectTopographyDisplay,
@@ -76,7 +77,7 @@ export function AdjustmentGridPrint({
               </tr>
               <tr>
                 <th scope="row">Sale Price</th>
-                <td>—</td>
+                <td>{subjectAskingPriceDisplay(values, meta.subjectAskingPrice) || "—"}</td>
                 {chunk.map((sale) => (
                   <Fragment key={sale.id}>
                     <td>{sale.salePrice || "—"}</td>
@@ -160,7 +161,7 @@ export function AdjustmentGridPrint({
               </tr>
               <tr>
                 <th scope="row">Adjusted sale price</th>
-                <td>{subjectAddress || "—"}</td>
+                <td />
                 {chunk.map((sale) => {
                   const t = computeSaleAdjustmentTotals(sale);
                   return (
