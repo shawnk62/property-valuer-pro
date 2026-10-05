@@ -2524,10 +2524,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                             },
                             {
                               label: "Adjusted Sale Price",
-                              cell: (sale: (typeof sales)[0]) =>
-                                formatMoney(
-                                  computeSaleAdjustmentTotals(sale).adjustedSalePrice,
-                                ),
+                              cell: (sale: (typeof sales)[0]) => {
+                                const adjusted = computeSaleAdjustmentTotals(sale).adjustedSalePrice;
+                                return adjusted == null ? "—" : formatMoney(Math.abs(adjusted));
+                              },
                               strong: true,
                             },
                           ] as const

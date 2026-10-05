@@ -5,6 +5,7 @@ import {
   computeSaleAdjustmentTotals,
   detailLooksLikeSaleDate,
   formatAdjustmentMoney,
+  formatMoney,
   formatAreaWithSqm,
   subjectAskingPriceDisplay,
   subjectFeatureDisplay,
@@ -167,7 +168,11 @@ export function AdjustmentGridPrint({
                   return (
                     <Fragment key={sale.id}>
                       <td />
-                      <td className="adj-money">{formatAdjustmentMoney(t.adjustedSalePrice)}</td>
+                      <td className="adj-money">
+                        {t.adjustedSalePrice == null
+                          ? "—"
+                          : formatMoney(Math.abs(t.adjustedSalePrice))}
+                      </td>
                     </Fragment>
                   );
                 })}
