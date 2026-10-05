@@ -234,8 +234,12 @@ function Lead({
           style={{ color: TEAL, borderColor: RULE }}
         >
           {title}
-          {opened.title ? <span className="report-section-sub">{opened.title}</span> : null}
         </h2>
+        {opened.title ? (
+          <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
+            {opened.title}
+          </h3>
+        ) : null}
         {opened.lead}
       </div>
       {opened.tail}
@@ -265,8 +269,12 @@ function SectionOpen({
           style={{ color: TEAL, borderColor: RULE }}
         >
           {title}
-          {sub ? <span className="report-section-sub">{sub}</span> : null}
         </h2>
+        {sub ? (
+          <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
+            {sub}
+          </h3>
+        ) : null}
         {paras[0] ? (
           <p className="report-prose-para text-left leading-relaxed whitespace-pre-line">{paras[0]}</p>
         ) : null}

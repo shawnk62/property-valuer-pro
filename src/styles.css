@@ -1016,7 +1016,8 @@
     page-break-before: auto !important;
   }
 
-  #report-preview-sheet .report-section-open .report-section-sub {
+  #report-preview-sheet .report-section-open .report-section-sub,
+  #report-preview-sheet .report-section-open h2 + h3 {
     display: block !important;
     margin-top: 0.85rem !important;
     border: 0 !important;
