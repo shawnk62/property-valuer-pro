@@ -334,8 +334,6 @@ function ExamToc({
 }) {
   useEffect(() => {
     const run = () => fillExamTocPages();
-    const sheet = document.getElementById("report-preview-sheet");
-    if (sheet && /Chrome|Chromium|Edg\//.test(navigator.userAgent)) sheet.classList.add("exam-toc-live");
     run();
     const t = window.setTimeout(run, 400);
     window.addEventListener("beforeprint", run);

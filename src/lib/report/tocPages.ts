@@ -1,12 +1,14 @@
 /**
- * Fill [data-toc-id] page labels from the same breaks the print stylesheet uses.
- * Page 1 is the cover. Screen computed style does not see @media print, so the
- * breaks are read from the classes styles.css applies in print.
+ * Write contents page numbers for every report type.
+ * The number is text, not a browser page counter, so Safari and Chrome match.
+ * Page 1 is the cover. A contents block, summary sheet, sales section,
+ * reference section and each annexure page start a new page.
  */
 const PAGE_MM = 297;
 const MARGIN_TOP_MM = 14;
 const MARGIN_BOTTOM_MM = 18;
 const CONTENT_MM = PAGE_MM - MARGIN_TOP_MM - MARGIN_BOTTOM_MM;
+const CONTENT_WIDTH_MM = 210 - 24;
 
 function mmToPx(mm: number): number {
   return (mm / 25.4) * 96;
@@ -59,6 +61,8 @@ export function fillExamTocPages(): void {
   const hostWasHidden = host?.classList.contains("hidden") ?? false;
   if (hostWasHidden) host.classList.remove("hidden");
   sheet.classList.add("exam-toc-measure");
+  const previousWidth = sheet.style.width;
+  sheet.style.width = `${CONTENT_WIDTH_MM}mm`;
   void sheet.offsetHeight;
 
   const pageH = mmToPx(CONTENT_MM);
@@ -152,5 +156,6 @@ export function fillExamTocPages(): void {
     if (fallback) fallback.textContent = n ? String(n) : "—";
   });
   sheet.classList.remove("exam-toc-measure");
+  sheet.style.width = previousWidth;
   if (hostWasHidden) host.classList.add("hidden");
 }

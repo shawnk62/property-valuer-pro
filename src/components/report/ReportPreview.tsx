@@ -483,6 +483,9 @@ function TableOfContents({
             >
               {entry.title}
             </a>
+            <a href={`#${entry.id}`} className="exam-toc-page w-8 shrink-0 text-right tabular-nums" data-toc-id={entry.id}>
+              <span className="toc-fallback" />
+            </a>
           </li>
         ))}
       </ol>
