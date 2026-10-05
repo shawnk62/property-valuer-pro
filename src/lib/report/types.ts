@@ -251,6 +251,8 @@ export interface ReportNarrative {
   siteIdentification: string;
   /** Legal access — 2.2 Title Particulars. */
   legalAccess: string;
+  /** Narrative written from the full imported title search. Manual text is kept. */
+  titleSearchNarrative: string;
   /** Physical ingress/egress — 2.3 Particulars of Land when relevant. */
   physicalAccess: string;
   /** §6.2 Services/Amenities (AI or template). */

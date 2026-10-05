@@ -10,9 +10,10 @@ export type TitleSearchExtract = {
   prop_title_search_date?: string;
   exam_title_search_date?: string;
   enc_notes?: string;
-  title_admin_advices?: string;
-  title_search_text?: string;
   enc?: string;
+  title_search_text?: string;
+  title_admin_advices?: string;
+  title_unregistered?: string;
 };
 
 function clean(s: string): string {
@@ -40,10 +41,27 @@ function planCode(planType: string, planNo: string): string {
   return `${clean(planType)} ${n}`.trim();
 }
 
+function section(text: string, start: RegExp, end: RegExp): string {
+  const from = text.search(start);
+  if (from < 0) return "";
+  const rest = text.slice(from).replace(start, "");
+  const stop = rest.search(end);
+  return cleanLines(stop < 0 ? rest : rest.slice(0, stop));
+}
+
+function cleanLines(raw: string): string {
+  return raw
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l && !/^Caution/i.test(l))
+    .join("\n")
+    .trim();
+}
+
 export function parseTitleSearchText(raw: string): TitleSearchExtract {
   const text = String(raw ?? "").replace(/\r/g, "\n");
   if (text.trim().length < 20) return {};
-  const out: TitleSearchExtract = {};
+  const out: TitleSearchExtract = { title_search_text: text.trim().slice(0, 20000) };
 
   const titleRef =
     text.match(/Title\s*Reference\s*[:\s]*([0-9]{5,12})/i)?.[1] ||
@@ -107,12 +125,22 @@ export function parseTitleSearchText(raw: string): TitleSearchExtract {
     }
   }
 
-  const adviceBlock = text.match(
-    /ADMINISTRATIVE ADVICES\s*\n([\s\S]{0,8000}?)(?=\n\s*UNREGISTERED DEALINGS\b|$)/i,
+  const advices = section(
+    text,
+    /ADMINISTRATIVE ADVICES\s*\n/i,
+    /\n\s*(?:UNREGISTERED DEALINGS|EASEMENTS, ENCUMBRANCES)\b/i,
   );
-  if (adviceBlock?.[1] && !/^NIL$/i.test(adviceBlock[1].trim())) {
-    out.title_admin_advices = adviceBlock[1].trim().slice(0, 8000);
-  }
+  if (advices && !/^NIL$/i.test(advices)) out.title_admin_advices = advices.slice(0, 8000);
+
+  const unregistered = section(
+    text,
+    /UNREGISTERED DEALINGS\s*\n/i,
+    /\n\s*(?:ADMINISTRATIVE ADVICES|EASEMENTS, ENCUMBRANCES|END OF SEARCH)\b/i,
+  );
+  if (unregistered && !/^NIL$/i.test(unregistered)) out.title_unregistered = unregistered.slice(0, 4000);
+
+  const parts = [out.enc_notes, out.title_admin_advices, out.title_unregistered].filter(Boolean);
+  if (parts.length) out.enc_notes = parts.join("\n\n").slice(0, 8000);
   if (text.trim()) out.title_search_text = text.trim().slice(0, 20000);
 
   return out;
@@ -132,8 +160,9 @@ export function mergeTitleSearchExtract(
     "exam_title_search_date",
     "enc_notes",
     "enc",
-    "title_admin_advices",
     "title_search_text",
+    "title_admin_advices",
+    "title_unregistered",
   ];
   for (const key of authoritative) {
     const value = incoming[key]?.trim();

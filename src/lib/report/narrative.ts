@@ -1360,6 +1360,7 @@ export function generateNarrative(
     sitePhysical: buildSitePhysical(values),
     siteIdentification: buildSiteIdentification(values),
     legalAccess: buildLegalAccess(values),
+    titleSearchNarrative: "",
     physicalAccess: buildPhysicalAccess(values),
     servicesAmenities: buildServicesAmenities(values),
     improvements:

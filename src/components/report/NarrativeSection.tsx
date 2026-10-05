@@ -93,6 +93,11 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           hint: "Prints under 2.2 Title Particulars. How and where the allotment gains vehicular access, including any easement.",
         },
         {
+          key: "titleSearchNarrative",
+          label: "2.2 Title search",
+          hint: "Written from the full imported title search. Prints under Title Particulars. Manual text is kept.",
+        },
+        {
           key: "physicalAccess",
           label: "2.3 Physical ingress / egress",
           hint: "Prints under 2.3 only if ticked. Defaults off except industrial and commercial.",
@@ -1041,8 +1046,10 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               ...(key === "marketRegion"
                 ? { locationContext: await marketContext("region", true) }
                 : {}),
-              ...(key === "marketLocality"
-                ? { locationContext: await marketContext("locality", true) }
+              ...(key === "titleSearchNarrative"
+                ? {
+                    locationContext: String(draft.values["title_search_text"] ?? "").slice(0, 14000),
+                  }
                 : {}),
             },
           });

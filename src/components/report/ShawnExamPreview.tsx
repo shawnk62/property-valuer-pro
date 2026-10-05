@@ -722,6 +722,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ]}
       />
       </Keep>
+      {narrativePrints(m, "titleSearchNarrative") &&
+      draft.narrative.titleSearchNarrative?.trim() ? (
+        <Prose text={draft.narrative.titleSearchNarrative} />
+      ) : null}
 
       <Keep>
       <H2>{subTitle(major[1], n2[2], "Particulars of Land")}</H2>

@@ -512,6 +512,19 @@ ${sectionAnswers(values, ["1", "2"])}
 
 State how and where the allotment gains vehicular access. If a right of way easement or access handle is recorded, say so. Do not describe turning circles or pedestrian ease. One or two sentences. Do not invent an easement.`,
       };
+    case "titleSearchNarrative":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write the title-search narrative for a ${type} valuation report from the imported Titles Queensland search only.
+
+Full search text:
+${String(values.title_search_text ?? extras?.locationContext ?? "").slice(0, 14000) || "(no title search imported)"}
+
+Extracted fields:
+${sectionAnswers(values, ["1", "2"])}
+
+Cover, in separate paragraphs, only what the search records: title reference, lot and plan, estate or interest, registered owner, easements and encumbrances, administrative advices, and unregistered dealings. If a heading is NIL or absent, say so in one sentence. Do not invent dealings, easements or owners. Do not repeat the street address as a heading.`,
+      };
     case "physicalAccess":
       return {
         system: BASE_RULES + styleGuide(type),
