@@ -1009,6 +1009,8 @@
     page-break-inside: avoid !important;
     break-after: auto !important;
     page-break-after: auto !important;
+    break-before: auto !important;
+    page-break-before: auto !important;
   }
 
   /*

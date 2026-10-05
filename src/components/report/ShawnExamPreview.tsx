@@ -1,4 +1,4 @@
-import { useEffect, type ReactElement, type ReactNode } from "react";
+import { Children, useEffect, type ReactElement, type ReactNode } from "react";
 import { australianiseSpelling } from "@/lib/report/australianEnglish";
 import { formatNarrativeDate, formatNarrativeDateOr } from "@/lib/report/dates";
 import { stripLeadingHeading } from "@/lib/report/printText";
@@ -169,11 +169,16 @@ function Lead({
   title: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const items = Children.toArray(children).filter((child) => child != null && child !== false);
+  const [first, ...rest] = items;
   return (
-    <div className="report-h-block">
-      <H1 id={id}>{title}</H1>
-      {children}
-    </div>
+    <>
+      <div className="report-h-block">
+        <H1 id={id}>{title}</H1>
+        {first}
+      </div>
+      {rest}
+    </>
   );
 }
 
