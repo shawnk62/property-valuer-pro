@@ -169,14 +169,19 @@ function subsectionTitle(node: ReactNode): ReactNode {
   return (node.props as { children?: ReactNode }).children ?? null;
 }
 
+function flattenNodes(nodes: ReactNode): ReactNode[] {
+  return Children.toArray(nodes).filter((child) => child != null && child !== false);
+}
+
 function openWithFirstSubsection(node: ReactNode): {
   title: ReactNode;
   lead: ReactNode;
   tail: ReactNode;
 } {
-  if (!isValidElement(node)) return { title: null, lead: node, tail: null };
-  const inner = Children.toArray((node.props as { children?: ReactNode }).children).filter(
-    (child) => child != null && child !== false,
+  const flat = flattenNodes(node);
+  const target = flat.length === 1 ? flat[0] : flat;
+  const inner = Array.isArray(target) ? target : flattenNodes(
+    isValidElement(target) ? (target.props as { children?: ReactNode }).children : target,
   );
   const heading = inner.find((child) => subsectionTitle(child) != null);
   const rest = inner.filter((child) => child !== heading);
@@ -234,7 +239,26 @@ function Lead({
 }
 
 function Keep({ children }: { children: React.ReactNode }) {
-  return <div className="report-keep-block">{children}</div>;
+  const inner = flattenNodes(children);
+  const heading = inner.find((child) => subsectionTitle(child) != null);
+  const prose = inner.find(
+    (child) => isValidElement(child) && child.type === Prose,
+  ) as ReactElement<{ text?: string }> | undefined;
+  if (!heading || !prose) return <div className="report-keep-block">{children}</div>;
+  const paras = proseParagraphs(prose.props.text || "");
+  const other = inner.filter((child) => child !== heading && child !== prose);
+  return (
+    <>
+      <div className="report-keep-block">
+        {heading}
+        {paras[0] ? (
+          <p className="report-prose-para text-left leading-relaxed whitespace-pre-line">{paras[0]}</p>
+        ) : null}
+        {other}
+      </div>
+      {paras.length > 1 ? <Prose text={paras.slice(1).join("\n\n")} /> : null}
+    </>
+  );
 }
 
 function TocRows({ entries }: { entries: { id: string; label: string }[] }) {
@@ -245,7 +269,7 @@ function TocRows({ entries }: { entries: { id: string; label: string }[] }) {
         <li key={item.id} className="exam-toc-row">
           <a href={`#${item.id}`}>{item.label}</a>
           <span className="exam-toc-leader" aria-hidden />
-          <span className="exam-toc-page" data-toc-id={item.id} />
+          <a href={`#${item.id}`} className="exam-toc-page" data-toc-id={item.id} />
         </li>
       ))}
     </ol>
