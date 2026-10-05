@@ -93,7 +93,13 @@ export function isMapAnnexPhoto(photo: ReportPhoto): boolean {
 }
 
 export function titlePhotosOnReport(photos: ReportPhoto[] | null | undefined): ReportPhoto[] {
-  return photosOnReport(photos).filter(isTitleAnnexPhoto);
+  const seen = new Set<string>();
+  return photosOnReport(photos).filter(isTitleAnnexPhoto).filter((photo) => {
+    const key = photo.url || photo.id;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 export function surveyPhotosOnReport(photos: ReportPhoto[] | null | undefined): ReportPhoto[] {

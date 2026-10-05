@@ -457,7 +457,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     : "Certificate of Title";
   const surveyPages = surveyPhotosOnReport(draft.photos);
   const cadastralPages = cadastralPhotosOnReport(draft.photos);
-  const extraAnnexGroups = extraAnnexGroupsOnReport(draft.photos);
+  const extraAnnexGroups = extraAnnexGroupsOnReport(draft.photos).filter(
+    (group) => !/title search|certificate of title/i.test(group.title),
+  );
   const valueWords = m.valueAmount ? amountInWords(m.valueAmount) : "";
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], " ");
   const usableSiteArea = formatUsableSiteAreaIfDifferent(v);
@@ -1237,43 +1239,19 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       ) : null}
 
       {mapPhotos.length > 0 ? (
-        <section id="exam-annex-maps" className="report-annexure mt-12">
-          <h2 className="text-left text-base font-semibold" style={{ color: TEAL }}>
-            Annexure — Maps
-          </h2>
-          <div className="mt-6">
-            {mapPhotos.map((photo) => (
-              <div key={photo.id}>
-                <figure className="report-map-figure">
-                  <img src={photo.url} alt={photo.caption || "Map"} />
-                  <figcaption className="mt-1.5 text-left text-sm">{photo.caption}</figcaption>
-                </figure>
-                {photo.slot === "map_aerial" ? (
-                  <A4DocumentAnnex
-                    id="exam-annex-cadastral"
-                    heading="Cadastral plan"
-                    pages={cadastralPages}
-                  />
-                ) : null}
-              </div>
-            ))}
-            {!mapPhotos.some((p) => p.slot === "map_aerial") && cadastralPages.length > 0 ? (
-              <A4DocumentAnnex
-                id="exam-annex-cadastral"
-                heading="Cadastral plan"
-                pages={cadastralPages}
-              />
-            ) : null}
-          </div>
-        </section>
-      ) : cadastralPages.length > 0 ? (
-        <section id="exam-annex-maps" className="report-annexure mt-12">
-          <A4DocumentAnnex
-            id="exam-annex-cadastral"
-            heading="Cadastral plan"
-            pages={cadastralPages}
-          />
-        </section>
+        <A4DocumentAnnex
+          id="exam-annex-maps"
+          heading="Annexure — Maps"
+          pages={mapPhotos}
+          pageHeading={(photo) => photo.caption || "Map"}
+        />
+      ) : null}
+      {cadastralPages.length > 0 ? (
+        <A4DocumentAnnex
+          id="exam-annex-cadastral"
+          heading="Cadastral plan"
+          pages={cadastralPages}
+        />
       ) : null}
 
       <A4DocumentAnnex

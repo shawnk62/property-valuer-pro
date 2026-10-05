@@ -504,6 +504,24 @@
   aspect-ratio: auto;
   object-fit: cover;
 }
+.report-print-host .report-a4-page {
+  width: 210mm;
+  min-height: 265mm;
+  margin: 0 auto 10mm;
+  padding: 14mm 12mm 18mm;
+  background: #fff;
+  box-sizing: border-box;
+  box-shadow: 0 0 0 1px #d5d5d5, 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+.report-print-host .report-a4-page img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 240mm;
+  margin: 0 auto;
+  object-fit: contain;
+}
 .report-sig-stage {
   position: relative;
   display: block;
