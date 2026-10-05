@@ -63,6 +63,13 @@ export function fillExamTocPages(): void {
     sheet.appendChild(pageEl);
   };
 
+  const place = (el: Element, forced: boolean) => {
+    const h = Math.max(el.getBoundingClientRect().height, el.scrollHeight);
+    if (!pageEl || forced || (used > 8 && h > 0 && used + h > pageH)) open();
+    pageEl!.appendChild(el);
+    used += h;
+  };
+
   children.forEach((el) => {
     const leafs = Array.from(el.querySelectorAll<HTMLElement>(":scope > .photo-annex-page, :scope > .report-a4-page"));
     if (leafs.length > 0) {
@@ -79,12 +86,31 @@ export function fillExamTocPages(): void {
       pageEl = null;
       return;
     }
+    const blocks = Array.from(
+      el.querySelectorAll<HTMLElement>(
+        ":scope > .report-section-open, :scope > .report-keep-block, :scope > .report-result-sign, .sales-evidence-item, .report-table-keep",
+      ),
+    );
+    if (el.classList.contains("report-section-sales") && blocks.length > 0) {
+      if (!pageEl || used > 1) open();
+      pageEl!.appendChild(el);
+      used = 40;
+      blocks.forEach((block) => {
+        const blockH = Math.max(block.getBoundingClientRect().height, 48);
+        const start = block.classList.contains("sales-evidence-item") || block.classList.contains("report-table-keep") || block.querySelector("h3[id]");
+        if (used > 8 && used + blockH > pageH) open();
+        else if (start && used > pageH * 0.72) open();
+        pageEl!.appendChild(block);
+        used += blockH;
+      });
+      return;
+    }
     const h = Math.max(el.getBoundingClientRect().height, el.scrollHeight);
     const forced = ownPage(el);
     if (!pageEl || forced || (used > 8 && h > 0 && used + h > pageH)) open();
     pageEl!.appendChild(el);
-    used = forced ? pageH : used + h;
-    if (forced) pageEl = null;
+    used = forced && !el.classList.contains("report-section-sales") && !el.classList.contains("report-section-references") ? pageH : used + h;
+    if (forced && el.classList.contains("exam-cover") || forced && el.classList.contains("report-toc") || forced && el.classList.contains("report-exam-summary-sheet")) pageEl = null;
   });
 
   document.querySelectorAll<HTMLElement>("[data-toc-id]").forEach((slot) => {
