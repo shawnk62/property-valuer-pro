@@ -80,7 +80,97 @@ export function administrativeAdviceText(raw: string): string {
     .join("\n");
 }
 
+const ADVICE_MEANING: Array<{
+  test: RegExp;
+  act: string;
+  meaning: string;
+}> = [
+  {
+    test: /heritage/i,
+    act: "the Queensland Heritage Act 1992",
+    meaning:
+      "A heritage administrative advice records that the land is affected by a state or local heritage listing or a heritage agreement. Works may need approval beyond the planning scheme.",
+  },
+  {
+    test: /contaminat|clr\b|notifiable activity/i,
+    act: "the Environmental Protection Act 1994",
+    meaning:
+      "A contaminated-land advice records that the land is on the environmental management or contaminated-land register, or that a notifiable activity has been recorded. Use may be restricted until the site is investigated or removed from the register.",
+  },
+  {
+    test: /coastal|erosion prone/i,
+    act: "the Coastal Protection and Management Act 1995",
+    meaning:
+      "A coastal advice records that the land is in a coastal management district or an erosion-prone area. Building and clearing can be limited inside that area.",
+  },
+  {
+    test: /nature conservation|koala|protected area/i,
+    act: "the Nature Conservation Act 1992",
+    meaning:
+      "A nature-conservation advice records a protected-area, koala-habitat or conservation obligation that can restrict clearing and use.",
+  },
+  {
+    test: /resumption|intention to resume|acquisition of land/i,
+    act: "the Acquisition of Land Act 1967",
+    meaning:
+      "A resumption advice records a notice of intention to resume or a related acquisition step. It can remove or reduce the land available to the owner.",
+  },
+  {
+    test: /water (licence|license|notice)|water act/i,
+    act: "the Water Act 2000",
+    meaning:
+      "A water advice records a water licence, allocation or notice that may not run with the land in the same way as the title.",
+  },
+  {
+    test: /strategic cropping|priority agricultural|regional interest/i,
+    act: "the Regional Planning Interests Act 2014",
+    meaning:
+      "This advice records a regional interest, such as strategic cropping land or a priority agricultural area, which can constrain a non-agricultural use.",
+  },
+  {
+    test: /carbon|offset/i,
+    act: "the relevant carbon or offset legislation",
+    meaning:
+      "This advice records a carbon-farming, offset or similar interest that can restrict clearing and future use for the term of the project.",
+  },
+  {
+    test: /mining|petroleum|resource authority|geothermal/i,
+    act: "the Mineral and Energy Resources (Common Provisions) Act 2014",
+    meaning:
+      "This advice records a resource authority or related notice. It can allow access or restrict surface use even though it is not an estate in the land.",
+  },
+  {
+    test: /cultural heritage|aboriginal/i,
+    act: "the Aboriginal Cultural Heritage Act 2003",
+    meaning:
+      "This advice records a cultural-heritage obligation or agreement. Ground disturbance may need a heritage assessment.",
+  },
+];
+
 function adviceLine(item: TitleAdvice): string {
+  const lodged = item.lodged ? `, lodged ${item.lodged}` : "";
+  const status = item.status ? `, ${item.status.toLowerCase()}` : "";
+  const dealing = item.dealing ? `dealing ${item.dealing}` : "an administrative advice";
+  return `${dealing}${lodged}${status}`;
+}
+
+function meaningFor(item: TitleAdvice): { act: string; meaning: string } {
+  const blob = `${item.label} ${item.detail}`;
+  const found = ADVICE_MEANING.find((row) => row.test.test(blob));
+  if (found) return found;
+  return {
+    act: "the Act named on the dealing",
+    meaning:
+      "The search records the advice type and dealing number only. The dealing image was not obtained, so the precise restriction is not confirmed from the search alone.",
+  };
+}
+
+function usableAssumption(values: InspectionValues): string {
+  const usable = String(values["prop_usable_sitearea"] ?? "").trim();
+  return usable
+    ? `This valuation assumes the advice is confined to land already excluded from the estimated usable area of ${usable} square metres.`
+    : "This valuation assumes the advice does not reduce the recorded usable area.";
+}
   const lodged = item.lodged ? `, lodged ${item.lodged}` : "";
   const status = item.status ? `, ${item.status.toLowerCase()}` : "";
   const dealing = item.dealing ? `dealing ${item.dealing}` : "an administrative advice";
@@ -123,9 +213,12 @@ export function buildTitleNoticesNarrative(values: InspectionValues): string {
     }
     paragraphs.push(
       [
-        `The current title search records an administrative advice, ${adviceLine(item)}${item.detail ? `: ${item.detail}` : ""}.`,
-        "The instrument was not obtained, so its effect on use and value is not confirmed from the search alone.",
-        "This valuation assumes it does not reduce the recorded usable area. If the instrument shows that it does, the value should be referred back.",
+        `The current title search records an administrative advice, ${adviceLine(item)}, under ${meaningFor(item).act}.`,
+        meaningFor(item).meaning,
+        item.detail ? `The search notes: ${item.detail}.` : "The dealing image was not obtained.",
+        usableAssumption(values),
+        "If the dealing shows that it affects land treated as usable, the value should be referred back.",
+        "No separate dollar adjustment is made unless a comparable is shown not to carry the same advice.",
       ].join(" "),
     );
   }

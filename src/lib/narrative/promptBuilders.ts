@@ -762,8 +762,9 @@ ${titleAdviceFacts(values)}
 Rules:
 - A VEG NOTICE is not a restoration notice. Restoration notices are entered as RESTORATION.
 - A VEG NOTICE is either a property map of assessable vegetation containing a Category A area, or a declared area and its management plan. Do not choose between them unless the dealing image is recorded.
-- State the dealing number, lodgement date and status when recorded.
-- Assume the notice is confined to land already excluded from the usable area, and say the value should be referred back if the dealing shows it affects usable land.
+- State the dealing number, lodgement date, status and the Act that applies when recorded.
+- Use the looked-up meaning of the advice type. Do not treat an unlisted type as a vegetation notice.
+- Assume the advice is confined to land already excluded from the usable area, and say the value should be referred back if the dealing shows it affects usable land.
 - Do not invent a dollar adjustment unless a comparable is recorded as not carrying the same notice.
 - Do not repeat the heading.`,
       };
