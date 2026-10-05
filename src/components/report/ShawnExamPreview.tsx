@@ -238,6 +238,38 @@ function Lead({
   );
 }
 
+function SectionOpen({
+  id,
+  title,
+  sub,
+  text,
+}: {
+  id?: string;
+  title: React.ReactNode;
+  sub?: React.ReactNode;
+  text?: string;
+}) {
+  const paras = proseParagraphs(text || "");
+  return (
+    <>
+      <div className="report-section-open">
+        <h2
+          id={id}
+          className="report-h2 report-heading-lead mt-8 border-b pb-1 text-[1.05rem] font-semibold"
+          style={{ color: TEAL, borderColor: RULE }}
+        >
+          {title}
+          {sub ? <span className="report-section-sub">{sub}</span> : null}
+        </h2>
+        {paras[0] ? (
+          <p className="report-prose-para text-left leading-relaxed whitespace-pre-line">{paras[0]}</p>
+        ) : null}
+      </div>
+      {paras.length > 1 ? <Prose text={paras.slice(1).join("\n\n")} /> : null}
+    </>
+  );
+}
+
 function Keep({ children }: { children: React.ReactNode }) {
   const inner = flattenNodes(children);
   const heading = inner.find((child) => subsectionTitle(child) != null);
@@ -816,59 +848,43 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </Keep>
       ) : null}
 
-      {show6 ? <Lead id="exam-6" title={t(major[5], "Market Commentary")}>
-      {hasMarketParts ? (
-        <>
-          {show61 ? (
-            <Keep>
-              {show61 ? <H2>{subTitle(major[5], n6[0], "Australia")}</H2> : null}
-              <Prose
-                text={
-                  draft.narrative.marketAustralia?.trim() || get(v, "exam_market_australia")
-                }
-              />
-            </Keep>
-          ) : null}
-          {show62 ? (
-            <Keep>
-              {show62 ? <H2>{subTitle(major[5], n6[1], "State")}</H2> : null}
-              <Prose
-                text={draft.narrative.marketState?.trim() || get(v, "exam_market_state")}
-              />
-            </Keep>
-          ) : null}
-          {show63 ? (
-            <Keep>
-              {show63 ? <H2>{subTitle(major[5], n6[2], "Region")}</H2> : null}
-              <Prose
-                text={draft.narrative.marketRegion?.trim() || get(v, "exam_market_region")}
-              />
-            </Keep>
-          ) : null}
-          {show64 ? (
-            <Keep>
-              {show64 ? <H2>{subTitle(major[5], n6[3], "Locality")}</H2> : null}
-              <Prose
-                text={
-                  draft.narrative.marketLocality?.trim() || get(v, "exam_market_local")
-                }
-              />
-            </Keep>
-          ) : null}
-        </>
-      ) : (
+      {show6 && hasMarketParts ? (
+        <SectionOpen
+          id="exam-6"
+          title={t(major[5], "Market Commentary")}
+          sub={show61 ? subTitle(major[5], n6[0], "Australia") : undefined}
+          text={
+            show61
+              ? draft.narrative.marketAustralia?.trim() || get(v, "exam_market_australia")
+              : ""
+          }
+        />
+      ) : null}
+      {show6 && show62 ? (
         <Keep>
-          <Prose text={get(v, "exam_market_commentary") || ""} />
-          {!get(v, "exam_market_commentary") ? (
-            <Para>
-              Record national, state, regional and suburb conditions, supply and demand, and the
-              price range of similar vacant lots. Use the four part-fields on the inspection form
-              for the 6.1–6.4 structure used in the sample reports.
-            </Para>
-          ) : null}
+          <H2>{subTitle(major[5], n6[1], "State")}</H2>
+          <Prose text={draft.narrative.marketState?.trim() || get(v, "exam_market_state")} />
         </Keep>
-      )}
-      </Lead> : null}
+      ) : null}
+      {show6 && show63 ? (
+        <Keep>
+          <H2>{subTitle(major[5], n6[2], "Region")}</H2>
+          <Prose text={draft.narrative.marketRegion?.trim() || get(v, "exam_market_region")} />
+        </Keep>
+      ) : null}
+      {show6 && show64 ? (
+        <Keep>
+          <H2>{subTitle(major[5], n6[3], "Locality")}</H2>
+          <Prose text={draft.narrative.marketLocality?.trim() || get(v, "exam_market_local")} />
+        </Keep>
+      ) : null}
+      {show6 && !hasMarketParts ? (
+        <SectionOpen
+          id="exam-6"
+          title={t(major[5], "Market Commentary")}
+          text={get(v, "exam_market_commentary")}
+        />
+      ) : null}
       <Lead id="exam-7" title={t(major[6], "Risk Assessment")}>
       <div>
       <H2>{subTitle(major[6], 1, "Property risk assessment")}</H2>

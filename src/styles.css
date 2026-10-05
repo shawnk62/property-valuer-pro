@@ -1459,15 +1459,6 @@
   color: inherit;
   text-decoration: none;
 }
-@media print {
-  .report-type-exam .exam-toc-page {
-    font-size: 0;
-  }
-  .report-type-exam .exam-toc-page::after {
-    content: target-counter(attr(href), page);
-    font-size: 10pt;
-  }
-}
 #report-preview-sheet.exam-toc-measure {
   width: 186mm !important;
   max-width: 186mm !important;
