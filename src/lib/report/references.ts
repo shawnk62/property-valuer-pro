@@ -451,7 +451,7 @@ export function referencesForPrint(
     return true;
   });
   cleaned.sort((a, b) => a.author.localeCompare(b.author, "en") || a.title.localeCompare(b.title, "en"));
-  const primary = [...primaryReportSources(values), ...marketSourcesNamedIn(values, marketText)];
+  const primary = [...primaryReportSources(values), ...standingShawnSources(), ...marketSourcesNamedIn(values, marketText)];
   for (const item of primary) {
     const key = referenceKey(item);
     if (cleaned.some((row) => row.author.toLowerCase() === item.author.toLowerCase())) continue;
@@ -498,6 +498,20 @@ function marketSourcesNamedIn(values: InspectionValues, extra = ""): ReferencePa
   }));
 }
 
+function standingShawnSources(): ReferenceParts[] {
+  const viewed = apaRetrieved();
+  const year = viewed.split(" ").pop() ?? "";
+  return [
+    {
+      author: "International Valuation Standards Council",
+      year,
+      title: "International Valuation Standards",
+      site: "International Valuation Standards Council",
+      url: "",
+      accessed: viewed,
+    },
+  ];
+}
 function primaryReportSources(values: InspectionValues): ReferenceParts[] {
   const viewed = apaRetrieved();
   const out: ReferenceParts[] = [];

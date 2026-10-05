@@ -334,6 +334,8 @@ function ExamToc({
 }) {
   useEffect(() => {
     const run = () => fillExamTocPages();
+    const sheet = document.getElementById("report-preview-sheet");
+    if (sheet && /Chrome|Chromium|Edg\//.test(navigator.userAgent)) sheet.classList.add("exam-toc-live");
     run();
     const t = window.setTimeout(run, 400);
     window.addEventListener("beforeprint", run);
@@ -1110,8 +1112,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             draft.narrative.marketRegion,
             draft.narrative.marketLocality,
             draft.narrative.salesComments,
-            "The methodological framework cites the International Valuation Standards Council.",
-            "Section 6 names the Australian Bureau of Statistics.",
           ].join("\n"),
         ).length ? (
           <div className="report-reference-list">
@@ -1125,8 +1125,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 draft.narrative.marketRegion,
                 draft.narrative.marketLocality,
             draft.narrative.salesComments,
-            "The methodological framework cites the International Valuation Standards Council.",
-            "Section 6 names the Australian Bureau of Statistics.",
               ].join("\n"),
             ).map((ref, i) => {
               const style = "harvard";

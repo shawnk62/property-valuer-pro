@@ -934,11 +934,11 @@
     page-break-after: always !important;
   }
 
-  /* Printed page numbers come from the printed pages, not the estimate. */
-  #report-preview-sheet .exam-toc-page .toc-fallback {
+  /* Chrome print reads the real page. Other browsers keep the measured number. */
+  #report-preview-sheet.exam-toc-live .exam-toc-page .toc-fallback {
     display: none !important;
   }
-  #report-preview-sheet .exam-toc-page::after {
+  #report-preview-sheet.exam-toc-live .exam-toc-page::after {
     content: target-counter(attr(href), page);
     font-size: 10.5pt;
     font-variant-numeric: tabular-nums;
