@@ -280,18 +280,24 @@ export function titleCreatedDisplay(values: InspectionValues): string {
   return created ?? "";
 }
 
-export function unregisteredDealingsDisplay(values: InspectionValues): string {
-  const raw = String(values["title_unregistered"] ?? values["title_search_text"] ?? "");
-  const block =
-    raw.match(
-      /UNREGISTERED DEALINGS\s*\n([\s\S]{0,2000}?)(?=\n\s*(?:END OF (?:CURRENT )?TITLE SEARCH|COPYRIGHT|ADMINISTRATIVE ADVICES)\b|$)/i,
-    )?.[1] ?? raw;
-  const cleaned = block
+function cleanUnregistered(raw: string): string {
+  return raw
     .replace(/End of Current Title Search[\s\S]*$/i, "")
     .replace(/copyright[\s\S]*$/i, "")
     .replace(/\bNIL\b/gi, "")
+    .replace(/\*+/g, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+export function unregisteredDealingsDisplay(values: InspectionValues): string {
+  const stored = String(values["title_unregistered"] ?? "").trim();
+  const text = String(values["title_search_text"] ?? "");
+  const fromSearch =
+    text.match(
+      /UNREGISTERED DEALINGS\s*\n([\s\S]{0,2000}?)(?=\n\s*(?:END OF (?:CURRENT )?TITLE SEARCH|COPYRIGHT|ADMINISTRATIVE ADVICES)\b|$)/i,
+    )?.[1] ?? "";
+  const cleaned = cleanUnregistered(fromSearch || stored);
   if (!cleaned || /^none recorded$/i.test(cleaned)) return "None recorded";
   return cleaned;
 }

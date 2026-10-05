@@ -147,6 +147,7 @@ export function parseTitleSearchText(raw: string): TitleSearchExtract {
     .replace(/End of Current Title Search[\s\S]*$/i, "")
     .replace(/copyright[\s\S]*$/i, "")
     .replace(/\bNIL\b/gi, "")
+    .replace(/\*+/g, "")
     .trim();
   out.title_unregistered = cleanedUnregistered
     ? cleanedUnregistered.slice(0, 4000)
