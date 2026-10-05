@@ -1029,6 +1029,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             />
           </>
         ) : null}
+        <div className="report-result-sign">
         <H2>{subTitle(major[7], n8[5], "Valuation result")}</H2>
         <Para>
           Having regard to the sales evidence and market conditions at the date of valuation, it is
@@ -1041,6 +1042,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </Para>
         <div className="mt-4">
           <ExamSignature draft={draft} />
+        </div>
         </div>
       </section>
 

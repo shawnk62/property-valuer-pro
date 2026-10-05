@@ -1998,6 +1998,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
 
       {/* ---- 16. Valuation statement ---- */}
       <Section id="sec-valuation" number={murray ? "12." : "16."} title={murray ? "Valuation Assessment Statement" : "Valuation Statement"}>
+        <div className="report-result-sign">
         {reportType.valuationDisplay === "see-remarks" ? (
           <>
             <Para>
@@ -2032,6 +2033,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
           className="report-signature mt-8"
           showFirm
         />
+        </div>
         {annexures.length > 0 ? (
           <div className="mt-6">
             {annexures.map((a) => (

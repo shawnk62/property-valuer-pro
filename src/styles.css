@@ -1296,6 +1296,11 @@
     page-break-inside: avoid !important;
   }
 
+  .report-result-sign {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
   /* Executive Summary occupies its own sheet. Section 1.0 cannot start on it. */
   .report-exam-summary-sheet,
   .report-summary-page {
