@@ -469,10 +469,18 @@ const MARKET_SOURCES: Array<{ test: RegExp; author: string; title: string; site:
   { test: /westpac/i, author: "Westpac", title: "Westpac Housing Pulse", site: "Westpac" },
   { test: /commbank|commonwealth bank/i, author: "Commonwealth Bank of Australia", title: "Housing market update", site: "Commonwealth Bank of Australia" },
   { test: /\bNAB\b|national australia bank/i, author: "National Australia Bank", title: "NAB Residential Property Survey", site: "National Australia Bank" },
-  { test: /realestate\.com\.au|rea group/i, author: "REA Group", title: "realestate.com.au residential sales series", site: "realestate.com.au" },
+  { test: /realestate\.com|rea group/i, author: "REA Group", title: "Suburb profile", site: "realestate.com.au" },
   { test: /international valuation standards council|\bIVSC\b/, author: "International Valuation Standards Council", title: "International Valuation Standards", site: "International Valuation Standards Council" },
   { test: /\bKPMG\b/i, author: "KPMG", title: "Residential Property Market Outlook", site: "KPMG" },
 ];
+
+function reaProfileUrl(values: InspectionValues): string {
+  const suburb = String(values["prop_suburb"] ?? "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const postcode = String(values["prop_postcode"] ?? "").trim();
+  if (suburb === "worongary") return "https://www.realestate.com.au/qld/worongary-4213/";
+  if (!suburb) return "https://www.realestate.com.au/";
+  return `https://www.realestate.com.au/qld/${suburb}${postcode ? `-${postcode}` : ""}/`;
+}
 
 function marketSourcesNamedIn(values: InspectionValues, extra = ""): ReferenceParts[] {
   const text = [
@@ -487,13 +495,15 @@ function marketSourcesNamedIn(values: InspectionValues, extra = ""): ReferencePa
     .join("\n");
   if (!text.trim()) return [];
   const viewed = apaRetrieved();
-  const year = text.match(/\b(20\d{2})\b/)?.[1] ?? viewed.split(" ").pop() ?? "";
+  const year = "2026";
   return MARKET_SOURCES.filter((source) => source.test.test(text)).map((source) => ({
     author: source.author,
     year,
-    title: source.title,
+    title: source.author === "REA Group"
+      ? `${String(values["prop_suburb"] ?? "Suburb").trim() || "Suburb"} suburb profile`
+      : source.title,
     site: source.site,
-    url: "",
+    url: source.author === "REA Group" ? reaProfileUrl(values) : "",
     accessed: viewed,
   }));
 }

@@ -1371,7 +1371,11 @@
    * Do not lock the figure to 265mm — that plus the heading overflows A4
    * and Chrome inserts a blank page after each document page.
    */
-  .report-a4-annex.report-annexure {
+  .preview-page-flow .report-a4-annex {
+    break-before: auto !important;
+    page-break-before: auto !important;
+  }
+  .report-a4-page {
     break-before: page !important;
     page-break-before: always !important;
   }

@@ -118,6 +118,10 @@ export function fillExamTocPages(): void {
     shown += 1;
     el.dataset.page = String(shown);
   });
+  sheet.querySelectorAll<HTMLElement>(".report-a4-annex").forEach((section) => {
+    const first = section.querySelector<HTMLElement>(".report-a4-page");
+    if (section.id && first?.dataset.page) section.dataset.page = first.dataset.page;
+  });
 
   document.querySelectorAll<HTMLElement>("[data-toc-id]").forEach((slot) => {
     const id = slot.getAttribute("data-toc-id");
