@@ -50,7 +50,7 @@ import {
 } from "@/lib/report/references";
 import { purposeOfValuation } from "@/lib/report/reportTypes";
 import { buildExecutiveSummaryLead } from "@/lib/report/narrative";
-import { buildEncumbrancesSummary } from "@/lib/report/titleAdvices";
+import { buildEncumbrancesSummary, titleSearchNarrativeWithoutGridFacts } from "@/lib/report/titleAdvices";
 import { planningSchemeDisplay } from "@/lib/report/parsePlanningExtract";
 import { fillExamTocPages } from "@/lib/report/tocPages";
 import { includedNumbers, majorTitle, subTitle } from "@/lib/report/sectionNumbers";
@@ -724,8 +724,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       />
       </Keep>
       {narrativePrints(m, "titleSearchNarrative") &&
-      draft.narrative.titleSearchNarrative?.trim() ? (
-        <Prose text={draft.narrative.titleSearchNarrative} />
+      titleSearchNarrativeWithoutGridFacts(draft.narrative.titleSearchNarrative ?? "").trim() ? (
+        <Prose text={titleSearchNarrativeWithoutGridFacts(draft.narrative.titleSearchNarrative ?? "")} />
       ) : null}
 
       <Keep>

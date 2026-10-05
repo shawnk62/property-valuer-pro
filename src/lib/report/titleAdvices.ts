@@ -252,6 +252,38 @@ export function buildEncumbrancesSummary(values: InspectionValues): string {
   return parts.join("\n\n");
 }
 
+export function titleSearchNarrativeWithoutGridFacts(text: string): string {
+  const paragraphs = text
+    .split(/\n\n+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .filter((part) => {
+      if (/title reference|records the current title/i.test(part)) return false;
+      if (/lot\s+\d+|survey plan|fee simple|local government/i.test(part)) return false;
+      if (/registered owner/i.test(part)) return false;
+      if (/easement|encumbrance|rights and interests reserved/i.test(part)) return false;
+      if (/administrative advice|VEG NOTICE|vegetation notice/i.test(part)) return false;
+      return true;
+    });
+  return paragraphs.join("\n\n");
+}
+
+export function buildTitleSearchResidual(values: InspectionValues): string {
+  const text = String(values["title_search_text"] ?? "");
+  const created = text.match(
+    /Title\s+Created\s*[:\s]*(\d{1,2}\/\d{1,2}\/\d{4})/i,
+  )?.[1];
+  const unregistered = String(values["title_unregistered"] ?? "");
+  const parts: string[] = [];
+  if (created) parts.push(`The current title was created on ${created}.`);
+  if (unregistered && !/^NIL$/i.test(unregistered.trim())) {
+    parts.push(`Unregistered dealings are recorded: ${unregistered.trim()}.`);
+  } else if (/UNREGISTERED DEALINGS\s*\n\s*NIL/i.test(text)) {
+    parts.push("No unregistered dealings are recorded on the title.");
+  }
+  return parts.join("\n\n");
+}
+
 export function titleAdviceFacts(values: InspectionValues): string {
   const narrative = buildTitleNoticesNarrative(values);
   if (!narrative) return "No administrative advice was read from the imported title search.";

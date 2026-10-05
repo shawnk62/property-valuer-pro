@@ -95,7 +95,7 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
         {
           key: "titleSearchNarrative",
           label: "2.2 Title search",
-          hint: "Written from the full imported title search. Prints under Title Particulars. Manual text is kept.",
+          hint: "Prints under Title Particulars only for facts not already in the 2.2 or 2.3 tables. Manual text is kept.",
         },
         {
           key: "encumbrancesSummary",

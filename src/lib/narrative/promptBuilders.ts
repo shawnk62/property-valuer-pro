@@ -523,7 +523,10 @@ ${String(values.title_search_text ?? extras?.locationContext ?? "").slice(0, 140
 Extracted fields:
 ${sectionAnswers(values, ["1", "2"])}
 
-Cover, in separate paragraphs, only what the search records: title reference, lot and plan, estate or interest, registered owner, easements and encumbrances, administrative advices, and unregistered dealings. If a heading is NIL or absent, say so in one sentence. Do not invent dealings, easements or owners. Do not repeat the street address as a heading.`,
+Cover only title facts that are not already in the 2.2 Title Particulars table or the 2.3 Particulars of Land table.
+Do not mention title reference, lot and plan, local government, fee simple or other estate, registered owner, easements, encumbrances, or the vegetation notice. Those are already in the tables.
+If unregistered dealings are NIL, one sentence is enough. If the title creation date is recorded and is not the search date, you may state it. If nothing remains, return an empty string.
+Do not invent dealings, easements or owners.`,
       };
     case "physicalAccess":
       return {
