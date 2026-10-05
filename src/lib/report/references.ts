@@ -63,11 +63,18 @@ function titleFromUrl(url: string): string {
   }
 }
 
-/** APA 7th webpage: Author. (n.d.). Title. Site (if different). URL */
-export function formatApaReference(raw: string): string {
+export type ReferenceStyle = "harvard" | "apa";
+
+function accessedLabel(date = new Date()): string {
+  return date.toLocaleDateString("en-AU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function referenceParts(raw: string): { author: string; title: string; url: string } {
   const s = raw.replace(/\s+/g, " ").trim().replace(/[.,;]+$/, "");
-  if (!s) return "";
-  if (/\(\s*(n\.d\.|\d{4})\s*[,)]/.test(s) && /\.\s+\S+/.test(s)) return s;
   if (/^https?:\/\//i.test(s)) {
     let host = "";
     try {
@@ -75,22 +82,44 @@ export function formatApaReference(raw: string): string {
     } catch {
       host = "";
     }
-    const author = host ? hostAuthor(host) : "Web source";
-    const title = titleFromUrl(s);
-    const site = host ? hostAuthor(host) : "";
-    const siteBit = site && site.toLowerCase() !== author.toLowerCase() ? `${site}. ` : "";
-    return `${author}. (n.d.). ${title}. ${siteBit}${s}`;
+    return { author: host ? hostAuthor(host) : "Web source", title: titleFromUrl(s), url: s };
   }
-  if (/https?:\/\//i.test(s)) {
-    const url = s.match(/https?:\/\/\S+/i)?.[0] ?? "";
-    const label = s.replace(url, "").trim().replace(/[.,;]+$/, "");
-    if (url && label) {
-      if (/\(\s*(n\.d\.|\d{4})/.test(label)) return `${label} ${url}`.trim();
-      return `${label}. (n.d.). ${url}`;
+  const url = s.match(/https?:\/\/\S+/i)?.[0] ?? "";
+  const label = s.replace(url, "").trim().replace(/[.,;]+$/, "");
+  if (url && label) {
+    let author = label.replace(/\(\s*(n\.d\.|\d{4})\s*\)/, "").trim();
+    if (!author) {
+      try {
+        author = hostAuthor(new URL(url).hostname);
+      } catch {
+        author = "Web source";
+      }
     }
-    if (url) return formatApaReference(url);
+    return { author, title: titleFromUrl(url), url };
   }
-  return `${s.replace(/\.$/, "")}. (n.d.).`;
+  return { author: s || "Source", title: s || "Source", url: "" };
+}
+
+/** APA 7th webpage: Author. (n.d.). Title. URL */
+export function formatApaReference(raw: string): string {
+  const parts = referenceParts(raw);
+  if (!parts.author) return "";
+  if (parts.url) return `${parts.author}. (n.d.). ${parts.title}. ${parts.url}`;
+  return `${parts.author}. (n.d.). ${parts.title}. Publisher: ${parts.author}.`;
+}
+
+/** Harvard (author-date): Author (n.d.) Title. Available at: URL (Accessed: date). */
+export function formatHarvardReference(raw: string, accessed = accessedLabel()): string {
+  const parts = referenceParts(raw);
+  if (!parts.author) return "";
+  if (parts.url) {
+    return `${parts.author} (n.d.) ${parts.title}. Available at: ${parts.url} (Accessed: ${accessed}).`;
+  }
+  return `${parts.author} (n.d.) ${parts.title}. Publisher: ${parts.author}.`;
+}
+
+export function formatReference(raw: string, style: ReferenceStyle = "harvard"): string {
+  return style === "apa" ? formatApaReference(raw) : formatHarvardReference(raw);
 }
 
 function claimLists(meta: ReportMeta | undefined): NbhdClaim[] {
@@ -133,6 +162,7 @@ export function collectReportReferences(
   meta: ReportMeta | undefined,
   values: InspectionValues,
   existing: ReportReference[] | undefined,
+  style: ReferenceStyle = meta?.referenceStyle === "apa" ? "apa" : "harvard",
 ): ReportReference[] {
   const raws: string[] = [];
   for (const claim of claimLists(meta)) {
@@ -153,7 +183,7 @@ export function collectReportReferences(
     seen.add(key);
     incoming.push({
       id: newId(),
-      text: formatApaReference(raw),
+      text: formatReference(raw, style),
       sourceRaw: raw,
       accepted: true,
     });
@@ -184,6 +214,16 @@ export function collectReportReferences(
   }
   out.sort((a, b) => a.text.localeCompare(b.text, "en"));
   return out;
+}
+
+export function reformatReferences(
+  items: ReportReference[] | undefined,
+  style: ReferenceStyle,
+): ReportReference[] {
+  return (items ?? []).map((item) => ({
+    ...item,
+    text: formatReference(item.sourceRaw || item.text, style) || item.text,
+  }));
 }
 
 export function referencesProse(items: ReportReference[] | undefined): string {

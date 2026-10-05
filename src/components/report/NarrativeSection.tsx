@@ -44,6 +44,7 @@ import {
 import {
   collectReportReferences,
   referencesProse,
+  reformatReferences,
   type ReportReference,
 } from "@/lib/report/references";
 import { CannedCommentsBar } from "@/components/report/CannedCommentsBar";
@@ -188,8 +189,8 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
         },
         {
           key: "disclaimer",
-          label: "Disclaimer",
-          hint: "Prints after the valuation result.",
+          label: "Reliance and terms of use",
+          hint: "Prints under its own heading before the references. States who instructed the report, the purpose, who may rely on it, and the terms. Manual text is kept.",
         },
         {
           key: "assumptions",
@@ -199,7 +200,7 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
         {
           key: "references",
           label: "9.0 References",
-          hint: "Prints under 9.0 References. Tick sources to include. APA 7th.",
+          hint: "Prints under 9.0 References. Choose Harvard or APA. Tick sources to include.",
         },
       ]
     : [
@@ -537,7 +538,11 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     const current = narrativeRef.current;
     const patch: Partial<ReportNarrative> = {};
     for (const key of keys) {
-      if (!String(current[key] ?? "").trim() && String(full[key] ?? "").trim()) {
+      const currentText = String(current[key] ?? "").trim();
+      const thinDisclaimer =
+        key === "disclaimer" &&
+        /prepared for the stated purpose and the instructing party only/i.test(currentText);
+      if ((!currentText || thinDisclaimer) && String(full[key] ?? "").trim()) {
         patch[key] = full[key];
       }
     }
@@ -554,6 +559,11 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     if (!loaded) return;
     if (autoStarted.current) return;
     let keys = emptyNarrativeKeys(draft.narrative);
+    const thinDisclaimer =
+      /prepared for the stated purpose and the instructing party only/i.test(
+        String(draft.narrative.disclaimer ?? ""),
+      ) && draft.reportMeta.manualNarrative?.disclaimer !== true;
+    if (thinDisclaimer && !keys.includes("disclaimer")) keys = [...keys, "disclaimer"];
     if (keys.length === 0) {
       autoStarted.current = true; // mark done so we don't fire later if user clears a block
       return;
@@ -1414,9 +1424,33 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             shawnExam) ? (
             <div className="mt-2 space-y-2 rounded-md border border-amber-300/80 bg-amber-50 p-3 dark:bg-amber-950/30">
               <p className="text-xs font-medium text-foreground">
-                Sources used in locality and market notes, formatted in APA 7th. Tick to
-                print. Unticked lines stay in this working box.
+                Sources used in the report. Each line names the publisher and, where available, the page address so the source can be located. Tick to print.
               </p>
+              <div className="flex gap-2">
+                {(["harvard", "apa"] as const).map((style) => (
+                  <button
+                    key={style}
+                    type="button"
+                    onClick={() => {
+                      const items = reformatReferences(
+                        (draft.reportMeta.reportReferences as ReportReference[] | undefined) ?? [],
+                        style,
+                      );
+                      flushSync(() => {
+                        setMeta({ referenceStyle: style, reportReferences: items });
+                        setNarrative({ references: referencesProse(items) });
+                      });
+                    }}
+                    className={`rounded-md border px-2.5 py-1 text-xs font-medium ${
+                      (draft.reportMeta.referenceStyle ?? "harvard") === style
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-input bg-card"
+                    }`}
+                  >
+                    {style === "harvard" ? "Harvard" : "APA"}
+                  </button>
+                ))}
+              </div>
               <button
                 type="button"
                 onClick={collectReferencesNow}

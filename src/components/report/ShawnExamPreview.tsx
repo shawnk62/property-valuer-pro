@@ -501,6 +501,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     { id: "exam-8", label: t(major[7], "Valuation Approach") },
     ...(show82 ? [{ id: "exam-8-2", label: `${major[7]}.${n8[1]} Comments on comparable sales` }] : []),
     ...(show83 ? [{ id: "exam-8-3", label: `${major[7]}.${n8[2]} Final reconciliation of value` }] : []),
+    ...(prints("disclaimer") ? [{ id: "exam-reliance", label: "Reliance and terms of use" }] : []),
     ...(show9 ? [{ id: "exam-9", label: t(major[8], "List of References") }] : []),
     ...(hasAnnexures ? [{ id: "exam-10", label: t(major[9], "Annexures") }] : []),
   ];
@@ -1012,16 +1013,17 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </div>
       </section>
 
-      <div className="mt-4">
-        <H2>Disclaimer</H2>
-        <Prose
+      {prints("disclaimer") ? (
+        <SectionOpen
+          id="exam-reliance"
+          title="Reliance and terms of use"
           text={
             draft.narrative.disclaimer?.trim() ||
             get(v, "exam_limitations") ||
-            "This valuation has been prepared for the stated purpose and the instructing party only. It may not be used for any other purpose without written authorisation."
+            "This report was prepared for the instructing party for the stated purpose only. No other party may rely on it without written authorisation. It should not be relied upon more than 30 days after the date of valuation."
           }
         />
-      </div>
+      ) : null}
       {draft.narrative.assumptions?.trim() || get(v, "exam_assumptions") ? (
         <div className="mt-4">
           <H2>Assumptions</H2>

@@ -1271,6 +1271,22 @@ function overlayIds(values: InspectionValues): string[] {
   return [];
 }
 
+function buildRelianceTerms(values: InspectionValues): string {
+  const party = v(values, "instr_from_name") || v(values, "prop_owner") || "the instructing party";
+  const purpose =
+    v(values, "prop_purpose") ||
+    "to assess the market value of the property for the stated purpose";
+  const address =
+    [v(values, "prop_street"), v(values, "prop_suburb")].filter(Boolean).join(", ") ||
+    "the subject property";
+  return [
+    `This report was prepared for ${party}. The purpose of the report is ${purpose.replace(/\.$/, "")}.`,
+    `${party} may rely on this report for that purpose only. No other person or organisation may rely on it without the written authorisation of the valuer. It must not be used for any other purpose unless that purpose is the purpose stated above.`,
+    `The valuation is current at the date of valuation only. It should not be relied upon more than 30 days after that date. If it is to be used after that period it must be referred to the valuer for review. No liability is accepted from any party who relies on it outside that period, or for a purpose other than the purpose stated.`,
+    `The report is subject to the assumptions, limitations and qualifications set out in this report. Information supplied by the instructing party and in the searches annexed has been relied upon. No structural, pest or environmental investigation beyond those recorded has been undertaken. The property is ${address}.`,
+  ].join("\n\n");
+}
+
 function buildEnvIntro(): string {
   return "No separate contaminated-land search is assumed beyond the inspection record and any planning overlays noted. The valuation assumes there are no environmental issues other than those set out below.";
 }
@@ -1376,9 +1392,7 @@ export function generateNarrative(
     salesAnalysis: v(values, "exam_sales_analysis"),
     salesComments: "",
     valueReconciliation: "",
-    disclaimer:
-      v(values, "exam_limitations") ||
-      "This valuation has been prepared for the stated purpose and the instructing party only. It may not be used for any other purpose without written authorisation.",
+    disclaimer: v(values, "exam_limitations") || buildRelianceTerms(values),
     assumptions: v(values, "exam_assumptions"),
     references: "",
     remarks: buildRemarks(values, {

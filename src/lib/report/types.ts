@@ -380,6 +380,8 @@ export interface ReportMeta {
     sourceRaw?: string;
     accepted: boolean;
   }>;
+  /** Reference list style. Missing means Harvard. */
+  referenceStyle?: "harvard" | "apa";
   salesMapPins?: Array<{
     id: string;
     label: string;
