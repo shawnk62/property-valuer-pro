@@ -82,7 +82,7 @@ export function AdjustmentGridPrint({
                   return (
                     <Fragment key={sale?.id ?? `empty-head-${chunkIdx}-${i}`}>
                       <th>{sale ? `Sale ${chunkIdx * COMPS_PER_BLOCK + i + 1}` : ""}</th>
-                      <th className="adj-money">{sale ? "Adjustment" : ""}</th>
+                      <th className="adj-money">{sale ? "Adj." : ""}</th>
                     </Fragment>
                   );
                 })}
