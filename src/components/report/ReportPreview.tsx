@@ -1345,8 +1345,9 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
       >
         {isPhilReportType(reportType.id) ? (
           <>
+            {narrativePrints(draft.reportMeta, "location") ? (
             <Sub title="5.1  Location">
-              {narrativePrints(draft.reportMeta, "location") && draft.narrative.location?.trim() ? (
+              {draft.narrative.location?.trim() ? (
                 <Prose text={stripLeadingHeading(draft.narrative.location, "Location")} />
               ) : (
                 <Para>
@@ -1354,6 +1355,8 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 </Para>
               )}
             </Sub>
+            ) : null}
+            {narrativePrints(draft.reportMeta, "neighbourhood") ? (
             <Sub title="5.2  Neighbourhood">
               {narrativePrints(draft.reportMeta, "neighbourhood") && (draft.narrative.neighbourhood?.trim() || get(v, "nbhd_description")) ? (
                 <Prose
@@ -1365,6 +1368,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
                 <Para>—</Para>
               )}
             </Sub>
+            ) : null}
             <Sub title="5.3  Property Location">
               <Para>
                 {addressLine
@@ -1384,10 +1388,12 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
         ) : (
           <>
             <Sub title="Location">
-              {narrativePrints(draft.reportMeta, "location") && draft.narrative.location?.trim() ? (
-                <Prose text={stripLeadingHeading(draft.narrative.location, "Location")} />
-              ) : addressLine ? (
-                <Para>{`The property is located at ${addressLine}.`}</Para>
+              {narrativePrints(draft.reportMeta, "location") ? (
+                draft.narrative.location?.trim() ? (
+                  <Prose text={stripLeadingHeading(draft.narrative.location, "Location")} />
+                ) : addressLine ? (
+                  <Para>{`The property is located at ${addressLine}.`}</Para>
+                ) : null
               ) : null}
             </Sub>
             <Sub title="Neighbourhood">

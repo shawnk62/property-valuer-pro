@@ -47,6 +47,7 @@ import { purposeOfValuation } from "@/lib/report/reportTypes";
 import { buildExecutiveSummaryLead } from "@/lib/report/narrative";
 import { planningSchemeDisplay } from "@/lib/report/parsePlanningExtract";
 import { fillExamTocPages } from "@/lib/report/tocPages";
+import { includedNumbers, majorTitle, subTitle } from "@/lib/report/sectionNumbers";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { riskCommentsForPrint } from "@/lib/report/propertyRiskRatings";
 import { RiskRatingsPrintTable } from "@/components/report/RiskRatingsPrintTable";
@@ -334,23 +335,64 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const servicesText = narrativePrints(m, "servicesAmenities")
     ? draft.narrative.servicesAmenities?.trim() || ""
     : "";
- 
-
+  const prints = (key: keyof typeof draft.narrative) => narrativePrints(m, key, v);
+  const show11 = prints("instructions");
+  const show21 = prints("sitePhysical");
+  const show32 = prints("highestBestUse");
+  const show40 = prints("envIntro");
+  const show41 = prints("acidSulphate");
+  const show42 = prints("floodAssessment");
+  const show43 = prints("noiseNuisances");
+  const show51 = prints("location");
+  const show52 = prints("neighbourhood");
+  const show53 = prints("amenities") && Boolean(draft.narrative.amenities?.trim() || get(v, "exam_amenities"));
+  const show54 = prints("popularDestinations") && Boolean(draft.narrative.popularDestinations?.trim() || get(v, "exam_destinations"));
+  const show61 = prints("marketAustralia") && Boolean(draft.narrative.marketAustralia?.trim() || get(v, "exam_market_australia"));
+  const show62 = prints("marketState") && Boolean(draft.narrative.marketState?.trim() || get(v, "exam_market_state"));
+  const show63 = prints("marketRegion") && Boolean(draft.narrative.marketRegion?.trim() || get(v, "exam_market_region"));
+  const show64 = prints("marketLocality") && Boolean(draft.narrative.marketLocality?.trim() || get(v, "exam_market_local"));
+  const show82 = prints("salesComments");
+  const show83 = prints("valueReconciliation");
+  const show84 = Boolean(get(v, "exam_on_market"));
+  const show85 = prints("salesAnalysis") && Boolean(draft.narrative.salesAnalysis?.trim() || get(v, "exam_sales_analysis"));
+  const show9 = prints("references");
+  const hasAnnexures = Boolean(
+    annexurePhotos.length ||
+      printedSales.some((s) => s.photoUrl) ||
+      mapPhotos.length ||
+      cadastralPages.length ||
+      titlePages.length ||
+      surveyPages.length ||
+      extraAnnexGroups.length,
+  );
+  const show4 = show40 || show41 || show42 || show43;
+  const show5 = show51 || show52 || show53 || show54;
+  const show6 = show61 || show62 || show63 || show64 || Boolean(get(v, "exam_market_commentary"));
+  const major = includedNumbers([true, true, true, show4, show5, show6, true, true, show9, hasAnnexures]);
+  const n1 = includedNumbers([show11, true, true, true]);
+  const n2 = includedNumbers([show21, true, true]);
+  const n3 = includedNumbers([true, show32]);
+  const n4 = includedNumbers([show41, show42, show43]);
+  const n5 = includedNumbers([show51, show52, show53, show54]);
+  const n6 = includedNumbers([show61, show62, show63, show64]);
+  const n8 = includedNumbers([true, show82, show83, show84, show85, true]);
+  const t = (n: number, title: string) => majorTitle(n, title);
   const toc = [
     { id: "exam-summary", label: "Executive Summary" },
-    { id: "exam-1", label: "1.0 Basis of Value" },
-    { id: "exam-2", label: "2.0 Title and Property Details" },
-    { id: "exam-3", label: "3.0 Planning Controls" },
-    { id: "exam-4", label: "4.0 Environmental Issues" },
-    { id: "exam-5", label: "5.0 Locality and Location" },
-    { id: "exam-6", label: "6.0 Market Commentary" },
-    { id: "exam-7", label: "7.0 Risk Assessment" },
-    { id: "exam-8", label: "8.0 Valuation Approach" },
-    { id: "exam-8-2", label: "8.2 Comments on comparable sales" },
-    { id: "exam-8-3", label: "8.3 Final reconciliation of value" },
-    { id: "exam-9", label: "9.0 List of References" },
-    { id: "exam-10", label: "10.0 Annexures" },
+    { id: "exam-1", label: t(major[0], "Basis of Value") },
+    { id: "exam-2", label: t(major[1], "Title and Property Details") },
+    { id: "exam-3", label: t(major[2], "Planning Controls") },
+    ...(show4 ? [{ id: "exam-4", label: t(major[3], "Environmental Issues") }] : []),
+    ...(show5 ? [{ id: "exam-5", label: t(major[4], "Locality and Location") }] : []),
+    ...(show6 ? [{ id: "exam-6", label: t(major[5], "Market Commentary") }] : []),
+    { id: "exam-7", label: t(major[6], "Risk Assessment") },
+    { id: "exam-8", label: t(major[7], "Valuation Approach") },
+    ...(show82 ? [{ id: "exam-8-2", label: `${major[7]}.${n8[1]} Comments on comparable sales` }] : []),
+    ...(show83 ? [{ id: "exam-8-3", label: `${major[7]}.${n8[2]} Final reconciliation of value` }] : []),
+    ...(show9 ? [{ id: "exam-9", label: t(major[8], "List of References") }] : []),
+    ...(hasAnnexures ? [{ id: "exam-10", label: t(major[9], "Annexures") }] : []),
   ];
+
   const hasMarketParts = Boolean(
     draft.narrative.marketAustralia?.trim() ||
       draft.narrative.marketState?.trim() ||
@@ -465,9 +507,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </div>
       </div>
 
-      <Lead id="exam-1" title="1.0 Basis of Value">
+      <Lead id="exam-1" title={t(major[0], "Basis of Value")}>
       <Keep>
-      <H2>1.1 Instructions</H2>
+      {show11 ? <H2>{subTitle(major[0], n1[0], "Instructions")}</H2> : null}
       <Prose
         text={
           draft.narrative.instructions?.trim() ||
@@ -478,7 +520,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Lead>
 
       <Keep>
-      <H2>1.2 Valuation Standards</H2>
+      <H2>{subTitle(major[0], n1[1], "Valuation Standards")}</H2>
       <Para>
         The methodological framework for this valuation is grounded in the standards established by
         the International Valuation Standards Council (IVSC), the Australian Property Institute (API),
@@ -489,7 +531,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep>
 
       <Keep>
-      <H2>1.3 Valuer’s Interest</H2>
+      <H2>{subTitle(major[0], n1[2], "Valuer’s Interest")}</H2>
       <Para>
         The valuer declares that there is no pecuniary, professional or other interest that would
         constitute a conflict of interest or otherwise compromise the ability to provide an
@@ -499,7 +541,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep>
 
       <Keep>
-      <H2>1.4 Date of Valuation / Liability</H2>
+      <H2>{subTitle(major[0], n1[3], "Date of Valuation / Liability")}</H2>
       <Para>
         The subject property was inspected on {formatNarrativeDateOr(m.inspectionDate, "the date recorded in this report")}.
         The valuation is effective as at {formatNarrativeDateOr(m.valueDate, "the date of valuation")} only. The concluded
@@ -509,9 +551,11 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Para>
       </Keep>
 
-      <Lead id="exam-2" title="2.0 Title and Property Details">
+      <Lead id="exam-2" title={t(major[1], "Title and Property Details")}>
       <Keep>
-      <H2>2.1 Property Description</H2>
+      {show21 ? (
+      <>
+      <H2>{subTitle(major[1], n2[0], "Property Description")}</H2>
       <Prose
         text={String(draft.narrative.sitePhysical ?? "").trim()}
       />
@@ -525,11 +569,13 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           {get(v, "prop_lot_position") ? `Lot position is ${get(v, "prop_lot_position")}.` : ""}
         </Para>
       ) : null}
+      </>
+      ) : null}
       </Keep>
       </Lead>
 
       <Keep>
-      <H2>2.2 Title Particulars</H2>
+      <H2>{subTitle(major[1], n2[1], "Title Particulars")}</H2>
       <StripeTable
         rows={[
           { label: "Street address", value: addressLine },
@@ -559,7 +605,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep>
 
       <Keep>
-      <H2>2.3 Particulars of Land</H2>
+      <H2>{subTitle(major[1], n2[2], "Particulars of Land")}</H2>
       <StripeTable
         rows={[
           { label: "Area", value: siteArea },
@@ -587,9 +633,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       />
       </Keep>
 
-      <Lead id="exam-3" title="3.0 Planning Controls">
+      <Lead id="exam-3" title={t(major[2], "Planning Controls")}>
       <Keep>
-      <H2>3.1 Planning Scheme and Zoning</H2>
+      <H2>{subTitle(major[2], n3[0], "Planning Scheme and Zoning")}</H2>
       <StripeTable
         rows={[
           {
@@ -603,50 +649,52 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       />
       </Keep>
       </Lead>
+      {show32 ? (
       <div className="report-keep-block">
-        <H2>3.2 Highest and Best Use</H2>
+        <H2>{subTitle(major[2], n3[1], "Highest and Best Use")}</H2>
         {draft.narrative.highestBestUse?.trim() ? (
           <Prose text={draft.narrative.highestBestUse} />
         ) : (
           <Para>{formatHbuVacant(v) || "Record the highest and best use of the subject property."}</Para>
         )}
       </div>
+      ) : null}
 
-      <Lead id="exam-4" title="4.0 Environmental Issues">
+      {show4 ? <Lead id="exam-4" title={t(major[3], "Environmental Issues")}>
       <Keep>
-      <Prose
+      {show40 ? <Prose
         text={
           draft.narrative.envIntro?.trim() ||
           "No separate contaminated-land search is assumed beyond the inspection record and any planning overlays noted. The valuation assumes there are no environmental issues other than those set out below."
         }
-      />
+      /> : null}
       </Keep>
-      </Lead>
-      <Keep>
-      <H2>4.1 Acid sulphate soils</H2>
+      </Lead> : null}
+      {show41 ? <Keep>
+      <H2>{subTitle(major[3], n4[0], "Acid sulphate soils")}</H2>
       <Prose text={draft.narrative.acidSulphate?.trim() || ""} />
       {!draft.narrative.acidSulphate?.trim() ? (
         <Para>No acid sulphate soils overlay is recorded against the subject.</Para>
       ) : null}
-      </Keep>
-      <Keep>
-      <H2>4.2 Flood assessment</H2>
+      </Keep> : null}
+      {show42 ? <Keep>
+      <H2>{subTitle(major[3], n4[1], "Flood assessment")}</H2>
       <Para>
         {draft.narrative.floodAssessment?.trim() ||
           "No flood notation is recorded on the inspection."}
       </Para>
-      </Keep>
-      <Keep>
-      <H2>4.3 Noise and other nuisances</H2>
+      </Keep> : null}
+      {show43 ? <Keep>
+      <H2>{subTitle(major[3], n4[2], "Noise and other nuisances")}</H2>
       <Para>
         {draft.narrative.noiseNuisances?.trim() ||
           "No formal acoustic report has been obtained. Comment is limited to features recorded on the inspection."}
       </Para>
-      </Keep>
+      </Keep> : null}
 
-      <Lead id="exam-5" title="5.0 Locality and Location">
+      {show5 ? <Lead id="exam-5" title={t(major[4], "Locality and Location")}>
       <Keep>
-      <H2>5.1 Location</H2>
+      {show51 ? <H2>{subTitle(major[4], n5[0], "Location")}</H2> : null}
       {narrativePrints(m, "location") ? (
         <>
       <Prose text={stripLeadingHeading(draft.narrative.location?.trim() || "", "Location")} />
@@ -656,9 +704,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </>
       ) : null}
       </Keep>
-      </Lead>
-      <Keep>
-      <H2>5.2 Locality</H2>
+      </Lead> : null}
+      {show52 ? <Keep>
+      <H2>{subTitle(major[4], n5[1], "Locality")}</H2>
       {narrativePrints(m, "neighbourhood") ? (
       <Prose
         text={stripLeadingHeading(
@@ -670,16 +718,16 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         )}
       />
       ) : null}
-      </Keep>
-      {draft.narrative.amenities?.trim() || get(v, "exam_amenities") ? (
+      </Keep> : null}
+      {show53 ? (
         <Keep>
-          <H2>5.3 Amenities</H2>
+          {show53 ? <H2>{subTitle(major[4], n5[2], "Amenities")}</H2> : null}
           <Prose text={draft.narrative.amenities?.trim() || get(v, "exam_amenities")} />
         </Keep>
       ) : null}
-      {draft.narrative.popularDestinations?.trim() || get(v, "exam_destinations") ? (
+      {show54 ? (
         <Keep>
-          <H2>5.4 Popular destinations</H2>
+          {show54 ? <H2>{subTitle(major[4], n5[3], "Popular destinations")}</H2> : null}
           <Prose
             text={
               draft.narrative.popularDestinations?.trim() || get(v, "exam_destinations")
@@ -688,12 +736,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </Keep>
       ) : null}
 
-      <Lead id="exam-6" title="6.0 Market Commentary">
+      {show6 ? <Lead id="exam-6" title={t(major[5], "Market Commentary")}>
       {hasMarketParts ? (
         <>
-          {draft.narrative.marketAustralia?.trim() || get(v, "exam_market_australia") ? (
+          {show61 ? (
             <Keep>
-              <H2>6.1 Australia</H2>
+              {show61 ? <H2>{subTitle(major[5], n6[0], "Australia")}</H2> : null}
               <Prose
                 text={
                   draft.narrative.marketAustralia?.trim() || get(v, "exam_market_australia")
@@ -701,25 +749,25 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
               />
             </Keep>
           ) : null}
-          {draft.narrative.marketState?.trim() || get(v, "exam_market_state") ? (
+          {show62 ? (
             <Keep>
-              <H2>6.2 State</H2>
+              {show62 ? <H2>{subTitle(major[5], n6[1], "State")}</H2> : null}
               <Prose
                 text={draft.narrative.marketState?.trim() || get(v, "exam_market_state")}
               />
             </Keep>
           ) : null}
-          {draft.narrative.marketRegion?.trim() || get(v, "exam_market_region") ? (
+          {show63 ? (
             <Keep>
-              <H2>6.3 Region</H2>
+              {show63 ? <H2>{subTitle(major[5], n6[2], "Region")}</H2> : null}
               <Prose
                 text={draft.narrative.marketRegion?.trim() || get(v, "exam_market_region")}
               />
             </Keep>
           ) : null}
-          {draft.narrative.marketLocality?.trim() || get(v, "exam_market_local") ? (
+          {show64 ? (
             <Keep>
-              <H2>6.4 Locality</H2>
+              {show64 ? <H2>{subTitle(major[5], n6[3], "Locality")}</H2> : null}
               <Prose
                 text={
                   draft.narrative.marketLocality?.trim() || get(v, "exam_market_local")
@@ -740,9 +788,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           ) : null}
         </Keep>
       )}
-      </Lead>
-
-      <Lead id="exam-7" title="7.0 Risk Assessment">
+      </Lead> : null}
+      <Lead id="exam-7" title={t(major[6], "Risk Assessment")}>
       <Keep>
       <Para>
         Each category has been considered against the criteria in the PropertyPRO Supporting
@@ -751,7 +798,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep>
       </Lead>
       <Keep>
-      <H2>7.1 Property risk assessment</H2>
+      <H2>{subTitle(major[6], 1, "Property risk assessment")}</H2>
       <RiskRatingsPrintTable values={v} />
       </Keep>
       <div className="mt-4">
@@ -767,7 +814,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </div>
 
       <section id="sec-sales" className="report-section report-section-sales">
-        <Lead id="exam-8" title="8.0 Valuation Approach">
+        <Lead id="exam-8" title={t(major[7], "Valuation Approach")}>
         <Keep>
         {narrativePrints(m, "valuationApproach") && draft.narrative.valuationApproach?.trim() ? (
           <Prose text={draft.narrative.valuationApproach} />
@@ -783,7 +830,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </Keep>
         </Lead>
         <Keep>
-        <H2>8.1 Comparable sales evidence (sales schedule)</H2>
+        <H2>{subTitle(major[7], n8[0], "Comparable sales evidence (sales schedule)")}</H2>
         {printedSales.length === 0 ? (
           <Para>No sales evidence has been recorded.</Para>
         ) : (
@@ -823,7 +870,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {narrativePrints(m, "salesComments") ? (
           <Keep>
             <h3 id="exam-8-2" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
-              8.2 Comments on comparable sales
+              {`${major[7]}.${n8[1]} Comments on comparable sales`}
             </h3>
             <Prose text={draft.narrative.salesComments?.trim() || ""} />
           </Keep>
@@ -831,14 +878,14 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {narrativePrints(m, "valueReconciliation") ? (
           <Keep>
             <h3 id="exam-8-3" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
-              8.3 Final reconciliation of value
+              {`${major[7]}.${n8[2]} Final reconciliation of value`}
             </h3>
             <Prose text={draft.narrative.valueReconciliation?.trim() || ""} />
           </Keep>
         ) : null}
         {get(v, "exam_on_market") ? (
           <>
-            <H2>8.4 On-the-market listings</H2>
+            {show84 ? <H2>{subTitle(major[7], n8[3], "On-the-market listings")}</H2> : null}
             <Para>
               The following listings were considered. They are not settled sales and are not used as
               primary evidence.
@@ -848,7 +895,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ) : null}
         {draft.narrative.salesAnalysis?.trim() || get(v, "exam_sales_analysis") ? (
           <>
-            <H2>8.5 Analysis</H2>
+            {show85 ? <H2>{subTitle(major[7], n8[4], "Analysis")}</H2> : null}
             <Prose
               text={
                 draft.narrative.salesAnalysis?.trim() || get(v, "exam_sales_analysis")
@@ -856,7 +903,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             />
           </>
         ) : null}
-        <H2>8.6 Valuation result</H2>
+        <H2>{subTitle(major[7], n8[5], "Valuation result")}</H2>
         <Para>
           Having regard to the sales evidence and market conditions at the date of valuation, it is
           my opinion that the market value of the unencumbered fee simple interest in the subject
@@ -891,7 +938,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       ) : null}
 
       <section className="report-section report-section-references">
-      <Lead id="exam-9" title="9.0 References">
+      {show9 ? <Lead id="exam-9" title={t(major[8], "References")}>
       <Keep>
       {narrativePrints(m, "references") ? (
         draft.narrative.references?.trim() ? (
@@ -914,10 +961,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         <Para>List sources used for the market commentary, planning searches and sales evidence.</Para>
       ) : null}
       </Keep>
-      </Lead>
+      </Lead> : null}
       </section>
 
-      <Lead id="exam-10" title="10.0 Annexures">
+      {hasAnnexures ? <Lead id="exam-10" title={t(major[9], "Annexures")}>
       <ol className="ml-5 list-decimal space-y-0.5 text-sm">
         {annexurePhotos.length > 0 ? <li>Subject photographs</li> : null}
         {printedSales.some((s) => s.photoUrl) ? <li>Comparable sale photographs</li> : null}
@@ -929,7 +976,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           <li key={g.id}>{g.title}</li>
         ))}
       </ol>
-      </Lead>
+      </Lead> : null}
 
       {annexurePhotos.length > 0 ? (
         <section id="exam-annex-subject" className="report-annexure report-annexure-subject mt-12">
