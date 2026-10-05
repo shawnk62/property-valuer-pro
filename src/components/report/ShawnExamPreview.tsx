@@ -737,6 +737,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       />
       <Para>Title particulars are taken from the current title search annexed to this report.</Para>
       </Keep>
+      {narrativePrints(m, "titleSearchNarrative") &&
       titleSearchNarrativeWithoutGridFacts(draft.narrative.titleSearchNarrative ?? "").trim() ? (
         <Prose text={titleSearchNarrativeWithoutGridFacts(draft.narrative.titleSearchNarrative ?? "")} />
       ) : null}

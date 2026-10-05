@@ -303,15 +303,19 @@ function cleanUnregistered(raw: string): string {
 export function unregisteredDealingsDisplay(values: InspectionValues): string {
   const stored = String(values["title_unregistered"] ?? "").trim();
   const text = String(values["title_search_text"] ?? "");
-  const fromSearch =
+  const section =
     text.match(
-      /UNREGISTERED DEALINGS\s*\n([\s\S]{0,2000}?)(?=\n\s*(?:END OF (?:CURRENT )?TITLE SEARCH|COPYRIGHT|ADMINISTRATIVE ADVICES)\b|$)/i,
+      /UNREGISTERED DEALINGS\s*\n([\s\S]{0,800}?)(?=\n\s*(?:END OF (?:CURRENT )?TITLE SEARCH|COPYRIGHT|ADMINISTRATIVE ADVICES)\b|$)/i,
     )?.[1] ?? "";
-  const cleaned = cleanUnregistered(fromSearch || stored);
-  if (!cleaned || /^nil$|^none recorded$/i.test(cleaned) || /caution|order of priority/i.test(cleaned)) {
+  const candidate = cleanUnregistered(section || stored);
+  if (
+    !candidate ||
+    /^nil$|^none recorded$|^caution\b/i.test(candidate) ||
+    /charges do not necessarily appear|order of priority/i.test(candidate)
+  ) {
     return "NIL";
   }
-  return cleaned;
+  return candidate;
 }
 
 export function buildTitleSearchResidual(_values: InspectionValues): string {
