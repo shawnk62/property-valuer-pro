@@ -51,7 +51,7 @@ import {
 import { purposeOfValuation } from "@/lib/report/reportTypes";
 import { buildExecutiveSummaryLead } from "@/lib/report/narrative";
 import { buildEncumbrancesSummary, titleCreatedDisplay, titleSearchNarrativeWithoutGridFacts, unregisteredDealingsDisplay } from "@/lib/report/titleAdvices";
-import { planningSchemeDisplay } from "@/lib/report/parsePlanningExtract";
+import { planningSchemeInForce, zoningPurposeSentence } from "@/lib/report/parsePlanningExtract";
 import { fillExamTocPages } from "@/lib/report/tocPages";
 import { includedNumbers, majorTitle, subTitle } from "@/lib/report/sectionNumbers";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
@@ -735,8 +735,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           },
         ]}
       />
+      <Para>Title particulars are taken from the current title search annexed to this report.</Para>
       </Keep>
-      {narrativePrints(m, "titleSearchNarrative") &&
       titleSearchNarrativeWithoutGridFacts(draft.narrative.titleSearchNarrative ?? "").trim() ? (
         <Prose text={titleSearchNarrativeWithoutGridFacts(draft.narrative.titleSearchNarrative ?? "")} />
       ) : null}
@@ -780,13 +780,16 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         rows={[
           {
             label: "Planning scheme",
-            value: planningSchemeDisplay(v),
+            value: planningSchemeInForce(v, m.valueDate),
           },
           { label: "Zoning", value: get(v, "prop_zoning") },
-          { label: "Zoning purpose / description", value: get(v, "prop_zoning_desc") },
+          { label: "Zoning purpose / description", value: zoningPurposeSentence(get(v, "prop_zoning_desc")) },
           { label: "Zoning compliance", value: get(v, "prop_zoning_comp") },
         ]}
       />
+      <Para>
+        The planning scheme cited above is the scheme in force at the date of valuation.
+      </Para>
       </Keep>
       </Lead>
       {show32 ? (
@@ -887,7 +890,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           sub={show61 ? subTitle(major[5], n6[0], "Australia") : undefined}
           text={
             show61
-              ? draft.narrative.marketAustralia?.trim() || get(v, "exam_market_australia")
+              ? withoutSourceNotes(
+                  draft.narrative.marketAustralia?.trim() || get(v, "exam_market_australia"),
+                  printedSales,
+                )
               : ""
           }
         />
@@ -895,19 +901,19 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       {show6 && show62 ? (
         <Keep>
           <H2>{subTitle(major[5], n6[1], "State")}</H2>
-          <Prose text={draft.narrative.marketState?.trim() || get(v, "exam_market_state")} />
+          <Prose text={withoutSourceNotes(draft.narrative.marketState?.trim() || get(v, "exam_market_state"), printedSales)} />
         </Keep>
       ) : null}
       {show6 && show63 ? (
         <Keep>
           <H2>{subTitle(major[5], n6[2], "Region")}</H2>
-          <Prose text={draft.narrative.marketRegion?.trim() || get(v, "exam_market_region")} />
+          <Prose text={withoutSourceNotes(draft.narrative.marketRegion?.trim() || get(v, "exam_market_region"), printedSales)} />
         </Keep>
       ) : null}
       {show6 && show64 ? (
         <Keep>
           <H2>{subTitle(major[5], n6[3], "Locality")}</H2>
-          <Prose text={draft.narrative.marketLocality?.trim() || get(v, "exam_market_local")} />
+          <Prose text={withoutSourceNotes(draft.narrative.marketLocality?.trim() || get(v, "exam_market_local"), printedSales)} />
         </Keep>
       ) : null}
       {show6 && !hasMarketParts ? (
@@ -930,11 +936,18 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <div className="mt-4">
         <RiskAnalysisProse
           text={
-            riskCommentsForPrint(
-              v,
-              draft.narrative.riskAnalysis,
-              draft.reportMeta.manualNarrative?.riskAnalysis === true,
-            ) || get(v, "exam_risk_commentary")
+            [
+              riskCommentsForPrint(
+                v,
+                draft.narrative.riskAnalysis,
+                draft.reportMeta.manualNarrative?.riskAnalysis === true,
+              ) || get(v, "exam_risk_commentary"),
+              /overlay/i.test(String(v["prop_adverse_site"] ?? ""))
+                ? "A mortgagee should require the overlay to be confirmed against the planning scheme before relying on the security, and should treat any land excluded by the overlay as not fully available."
+                : "",
+            ]
+              .filter(Boolean)
+              .join("\n\n")
           }
         />
       </div>
@@ -943,14 +956,18 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         <Lead id="exam-8" title={t(major[7], "Valuation Approach")}>
         <Keep>
         {narrativePrints(m, "valuationApproach") && draft.narrative.valuationApproach?.trim() ? (
-          <Prose text={draft.narrative.valuationApproach} />
+          <Prose
+            text={`${draft.narrative.valuationApproach.trim()}\n\nThe opinion is as at ${formatNarrativeDateOr(m.valueDate, "the date of valuation")} and is not to be read after the reliance period without a review.`}
+          />
         ) : narrativePrints(m, "valuationApproach") ? (
         <Para>
           The market value of the subject property has been determined using the Direct Comparison
           Approach. Recent sales of similar properties are analysed and adjusted for points of
           difference. For vacant residential land those factors typically include date of sale, land
           area and shape, topography and zoning, location and proximity to amenities, aspect and
-          views, and surrounding development.
+          views, and surrounding development. The opinion is as at{" "}
+          {formatNarrativeDateOr(m.valueDate, "the date of valuation")} and is not to be read after
+          the reliance period without a review.
         </Para>
         ) : null}
         </Keep>
@@ -1025,7 +1042,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             {show85 ? <H2>{subTitle(major[7], n8[4], "Analysis")}</H2> : null}
             <Prose
               text={withoutSourceNotes(
-                draft.narrative.salesAnalysis?.trim() || get(v, "exam_sales_analysis"),
+                (draft.narrative.salesAnalysis?.trim() || get(v, "exam_sales_analysis")).replace(
+                  /\b(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\b/g,
+                  (_m, d, mo, y) => formatNarrativeDateOr(`${d}/${mo}/${y}`, `${d}/${mo}/${y}`),
+                ),
                 printedSales,
               )}
             />

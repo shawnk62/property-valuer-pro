@@ -445,6 +445,8 @@ Rules:
 - If an accepted fact is an agent's or developer's observation, attribute it as advice received, do not present it as the valuer's unaided opinion.
 - When two or more sources give different figures for the same item, cite ONE range from the lowest to the highest accepted figure. Do not list each source's statistic separately.
 - Do not invent rates, incentives, estate stages, mortgagee activity or buyer profiles that are not in the accepted facts.
+- Name the source and the period in each paragraph that cites a figure. Do not leave a market figure without a source.
+- Do not use source notes or working notes.
 - Do not describe the subject allotment, overlays, or comparable sales.
 - Do not write the 5.2 physical locality / amenity tour here.
 - Two to five paragraphs when enough facts exist. Australian spelling.
@@ -605,6 +607,7 @@ Rules:
 - Two short paragraphs. Formal valuation English.
 - Do not invent a method other than Direct Comparison unless the inspection records one.
 - Do not quote a dollar value.
+- State that the opinion is as at the date of valuation and is not to be read after the reliance period without a review.
 - Do not repeat the heading.`,
       };
     case "highestBestUse":
@@ -658,6 +661,7 @@ Rules:
 - Name the rating number and label (Low through High) in each paragraph.
 - Explain the rating from the official criteria and only recorded facts (flood, overlays, title, condition, vacant land).
 - Do not invent market statistics or overlay names.
+- If an overlay affects the subject, add one sentence on what a mortgagee would do about that overlay.
 - Omit a heading when no score and no comment are recorded. Do not write "no rating was selected".
 - If vacant land is recorded, treat Improvements as vacant-land risk, not a dwelling.
 - Do not write percentages.`,

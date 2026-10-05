@@ -111,7 +111,45 @@ export function planningSchemeDisplay(values: Record<string, unknown>): string {
   return form || "";
 }
 
-export function mergePlanningExtract(
+/** Scheme wording pasted as "to:(1)identify" is rewritten as a sentence. */
+export function zoningPurposeSentence(raw: string | null | undefined): string {
+  let text = String(raw ?? "").replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  text = text
+    .replace(/\bto:\s*(?:\(\d+\)\s*)?/gi, "to ")
+    .replace(/\(\d+\)\s*/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!/[.!?]$/.test(text)) text += ".";
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function schemeDate(raw: string): Date | null {
+  const named = raw.match(
+    /(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})/i,
+  );
+  if (!named) return null;
+  const months = "january,february,march,april,may,june,july,august,september,october,november,december".split(",");
+  const month = months.indexOf(named[2]!.toLowerCase());
+  if (month < 0) return null;
+  return new Date(Number(named[3]), month, Number(named[1]));
+}
+
+/** Drop a scheme version that commenced after the valuation date. */
+export function planningSchemeInForce(
+  values: Record<string, unknown>,
+  valueDate: string | null | undefined,
+): string {
+  const display = planningSchemeDisplay(values);
+  const valuation = schemeDate(String(valueDate ?? ""));
+  if (!display || !valuation) return display;
+  const effective = schemeDate(display);
+  if (!effective || effective.getTime() <= valuation.getTime()) return display;
+  return display
+    .replace(/,?\s*(?:amended|commenced|effective)\s+\d{1,2}\s+[A-Za-z]+\s+\d{4}/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
   existing: Record<string, unknown>,
   incoming: PlanningExtract,
 ): Record<string, string> {

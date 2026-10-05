@@ -443,10 +443,62 @@ export function referencesForPrint(
   const cleaned = out.filter((item) => {
     if (/^com\.?$/i.test(item.author)) return false;
     if (!item.url && authorsWithUrl.has(item.author.toLowerCase())) return false;
+    const thin =
+      !item.title &&
+      (!item.year || item.year === "n.d.") &&
+      /prd\.com\.au|propertycouncil\.com\.au|proptrack|wikipedia/i.test(
+        `${item.author} ${item.site} ${item.url}`,
+      );
+    if (thin) return false;
+    if (!item.title || !item.year || item.year === "n.d.") return false;
     return true;
   });
   cleaned.sort((a, b) => a.author.localeCompare(b.author, "en") || a.title.localeCompare(b.title, "en"));
+  const primary = primaryReportSources(values);
+  for (const item of primary) {
+    const key = referenceKey(item);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    cleaned.push(item);
+  }
   return cleaned.map((parts) => ({ ...parts, year: parts.year || "n.d." }));
+}
+
+function primaryReportSources(values: InspectionValues): ReferenceParts[] {
+  const viewed = apaRetrieved();
+  const out: ReferenceParts[] = [];
+  const scheme = String(values["prop_planning_scheme"] ?? values["exam_planning_scheme"] ?? "").trim();
+  if (scheme) {
+    out.push({
+      author: String(values["prop_lga"] ?? "Planning authority").trim() || "Planning authority",
+      year: scheme.match(/\b(20\d{2})\b/)?.[1] ?? viewed.split(" ").pop() ?? "",
+      title: scheme,
+      site: "",
+      url: "",
+      accessed: viewed,
+    });
+  }
+  if (String(values["title_search_text"] ?? values["prop_title"] ?? "").trim()) {
+    out.push({
+      author: "Titles Queensland",
+      year: String(values["prop_title_search_date"] ?? values["exam_title_search_date"] ?? "").match(/\b(20\d{2})\b/)?.[1] ?? viewed.split(" ").pop() ?? "",
+      title: "Current title search",
+      site: "Titles Queensland",
+      url: "",
+      accessed: viewed,
+    });
+  }
+  if (String(values["prop_lotplan"] ?? values["prop_plan"] ?? "").trim()) {
+    out.push({
+      author: "Queensland Government",
+      year: viewed.split(" ").pop() ?? "",
+      title: "Survey plan",
+      site: "",
+      url: "",
+      accessed: viewed,
+    });
+  }
+  return out.filter((item) => item.title && item.year && item.year !== "n.d.");
 }
 
 export function referenceStyleOf(meta: ReportMeta | undefined): ReferenceStyle {

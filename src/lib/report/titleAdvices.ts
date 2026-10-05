@@ -220,6 +220,15 @@ export function buildTitleNoticesNarrative(values: InspectionValues): string {
   return paragraphs.join("\n\n");
 }
 
+function easementSentence(line: string): string {
+  const number = line.match(/\b(\d{6,})\b/)?.[1] ?? "";
+  const gross = /easement in gross/i.test(line);
+  if (gross && number) return `Easement in Gross No. ${number}`;
+  if (gross) return "an easement in gross";
+  if (/easement/i.test(line) && number) return `easement No. ${number}`;
+  return line.replace(/\s+/g, " ").trim();
+}
+
 export function buildEncumbrancesSummary(values: InspectionValues): string {
   const text = String(values["title_search_text"] ?? values["enc_notes"] ?? "");
   const interestBlock =
@@ -236,9 +245,10 @@ export function buildEncumbrancesSummary(values: InspectionValues): string {
         !/^NIL$/i.test(line) &&
         !/End of Current Title Search/i.test(line) &&
         !/copyright|Titles Queensland/i.test(line) &&
-        !/^Caution/i.test(line),
+        !/Charges do not necessarily appear/i.test(line),
     )
-    .slice(0, 4);
+    .slice(0, 4)
+    .map(easementSentence);
   const notices = buildTitleNoticesNarrative(values);
   const veg = notices
     .split(/\n\n/)
@@ -284,7 +294,7 @@ function cleanUnregistered(raw: string): string {
   return raw
     .replace(/End of Current Title Search[\s\S]*$/i, "")
     .replace(/copyright[\s\S]*$/i, "")
-    .replace(/\bNIL\b/gi, "")
+    .replace(/Charges do not necessarily appear[\s\S]*$/i, "")
     .replace(/\*+/g, "")
     .replace(/\s+/g, " ")
     .trim();
@@ -298,7 +308,7 @@ export function unregisteredDealingsDisplay(values: InspectionValues): string {
       /UNREGISTERED DEALINGS\s*\n([\s\S]{0,2000}?)(?=\n\s*(?:END OF (?:CURRENT )?TITLE SEARCH|COPYRIGHT|ADMINISTRATIVE ADVICES)\b|$)/i,
     )?.[1] ?? "";
   const cleaned = cleanUnregistered(fromSearch || stored);
-  if (!cleaned || /^none recorded$/i.test(cleaned)) return "None recorded";
+  if (!cleaned || /^nil$|^none recorded$/i.test(cleaned)) return "NIL";
   return cleaned;
 }
 
