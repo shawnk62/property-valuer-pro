@@ -1061,7 +1061,15 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                     <>
                       {ref.author} ({ref.year})
                       {titled ? <> <em>{ref.title}</em></> : null}
-                      {ref.url ? <>, {ref.site || ref.author}, viewed {ref.accessed}, <{ref.url}>.</> : "."}
+                      {ref.url ? (
+                        <>
+                          , {ref.site || ref.author}, viewed {ref.accessed}, {"<"}
+                          {ref.url}
+                          {">"}.
+                        </>
+                      ) : (
+                        "."
+                      )}
                     </>
                   )}
                 </p>

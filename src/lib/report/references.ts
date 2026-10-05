@@ -437,8 +437,16 @@ export function referencesForPrint(
     seen.add(key);
     out.push(parts);
   }
-  out.sort((a, b) => a.author.localeCompare(b.author, "en") || a.title.localeCompare(b.title, "en"));
-  return out.map((parts) => ({ ...parts, year: parts.year || "n.d." }));
+  const authorsWithUrl = new Set(
+    out.filter((item) => item.url).map((item) => item.author.toLowerCase()),
+  );
+  const cleaned = out.filter((item) => {
+    if (/^com\.?$/i.test(item.author)) return false;
+    if (!item.url && authorsWithUrl.has(item.author.toLowerCase())) return false;
+    return true;
+  });
+  cleaned.sort((a, b) => a.author.localeCompare(b.author, "en") || a.title.localeCompare(b.title, "en"));
+  return cleaned.map((parts) => ({ ...parts, year: parts.year || "n.d." }));
 }
 
 export function referenceStyleOf(meta: ReportMeta | undefined): ReferenceStyle {
