@@ -497,6 +497,8 @@ export function subjectAskingPriceDisplay(
   if (offered !== "yes" && !contract && !listed) return "";
   return contract || listed;
 }
+
+export function formatMoney(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return "—";
   const abs = Math.abs(n);
   const formatted = abs.toLocaleString("en-AU", {
