@@ -360,8 +360,15 @@
 .sales-evidence-item .sales-col-address { width: 34mm; }
 .sales-evidence-item .sales-col-area { width: 18mm; white-space: nowrap; }
 .sales-evidence-item .sales-col-price { width: 22mm; white-space: nowrap; }
-.sales-evidence-item .sales-col-rate { width: 18mm; white-space: nowrap; }
-.sales-evidence-item .sales-col-date { width: 20mm; white-space: nowrap; }
+.sales-evidence-item .sales-col-rate { width: 28mm; }
+.sales-evidence-item .sales-col-date { width: 24mm; }
+.sales-evidence-item .sales-col-rating { width: 22mm; }
+.sales-evidence-item .sales-rate-cell,
+.sales-evidence-item .sales-date-cell {
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
 .sales-evidence-item .report-prose-para {
   display: block;
   margin: 0 0 0.85rem;
@@ -983,16 +990,20 @@
     white-space: nowrap !important;
   }
   #report-preview-sheet .sales-evidence-item .sales-col-rate {
-    width: 18mm !important;
-    white-space: nowrap !important;
+    width: 28mm !important;
+    white-space: normal !important;
   }
   #report-preview-sheet .sales-evidence-item .sales-col-date {
-    width: 20mm !important;
-    white-space: nowrap !important;
+    width: 24mm !important;
+    white-space: normal !important;
   }
   #report-preview-sheet .sales-evidence-item .sales-col-rating {
-    width: 18mm !important;
-    white-space: nowrap !important;
+    width: 22mm !important;
+  }
+  #report-preview-sheet .sales-evidence-item .sales-rate-cell,
+  #report-preview-sheet .sales-evidence-item .sales-date-cell {
+    overflow: hidden !important;
+    white-space: normal !important;
   }
 
   #report-preview-sheet h1,

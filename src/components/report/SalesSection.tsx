@@ -2107,6 +2107,13 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                               write: (id: string, v: string) => patchSale(id, { saleDate: v }),
                             },
                             {
+                              key: "printRating",
+                              label: "Rating",
+                              subject: () => "—",
+                              read: (s: (typeof sales)[0]) => s.printRating ?? "",
+                              write: (id: string, v: string) => patchSale(id, { printRating: v }),
+                            },
+                            {
                               key: "priceGla",
                               label: "Sale Price/Gross Liv. Area",
                               subject: () => "—",
@@ -2158,7 +2165,19 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                     "border-l border-border px-1 py-1 align-middle",
                                   )}
                                 >
-                                  {row.write ? (
+                                  {row.key === "printRating" ? (
+                                    <select
+                                      value={row.read(sale)}
+                                      onChange={(e) => row.write!(sale.id, e.target.value)}
+                                      title="Rating on the printed sales schedule. Blank uses the calculated rating."
+                                      className="w-full rounded border border-input bg-card px-1 py-0.5 text-xs outline-none"
+                                    >
+                                      <option value="">Calculated</option>
+                                      <option value="Superior">Superior</option>
+                                      <option value="Similar">Similar</option>
+                                      <option value="Inferior">Inferior</option>
+                                    </select>
+                                  ) : row.write ? (
                                     <input
                                       value={row.read(sale)}
                                       onChange={(e) => row.write!(sale.id, e.target.value)}
@@ -2217,7 +2236,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                         sale.adjustments?.dateOfSale?.amount ?? 0,
                                       )} min-w-[4.5rem] border-input bg-card`}
                                     />
-                                  ) : row.key === "address" || row.key === "salePrice" ? (
+                                  ) : row.key === "address" || row.key === "salePrice" || row.key === "printRating" ? (
                                     ""
                                   ) : (
                                     "—"

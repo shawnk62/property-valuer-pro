@@ -184,6 +184,8 @@ export interface ComparableSale {
   salePrice: string;
   landArea: string;
   comments: string;
+  /** Printed rating on the sales schedule. Blank uses the calculated rating. */
+  printRating?: string;
   /** Gross living area (Sale Price/GLA row + GLA adjustment line). */
   gla?: string;
   beds?: string;

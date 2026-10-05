@@ -18,6 +18,8 @@ const HEADERS = [
 ] as const;
 
 function saleRating(sale: ComparableSale): string {
+  const chosen = sale.printRating?.trim();
+  if (chosen) return chosen;
   const net = computeSaleAdjustmentTotals(sale).netAdjustment;
   if (!Number.isFinite(net) || net === 0) return "Similar";
   return net < 0 ? "Superior" : "Inferior";
@@ -98,10 +100,10 @@ export function SalesEvidenceSchedule({
                 <td className={`${cell} whitespace-nowrap`} style={cellStyle}>
                   {formatSalePrice(s.salePrice) || "—"}
                 </td>
-                <td className={`${cell} whitespace-nowrap`} style={cellStyle}>
+                <td className={`${cell} sales-rate-cell`} style={cellStyle}>
                   {site.rate}
                 </td>
-                <td className={`${cell} whitespace-nowrap`} style={cellStyle}>
+                <td className={`${cell} sales-date-cell`} style={cellStyle}>
                   {s.saleDate || "—"}
                 </td>
                 <td className={`${cell} whitespace-nowrap`} style={cellStyle}>
