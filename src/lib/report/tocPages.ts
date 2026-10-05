@@ -1,7 +1,7 @@
 /**
- * Fill [data-toc-id] page labels from the live print layout.
- * Page 1 is the cover. Forced breaks on the cover and executive summary
- * are applied the same way as styles.css so footer counters stay aligned.
+ * Fill [data-toc-id] page labels from the same breaks the print stylesheet uses.
+ * Page 1 is the cover. Screen computed style does not see @media print, so the
+ * breaks are read from the classes styles.css applies in print.
  */
 const PAGE_MM = 297;
 const MARGIN_TOP_MM = 14;
@@ -12,33 +12,44 @@ function mmToPx(mm: number): number {
   return (mm / 25.4) * 96;
 }
 
-function isPageBreakBefore(el: Element): boolean {
-  if (
-    el.classList.contains("report-exam-summary-sheet") ||
-    el.classList.contains("report-a4-page") ||
-    el.classList.contains("report-annexure")
-  ) {
-    return true;
-  }
-  const s = window.getComputedStyle(el);
-  return s.breakBefore === "page" || s.pageBreakBefore === "always";
+function isPhotoPage(el: Element): boolean {
+  return el.classList.contains("photo-annex-page");
 }
 
-function isPageBreakAfter(el: Element): boolean {
+function isA4Page(el: Element): boolean {
+  return el.classList.contains("report-a4-page");
+}
+
+function photoPageBreaksAfter(el: Element): boolean {
+  if (!isPhotoPage(el)) return false;
+  const parent = el.parentElement;
+  const last = parent?.lastElementChild === el;
   if (
+    last &&
+    parent &&
+    (parent.classList.contains("report-annexure-subject") ||
+      parent.classList.contains("report-annexure-comps"))
+  ) {
+    return false;
+  }
+  return true;
+}
+
+function startsPage(el: Element): boolean {
+  return (
+    el.classList.contains("report-exam-summary-sheet") ||
+    el.classList.contains("report-annexure") ||
+    el.classList.contains("report-section-sales") ||
+    el.classList.contains("report-section-references")
+  );
+}
+
+function endsPage(el: Element): boolean {
+  return (
     el.classList.contains("exam-cover") ||
     el.classList.contains("report-exam-summary-sheet") ||
-    el.classList.contains("report-a4-page")
-  ) {
-    return true;
-  }
-  const s = window.getComputedStyle(el);
-  return s.breakAfter === "page" || s.pageBreakAfter === "always";
-}
-
-function isAvoidInside(el: Element): boolean {
-  const s = window.getComputedStyle(el);
-  return s.breakInside === "avoid" || s.pageBreakInside === "avoid";
+    el.classList.contains("report-toc")
+  );
 }
 
 export function fillExamTocPages(): void {
@@ -46,7 +57,7 @@ export function fillExamTocPages(): void {
   if (!sheet) return;
   const host = sheet.closest(".report-print-host") as HTMLElement | null;
   const hostWasHidden = host?.classList.contains("hidden") ?? false;
-  if (hostWasHidden) host?.classList.remove("hidden");
+  if (hostWasHidden) host.classList.remove("hidden");
   sheet.classList.add("exam-toc-measure");
   void sheet.offsetHeight;
 
@@ -57,9 +68,6 @@ export function fillExamTocPages(): void {
 
   const mark = (el: Element) => {
     if (el.id && !pages.has(el.id)) pages.set(el.id, page);
-    el.querySelectorAll<HTMLElement>("[id]").forEach((node) => {
-      if (!pages.has(node.id)) pages.set(node.id, page);
-    });
   };
 
   const newPage = () => {
@@ -67,44 +75,73 @@ export function fillExamTocPages(): void {
     used = 0;
   };
 
-  const place = (el: Element) => {
-    const h = Math.max(el.scrollHeight, (el as HTMLElement).getBoundingClientRect().height);
-    if (isPageBreakBefore(el) && (used > 1 || page > 1)) newPage();
-    if (isAvoidInside(el) && used > 1 && h > 0 && h <= pageH && used + h > pageH + 0.5) newPage();
+  const flow = (el: Element) => {
+    const h = Math.max(el.scrollHeight, el.getBoundingClientRect().height);
+    const avoid =
+      el.classList.contains("report-section-open") ||
+      el.classList.contains("report-keep-block") ||
+      el.classList.contains("report-table-keep");
+    if (avoid && used > 1 && h > 0 && h <= pageH && used + h > pageH) newPage();
     mark(el);
-    if (h <= 0) {
-      if (isPageBreakAfter(el)) newPage();
-      return;
-    }
+    el.querySelectorAll<HTMLElement>("[id]").forEach((node) => {
+      if (node.closest(".report-annexure, .photo-annex-page, .report-a4-page") === el) mark(node);
+      else if (!node.closest(".report-annexure, .photo-annex-page, .report-a4-page")) mark(node);
+    });
+    if (h <= 0) return;
     if (used + h <= pageH + 0.5) {
       used += h;
-    } else if (isAvoidInside(el) && h <= pageH && used > 1) {
+      return;
+    }
+    if (avoid && h <= pageH) {
       newPage();
       mark(el);
       used = h;
-    } else {
-      const total = used + h;
-      const extra = Math.floor(total / pageH);
-      page += extra;
-      used = total % pageH;
-      mark(el);
+      return;
     }
-    if (isPageBreakAfter(el)) newPage();
-    if (el.classList.contains("report-annexure")) {
-      el.querySelectorAll<HTMLElement>(".photo-annex-page, .report-a4-page").forEach((pageEl, index) => {
-        if (index > 0) newPage();
-        mark(pageEl);
-      });
-    }
+    const total = used + h;
+    page += Math.floor(total / pageH);
+    used = total % pageH;
   };
 
-  Array.from(sheet.children).forEach((child) => place(child));
-  sheet.querySelectorAll<HTMLElement>("[id]").forEach((node) => {
-    if (!pages.has(node.id)) {
-      const parent = node.closest("[id]");
-      const known = parent && parent !== node ? pages.get(parent.id) : undefined;
-      pages.set(node.id, known || page);
+  const placePageBlock = (el: Element) => {
+    if (used > 1) newPage();
+    const owner = el.closest("[id]");
+    if (owner) mark(owner);
+    mark(el);
+    used = pageH;
+    if (isPhotoPage(el) && photoPageBreaksAfter(el)) newPage();
+  };
+
+  const place = (el: Element) => {
+    if (isPhotoPage(el) || isA4Page(el)) {
+      placePageBlock(el);
+      return;
     }
+    if (startsPage(el) && used > 1) newPage();
+    const blocks = Array.from(el.querySelectorAll<HTMLElement>(".photo-annex-page, .report-a4-page"));
+    if (blocks.length > 0) {
+      mark(el);
+      let cursor: ChildNode | null = el.firstChild;
+      blocks.forEach((block) => {
+        const before: Element[] = [];
+        while (cursor && cursor !== block) {
+          if (cursor instanceof Element && !cursor.querySelector(".photo-annex-page, .report-a4-page")) {
+            before.push(cursor);
+          }
+          cursor = cursor.nextSibling;
+        }
+        before.forEach(flow);
+        placePageBlock(block);
+        cursor = block.nextSibling;
+      });
+      return;
+    }
+    flow(el);
+    if (endsPage(el)) newPage();
+  };
+
+  Array.from(sheet.children).forEach((child) => {
+    if (child instanceof Element) place(child);
   });
 
   document.querySelectorAll<HTMLElement>("[data-toc-id]").forEach((slot) => {
@@ -114,5 +151,5 @@ export function fillExamTocPages(): void {
     slot.textContent = n ? String(n) : "—";
   });
   sheet.classList.remove("exam-toc-measure");
-  if (hostWasHidden) host?.classList.add("hidden");
+  if (hostWasHidden) host.classList.add("hidden");
 }
