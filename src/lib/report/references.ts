@@ -454,12 +454,25 @@ export function referencesForPrint(
   const primary = [...primaryReportSources(values), ...standingShawnSources(), ...marketSourcesNamedIn(values, marketText)];
   for (const item of primary) {
     const key = referenceKey(item);
-    if (cleaned.some((row) => row.author.toLowerCase() === item.author.toLowerCase())) continue;
+    const sameAuthor = cleaned.findIndex((row) => row.author.toLowerCase() === item.author.toLowerCase());
+    if (sameAuthor >= 0 && item.url && !cleaned[sameAuthor].url) cleaned.splice(sameAuthor, 1);
+    else if (sameAuthor >= 0) continue;
     seen.add(key);
     cleaned.push(item);
   }
+  if (/realestate\.com|rea group/i.test(marketText) && !cleaned.some((row) => row.author === "REA Group" && row.url)) {
+    const viewed = apaRetrieved();
+    cleaned.push({
+      author: "REA Group",
+      year: "2026",
+      title: `${String(values["prop_suburb"] ?? "Worongary").trim() || "Worongary"} suburb profile`,
+      site: "realestate.com.au",
+      url: reaProfileUrl(values),
+      accessed: viewed,
+    });
+  }
   cleaned.sort((a, b) => a.author.localeCompare(b.author, "en") || a.title.localeCompare(b.title, "en"));
-  return cleaned;
+  return cleaned.filter((row) => row.title && row.author !== row.url);
 }
 
 const MARKET_SOURCES: Array<{ test: RegExp; author: string; title: string; site: string }> = [

@@ -1026,7 +1026,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <h3 id="exam-8-2" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
               {`${major[7]}.${n8[1]} Comments on comparable sales`}
             </h3>
-            <Prose text={withoutSourceNotes(draft.narrative.salesComments || "", printedSales).replace(/realestate\.com(?:\.au)? indicates/gi, "REA Group (2026)")} />
+            <Prose text={withoutSourceNotes(draft.narrative.salesComments || "", printedSales).replace(/real\s*estate\.com(?:\.au)?/gi, "REA Group (2026)")} />
           </Keep>
         ) : null}
         {narrativePrints(m, "valueReconciliation") ? (

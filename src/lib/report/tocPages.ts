@@ -129,7 +129,9 @@ export function fillExamTocPages(): void {
     const target = document.getElementById(id);
     const leaf = target?.closest<HTMLElement>("[data-page]");
     const box = target?.closest<HTMLElement>(".preview-page");
-    const n = leaf?.dataset.page || box?.dataset.page;
+    const n = id === "exam-annex-survey" && (leaf?.dataset.page || box?.dataset.page)
+      ? String(Number(leaf?.dataset.page || box?.dataset.page) + 1)
+      : leaf?.dataset.page || box?.dataset.page;
     const fallback = slot.querySelector(".toc-fallback");
     if (fallback) fallback.textContent = n || "—";
   });
