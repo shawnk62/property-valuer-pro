@@ -460,7 +460,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], " ");
   const usableSiteArea = formatUsableSiteAreaIfDifferent(v);
   const servicesText = narrativePrints(m, "servicesAmenities")
-    ? draft.narrative.servicesAmenities?.trim() || ""
+    ? (draft.narrative.servicesAmenities || "")
+        .replace(/^\s*\d+(?:\.\d+)*\s*services?\s*\/\s*amenities\s*/i, "")
+        .trim()
     : "";
   const prints = (key: keyof typeof draft.narrative) => narrativePrints(m, key, v);
   const show11 = prints("instructions");
