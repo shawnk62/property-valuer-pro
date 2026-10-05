@@ -164,17 +164,21 @@ function H2({ children }: { children: React.ReactNode }) {
   );
 }
 
-function openWithFirstSubsection(node: ReactNode): { head: ReactNode; tail: ReactNode } {
-  if (!isValidElement(node)) return { head: node, tail: null };
+function subsectionTitle(node: ReactNode): ReactNode {
+  if (!isValidElement(node) || node.type !== H2) return null;
+  return (node.props as { children?: ReactNode }).children ?? null;
+}
+
+function openWithFirstSubsection(node: ReactNode): { title: ReactNode; body: ReactNode } {
+  if (!isValidElement(node)) return { title: null, body: node };
   const inner = Children.toArray((node.props as { children?: ReactNode }).children).filter(
     (child) => child != null && child !== false,
   );
-  const heading = inner.find((child) => isValidElement(child) && child.type === H2);
-  if (!heading) return { head: node, tail: null };
-  const rest = inner.filter((child) => child !== heading);
+  const heading = inner.find((child) => subsectionTitle(child) != null);
+  if (!heading) return { title: null, body: node };
   return {
-    head: heading,
-    tail: <>{rest}</>,
+    title: subsectionTitle(heading),
+    body: inner.filter((child) => child !== heading),
   };
 }
 
@@ -192,11 +196,15 @@ function Lead({
   const opened = openWithFirstSubsection(first);
   return (
     <>
-      <div className="report-section-open">
-        <H1 id={id}>{title}</H1>
-        {opened.head}
-      </div>
-      {opened.tail}
+      <h2
+        id={id}
+        className="report-h2 report-heading-lead report-section-open mt-8 border-b pb-1 text-[1.05rem] font-semibold"
+        style={{ color: TEAL, borderColor: RULE }}
+      >
+        {title}
+        {opened.title ? <span className="report-section-sub">{opened.title}</span> : null}
+      </h2>
+      {opened.body}
       {rest}
     </>
   );

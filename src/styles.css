@@ -1004,21 +1004,32 @@
     page-break-before: avoid !important;
   }
 
-  /* Two headings only. No overflow clip, so a page edge cannot cut the title. */
-  #report-preview-sheet .report-section-open {
+  /* One heading element: the browser cannot leave 6.0 on a page without 6.1. */
+  #report-preview-sheet h2.report-section-open {
     display: block !important;
     overflow: visible !important;
-    width: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-    background: transparent !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
     break-after: avoid !important;
     page-break-after: avoid !important;
     break-before: auto !important;
     page-break-before: auto !important;
+  }
+
+  #report-preview-sheet h2.report-section-open .report-section-sub {
+    display: block !important;
+    margin-top: 0.85rem !important;
+    padding-top: 0 !important;
+    border: 0 !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+  }
+
+  #report-preview-sheet h2.report-section-open + * {
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
   }
 
   /* A nested keep must not jump to the next page and leave the heading. */
