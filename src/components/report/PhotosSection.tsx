@@ -296,6 +296,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     kind?: "map" | "photo" | "title" | "survey" | "cadastral" | "annex";
     annexGroup?: string;
     annexTitle?: string;
+    annexDestination?: "client" | "working" | "both";
   }) {
     if (!opts.file || opts.file.size <= 0) {
       toast.error("The selected file is empty.");
@@ -322,6 +323,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
           ...(opts.kind ? { kind: opts.kind } : {}),
           ...(opts.annexGroup ? { annexGroup: opts.annexGroup } : {}),
           ...(opts.annexTitle ? { annexTitle: opts.annexTitle } : {}),
+          ...(opts.annexDestination ? { annexDestination: opts.annexDestination } : {}),
         };
         if (opts.slot) {
           return [...prev.filter((p) => p.slot !== opts.slot && p.id !== photoId), entry];
@@ -528,13 +530,19 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     }
   }
 
-  async function onAnnexFile(file: File, groupId?: string) {
+  async function onAnnexFile(
+    file: File,
+    groupId?: string,
+    destination: "client" | "working" | "both" = "client",
+    titleOverride?: string,
+  ) {
     try {
       const pages = isPdfFile(file) ? await rasterizePdfPages(file) : [file];
       const existingGroups = extraAnnexGroupsOnReport(photos);
       const id = groupId || newId();
       const existing = photos.filter((p) => p.kind === "annex" && p.annexGroup === id);
       const title =
+        titleOverride?.trim() ||
         existing[0]?.annexTitle?.trim() ||
         file.name.replace(/\.pdf$/i, "").replace(/[_-]+/g, " ").trim() ||
         `Annexure document ${existingGroups.filter((g) => g.id !== id).length + 1}`;
@@ -550,6 +558,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
           kind: "annex",
           annexGroup: id,
           annexTitle: title,
+          annexDestination: existing[0]?.annexDestination || destination,
         });
       }
     } catch (err) {
@@ -1001,7 +1010,8 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
         <h3 className="text-sm font-semibold text-foreground">Additional annexure documents</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           Drop another PDF or images here. Each file becomes its own A4 annexure after the Survey
-          Plan. Multi-page PDFs keep every page. Empty slot does not print.
+          Plan. Multi-page PDFs keep every page. Empty slot does not print. Use the destination
+          control to send a document to the working notes instead of the client report.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <button
@@ -1022,7 +1032,18 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
               const groupId = annexTargetGroupRef.current;
               annexTargetGroupRef.current = null;
               e.target.value = "";
-              for (const file of files) void onAnnexFile(file, groupId ?? undefined);
+              const working = groupId === "working-new" || groupId === "handwritten";
+              for (const file of files) {
+                if (groupId === "handwritten") {
+                  void onAnnexFile(file, "", "working", "Handwritten field note");
+                } else if (working) {
+                  void onAnnexFile(file, "", "working");
+                } else if (groupId) {
+                  void onAnnexFile(file, groupId);
+                } else {
+                  void onAnnexFile(file);
+                }
+              }
             }}
           />
         </div>
@@ -1062,6 +1083,21 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
             >
               Add pages
             </button>
+            <select
+              className="rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+              value={group.pages[0]?.annexDestination ?? "client"}
+              onChange={(e) => {
+                const annexDestination = e.target.value as "client" | "working" | "both";
+                const pageIds = new Set(group.pages.map((page) => page.id));
+                setPhotos((prev) =>
+                  prev.map((photo) => (pageIds.has(photo.id) ? { ...photo, annexDestination } : photo)),
+                );
+              }}
+            >
+              <option value="client">Client annexure</option>
+              <option value="working">Working notes</option>
+              <option value="both">Client annexure and working notes</option>
+            </select>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {group.pages.map((photo, index) => (
@@ -1096,6 +1132,48 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
           </div>
         </div>
       ))}
+
+      <div
+        className="rounded-md border border-dashed border-border bg-card p-4"
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const files = Array.from(e.dataTransfer.files ?? []);
+          for (const file of files) void onAnnexFile(file, undefined, "working");
+        }}
+      >
+        <h3 className="text-sm font-semibold text-foreground">Working file documents</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Drop Cotality, Landchecker, the instructor sales pack, or any other source here. These
+          print only in the field and working notes annexure. Nothing is rewritten.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              annexTargetGroupRef.current = "working-new";
+              annexInputRef.current?.click();
+            }}
+            className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+          >
+            Attach working-file PDF
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              annexTargetGroupRef.current = "handwritten";
+              annexInputRef.current?.click();
+            }}
+            className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+          >
+            Handwritten field note
+          </button>
+        </div>
+      </div>
 
       {photoMenu ? (
         <div

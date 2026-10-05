@@ -63,6 +63,12 @@ export interface ReportPhoto {
   /** Heading for that appendix document. */
   annexTitle?: string;
   /**
+   * Where an annex document prints. Missing means the client annexure only,
+   * so existing documents are unchanged. Working-file documents print only in
+   * the field and working notes annexure.
+   */
+  annexDestination?: "client" | "working" | "both";
+  /**
    * When true, the image stays on the job (working file) but is omitted from
    * the printed report, Word export, cover and annexures.
    */
@@ -137,6 +143,15 @@ export function annexPageLabel(title: string, index: number): string {
   return `${title} Page ${index + 1}`;
 }
 
+export function annexPrintsOnClient(photo: ReportPhoto): boolean {
+  const destination = photo.annexDestination ?? "client";
+  return destination === "client" || destination === "both";
+}
+
+export function annexPrintsInWorkingFile(photo: ReportPhoto): boolean {
+  return photo.annexDestination === "working" || photo.annexDestination === "both";
+}
+
 export function extraAnnexGroupsOnReport(
   photos: ReportPhoto[] | null | undefined,
 ): { id: string; title: string; pages: ReportPhoto[] }[] {
@@ -157,6 +172,22 @@ export function extraAnnexGroupsOnReport(
     const title = annexDocumentTitle(groupPages[0] ?? {}) || `Annexure document ${i + 1}`;
     return { id, title, pages: groupPages };
   });
+}
+
+export function clientAnnexGroupsOnReport(
+  photos: ReportPhoto[] | null | undefined,
+) {
+  return extraAnnexGroupsOnReport(photos)
+    .map((group) => ({ ...group, pages: group.pages.filter(annexPrintsOnClient) }))
+    .filter((group) => group.pages.length > 0);
+}
+
+export function workingAnnexGroupsOnReport(
+  photos: ReportPhoto[] | null | undefined,
+) {
+  return extraAnnexGroupsOnReport(photos)
+    .map((group) => ({ ...group, pages: group.pages.filter(annexPrintsInWorkingFile) }))
+    .filter((group) => group.pages.length > 0);
 }
 
 /** Relativity mark on a comparison feature (URAR-style description). */

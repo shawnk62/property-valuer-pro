@@ -27,7 +27,14 @@ import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
 import { formatHbuVacant, formatPropertyType, formatSiteDimensions, formatUsableSiteAreaIfDifferent, get, hasValue, joinValues, labelFor, PROPERTY_PLANNING_FIELDS, PROP_TYPE_FIELDS, valuedInterestPhrase } from "@/lib/report/schema";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { printedSaleComment, withoutSourceNotes } from "@/lib/report/sourceNotes";
-import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
+import {
+  calculationWorkingRows,
+  inspectionWorkingSections,
+  researchWorkingGroups,
+  saleWorkingRating,
+  workingFileCoverLine,
+} from "@/lib/report/workingFile";
+import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, workingAnnexGroupsOnReport, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
 
 /** A4 (matches Australian report paper). */
 const PAGE_WIDTH = 11906;
@@ -1080,6 +1087,31 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
       width: 500,
       height: 375,
     });
+  }
+
+  if (String(get(v, "prop_assignment") || "").toLowerCase().includes("shawn")) {
+    children.push(p("Annexure — Field and working notes", { bold: true, size: 26, before: 360, after: 120 }));
+    children.push(p(workingFileCoverLine()));
+    for (const section of inspectionWorkingSections(v)) {
+      children.push(p(section.title, { bold: true, before: 200, after: 80 }));
+      for (const row of section.rows) children.push(p(`${row.label}: ${row.value}`));
+    }
+    for (const [index, sale] of salesOnReport(draft.sales).entries()) {
+      children.push(p(`Comparable ${index + 1}`, { bold: true, before: 200, after: 80 }));
+      children.push(p([sale.address, sale.saleDate, sale.salePrice, sale.landArea, saleWorkingRating(sale)].filter(Boolean).join(" — ")));
+      if (sale.comments?.trim()) children.push(p(`Source note: ${sale.comments.trim()}`));
+      if (sale.workingNotes?.trim()) children.push(p(`Working note: ${sale.workingNotes.trim()}`));
+    }
+    for (const row of calculationWorkingRows(draft)) children.push(p(`${row.label}: ${row.value}`));
+    for (const group of researchWorkingGroups(m)) {
+      children.push(p(group.title, { bold: true, before: 200, after: 80 }));
+      for (const claim of group.claims) {
+        children.push(p(`${claim.accepted ? "Accepted" : "Not accepted"}${claim.source ? ` — ${claim.source}` : ""}. ${claim.text}`));
+      }
+    }
+    for (const group of workingAnnexGroupsOnReport(draft.photos)) {
+      children.push(p(`${group.title}: ${group.pages.length} page${group.pages.length === 1 ? "" : "s"} attached in the printed working file.`, { before: 120 }));
+    }
   }
 
   const doc = new Document({

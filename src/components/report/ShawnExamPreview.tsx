@@ -23,7 +23,7 @@ import {
   MAP_SLOTS,
   PHOTO_SLOTS,
   cadastralPhotosOnReport,
-  extraAnnexGroupsOnReport,
+  clientAnnexGroupsOnReport,
   isCadastralAnnexPhoto,
   isExtraAnnexPhoto,
   isMapAnnexPhoto,
@@ -37,6 +37,7 @@ import {
   type ReportDraft,
 } from "@/lib/report/types";
 import { A4DocumentAnnex } from "@/components/report/A4DocumentAnnex";
+import { hasWorkingFile, WorkingNotesAnnex } from "@/components/report/WorkingNotesAnnex";
 import { AdjustmentGridPrint } from "@/components/report/AdjustmentGridPrint";
 import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
 import {
@@ -457,9 +458,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     : "Certificate of Title";
   const surveyPages = surveyPhotosOnReport(draft.photos);
   const cadastralPages = cadastralPhotosOnReport(draft.photos);
-  const extraAnnexGroups = extraAnnexGroupsOnReport(draft.photos).filter(
+  const extraAnnexGroups = clientAnnexGroupsOnReport(draft.photos).filter(
     (group) => !/title search|certificate of title/i.test(group.title),
   );
+  const showWorkingFile = hasWorkingFile(draft);
   const valueWords = m.valueAmount ? amountInWords(m.valueAmount) : "";
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], " ");
   const usableSiteArea = formatUsableSiteAreaIfDifferent(v);
@@ -497,7 +499,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       cadastralPages.length ||
       titlePages.length ||
       surveyPages.length ||
-      extraAnnexGroups.length,
+      extraAnnexGroups.length ||
+      showWorkingFile,
   );
   const show4 = show40 || show41 || show42 || show43 || show44;
   const show5 = show51 || show52 || show53 || show54;
@@ -606,6 +609,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             id: `exam-annex-extra-${g.id}`,
             label: g.title,
           })),
+          ...(showWorkingFile
+            ? [{ id: "exam-annex-working", label: "Field and working notes" }]
+            : []),
         ]}
       />
       </section>
@@ -1191,6 +1197,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {extraAnnexGroups.map((g) => (
           <li key={g.id}>{g.title}</li>
         ))}
+        {showWorkingFile ? <li>Field and working notes</li> : null}
       </ol>
       </Lead> : null}
 
@@ -1274,6 +1281,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           pageHeading={(_page, index) => annexPageLabel(g.title, index)}
         />
       ))}
+      {showWorkingFile ? <WorkingNotesAnnex draft={draft} /> : null}
     </article>
   );
 }
