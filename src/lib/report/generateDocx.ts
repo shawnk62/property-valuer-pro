@@ -26,6 +26,7 @@ import { parseOverlayList } from "@/lib/report/overlays";
 import { PPV_LOGO_JPEG_BASE64 } from "@/lib/report/ppv-logo-base64";
 import { formatHbuVacant, formatPropertyType, formatSiteDimensions, formatUsableSiteAreaIfDifferent, get, hasValue, joinValues, labelFor, PROPERTY_PLANNING_FIELDS, PROP_TYPE_FIELDS, valuedInterestPhrase } from "@/lib/report/schema";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
+import { printedSaleComment, withoutSourceNotes } from "@/lib/report/sourceNotes";
 import { MAP_SLOTS, PHOTO_SLOTS, photoIsOnReport, salesOnReport, type ReportDraft, type ReportNarrative } from "@/lib/report/types";
 
 /** A4 (matches Australian report paper). */
@@ -830,7 +831,11 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
             s.saleDate,
             s.salePrice,
             s.landArea,
-            cleanSaleProse((s.narrative && s.narrative.trim()) || s.comments || ""),
+            cleanSaleProse(
+              String(get(v, "prop_assignment") || "").toLowerCase().includes("shawn")
+                ? printedSaleComment(s)
+                : (s.narrative && s.narrative.trim()) || s.comments || "",
+            ),
           ].map(
             (cell, i) =>
               new TableCell({
@@ -896,7 +901,10 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
 
   if (draft.narrative.salesComments?.trim()) {
     children.push(subHeading("Comments on comparable sales"));
-    children.push(...prose(draft.narrative.salesComments));
+    const salesText = String(get(v, "prop_assignment") || "").toLowerCase().includes("shawn")
+      ? withoutSourceNotes(draft.narrative.salesComments, sales)
+      : draft.narrative.salesComments;
+    children.push(...prose(salesText));
   }
   if (draft.narrative.valueReconciliation?.trim()) {
     children.push(subHeading("Final reconciliation of value"));

@@ -55,6 +55,7 @@ import { planningSchemeDisplay } from "@/lib/report/parsePlanningExtract";
 import { fillExamTocPages } from "@/lib/report/tocPages";
 import { includedNumbers, majorTitle, subTitle } from "@/lib/report/sectionNumbers";
 import { cleanSaleProse, formatCurrencyDisplay } from "@/lib/report/salesRelativity";
+import { withoutSourceNotes } from "@/lib/report/sourceNotes";
 import { riskCommentsForPrint } from "@/lib/report/propertyRiskRatings";
 import { RiskRatingsPrintTable } from "@/components/report/RiskRatingsPrintTable";
 import { SHAWN_EXAM_STYLE as EXAM } from "@/lib/report/shawnExamStyle";
@@ -974,6 +975,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             {printSalesEvidenceEnabled(draft.reportMeta) ? (
             <SalesEvidenceSchedule
               sales={printedSales}
+              omitSourceNotes
               headerStyle={{ background: TEAL, color: "#fff" }}
               cellBorderClassName="border"
               cellStyle={{ borderColor: RULE }}
@@ -995,7 +997,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <h3 id="exam-8-2" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
               {`${major[7]}.${n8[1]} Comments on comparable sales`}
             </h3>
-            <Prose text={draft.narrative.salesComments?.trim() || ""} />
+            <Prose text={withoutSourceNotes(draft.narrative.salesComments?.trim() || "", printedSales)} />
           </Keep>
         ) : null}
         {narrativePrints(m, "valueReconciliation") ? (
@@ -1003,7 +1005,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <h3 id="exam-8-3" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
               {`${major[7]}.${n8[2]} Final reconciliation of value`}
             </h3>
-            <Prose text={draft.narrative.valueReconciliation?.trim() || ""} />
+            <Prose text={withoutSourceNotes(draft.narrative.valueReconciliation?.trim() || "", printedSales)} />
           </Keep>
         ) : null}
         {get(v, "exam_on_market") ? (
@@ -1020,9 +1022,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           <>
             {show85 ? <H2>{subTitle(major[7], n8[4], "Analysis")}</H2> : null}
             <Prose
-              text={
-                draft.narrative.salesAnalysis?.trim() || get(v, "exam_sales_analysis")
-              }
+              text={withoutSourceNotes(
+                draft.narrative.salesAnalysis?.trim() || get(v, "exam_sales_analysis"),
+                printedSales,
+              )}
             />
           </>
         ) : null}

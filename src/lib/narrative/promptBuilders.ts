@@ -782,7 +782,7 @@ ${sectionAnswers(values, ["1", "2"])}
 Title notices, if any:
 ${titleAdviceFacts(values)}
 
-If a VEG NOTICE or other administrative advice is recorded, say whether the adopted sales are known to carry the same notice. If that is not recorded, do not make a separate adjustment and say the notice is assumed to be reflected in the estate sales unless a sale is shown to be free of it. Do not invent sale prices or notice status.`,
+If a VEG NOTICE or other administrative advice is recorded, say whether the adopted sales are known to carry the same notice. If that is not recorded, do not make a separate adjustment and say the notice is assumed to be reflected in the estate sales unless a sale is shown to be free of it. Do not invent sale prices or notice status. Do not use source notes or working notes. Do not name a data website or quote an internal note.`,
       };
     default:
       return {

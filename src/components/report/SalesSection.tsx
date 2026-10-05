@@ -2697,11 +2697,13 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                             </td>
                           ))}
                         </tr>
-                        <tr className="border-b border-border">
+                        <tr className="border-b border-border print:hidden">
                           <td className="sticky left-0 z-10 bg-card px-2 py-1.5 font-medium">
                             Source notes
                           </td>
-                          <td className="px-2 py-1.5 text-xs text-muted-foreground">CSV / CMA</td>
+                          <td className="px-2 py-1.5 text-xs text-muted-foreground">
+                            Internal only — not printed
+                          </td>
                           {chunk.map((sale) => (
                             <td
                               key={sale.id}

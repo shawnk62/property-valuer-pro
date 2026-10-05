@@ -126,6 +126,12 @@ Style (match this tone and density):
 - No bullet points, headings, or dollar adjustment schedules unless a net figure is clearly useful in one short clause.
 - Tone: formal Australian valuation English and Australian spelling only.`;
 
+  const shawnRule = reportType.id === "shawn-exam"
+    ? " Source notes and working notes are internal. Do not quote, paraphrase, or cite them, and do not name a data website from them."
+    : "";
+
+  const systemWithShawn = system + shawnRule;
+
   const writeInstruction = murrayStamp
     ? "Write the Murray Stamp Duty sales-evidence note now (2–4 short sentences). Do not end with overall superior/inferior — that is applied separately."
     : compact
@@ -141,8 +147,10 @@ Sale date: ${sale.saleDate || "(not stated)"}
 Sale price: ${sale.salePrice || "(not stated)"}
 Land area: ${sale.landArea || "(not stated)"}
 ${sale.gla ? `Living area: ${sale.gla}` : ""}
-${sale.comments?.trim() ? `CSV / user notes: ${sale.comments.trim()}` : ""}
-Do not use in-house working notes — they are not provided and must not be invented.
+${sale.comments?.trim() && reportType.id !== "shawn-exam" ? `CSV / user notes: ${sale.comments.trim()}` : ""}
+${reportType.id === "shawn-exam"
+  ? "Do not use in-house working notes or source notes. They are internal and must not be quoted, paraphrased, or cited."
+  : "Do not use in-house working notes — they are not provided and must not be invented."}
 ${sale.narrative?.trim() ? `VALUER DRAFT NARRATIVE (revise and improve; preserve the valuer's intent and any facts they added; do not discard their wording without reason):\n${sale.narrative.trim()}` : ""}
 
 VALUER RELATIVITY MARKS (vs subject)
@@ -161,5 +169,5 @@ REPORT TYPE: ${reportType.id} (${compact ? "compact Stamp Duty notes" : "detaile
 
 ${writeInstruction}`;
 
-  return { system, prompt };
+  return { system: systemWithShawn, prompt };
 }

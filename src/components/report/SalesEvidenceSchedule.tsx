@@ -4,6 +4,7 @@ import {
   computeSaleAdjustmentTotals,
 } from "@/lib/report/adjustmentGrid";
 import { cleanSaleProse } from "@/lib/report/salesRelativity";
+import { printedSaleComment } from "@/lib/report/sourceNotes";
 import type { ComparableSale } from "@/lib/report/types";
 
 const HEADERS = [
@@ -32,12 +33,15 @@ export function SalesEvidenceSchedule({
   headerStyle,
   cellBorderClassName = "border border-[var(--rule)]",
   cellStyle,
+  omitSourceNotes = false,
 }: {
   sales: ComparableSale[];
   headerClassName?: string;
   headerStyle?: CSSProperties;
   cellBorderClassName?: string;
   cellStyle?: CSSProperties;
+  /** Shawn reports: source notes are internal and must not print. */
+  omitSourceNotes?: boolean;
 }) {
   if (sales.length === 0) return null;
   const cell = `${cellBorderClassName} px-2 py-1.5 align-top`;
@@ -45,7 +49,9 @@ export function SalesEvidenceSchedule({
     <div className="sales-evidence-list space-y-3">
       {sales.map((s, idx) => {
         const site = comparableSiteRate(s);
-        const comment = cleanSaleProse(s.narrative?.trim() || s.comments || "");
+        const comment = cleanSaleProse(
+          omitSourceNotes ? printedSaleComment(s) : s.narrative?.trim() || s.comments || "",
+        );
         return (
           <table
             key={s.id}
