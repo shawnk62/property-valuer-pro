@@ -50,7 +50,7 @@ import {
 } from "@/lib/report/references";
 import { purposeOfValuation } from "@/lib/report/reportTypes";
 import { buildExecutiveSummaryLead } from "@/lib/report/narrative";
-import { buildEncumbrancesSummary, titleSearchNarrativeWithoutGridFacts } from "@/lib/report/titleAdvices";
+import { buildEncumbrancesSummary, titleCreatedDisplay, titleSearchNarrativeWithoutGridFacts, unregisteredDealingsDisplay } from "@/lib/report/titleAdvices";
 import { planningSchemeDisplay } from "@/lib/report/parsePlanningExtract";
 import { fillExamTocPages } from "@/lib/report/tocPages";
 import { includedNumbers, majorTitle, subTitle } from "@/lib/report/sectionNumbers";
@@ -701,6 +701,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           { label: "Street address", value: addressLine },
           { label: "Real property description", value: lotPlan },
           { label: "Title reference", value: get(v, "prop_title") },
+          { label: "Date title created", value: titleCreatedDisplay(v) },
           { label: "Local government", value: get(v, "prop_lga") },
           { label: "Registered owner", value: get(v, "prop_owner") },
           { label: "Nature of interest", value: get(v, "prop_rights") },
@@ -714,6 +715,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             label: "Date of title search",
             value: get(v, "exam_title_search_date") || get(v, "prop_title_search_date"),
           },
+          { label: "Unregistered dealings", value: unregisteredDealingsDisplay(v) },
           {
             label: "Legal access",
             value: narrativePrints(m, "legalAccess")

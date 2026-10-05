@@ -9,6 +9,7 @@ export type TitleSearchExtract = {
   prop_rights?: string;
   prop_title_search_date?: string;
   exam_title_search_date?: string;
+  title_created?: string;
   enc_notes?: string;
   enc?: string;
   title_search_text?: string;
@@ -76,6 +77,11 @@ export function parseTitleSearchText(raw: string): TitleSearchExtract {
     out.exam_title_search_date = formatted;
   }
 
+  const created = text.match(
+    /(?:Title\s+Created|Date\s+Created)\s*[:\s]*([0-9]{1,2}[/-][0-9]{1,2}[/-][0-9]{2,4})/i,
+  )?.[1];
+  if (created) out.title_created = auDate(created);
+
   const lotPlan =
     text.match(
       /LOT\s+(\d+[A-Z]?)\s+(SURVEY PLAN|REGISTERED PLAN|BUILDING FORMAT PLAN|GROUP TITLE PLAN|CROWN PLAN|SP|RP|BUP|GTP|CP)\s+(\d+)/i,
@@ -138,6 +144,7 @@ export function parseTitleSearchText(raw: string): TitleSearchExtract {
     /\n\s*(?:ADMINISTRATIVE ADVICES|EASEMENTS, ENCUMBRANCES|END OF SEARCH)\b/i,
   );
   if (unregistered && !/^NIL$/i.test(unregistered)) out.title_unregistered = unregistered.slice(0, 4000);
+  else if (/UNREGISTERED DEALINGS/i.test(text)) out.title_unregistered = "Nil";
   if (text.trim()) out.title_search_text = text.trim().slice(0, 20000);
 
   return out;
@@ -155,6 +162,7 @@ export function mergeTitleSearchExtract(
     "prop_rights",
     "prop_title_search_date",
     "exam_title_search_date",
+    "title_created",
     "enc_notes",
     "enc",
     "title_search_text",

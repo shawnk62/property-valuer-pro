@@ -263,25 +263,33 @@ export function titleSearchNarrativeWithoutGridFacts(text: string): string {
       if (/registered owner/i.test(part)) return false;
       if (/easement|encumbrance|rights and interests reserved/i.test(part)) return false;
       if (/administrative advice|VEG NOTICE|vegetation notice/i.test(part)) return false;
+      if (/unregistered dealing/i.test(part)) return false;
+      if (/title was created|title created/i.test(part)) return false;
       return true;
     });
   return paragraphs.join("\n\n");
 }
 
-export function buildTitleSearchResidual(values: InspectionValues): string {
+export function titleCreatedDisplay(values: InspectionValues): string {
+  const stored = String(values["title_created"] ?? "").trim();
+  if (stored) return stored;
   const text = String(values["title_search_text"] ?? "");
   const created = text.match(
-    /Title\s+Created\s*[:\s]*(\d{1,2}\/\d{1,2}\/\d{4})/i,
+    /(?:Title\s+Created|Date\s+Created)\s*[:\s]*([0-9]{1,2}[/-][0-9]{1,2}[/-][0-9]{2,4})/i,
   )?.[1];
-  const unregistered = String(values["title_unregistered"] ?? "");
-  const parts: string[] = [];
-  if (created) parts.push(`The current title was created on ${created}.`);
-  if (unregistered && !/^NIL$/i.test(unregistered.trim())) {
-    parts.push(`Unregistered dealings are recorded: ${unregistered.trim()}.`);
-  } else if (/UNREGISTERED DEALINGS\s*\n\s*NIL/i.test(text)) {
-    parts.push("No unregistered dealings are recorded on the title.");
-  }
-  return parts.join("\n\n");
+  return created ?? "";
+}
+
+export function unregisteredDealingsDisplay(values: InspectionValues): string {
+  const stored = String(values["title_unregistered"] ?? "").trim();
+  if (stored) return /^NIL$/i.test(stored) ? "Nil" : stored;
+  const text = String(values["title_search_text"] ?? "");
+  if (/UNREGISTERED DEALINGS\s*\n\s*NIL/i.test(text)) return "Nil";
+  return "";
+}
+
+export function buildTitleSearchResidual(_values: InspectionValues): string {
+  return "";
 }
 
 export function titleAdviceFacts(values: InspectionValues): string {

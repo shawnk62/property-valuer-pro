@@ -95,7 +95,7 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
         {
           key: "titleSearchNarrative",
           label: "2.2 Title search",
-          hint: "Prints under Title Particulars only for facts not already in the 2.2 or 2.3 tables. Manual text is kept.",
+          hint: "Prints under Title Particulars only when it adds a fact that is not already in the 2.2 or 2.3 tables. Manual text is kept.",
         },
         {
           key: "encumbrancesSummary",
