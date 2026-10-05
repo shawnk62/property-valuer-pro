@@ -265,6 +265,8 @@ export interface ReportNarrative {
   accommodation: string;
   /** §9.2 Condition of Improvements (AI or template from component conditions + notes). */
   conditionImprovements: string;
+  /** Zoning purpose rewritten as a sentence. Manual text is kept. */
+  zoningPurpose: string;
   /** Highest and best use — editable; prints in 1.8 / Basis of valuation. */
   highestBestUse: string;
   remarks: string;

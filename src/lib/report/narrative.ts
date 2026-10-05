@@ -9,6 +9,7 @@ import { BOILERPLATE } from "./boilerplate";
 import { displayValue, formatSiteDimensions, hasValue, joinValues } from "./schema";
 import type { InspectionValues, ReportNarrative } from "./types";
 import { australianiseSpelling } from "./australianEnglish";
+import { zoningPurposeSentence } from "./parsePlanningExtract";
 import { buildRiskAnalysis } from "./propertyRiskRatings";
 import { purposeOfValuation } from "./reportTypes";
 import { buildEncumbrancesSummary, buildTitleNoticesNarrative, buildTitleSearchResidual } from "./titleAdvices";
@@ -1379,6 +1380,7 @@ export function generateNarrative(
         ? ""
         : buildConditionImprovements(values),
     highestBestUse: buildHighestBestUse(values),
+    zoningPurpose: zoningPurposeSentence(String(values["prop_zoning_desc"] ?? "")),
     individualCommentary: "",
     riskAnalysis: "",
     valuationApproach: buildValuationApproach(values),

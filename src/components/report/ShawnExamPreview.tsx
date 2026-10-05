@@ -783,7 +783,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             value: planningSchemeInForce(v, m.valueDate),
           },
           { label: "Zoning", value: get(v, "prop_zoning") },
-          { label: "Zoning purpose / description", value: zoningPurposeSentence(get(v, "prop_zoning_desc")) },
+          { label: "Zoning purpose / description", value: draft.narrative.zoningPurpose?.trim() || zoningPurposeSentence(get(v, "prop_zoning_desc")) },
           { label: "Zoning compliance", value: get(v, "prop_zoning_comp") },
         ]}
       />

@@ -113,6 +113,11 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           hint: "Prints in 2.3 Particulars of Land.",
         },
         {
+          key: "zoningPurpose",
+          label: "Planning Controls — Zoning purpose",
+          hint: "Prints in the zoning purpose cell. Starts from the scheme wording, rewritten as a sentence. Manual text is kept.",
+        },
+        {
           key: "highestBestUse",
           label: "3.2 Highest and Best Use",
           hint: "Prints under 3.0 Planning Controls.",
