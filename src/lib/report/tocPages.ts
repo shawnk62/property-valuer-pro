@@ -113,6 +113,12 @@ export function fillExamTocPages(): void {
     if (forced && el.classList.contains("exam-cover") || forced && el.classList.contains("report-toc") || forced && el.classList.contains("report-exam-summary-sheet")) pageEl = null;
   });
 
+  let shown = 0;
+  sheet.querySelectorAll<HTMLElement>(".preview-page:not(.preview-page-flow), .photo-annex-page, .report-a4-page").forEach((el) => {
+    shown += 1;
+    el.dataset.page = String(shown);
+  });
+
   document.querySelectorAll<HTMLElement>("[data-toc-id]").forEach((slot) => {
     const id = slot.getAttribute("data-toc-id");
     if (!id) return;

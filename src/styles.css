@@ -458,7 +458,23 @@
 
 
 /* Preview pages are the printed pages. The contents number is the box number. */
-.report-print-host .preview-page {
+.report-print-host .preview-page,
+.report-print-host .photo-annex-page,
+.report-print-host .report-a4-page {
+  position: relative;
+}
+.report-print-host .preview-page:not(.preview-page-flow)::after,
+.report-print-host .photo-annex-page::after,
+.report-print-host .report-a4-page::after {
+  content: attr(data-page);
+  position: absolute;
+  left: 12mm;
+  bottom: 8mm;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 10pt;
+  color: #000;
+}
+.report-print-host .preview-page:not(.preview-page-flow) {
   width: 210mm;
   min-height: 297mm;
   margin: 0 auto 10mm;
@@ -665,6 +681,12 @@
     line-height: 1.35 !important;
     break-before: auto !important;
     page-break-before: auto !important;
+  }
+
+  .preview-page::after,
+  .photo-annex-page::after,
+  .report-a4-page::after {
+    content: none !important;
   }
 
   .preview-page {
