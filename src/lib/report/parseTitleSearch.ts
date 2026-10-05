@@ -141,10 +141,16 @@ export function parseTitleSearchText(raw: string): TitleSearchExtract {
   const unregistered = section(
     text,
     /UNREGISTERED DEALINGS\s*\n/i,
-    /\n\s*(?:ADMINISTRATIVE ADVICES|EASEMENTS, ENCUMBRANCES|END OF SEARCH)\b/i,
+    /\n\s*(?:ADMINISTRATIVE ADVICES|EASEMENTS, ENCUMBRANCES|END OF (?:CURRENT )?TITLE SEARCH|END OF SEARCH|COPYRIGHT)\b/i,
   );
-  if (unregistered && !/^NIL$/i.test(unregistered)) out.title_unregistered = unregistered.slice(0, 4000);
-  else if (/UNREGISTERED DEALINGS/i.test(text)) out.title_unregistered = "Nil";
+  const cleanedUnregistered = unregistered
+    .replace(/End of Current Title Search[\s\S]*$/i, "")
+    .replace(/copyright[\s\S]*$/i, "")
+    .replace(/\bNIL\b/gi, "")
+    .trim();
+  out.title_unregistered = cleanedUnregistered
+    ? cleanedUnregistered.slice(0, 4000)
+    : "None recorded";
   if (text.trim()) out.title_search_text = text.trim().slice(0, 20000);
 
   return out;
