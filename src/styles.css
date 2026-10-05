@@ -362,7 +362,12 @@
 .sales-evidence-item .sales-col-price { width: 22mm; white-space: nowrap; }
 .sales-evidence-item .sales-col-rate { width: 18mm; white-space: nowrap; }
 .sales-evidence-item .sales-col-date { width: 20mm; white-space: nowrap; }
-.sales-evidence-item .sales-col-rating { width: 18mm; white-space: nowrap; }
+.sales-evidence-item .report-prose-para {
+  margin: 0 0 0.75rem;
+}
+.sales-evidence-item .report-prose-para:last-child {
+  margin-bottom: 0;
+}
 
 .risk-ratings-print table {
   width: 100%;

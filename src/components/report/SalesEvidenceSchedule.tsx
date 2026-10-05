@@ -49,9 +49,14 @@ export function SalesEvidenceSchedule({
     <div className="sales-evidence-list space-y-3">
       {sales.map((s, idx) => {
         const site = comparableSiteRate(s);
-        const comment = cleanSaleProse(
-          omitSourceNotes ? printedSaleComment(s) : s.narrative?.trim() || s.comments || "",
-        );
+        const comment = omitSourceNotes
+          ? printedSaleComment(s)
+          : s.narrative?.trim() || s.comments || "";
+        const commentParagraphs = comment
+          .replace(/\r\n/g, "\n")
+          .split(/\n+/)
+          .map((part) => cleanSaleProse(part))
+          .filter(Boolean);
         return (
           <table
             key={s.id}
@@ -103,7 +108,7 @@ export function SalesEvidenceSchedule({
                   {saleRating(s)}
                 </td>
               </tr>
-              {s.photoUrl || comment ? (
+              {s.photoUrl || commentParagraphs.length ? (
                 <tr>
                   <td className={cell} style={cellStyle} colSpan={2}>
                     {s.photoUrl ? (
@@ -115,7 +120,11 @@ export function SalesEvidenceSchedule({
                     ) : null}
                   </td>
                   <td className={cell} style={cellStyle} colSpan={5}>
-                    {comment}
+                    {commentParagraphs.map((part, i) => (
+                      <p key={i} className="report-prose-para text-left leading-relaxed">
+                        {part}
+                      </p>
+                    ))}
                   </td>
                 </tr>
               ) : null}
