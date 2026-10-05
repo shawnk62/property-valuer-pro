@@ -11,6 +11,7 @@ import type { InspectionValues, ReportNarrative } from "./types";
 import { australianiseSpelling } from "./australianEnglish";
 import { buildRiskAnalysis } from "./propertyRiskRatings";
 import { purposeOfValuation } from "./reportTypes";
+import { buildTitleNoticesNarrative } from "./titleAdvices";
 
 /**
  * Mock narrative generator. Composes QLD residential prose from the subject
@@ -1383,6 +1384,7 @@ export function generateNarrative(
     acidSulphate: buildAcidSulphate(values),
     floodAssessment: buildFloodAssessment(values),
     noiseNuisances: buildNoiseNuisances(values),
+    titleNotices: buildTitleNoticesNarrative(values),
     amenities: v(values, "exam_amenities"),
     popularDestinations: v(values, "exam_destinations"),
     marketAustralia: v(values, "exam_market_australia"),

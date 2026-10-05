@@ -460,6 +460,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const show41 = prints("acidSulphate");
   const show42 = prints("floodAssessment");
   const show43 = prints("noiseNuisances");
+  const show44 = prints("titleNotices") && Boolean(draft.narrative.titleNotices?.trim());
   const show51 = prints("location");
   const show52 = prints("neighbourhood");
   const show53 = prints("amenities") && Boolean(draft.narrative.amenities?.trim() || get(v, "exam_amenities"));
@@ -482,14 +483,14 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       surveyPages.length ||
       extraAnnexGroups.length,
   );
-  const show4 = show40 || show41 || show42 || show43;
+  const show4 = show40 || show41 || show42 || show43 || show44;
   const show5 = show51 || show52 || show53 || show54;
   const show6 = show61 || show62 || show63 || show64 || Boolean(get(v, "exam_market_commentary"));
   const major = includedNumbers([true, true, true, show4, show5, show6, true, true, show9, hasAnnexures]);
   const n1 = includedNumbers([show11, true, true, true]);
   const n2 = includedNumbers([show21, true, true]);
   const n3 = includedNumbers([true, show32]);
-  const n4 = includedNumbers([show41, show42, show43]);
+  const n4 = includedNumbers([show41, show42, show43, show44]);
   const n5 = includedNumbers([show51, show52, show53, show54]);
   const n6 = includedNumbers([show61, show62, show63, show64]);
   const n8 = includedNumbers([true, show82, show83, show84, show85, true]);
@@ -808,6 +809,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {draft.narrative.noiseNuisances?.trim() ||
           "No formal acoustic report has been obtained. Comment is limited to features recorded on the inspection."}
       </Para>
+      </Keep> : null}
+      {show44 ? <Keep>
+      <H2>{subTitle(major[3], n4[3], "Title notices")}</H2>
+      <Prose text={draft.narrative.titleNotices} />
       </Keep> : null}
 
       {show5 ? <Lead id="exam-5" title={t(major[4], "Locality and Location")}>

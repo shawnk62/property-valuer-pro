@@ -10,6 +10,8 @@ export type TitleSearchExtract = {
   prop_title_search_date?: string;
   exam_title_search_date?: string;
   enc_notes?: string;
+  title_admin_advices?: string;
+  title_search_text?: string;
   enc?: string;
 };
 
@@ -105,6 +107,14 @@ export function parseTitleSearchText(raw: string): TitleSearchExtract {
     }
   }
 
+  const adviceBlock = text.match(
+    /ADMINISTRATIVE ADVICES\s*\n([\s\S]{0,8000}?)(?=\n\s*UNREGISTERED DEALINGS\b|$)/i,
+  );
+  if (adviceBlock?.[1] && !/^NIL$/i.test(adviceBlock[1].trim())) {
+    out.title_admin_advices = adviceBlock[1].trim().slice(0, 8000);
+  }
+  if (text.trim()) out.title_search_text = text.trim().slice(0, 20000);
+
   return out;
 }
 
@@ -122,6 +132,8 @@ export function mergeTitleSearchExtract(
     "exam_title_search_date",
     "enc_notes",
     "enc",
+    "title_admin_advices",
+    "title_search_text",
   ];
   for (const key of authoritative) {
     const value = incoming[key]?.trim();

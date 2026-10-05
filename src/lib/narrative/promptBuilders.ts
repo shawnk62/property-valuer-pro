@@ -1,6 +1,7 @@
 import { fieldKeys, labelForField, sections } from "@/lib/inspection/schema";
 import type { InspectionField, InspectionValues } from "@/lib/inspection/types";
 import { describeLandUseMix, stripLandUsePercentages } from "@/lib/narrative/landUseMix";
+import { titleAdviceFacts } from "@/lib/report/titleAdvices";
 
 export interface BlockPrompt {
   system: string;
@@ -486,7 +487,9 @@ ${sectionAnswers(values, ["1", "2"])}
 Murray sample pattern (use when type includes Murray):
 "The subject allotment is [area], [shape] and [inside/corner], facing [orientation]. [Topography sentence]. [Boundary / flood / creek only if recorded]."
 Typically 2–4 short sentences. Use "allotment" not "lot". Include allotment shape, lot position, topography, dimensions/orientation, site area and property type/classification when recorded.
-If adjoining-property ticks or notes are recorded (adj_props, adj_props_interface, adj_props_notes), include one short sentence on neighbouring uses and any recorded impact (height, reserve, buffer, overlooking). Do not invent adjoining uses.`,
+If adjoining-property ticks or notes are recorded (adj_props, adj_props_interface, adj_props_notes), include one short sentence on neighbouring uses and any recorded impact (height, reserve, buffer, overlooking). Do not invent adjoining uses.
+If title administrative advices are recorded below, do not describe the allotment as unaffected by them. Do not invent a dollar adjustment.
+${titleAdviceFacts(values)}`,
       };
         case "siteIdentification":
       return {
@@ -734,13 +737,44 @@ ${sectionAnswers(values, ["6"])}
 Include only recorded notes, defects, or qualifications. If little is recorded, write one short professional sentence that the valuation assumes information disclosed by the client and that a full schedule of limitations applies. Do not invent defects.`,
       };
     }
+    case "titleNotices":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write section 4.4 Title notices for a ${type} valuation report.
+
+Use only the title administrative advices below. If none are recorded, write one sentence that no administrative advice was read from the imported title search.
+
+${titleAdviceFacts(values)}
+
+Rules:
+- A VEG NOTICE is not a restoration notice. Restoration notices are entered as RESTORATION.
+- A VEG NOTICE is either a property map of assessable vegetation containing a Category A area, or a declared area and its management plan. Do not choose between them unless the dealing image is recorded.
+- State the dealing number, lodgement date and status when recorded.
+- Assume the notice is confined to land already excluded from the usable area, and say the value should be referred back if the dealing shows it affects usable land.
+- Do not invent a dollar adjustment unless a comparable is recorded as not carrying the same notice.
+- Do not repeat the heading.`,
+      };
+    case "salesComments":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write the comments on comparable sales for a ${type} valuation report.
+
+Inspection data:
+${sectionAnswers(values, ["1", "2"])}
+
+Title notices, if any:
+${titleAdviceFacts(values)}
+
+If a VEG NOTICE or other administrative advice is recorded, say whether the adopted sales are known to carry the same notice. If that is not recorded, do not make a separate adjustment and say the notice is assumed to be reflected in the estate sales unless a sale is shown to be free of it. Do not invent sale prices or notice status.`,
+      };
     default:
       return {
         system: BASE_RULES,
         prompt: `Write a narrative paragraph for the ${blockKey} section of a ${type} valuation report.
 
 Inspection data:
-${sectionAnswers(values, [])}`,
+${sectionAnswers(values, [])}
+${titleAdviceFacts(values)}`,
       };
   }
 }

@@ -128,6 +128,11 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           hint: "Prints under 4.3 Noise and other nuisances.",
         },
         {
+          key: "titleNotices",
+          label: "4.4 Title notices",
+          hint: "Prints under 4.4. Filled from administrative advices on the imported title search, including a Vegetation Management Act VEG NOTICE or restoration notice. Edit the paragraph. Re-import the title search if this is empty.",
+        },
+        {
           key: "location",
           label: "5.1 Location",
           hint: "Prints under 5.0 Locality and Location.",

@@ -272,6 +272,8 @@ export interface ReportNarrative {
   acidSulphate: string;
   floodAssessment: string;
   noiseNuisances: string;
+  /** Title administrative advices, including Vegetation Management Act notices. */
+  titleNotices: string;
   amenities: string;
   popularDestinations: string;
   marketAustralia: string;
