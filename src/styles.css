@@ -1678,6 +1678,12 @@
   text-align: right;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+  padding-left: 1pt;
+  padding-right: 2pt;
+  font-size: 0.68rem;
+}
+.adjustment-print-grid td {
+  overflow-wrap: break-word;
 }
 .adjustment-print-grid thead th {
   background: #324758;

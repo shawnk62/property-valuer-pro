@@ -17,6 +17,20 @@ import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/
 
 const COMPS_PER_BLOCK = 3;
 
+function printGridRating(raw: string): string {
+  const text = raw.trim().toLowerCase();
+  if (!text) return "";
+  const slightly = /\bslightly\b/.test(text);
+  const superior = /\bsuperior\b/.test(text);
+  const inferior = /\binferior\b/.test(text);
+  if (slightly && superior) return "Sl sup.";
+  if (slightly && inferior) return "Sl inf.";
+  if (superior) return "Sup.";
+  if (inferior) return "Inf.";
+  if (text === "similar" || text === "comparable") return "Sim.";
+  return raw.trim();
+}
+
 function adjOf(sale: ComparableSale, featureId: string) {
   return sale.adjustments?.[featureId];
 }
@@ -64,12 +78,12 @@ export function AdjustmentGridPrint({
         <div key={`adj-print-${chunkIdx}`} className="report-table-keep">
           <table className="w-full table-fixed border-collapse text-[0.75rem]">
             <colgroup>
-              <col className="w-[14%]" />
-              <col className="w-[16%]" />
+              <col className="w-[13%]" />
+              <col className="w-[11%]" />
               {Array.from({ length: COMPS_PER_BLOCK }, (_, i) => (
                 <Fragment key={`cols-${chunkIdx}-${i}`}>
-                  <col className="w-[14%]" />
-                  <col className="w-[8%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[13%]" />
                 </Fragment>
               ))}
             </colgroup>
@@ -147,10 +161,11 @@ export function AdjustmentGridPrint({
                     ) {
                       detail = "";
                     }
+                    const rating = printGridRating(adj?.relativity || "");
                     const shown =
                       feature.id === "site"
                         ? detail
-                        : [detail, adj?.relativity].filter(Boolean).join(" · ") || "similar";
+                        : [detail, rating].filter(Boolean).join(" · ") || "Sim.";
                     return (
                       <Fragment key={sale.id}>
                         <td>{shown}</td>
