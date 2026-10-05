@@ -307,10 +307,14 @@ export function unregisteredDealingsDisplay(values: InspectionValues): string {
     text.match(
       /UNREGISTERED DEALINGS\s*\n([\s\S]{0,800}?)(?=\n\s*(?:END OF (?:CURRENT )?TITLE SEARCH|COPYRIGHT|ADMINISTRATIVE ADVICES)\b|$)/i,
     )?.[1] ?? "";
-  const candidate = cleanUnregistered(section || stored);
+  const candidate = cleanUnregistered(section || stored)
+    .replace(/\bcautions?\b\s*-?\s*/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
   if (
     !candidate ||
-    /^nil$|^none recorded$|^caution\b/i.test(candidate) ||
+    /^nil$/i.test(candidate) ||
+    /^none recorded$/i.test(candidate) ||
     /charges do not necessarily appear|order of priority/i.test(candidate)
   ) {
     return "NIL";

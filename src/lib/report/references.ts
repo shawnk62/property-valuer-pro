@@ -406,6 +406,7 @@ export function referencesForPrint(
   meta: ReportMeta | undefined,
   narrative: string | undefined,
   values: InspectionValues,
+  marketText = "",
 ): ReferenceParts[] {
   const style: ReferenceStyle = meta?.referenceStyle === "apa" ? "apa" : "harvard";
   const raws: string[] = [];
@@ -446,24 +447,54 @@ export function referencesForPrint(
     const blob = `${item.author} ${item.title} ${item.site} ${item.url}`.toLowerCase();
     if (/\bvia\b/.test(blob)) return false;
     if (item.year === "n.d." || !item.year) return false;
-    if (
-      /airdna|andreamonti|areasearch|prd\.com\.au|propertycouncil|proptrack|wikipedia|qld\.gov\.au/.test(blob) &&
-      (!item.title || item.title.toLowerCase() === item.author.toLowerCase())
-    ) {
-      return false;
-    }
-    if (!item.title || item.title.toLowerCase() === item.author.toLowerCase()) return false;
+    if (!item.title) return false;
     return true;
   });
   cleaned.sort((a, b) => a.author.localeCompare(b.author, "en") || a.title.localeCompare(b.title, "en"));
-  const primary = primaryReportSources(values);
+  const primary = [...primaryReportSources(values), ...marketSourcesNamedIn(values, marketText)];
   for (const item of primary) {
     const key = referenceKey(item);
-    if (seen.has(key)) continue;
+    if (seen.has(key) || cleaned.some((row) => row.author.toLowerCase() === item.author.toLowerCase())) continue;
     seen.add(key);
     cleaned.push(item);
   }
-  return cleaned.map((parts) => ({ ...parts, year: parts.year || "n.d." }));
+  cleaned.sort((a, b) => a.author.localeCompare(b.author, "en") || a.title.localeCompare(b.title, "en"));
+  return cleaned;
+}
+
+const MARKET_SOURCES: Array<{ test: RegExp; author: string; title: string; site: string }> = [
+  { test: /cotality|corelogic/i, author: "Cotality", title: "Home Value Index", site: "Cotality" },
+  { test: /proptrack/i, author: "PropTrack", title: "Home Price Index", site: "PropTrack" },
+  { test: /australian bureau of statistics|\bABS\b/, author: "Australian Bureau of Statistics", title: "Consumer Price Index, Australia", site: "Australian Bureau of Statistics" },
+  { test: /reserve bank/i, author: "Reserve Bank of Australia", title: "Statement on Monetary Policy", site: "Reserve Bank of Australia" },
+  { test: /westpac/i, author: "Westpac", title: "Westpac Housing Pulse", site: "Westpac" },
+  { test: /commbank|commonwealth bank/i, author: "Commonwealth Bank of Australia", title: "Housing market update", site: "Commonwealth Bank of Australia" },
+  { test: /\bNAB\b|national australia bank/i, author: "National Australia Bank", title: "NAB Residential Property Survey", site: "National Australia Bank" },
+  { test: /\bKPMG\b/i, author: "KPMG", title: "Residential Property Market Outlook", site: "KPMG" },
+];
+
+function marketSourcesNamedIn(values: InspectionValues, extra = ""): ReferenceParts[] {
+  const text = [
+    extra,
+    values["exam_market_australia"],
+    values["exam_market_state"],
+    values["exam_market_region"],
+    values["exam_market_local"],
+    values["exam_market_commentary"],
+  ]
+    .map((part) => String(part ?? ""))
+    .join("\n");
+  if (!text.trim()) return [];
+  const viewed = apaRetrieved();
+  const year = text.match(/\b(20\d{2})\b/)?.[1] ?? viewed.split(" ").pop() ?? "";
+  return MARKET_SOURCES.filter((source) => source.test.test(text)).map((source) => ({
+    author: source.author,
+    year,
+    title: source.title,
+    site: source.site,
+    url: "",
+    accessed: viewed,
+  }));
 }
 
 function primaryReportSources(values: InspectionValues): ReferenceParts[] {

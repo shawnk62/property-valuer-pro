@@ -1096,10 +1096,30 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       {show9 ? <Lead id="exam-9" title={t(major[8], "References")}>
       <Keep>
       {narrativePrints(m, "references") ? (
-        referencesForPrint(m, draft.narrative.references, v).length ? (
+        referencesForPrint(
+          m,
+          draft.narrative.references,
+          v,
+          [
+            draft.narrative.marketAustralia,
+            draft.narrative.marketState,
+            draft.narrative.marketRegion,
+            draft.narrative.marketLocality,
+          ].join("\n"),
+        ).length ? (
           <div className="report-reference-list">
-            {referencesForPrint(m, draft.narrative.references, v).map((ref, i) => {
-              const style = referenceStyleOf(m);
+            {referencesForPrint(
+              m,
+              draft.narrative.references,
+              v,
+              [
+                draft.narrative.marketAustralia,
+                draft.narrative.marketState,
+                draft.narrative.marketRegion,
+                draft.narrative.marketLocality,
+              ].join("\n"),
+            ).map((ref, i) => {
+              const style = "harvard";
               const titled = ref.title && ref.title.toLowerCase() !== ref.author.toLowerCase();
               const site = ref.site && ref.site.toLowerCase() !== ref.author.toLowerCase();
               return (
@@ -1113,17 +1133,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                     </>
                   ) : (
                     <>
-                      {ref.author} ({ref.year})
-                      {titled ? <> <em>{ref.title}</em></> : null}
-                      {ref.url ? (
-                        <>
-                          , {ref.site || ref.author}, viewed {ref.accessed}, {"<"}
-                          {ref.url}
-                          {">"}.
-                        </>
-                      ) : (
-                        "."
-                      )}
+                      {ref.author} ({ref.year}) <em>{ref.title}</em>, {ref.site || ref.author}, viewed {ref.accessed}.
                     </>
                   )}
                 </p>
@@ -1135,7 +1145,17 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ) : null
       ) : null}
       {narrativePrints(m, "references") &&
-      !referencesForPrint(m, draft.narrative.references, v).length &&
+      !referencesForPrint(
+        m,
+        draft.narrative.references,
+        v,
+        [
+          draft.narrative.marketAustralia,
+          draft.narrative.marketState,
+          draft.narrative.marketRegion,
+          draft.narrative.marketLocality,
+        ].join("\n"),
+      ).length &&
       !get(v, "exam_references") ? (
         <Para>List sources used for the market commentary, planning searches and sales evidence.</Para>
       ) : null}

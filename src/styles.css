@@ -1111,12 +1111,7 @@
   }
 
   #report-preview-sheet .exam-toc-page {
-    font-size: 0 !important;
-  }
-  #report-preview-sheet .exam-toc-page::after {
-    content: target-counter(attr(href), page);
     font-size: 10.5pt !important;
-    font-variant-numeric: tabular-nums;
   }
 
   #report-preview-sheet .report-prose-para {
