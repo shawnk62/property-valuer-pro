@@ -171,11 +171,6 @@ function usableAssumption(values: InspectionValues): string {
     ? `This valuation assumes the advice is confined to land already excluded from the estimated usable area of ${usable} square metres.`
     : "This valuation assumes the advice does not reduce the recorded usable area.";
 }
-  const lodged = item.lodged ? `, lodged ${item.lodged}` : "";
-  const status = item.status ? `, ${item.status.toLowerCase()}` : "";
-  const dealing = item.dealing ? `dealing ${item.dealing}` : "an administrative advice";
-  return `${dealing}${lodged}${status}`;
-}
 
 export function buildTitleNoticesNarrative(values: InspectionValues): string {
   const raw = String(values["title_admin_advices"] ?? values["title_search_text"] ?? "");
@@ -223,6 +218,38 @@ export function buildTitleNoticesNarrative(values: InspectionValues): string {
     );
   }
   return paragraphs.join("\n\n");
+}
+
+export function buildEncumbrancesSummary(values: InspectionValues): string {
+  const text = String(values["title_search_text"] ?? values["enc_notes"] ?? "");
+  const interestBlock =
+    text.match(
+      /EASEMENTS, ENCUMBRANCES AND INTERESTS\s*\n([\s\S]{0,4000}?)(?=\n\s*ADMINISTRATIVE ADVICES\b|$)/i,
+    )?.[1] ?? "";
+  const interests = interestBlock
+    .split("\n")
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(
+      (line) =>
+        line &&
+        !/^Dealing\s+Type/i.test(line) &&
+        !/^NIL$/i.test(line) &&
+        !/End of Current Title Search/i.test(line) &&
+        !/copyright|Titles Queensland/i.test(line) &&
+        !/^Caution/i.test(line),
+    )
+    .slice(0, 4);
+  const notices = buildTitleNoticesNarrative(values);
+  const veg = notices
+    .split(/\n\n/)
+    .find((part) => /VEG NOTICE/i.test(part));
+  const parts = [
+    interests.length
+      ? `The title records ${interests.join("; ")}.`
+      : "",
+    veg ?? "",
+  ].filter(Boolean);
+  return parts.join("\n\n");
 }
 
 export function titleAdviceFacts(values: InspectionValues): string {

@@ -138,9 +138,6 @@ export function parseTitleSearchText(raw: string): TitleSearchExtract {
     /\n\s*(?:ADMINISTRATIVE ADVICES|EASEMENTS, ENCUMBRANCES|END OF SEARCH)\b/i,
   );
   if (unregistered && !/^NIL$/i.test(unregistered)) out.title_unregistered = unregistered.slice(0, 4000);
-
-  const parts = [out.enc_notes, out.title_admin_advices, out.title_unregistered].filter(Boolean);
-  if (parts.length) out.enc_notes = parts.join("\n\n").slice(0, 8000);
   if (text.trim()) out.title_search_text = text.trim().slice(0, 20000);
 
   return out;

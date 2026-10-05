@@ -253,6 +253,8 @@ export interface ReportNarrative {
   legalAccess: string;
   /** Narrative written from the full imported title search. Manual text is kept. */
   titleSearchNarrative: string;
+  /** Short easements cell. Same wording as the title narrative. Manual text is kept. */
+  encumbrancesSummary: string;
   /** Physical ingress/egress — 2.3 Particulars of Land when relevant. */
   physicalAccess: string;
   /** §6.2 Services/Amenities (AI or template). */

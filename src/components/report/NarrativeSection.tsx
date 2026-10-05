@@ -98,6 +98,11 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           hint: "Written from the full imported title search. Prints under Title Particulars. Manual text is kept.",
         },
         {
+          key: "encumbrancesSummary",
+          label: "2.3 Easements, encumbrances and restrictions",
+          hint: "Prints in the easements cell. Uses the recorded interests and the vegetation notice, in the same words as the title narrative. Manual text is kept.",
+        },
+        {
           key: "physicalAccess",
           label: "2.3 Physical ingress / egress",
           hint: "Prints under 2.3 only if ticked. Defaults off except industrial and commercial.",
@@ -600,6 +605,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         "valuationApproach",
         "legalAccess",
         "physicalAccess",
+        "encumbrancesSummary",
       ]);
       return;
     }

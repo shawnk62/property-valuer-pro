@@ -11,7 +11,7 @@ import type { InspectionValues, ReportNarrative } from "./types";
 import { australianiseSpelling } from "./australianEnglish";
 import { buildRiskAnalysis } from "./propertyRiskRatings";
 import { purposeOfValuation } from "./reportTypes";
-import { buildTitleNoticesNarrative } from "./titleAdvices";
+import { buildEncumbrancesSummary, buildTitleNoticesNarrative } from "./titleAdvices";
 
 /**
  * Mock narrative generator. Composes QLD residential prose from the subject
@@ -1361,6 +1361,7 @@ export function generateNarrative(
     siteIdentification: buildSiteIdentification(values),
     legalAccess: buildLegalAccess(values),
     titleSearchNarrative: "",
+    encumbrancesSummary: buildEncumbrancesSummary(values),
     physicalAccess: buildPhysicalAccess(values),
     servicesAmenities: buildServicesAmenities(values),
     improvements:

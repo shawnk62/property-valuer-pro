@@ -50,6 +50,7 @@ import {
 } from "@/lib/report/references";
 import { purposeOfValuation } from "@/lib/report/reportTypes";
 import { buildExecutiveSummaryLead } from "@/lib/report/narrative";
+import { buildEncumbrancesSummary } from "@/lib/report/titleAdvices";
 import { planningSchemeDisplay } from "@/lib/report/parsePlanningExtract";
 import { fillExamTocPages } from "@/lib/report/tocPages";
 import { includedNumbers, majorTitle, subTitle } from "@/lib/report/sectionNumbers";
@@ -750,7 +751,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           { label: "Utilities", value: servicesText },
           {
             label: "Easements, encumbrances and restrictions",
-            value: get(v, "enc_notes") || get(v, "enc") || "",
+            value:
+              (narrativePrints(m, "encumbrancesSummary")
+                ? draft.narrative.encumbrancesSummary?.trim()
+                : "") || buildEncumbrancesSummary(v),
           },
         ]}
       />
