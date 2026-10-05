@@ -169,16 +169,36 @@ function subsectionTitle(node: ReactNode): ReactNode {
   return (node.props as { children?: ReactNode }).children ?? null;
 }
 
-function openWithFirstSubsection(node: ReactNode): { title: ReactNode; body: ReactNode } {
-  if (!isValidElement(node)) return { title: null, body: node };
+function openWithFirstSubsection(node: ReactNode): {
+  title: ReactNode;
+  lead: ReactNode;
+  tail: ReactNode;
+} {
+  if (!isValidElement(node)) return { title: null, lead: node, tail: null };
   const inner = Children.toArray((node.props as { children?: ReactNode }).children).filter(
     (child) => child != null && child !== false,
   );
   const heading = inner.find((child) => subsectionTitle(child) != null);
-  if (!heading) return { title: null, body: node };
+  const rest = inner.filter((child) => child !== heading);
+  const prose = rest.find(
+    (child) => isValidElement(child) && child.type === Prose,
+  ) as ReactElement<{ text?: string }> | undefined;
+  if (!prose) {
+    return { title: subsectionTitle(heading), lead: rest, tail: null };
+  }
+  const paras = proseParagraphs(prose.props.text || "");
+  const other = rest.filter((child) => child !== prose);
   return {
     title: subsectionTitle(heading),
-    body: inner.filter((child) => child !== heading),
+    lead: (
+      <>
+        {paras[0] ? (
+          <p className="report-prose-para text-left leading-relaxed whitespace-pre-line">{paras[0]}</p>
+        ) : null}
+        {other}
+      </>
+    ),
+    tail: paras.length > 1 ? <Prose text={paras.slice(1).join("\n\n")} /> : null,
   };
 }
 
@@ -196,15 +216,18 @@ function Lead({
   const opened = openWithFirstSubsection(first);
   return (
     <>
-      <h2
-        id={id}
-        className="report-h2 report-heading-lead report-section-open mt-8 border-b pb-1 text-[1.05rem] font-semibold"
-        style={{ color: TEAL, borderColor: RULE }}
-      >
-        {title}
-        {opened.title ? <span className="report-section-sub">{opened.title}</span> : null}
-      </h2>
-      {opened.body}
+      <div className="report-section-open">
+        <h2
+          id={id}
+          className="report-h2 report-heading-lead mt-8 border-b pb-1 text-[1.05rem] font-semibold"
+          style={{ color: TEAL, borderColor: RULE }}
+        >
+          {title}
+          {opened.title ? <span className="report-section-sub">{opened.title}</span> : null}
+        </h2>
+        {opened.lead}
+      </div>
+      {opened.tail}
       {rest}
     </>
   );
@@ -823,17 +846,15 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       )}
       </Lead> : null}
       <Lead id="exam-7" title={t(major[6], "Risk Assessment")}>
-      <Keep>
+      <div>
+      <H2>{subTitle(major[6], 1, "Property risk assessment")}</H2>
       <Para>
         Each category has been considered against the criteria in the PropertyPRO Supporting
         Memorandum (API).
       </Para>
-      </Keep>
-      </Lead>
-      <Keep>
-      <H2>{subTitle(major[6], 1, "Property risk assessment")}</H2>
       <RiskRatingsPrintTable values={v} />
-      </Keep>
+      </div>
+      </Lead>
       <div className="mt-4">
         <RiskAnalysisProse
           text={

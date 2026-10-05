@@ -1004,30 +1004,30 @@
     page-break-before: avoid !important;
   }
 
-  /* One heading element: the browser cannot leave 6.0 on a page without 6.1. */
-  #report-preview-sheet h2.report-section-open {
+  /* Heading plus the first table or paragraph. Short enough to move together. */
+  #report-preview-sheet .report-section-open {
     display: block !important;
     overflow: visible !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
-    break-after: avoid !important;
-    page-break-after: avoid !important;
+    break-after: auto !important;
+    page-break-after: auto !important;
     break-before: auto !important;
     page-break-before: auto !important;
   }
 
-  #report-preview-sheet h2.report-section-open .report-section-sub {
+  #report-preview-sheet .report-section-open .report-section-sub {
     display: block !important;
     margin-top: 0.85rem !important;
-    padding-top: 0 !important;
     border: 0 !important;
     font-size: 0.95rem !important;
     font-weight: 600 !important;
   }
 
-  #report-preview-sheet h2.report-section-open + * {
-    break-before: avoid !important;
-    page-break-before: avoid !important;
+  /* The inner table must not jump away and leave the heading. */
+  #report-preview-sheet .report-section-open .report-keep-block,
+  #report-preview-sheet .report-section-open .report-table-keep,
+  #report-preview-sheet .report-section-open table {
     break-inside: auto !important;
     page-break-inside: auto !important;
   }
