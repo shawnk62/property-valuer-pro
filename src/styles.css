@@ -934,6 +934,16 @@
     page-break-after: always !important;
   }
 
+  /* Printed page numbers come from the printed pages, not the estimate. */
+  #report-preview-sheet .exam-toc-page .toc-fallback {
+    display: none !important;
+  }
+  #report-preview-sheet .exam-toc-page::after {
+    content: target-counter(attr(href), page);
+    font-size: 10.5pt;
+    font-variant-numeric: tabular-nums;
+  }
+
   /*
    * Sections: keep intact when they fit on the remainder of a page.
    * If the section is taller than one page, the browser will split it

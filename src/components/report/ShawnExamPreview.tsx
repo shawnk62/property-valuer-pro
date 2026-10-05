@@ -316,7 +316,9 @@ function TocRows({ entries }: { entries: { id: string; label: string }[] }) {
         <li key={item.id} className="exam-toc-row">
           <a href={`#${item.id}`}>{item.label}</a>
           <span className="exam-toc-leader" aria-hidden />
-          <a href={`#${item.id}`} className="exam-toc-page" data-toc-id={item.id} />
+          <a href={`#${item.id}`} className="exam-toc-page" data-toc-id={item.id}>
+            <span className="toc-fallback" />
+          </a>
         </li>
       ))}
     </ol>
@@ -1108,7 +1110,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             draft.narrative.marketRegion,
             draft.narrative.marketLocality,
             draft.narrative.salesComments,
-            "International Valuation Standards Council",
+            "The methodological framework cites the International Valuation Standards Council.",
+            "Section 6 names the Australian Bureau of Statistics.",
           ].join("\n"),
         ).length ? (
           <div className="report-reference-list">
@@ -1122,7 +1125,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 draft.narrative.marketRegion,
                 draft.narrative.marketLocality,
             draft.narrative.salesComments,
-            "International Valuation Standards Council",
+            "The methodological framework cites the International Valuation Standards Council.",
+            "Section 6 names the Australian Bureau of Statistics.",
               ].join("\n"),
             ).map((ref, i) => {
               const style = "harvard";

@@ -454,7 +454,7 @@ export function referencesForPrint(
   const primary = [...primaryReportSources(values), ...marketSourcesNamedIn(values, marketText)];
   for (const item of primary) {
     const key = referenceKey(item);
-    if (seen.has(key) || cleaned.some((row) => row.author.toLowerCase() === item.author.toLowerCase())) continue;
+    if (cleaned.some((row) => row.author.toLowerCase() === item.author.toLowerCase())) continue;
     seen.add(key);
     cleaned.push(item);
   }
@@ -466,7 +466,6 @@ const MARKET_SOURCES: Array<{ test: RegExp; author: string; title: string; site:
   { test: /cotality|corelogic/i, author: "Cotality", title: "Home Value Index", site: "Cotality" },
   { test: /proptrack/i, author: "PropTrack", title: "Home Price Index", site: "PropTrack" },
   { test: /australian bureau of statistics|\bABS\b/, author: "Australian Bureau of Statistics", title: "Consumer Price Index, Australia", site: "Australian Bureau of Statistics" },
-  { test: /reserve bank/i, author: "Reserve Bank of Australia", title: "Statement on Monetary Policy", site: "Reserve Bank of Australia" },
   { test: /westpac/i, author: "Westpac", title: "Westpac Housing Pulse", site: "Westpac" },
   { test: /commbank|commonwealth bank/i, author: "Commonwealth Bank of Australia", title: "Housing market update", site: "Commonwealth Bank of Australia" },
   { test: /\bNAB\b|national australia bank/i, author: "National Australia Bank", title: "NAB Residential Property Survey", site: "National Australia Bank" },

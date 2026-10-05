@@ -148,7 +148,8 @@ export function fillExamTocPages(): void {
     const id = slot.getAttribute("data-toc-id");
     if (!id) return;
     const n = pages.get(id);
-    slot.textContent = n ? String(n) : "—";
+    const fallback = slot.querySelector(".toc-fallback");
+    if (fallback) fallback.textContent = n ? String(n) : "—";
   });
   sheet.classList.remove("exam-toc-measure");
   if (hostWasHidden) host.classList.add("hidden");
