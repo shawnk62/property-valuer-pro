@@ -1004,14 +1004,40 @@
     page-break-before: avoid !important;
   }
 
-  #report-preview-sheet .report-h-block {
-    display: block !important;
+  #report-preview-sheet table.report-section-open {
+    display: table !important;
+    width: 100% !important;
+    border: 0 !important;
+    border-collapse: collapse !important;
+    background: transparent !important;
+    margin: 0 0 8pt 0 !important;
+    font-size: inherit !important;
+    color: inherit !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
     break-after: auto !important;
     page-break-after: auto !important;
-    break-before: auto !important;
-    page-break-before: auto !important;
+  }
+
+  #report-preview-sheet table.report-section-open tr {
+    display: table-row !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    background: transparent !important;
+  }
+
+  #report-preview-sheet table.report-section-open td {
+    display: table-cell !important;
+    width: 100% !important;
+    border: 0 !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: inherit !important;
+    font-weight: inherit !important;
+    color: inherit !important;
+    text-align: left !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   /* A nested keep must not jump to the next page and leave the heading. */

@@ -208,10 +208,16 @@ function Lead({
   const opened = openWithFirstSubsection(first);
   return (
     <>
-      <div className="report-h-block">
-        <H1 id={id}>{title}</H1>
-        {opened.head}
-      </div>
+      <table className="report-h-block report-section-open">
+        <tbody>
+          <tr>
+            <td>
+              <H1 id={id}>{title}</H1>
+              {opened.head}
+            </td>
+          </tr>
+        </tbody>
+      </table>
       {opened.tail}
       {rest}
     </>
