@@ -164,6 +164,15 @@ function H2({ children }: { children: React.ReactNode }) {
   );
 }
 
+function firstPrintedLine(text: string): { lead: string; rest: string } {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (!clean) return { lead: "", rest: "" };
+  const sentence = clean.match(/^.{40,220}?[.?!](?=\s|$)/);
+  const lead = (sentence?.[0] || clean.slice(0, 180)).trim();
+  const rest = clean.slice(lead.length).trim();
+  return { lead, rest };
+}
+
 function openWithFirstSubsection(node: ReactNode): { head: ReactNode; tail: ReactNode } {
   if (!isValidElement(node)) return { head: node, tail: null };
   const inner = Children.toArray((node.props as { children?: ReactNode }).children).filter(
@@ -175,19 +184,25 @@ function openWithFirstSubsection(node: ReactNode): { head: ReactNode; tail: Reac
     (child) => isValidElement(child) && child.type === Prose,
   ) as ReactElement<{ text?: string }> | undefined;
   const paras = proseParagraphs(prose?.props.text || "");
+  const first = paras[0] || "";
+  const lead = first.length > 700 ? firstPrintedLine(first).lead : first;
+  const remainder = [
+    first.length > 700 ? firstPrintedLine(first).rest : "",
+    ...paras.slice(1),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
   const other = inner.filter((child) => child !== heading && child !== prose);
   return {
     head: (
       <>
         {heading}
-        {paras[0] ? (
-          <p className="report-prose-para text-left leading-relaxed whitespace-pre-line">{paras[0]}</p>
-        ) : null}
+        {lead ? <p className="report-prose-para text-left leading-relaxed">{lead}</p> : null}
       </>
     ),
     tail: (
       <>
-        {paras.length > 1 ? <Prose text={paras.slice(1).join("\n\n")} /> : null}
+        {remainder ? <Prose text={remainder} /> : null}
         {other}
       </>
     ),
@@ -208,16 +223,10 @@ function Lead({
   const opened = openWithFirstSubsection(first);
   return (
     <>
-      <table className="report-h-block report-section-open">
-        <tbody>
-          <tr>
-            <td>
-              <H1 id={id}>{title}</H1>
-              {opened.head}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div className="report-section-open">
+        <H1 id={id}>{title}</H1>
+        {opened.head}
+      </div>
       {opened.tail}
       {rest}
     </>
