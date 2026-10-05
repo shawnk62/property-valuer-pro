@@ -1,8 +1,7 @@
 import type { CSSProperties } from "react";
 import {
+  comparableSiteRate,
   computeSaleAdjustmentTotals,
-  formatMoney,
-  parseAreaNumber,
 } from "@/lib/report/adjustmentGrid";
 import { cleanSaleProse } from "@/lib/report/salesRelativity";
 import type { ComparableSale } from "@/lib/report/types";
@@ -10,19 +9,12 @@ import type { ComparableSale } from "@/lib/report/types";
 const HEADERS = [
   "No.",
   "Address",
-  "Land area m²",
+  "Land area",
   "Sale price",
-  "Price/m²",
+  "Rate",
   "Sale date",
   "Rating",
 ] as const;
-
-function pricePerSquareMetre(sale: ComparableSale): string {
-  const price = computeSaleAdjustmentTotals(sale).salePrice;
-  const area = parseAreaNumber(sale.landArea);
-  if (price == null || area == null || area <= 0) return "—";
-  return formatMoney(Math.round(price / area));
-}
 
 function saleRating(sale: ComparableSale): string {
   const net = computeSaleAdjustmentTotals(sale).netAdjustment;
@@ -52,6 +44,7 @@ export function SalesEvidenceSchedule({
   return (
     <div className="sales-evidence-list space-y-3">
       {sales.map((s, idx) => {
+        const site = comparableSiteRate(s);
         const comment = cleanSaleProse(s.narrative?.trim() || s.comments || "");
         return (
           <table
@@ -89,13 +82,13 @@ export function SalesEvidenceSchedule({
                   {s.address || "—"}
                 </td>
                 <td className={`${cell} whitespace-nowrap`} style={cellStyle}>
-                  {s.landArea || "—"}
+                  {site.area}
                 </td>
                 <td className={`${cell} whitespace-nowrap`} style={cellStyle}>
                   {s.salePrice || "—"}
                 </td>
                 <td className={`${cell} whitespace-nowrap`} style={cellStyle}>
-                  {pricePerSquareMetre(s)}
+                  {site.rate}
                 </td>
                 <td className={`${cell} whitespace-nowrap`} style={cellStyle}>
                   {s.saleDate || "—"}

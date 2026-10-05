@@ -510,6 +510,45 @@ export function formatMoney(n: number | null | undefined): string {
   return "$0";
 }
 
+/** Site figure shown in the working adjustment grid: edited site detail, then land area. */
+export function comparableSiteText(sale: ComparableSale): string {
+  const detail = sale.adjustments?.site?.detail?.trim() || "";
+  return detail || String(sale.landArea ?? "").trim();
+}
+
+export function comparableSiteRate(sale: ComparableSale): { area: string; rate: string } {
+  const raw = comparableSiteText(sale);
+  const price = computeSaleAdjustmentTotals(sale).salePrice;
+  if (!raw) return { area: "—", rate: "—" };
+  const token = raw.replace(/,/g, "").match(/(\d+(?:\.\d+)?)/);
+  const n = token ? Number(token[1]) : null;
+  const hectares = /\bha\b|hectare/i.test(raw);
+  const acres = /\bacre/i.test(raw);
+  if (n == null || !Number.isFinite(n) || n <= 0 || price == null) {
+    return { area: raw, rate: "—" };
+  }
+  if (hectares || acres) {
+    const ha = hectares ? n : n * 0.40468564224;
+    const perHa = price / ha;
+    return {
+      area: raw,
+      rate: `${formatRate(perHa)}/ha`,
+    };
+  }
+  return {
+    area: /m²|m2/i.test(raw) ? raw : `${raw} m²`,
+    rate: `${formatRate(price / n)}/m²`,
+  };
+}
+
+function formatRate(n: number): string {
+  const formatted = n.toLocaleString("en-AU", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return `$${formatted}`;
+}
+
 export function formatAreaWithSqm(raw: string | number | null | undefined): string {
   const s = String(raw ?? "").replace(/\s+/g, " ").trim();
   if (!s || s === "—") return "—";
