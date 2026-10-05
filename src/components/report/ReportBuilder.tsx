@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   downloadBlob,
   generateValuationDocx,
@@ -44,6 +44,12 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
   const [downloading, setDownloading] = useState(false);
   const [printing, setPrinting] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+
+  useEffect(() => {
+    if (tab !== "preview") return;
+    const t = window.setTimeout(() => fillExamTocPages(), 300);
+    return () => window.clearTimeout(t);
+  }, [tab, draft]);
 
   async function handleDownloadWord() {
     setDownloading(true);

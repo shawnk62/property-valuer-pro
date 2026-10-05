@@ -1,8 +1,6 @@
 /**
- * Write contents page numbers for every report type.
- * The number is text, so Safari and Chrome show the same figure.
- * Page 1 is the cover. A break-after followed by a break-before is one page.
- * Each contents target is numbered on the page where that heading starts.
+ * Split the preview into the pages the PDF prints, then write the contents
+ * number from the page a heading is actually on. No browser page counter.
  */
 const PAGE_MM = 297;
 const MARGIN_TOP_MM = 14;
@@ -14,29 +12,28 @@ function mmToPx(mm: number): number {
   return (mm / 25.4) * 96;
 }
 
-function isPhotoPage(el: Element): boolean {
-  return el.classList.contains("photo-annex-page");
+function isLeafPage(el: Element): boolean {
+  return el.classList.contains("photo-annex-page") || el.classList.contains("report-a4-page");
 }
 
-function isA4Page(el: Element): boolean {
-  return el.classList.contains("report-a4-page");
-}
-
-function startsPage(el: Element): boolean {
-  return (
-    el.classList.contains("report-exam-summary-sheet") ||
-    el.classList.contains("report-annexure") ||
-    el.classList.contains("report-section-sales") ||
-    el.classList.contains("report-section-references")
-  );
-}
-
-function endsPage(el: Element): boolean {
+function ownPage(el: Element): boolean {
   return (
     el.classList.contains("exam-cover") ||
+    el.classList.contains("report-toc") ||
     el.classList.contains("report-exam-summary-sheet") ||
-    el.classList.contains("report-toc")
+    el.classList.contains("report-summary-page") ||
+    el.classList.contains("report-section-sales") ||
+    el.classList.contains("report-section-references") ||
+    el.classList.contains("report-annexure") ||
+    isLeafPage(el)
   );
+}
+
+function unwrap(sheet: HTMLElement) {
+  sheet.querySelectorAll(":scope > .preview-page").forEach((page) => {
+    while (page.firstChild) sheet.insertBefore(page.firstChild, page);
+    page.remove();
+  });
 }
 
 export function fillExamTocPages(): void {
@@ -45,68 +42,62 @@ export function fillExamTocPages(): void {
   const host = sheet.closest(".report-print-host") as HTMLElement | null;
   const hostWasHidden = host?.classList.contains("hidden") ?? false;
   if (hostWasHidden) host.classList.remove("hidden");
+  unwrap(sheet);
   sheet.classList.add("exam-toc-measure");
   const previousWidth = sheet.style.width;
   sheet.style.width = `${CONTENT_WIDTH_MM}mm`;
   void sheet.offsetHeight;
 
   const pageH = mmToPx(CONTENT_MM);
-  const pages = new Map<string, number>();
-  let page = 1;
+  const children = Array.from(sheet.children).filter((node) => node instanceof Element);
+  let pageNum = 0;
   let used = 0;
+  let pageEl: HTMLDivElement | null = null;
 
-  const mark = (el: Element) => {
-    if (el.id && !pages.has(el.id)) pages.set(el.id, page);
-  };
-
-  const newPage = () => {
-    page += 1;
+  const open = () => {
+    pageNum += 1;
     used = 0;
+    pageEl = document.createElement("div");
+    pageEl.className = "preview-page";
+    pageEl.dataset.page = String(pageNum);
+    sheet.appendChild(pageEl);
   };
 
-  const consume = (height: number) => {
-    if (height <= 0) return;
-    if (used > 1 && used + height > pageH) newPage();
-    used += height;
-    while (used > pageH) {
-      used -= pageH;
-      page += 1;
-    }
-  };
-
-  const walk = (el: Element) => {
-    if (isPhotoPage(el) || isA4Page(el)) {
-      if (used > 1) newPage();
-      mark(el);
-      el.querySelectorAll<HTMLElement>("[id]").forEach(mark);
+  children.forEach((el) => {
+    const leafs = Array.from(el.querySelectorAll<HTMLElement>(":scope > .photo-annex-page, :scope > .report-a4-page"));
+    if (leafs.length > 0) {
+      if (used > 1) open();
+      else if (!pageEl) open();
+      pageEl?.classList.add("preview-page-flow");
+      pageEl?.appendChild(el);
+      pageEl!.dataset.page = String(pageNum);
+      leafs.forEach((leaf, index) => {
+        leaf.dataset.page = String(pageNum + index);
+      });
+      pageNum += leafs.length - 1;
       used = pageH;
-      if (isPhotoPage(el)) newPage();
+      pageEl = null;
       return;
     }
-    if (startsPage(el) && used > 1) newPage();
-    mark(el);
-    const nested = Array.from(el.children).filter(
-      (child) => child.querySelector("[id]") || child.id,
-    );
-    if (nested.length === 0) {
-      consume(el.getBoundingClientRect().height);
-    } else {
-      nested.forEach(walk);
-    }
-    if (endsPage(el)) newPage();
-  };
-
-  Array.from(sheet.children).forEach((child) => {
-    if (child instanceof Element) walk(child);
+    const h = Math.max(el.getBoundingClientRect().height, el.scrollHeight);
+    const forced = ownPage(el);
+    if (!pageEl || forced || (used > 8 && h > 0 && used + h > pageH)) open();
+    pageEl!.appendChild(el);
+    used = forced ? pageH : used + h;
+    if (forced) pageEl = null;
   });
 
   document.querySelectorAll<HTMLElement>("[data-toc-id]").forEach((slot) => {
     const id = slot.getAttribute("data-toc-id");
     if (!id) return;
-    const n = pages.get(id);
+    const target = document.getElementById(id);
+    const leaf = target?.closest<HTMLElement>("[data-page]");
+    const box = target?.closest<HTMLElement>(".preview-page");
+    const n = leaf?.dataset.page || box?.dataset.page;
     const fallback = slot.querySelector(".toc-fallback");
-    if (fallback) fallback.textContent = n ? String(n) : "—";
+    if (fallback) fallback.textContent = n || "—";
   });
+
   sheet.classList.remove("exam-toc-measure");
   sheet.style.width = previousWidth;
   if (hostWasHidden) host.classList.add("hidden");

@@ -457,7 +457,19 @@
 }
 
 
-/* Signature block — screen + shared (print overrides inside @media print) */
+/* Preview pages are the printed pages. The contents number is the box number. */
+.report-print-host .preview-page {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto 10mm;
+  padding: 14mm 12mm 18mm;
+  background: #fff;
+  box-sizing: border-box;
+  box-shadow: 0 0 0 1px #d5d5d5, 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+.report-print-host #report-preview-sheet.exam-toc-measure {
+  width: 186mm;
+}
 .report-sig-stage {
   position: relative;
   display: block;
@@ -601,6 +613,33 @@
     line-height: 1.35 !important;
     break-before: auto !important;
     page-break-before: auto !important;
+  }
+
+  .preview-page {
+    break-after: page !important;
+    page-break-after: always !important;
+    width: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+  .preview-page:last-child,
+  .preview-page-flow {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+  .preview-page .exam-cover,
+  .preview-page .report-toc,
+  .preview-page .report-exam-summary-sheet,
+  .preview-page .report-summary-page,
+  .preview-page .report-section-sales,
+  .preview-page .report-section-references,
+  .preview-page .report-annexure {
+    break-before: auto !important;
+    page-break-before: auto !important;
+    break-after: auto !important;
+    page-break-after: auto !important;
   }
 
 
