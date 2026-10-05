@@ -1835,6 +1835,17 @@ export function SalesSection({ controller }: { controller: ReportDraftController
               </p>
               {chunks.map((chunk, chunkIdx) => {
                 const startNum = chunkIdx * COMPS_PER_GRID;
+                const missing = COMPS_PER_GRID - chunk.length;
+                const emptyHeader = Array.from({ length: missing }, (_, i) => (
+                  <th key={`empty-head-${chunkIdx}-${i}`} colSpan={2} className="border-l border-border" />
+                ));
+                const emptyCells = (row: string) =>
+                  Array.from({ length: missing }, (_, i) => (
+                    <Fragment key={`empty-${row}-${chunkIdx}-${i}`}>
+                      <td className="border-l border-border" />
+                      <td />
+                    </Fragment>
+                  ));
                 return (
                   <div
                     key={`grid-${chunkIdx}`}
@@ -1846,8 +1857,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                       <colgroup>
                         <col className="w-[8.5rem]" />
                         <col className="w-[5.5rem]" />
-                        {chunk.map((sale) => (
-                          <Fragment key={sale.id}>
+                        {Array.from({ length: COMPS_PER_GRID }, (_, i) => (
+                          <Fragment key={`cols-${chunkIdx}-${i}`}>
                             <col className="w-[5.5rem]" />
                             <col className="w-[6.5rem]" />
                           </Fragment>
@@ -2032,6 +2043,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                               </th>
                             );
                           })}
+                          {emptyHeader}
                         </tr>
                         <tr className="border-b border-border bg-muted/95 text-xs text-muted-foreground">
                           <th className="sticky left-0 z-30 bg-muted/95 px-2 py-1" />
@@ -2051,6 +2063,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                               </th>
                             </Fragment>
                           ))}
+                          {emptyHeader}
                         </tr>
                       </thead>
                       <tbody>
@@ -2203,18 +2216,21 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                         sale.adjustments?.dateOfSale?.amount ?? 0,
                                       )} min-w-[4.5rem] border-input bg-card`}
                                     />
+                                  ) : row.key === "address" || row.key === "salePrice" ? (
+                                    ""
                                   ) : (
                                     "—"
                                   )}
                                 </td>
                               </Fragment>
                             ))}
+                            {emptyCells(row.key)}
                           </tr>
                         ))}
 
                         <tr className="border-b border-border bg-muted/30">
                           <td
-                            colSpan={2 + chunk.length * 2}
+                            colSpan={2 + COMPS_PER_GRID * 2}
                             className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                           >
                             Value adjustments
@@ -2500,6 +2516,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                 </Fragment>
                               );
                             })}
+                            {emptyCells(feature.id)}
                           </tr>
                           );
                         })}
@@ -2554,6 +2571,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                 </td>
                               </Fragment>
                             ))}
+                            {emptyHeader}
                           </tr>
                         ))}
 

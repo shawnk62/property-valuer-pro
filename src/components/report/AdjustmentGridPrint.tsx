@@ -20,6 +20,15 @@ function adjOf(sale: ComparableSale, featureId: string) {
   return sale.adjustments?.[featureId];
 }
 
+function emptySaleCells(chunkIdx: number, row: string, count: number) {
+  return Array.from({ length: COMPS_PER_BLOCK - count }, (_, i) => (
+    <Fragment key={`empty-${chunkIdx}-${row}-${i}`}>
+      <td />
+      <td />
+    </Fragment>
+  ));
+}
+
 function moneyCell(amount: number | undefined): string {
   if (amount == null || !Number.isFinite(amount)) return "—";
   return formatAdjustmentMoney(amount);
@@ -52,17 +61,30 @@ export function AdjustmentGridPrint({
     <div className="adjustment-print-grid space-y-5">
       {chunks.map((chunk, chunkIdx) => (
         <div key={`adj-print-${chunkIdx}`} className="report-table-keep">
-          <table className="w-full border-collapse text-[0.75rem]">
+          <table className="w-full table-fixed border-collapse text-[0.75rem]">
+            <colgroup>
+              <col className="w-[14%]" />
+              <col className="w-[16%]" />
+              {Array.from({ length: COMPS_PER_BLOCK }, (_, i) => (
+                <Fragment key={`cols-${chunkIdx}-${i}`}>
+                  <col className="w-[14%]" />
+                  <col className="w-[8%]" />
+                </Fragment>
+              ))}
+            </colgroup>
             <thead>
               <tr>
                 <th>Feature</th>
                 <th>Subject</th>
-                {chunk.map((sale, i) => (
-                  <Fragment key={sale.id}>
-                    <th>Sale {chunkIdx * COMPS_PER_BLOCK + i + 1}</th>
-                    <th className="adj-money">Adjustment</th>
-                  </Fragment>
-                ))}
+                {Array.from({ length: COMPS_PER_BLOCK }, (_, i) => {
+                  const sale = chunk[i];
+                  return (
+                    <Fragment key={sale?.id ?? `empty-head-${chunkIdx}-${i}`}>
+                      <th>{sale ? `Sale ${chunkIdx * COMPS_PER_BLOCK + i + 1}` : ""}</th>
+                      <th className="adj-money">{sale ? "Adjustment" : ""}</th>
+                    </Fragment>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
@@ -72,9 +94,10 @@ export function AdjustmentGridPrint({
                 {chunk.map((sale) => (
                   <Fragment key={sale.id}>
                     <td>{sale.address || "—"}</td>
-                    <td className="adj-money">—</td>
+                    <td className="adj-money" />
                   </Fragment>
                 ))}
+                {emptySaleCells(chunkIdx, "address", chunk.length)}
               </tr>
               <tr>
                 <th scope="row">Sale Price</th>
@@ -82,9 +105,10 @@ export function AdjustmentGridPrint({
                 {chunk.map((sale) => (
                   <Fragment key={sale.id}>
                     <td>{sale.salePrice || "—"}</td>
-                    <td className="adj-money">—</td>
+                    <td className="adj-money" />
                   </Fragment>
                 ))}
+                {emptySaleCells(chunkIdx, "price", chunk.length)}
               </tr>
               <tr className="is-stripe">
                 <th scope="row">Date of Sale</th>
@@ -95,6 +119,7 @@ export function AdjustmentGridPrint({
                     <td className="adj-money">{moneyCell(adjOf(sale, "dateOfSale")?.amount)}</td>
                   </Fragment>
                 ))}
+                {emptySaleCells(chunkIdx, "date", chunk.length)}
               </tr>
               {features.map((feature, idx) => (
                 <tr key={feature.id} className={idx % 2 === 0 ? "is-stripe" : undefined}>
@@ -132,6 +157,7 @@ export function AdjustmentGridPrint({
                       </Fragment>
                     );
                   })}
+                  {emptySaleCells(chunkIdx, feature.id, chunk.length)}
                 </tr>
               ))}
               <tr>
@@ -146,6 +172,7 @@ export function AdjustmentGridPrint({
                     </Fragment>
                   );
                 })}
+                {emptySaleCells(chunkIdx, "net", chunk.length)}
               </tr>
               <tr className="is-stripe">
                 <th scope="row">Gross adjustment</th>
@@ -159,6 +186,7 @@ export function AdjustmentGridPrint({
                     </Fragment>
                   );
                 })}
+                {emptySaleCells(chunkIdx, "gross", chunk.length)}
               </tr>
               <tr>
                 <th scope="row">Adjusted sale price</th>
@@ -176,6 +204,7 @@ export function AdjustmentGridPrint({
                     </Fragment>
                   );
                 })}
+                {emptySaleCells(chunkIdx, "adjusted", chunk.length)}
               </tr>
             </tbody>
           </table>
