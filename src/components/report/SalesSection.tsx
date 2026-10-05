@@ -51,6 +51,7 @@ import {
   salePricePerGla,
   subjectFeatureDisplay,
   subjectSiteAreaRaw,
+  subjectTopographyDisplay,
   type Relativity,
 } from "@/lib/report/adjustmentGrid";
 import { extractTextFromPdf } from "@/lib/report/extractPdfText";
@@ -2253,6 +2254,17 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                     )
                                   }
                                   placeholder="Describe other item…"
+                                  className="w-full min-w-0 rounded border border-input bg-card px-1 py-0.5 text-[0.65rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
+                                />
+                              ) : feature.id === "topography" ? (
+                                <input
+                                  value={
+                                    draft.reportMeta.subjectTopography ??
+                                    subjectTopographyDisplay(draft.values)
+                                  }
+                                  onChange={(e) => setMeta({ subjectTopography: e.target.value })}
+                                  placeholder="Topography"
+                                  title="Subject topography printed on the adjustment grid. Defaults to the inspection selection, and can be edited for this report."
                                   className="w-full min-w-0 rounded border border-input bg-card px-1 py-0.5 text-[0.65rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
                                 />
                               ) : isSite ? (

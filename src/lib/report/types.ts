@@ -306,6 +306,8 @@ export interface ReportMeta {
   siteRatePerM2?: string;
   /** Override of the subject site area used on the adjustment grid. */
   subjectSiteArea?: string;
+  /** Override of the subject topography printed on the adjustment grid. */
+  subjectTopography?: string;
   /** Subject-column description for the first Other adjustment row. */
   subjectOther1?: string;
   /** Subject-column description for the second Other adjustment row. */

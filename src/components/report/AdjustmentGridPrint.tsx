@@ -8,6 +8,7 @@ import {
   formatAreaWithSqm,
   subjectFeatureDisplay,
   subjectSiteSizeDisplay,
+  subjectTopographyDisplay,
 } from "@/lib/report/adjustmentGrid";
 import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/types";
 
@@ -103,7 +104,9 @@ export function AdjustmentGridPrint({
                         ? meta.subjectOther2 || "—"
                         : feature.id === "site"
                           ? subjectSiteSizeDisplay(values)
-                          : subjectFeatureDisplay(feature, values) || "—"}
+                          : feature.id === "topography"
+                            ? subjectTopographyDisplay(values, meta.subjectTopography)
+                            : subjectFeatureDisplay(feature, values) || "—"}
                   </td>
                   {chunk.map((sale) => {
                     const adj = adjOf(sale, feature.id);

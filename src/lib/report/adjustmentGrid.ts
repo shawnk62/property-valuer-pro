@@ -257,6 +257,73 @@ export function ensureSaleAdjustments(sale: ComparableSale): ComparableSale {
   return { ...sale, adjustments };
 }
 
+
+/** Inspection checkbox ids for topography. The stored value is the id, not the label. */
+const TOPO_LABELS: Record<string, string> = {
+  topo_gentle: "Gentle fall",
+  topo_moderate: "Moderate fall",
+  topo_steep: "Steep fall",
+  topo_fall_to_road: "Falls to the road",
+  topo_fall_from_road: "Falls from the road",
+  topo_gentle_to_road: "Falls gently to the road",
+  topo_moderate_to_road: "Falls moderately to the road",
+  topo_steep_to_road: "Falls steeply to the road",
+  topo_gentle_from_road: "Falls gently from the road",
+  topo_moderate_from_road: "Falls moderately from the road",
+  topo_steep_from_road: "Falls steeply from the road",
+  topo_slope_front: "Slopes to front",
+  topo_slope_rear: "Slopes to rear",
+  topo_slope_right: "Slopes to right",
+  topo_slope_left: "Slopes to left",
+  topo_slope_north: "Slopes to north",
+  topo_slope_south: "Slopes to south",
+  topo_slope_east: "Slopes to east",
+  topo_slope_west: "Slopes to west",
+  topo_level: "Level",
+  topo_level_with_road: "Level with road",
+  topo_poorly_drained: "Poorly drained",
+  topo_undulating: "Undulating",
+  topo_well_drained: "Well drained",
+  topo_other: "Other",
+};
+
+export function topographyOptionLabel(raw: string): string {
+  const key = raw.trim();
+  if (!key) return "";
+  if (TOPO_LABELS[key]) return TOPO_LABELS[key];
+  if (key.startsWith("topo_")) {
+    return key
+      .slice(5)
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+  return key;
+}
+
+export function topographyFromInspection(values: InspectionValues): string {
+  const topo = values["topo"];
+  const ids = Array.isArray(topo)
+    ? topo.map((item) => String(item))
+    : topo !== undefined && topo !== null && String(topo).trim()
+      ? [String(topo)]
+      : [];
+  const labels = ids.map((id) => topographyOptionLabel(id)).filter(Boolean);
+  return labels.length ? labels.join(", ") : "—";
+}
+
+/**
+ * Subject topography on the adjustment grid.
+ * A report-level override wins; otherwise the inspection selection is used.
+ */
+export function subjectTopographyDisplay(
+  values: InspectionValues,
+  override?: string | null,
+): string {
+  const custom = String(override ?? "").trim();
+  if (custom) return custom;
+  return topographyFromInspection(values);
+}
+
 export function subjectFeatureDisplay(
   feature: AdjustmentFeature,
   values: InspectionValues,
@@ -339,12 +406,7 @@ export function subjectFeatureDisplay(
   }
 
   if (feature.id === "topography") {
-    const topo = values["topo"];
-    if (Array.isArray(topo) && topo.length) return topo.join(", ");
-    if (topo !== undefined && topo !== null && String(topo).trim()) {
-      return String(topo).trim();
-    }
-    return "—";
+    return topographyFromInspection(values);
   }
 
   if (feature.id === "site") {
