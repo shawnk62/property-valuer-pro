@@ -78,7 +78,7 @@ import {
   saleNarrativeFingerprint,
   saveAutoSaleNarratives,
 } from "@/lib/report/saleNarrative";
-import { formatCurrencyDisplay, withRelativityNarrative, applyRelativityToSales } from "@/lib/report/salesRelativity";
+import { formatCurrencyDisplay, formatSalePrice, withRelativityNarrative, applyRelativityToSales } from "@/lib/report/salesRelativity";
 import type { ComparableSale, FeatureAdjustment } from "@/lib/report/types";
 import { salesHeldBack, salesOnReport } from "@/lib/report/types";
 import { confirmDelete } from "@/lib/confirmDelete";
@@ -2095,8 +2095,9 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                   draft.values,
                                   draft.reportMeta.subjectAskingPrice,
                                 ),
-                              read: (s: (typeof sales)[0]) => s.salePrice,
-                              write: (id: string, v: string) => patchSale(id, { salePrice: v }),
+                              read: (s: (typeof sales)[0]) => formatSalePrice(s.salePrice),
+                              write: (id: string, v: string) =>
+                                patchSale(id, { salePrice: formatSalePrice(v) || v }),
                             },
                             {
                               key: "saleDate",

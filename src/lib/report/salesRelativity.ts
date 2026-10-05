@@ -39,7 +39,14 @@ export function formatCurrencyInput(raw: string): string {
   return n.toLocaleString("en-AU", { maximumFractionDigits: 0 });
 }
 
-/** Format stored valueAmount for report output ( tolerates already-comma'd strings). */
+/** Format a sale price for the grids: 806000 or 806,000 → $806,000. */
+export function formatSalePrice(raw: string | null | undefined): string {
+  const text = String(raw ?? "").trim();
+  if (!text) return "";
+  const n = parseMoney(text);
+  if (n == null) return text;
+  return `$${n.toLocaleString("en-AU", { maximumFractionDigits: 0 })}`;
+}
 export function formatCurrencyDisplay(raw: string | null | undefined): string {
   if (raw == null || !String(raw).trim()) return "";
   const n = parseMoney(String(raw));

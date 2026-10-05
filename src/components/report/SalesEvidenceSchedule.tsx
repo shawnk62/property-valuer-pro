@@ -3,7 +3,7 @@ import {
   comparableSiteRate,
   computeSaleAdjustmentTotals,
 } from "@/lib/report/adjustmentGrid";
-import { cleanSaleProse } from "@/lib/report/salesRelativity";
+import { cleanSaleProse, formatSalePrice } from "@/lib/report/salesRelativity";
 import { printedSaleComment } from "@/lib/report/sourceNotes";
 import type { ComparableSale } from "@/lib/report/types";
 
@@ -96,7 +96,7 @@ export function SalesEvidenceSchedule({
                   {site.area}
                 </td>
                 <td className={`${cell} whitespace-nowrap`} style={cellStyle}>
-                  {s.salePrice || "—"}
+                  {formatSalePrice(s.salePrice) || "—"}
                 </td>
                 <td className={`${cell} whitespace-nowrap`} style={cellStyle}>
                   {site.rate}

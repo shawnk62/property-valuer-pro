@@ -12,6 +12,7 @@ import {
   subjectSiteSizeDisplay,
   subjectTopographyDisplay,
 } from "@/lib/report/adjustmentGrid";
+import { formatSalePrice } from "@/lib/report/salesRelativity";
 import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/types";
 
 const COMPS_PER_BLOCK = 3;
@@ -104,7 +105,7 @@ export function AdjustmentGridPrint({
                 <td>{subjectAskingPriceDisplay(values, meta.subjectAskingPrice) || "—"}</td>
                 {chunk.map((sale) => (
                   <Fragment key={sale.id}>
-                    <td>{sale.salePrice || "—"}</td>
+                    <td>{formatSalePrice(sale.salePrice) || "—"}</td>
                     <td className="adj-money" />
                   </Fragment>
                 ))}
