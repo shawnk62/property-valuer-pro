@@ -144,12 +144,6 @@ export function fillExamTocPages(): void {
     if (child instanceof Element) place(child);
   });
 
-  Array.from(sheet.querySelectorAll<HTMLElement>("[id]")).forEach((el) => {
-    if (!el.id) return;
-    const top = el.getBoundingClientRect().top - sheet.getBoundingClientRect().top;
-    pages.set(el.id, Math.max(1, 1 + Math.floor(Math.max(0, top) / pageH)));
-  });
-
   document.querySelectorAll<HTMLElement>("[data-toc-id]").forEach((slot) => {
     const id = slot.getAttribute("data-toc-id");
     if (!id) return;

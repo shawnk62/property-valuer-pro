@@ -51,7 +51,7 @@ export function withoutSourceNotes(text: string, sales: ComparableSale[]): strin
   return kept.join("\n\n");
 }
 
-/** Printed sale comment. Never the source-note or working-note field. */
+/** Printed sale comment. Working-grid narrative, then the comment field. */
 export function printedSaleComment(sale: ComparableSale): string {
-  return sale.narrative?.trim() || "";
+  return sale.narrative?.trim() || sale.comments?.trim() || "";
 }

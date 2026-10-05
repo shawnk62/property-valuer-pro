@@ -470,6 +470,8 @@ const MARKET_SOURCES: Array<{ test: RegExp; author: string; title: string; site:
   { test: /westpac/i, author: "Westpac", title: "Westpac Housing Pulse", site: "Westpac" },
   { test: /commbank|commonwealth bank/i, author: "Commonwealth Bank of Australia", title: "Housing market update", site: "Commonwealth Bank of Australia" },
   { test: /\bNAB\b|national australia bank/i, author: "National Australia Bank", title: "NAB Residential Property Survey", site: "National Australia Bank" },
+  { test: /realestate\.com\.au|rea group/i, author: "REA Group", title: "realestate.com.au market data", site: "realestate.com.au" },
+  { test: /international valuation standards council|\bIVSC\b/, author: "International Valuation Standards Council", title: "International Valuation Standards", site: "International Valuation Standards Council" },
   { test: /\bKPMG\b/i, author: "KPMG", title: "Residential Property Market Outlook", site: "KPMG" },
 ];
 

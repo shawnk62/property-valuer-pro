@@ -577,6 +577,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ) : null}
       </section>
 
+      <section className="report-toc">
       <H1>Table of Contents</H1>
       <ExamToc
         entries={toc}
@@ -603,6 +604,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           })),
         ]}
       />
+      </section>
 
       <div id="exam-summary" className="report-exam-summary-sheet report-keep-block">
       <H1>Executive Summary</H1>
@@ -1105,6 +1107,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             draft.narrative.marketState,
             draft.narrative.marketRegion,
             draft.narrative.marketLocality,
+            draft.narrative.salesComments,
+            "International Valuation Standards Council",
           ].join("\n"),
         ).length ? (
           <div className="report-reference-list">
@@ -1117,6 +1121,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 draft.narrative.marketState,
                 draft.narrative.marketRegion,
                 draft.narrative.marketLocality,
+            draft.narrative.salesComments,
+            "International Valuation Standards Council",
               ].join("\n"),
             ).map((ref, i) => {
               const style = "harvard";

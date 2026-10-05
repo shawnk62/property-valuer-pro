@@ -30,8 +30,9 @@ function printedAddress(raw: string): string {
 
 function printedComment(raw: string): string {
   return raw
+    .replace(/\b(\d+)\s+square metres\b/gi, "$1 square metre")
     .replace(/\bsquare meters\b/gi, "square metres")
-    .replace(/\bsquare meter\b/gi, "square metres")
+    .replace(/\bsquare meter\b/gi, "square metre")
     .replace(/\b(\d+)\s*m2\b/gi, "$1 m²");
 }
 function saleRating(sale: ComparableSale): string {
