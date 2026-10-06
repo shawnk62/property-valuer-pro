@@ -37,6 +37,7 @@ function emptyNarrative(): ReportNarrative {
     highestBestUse: "",
     remarks: "",
     individualCommentary: "",
+    assignmentReflection: "",
     riskAnalysis: "",
     valuationApproach: "",
     envIntro: "",
@@ -93,6 +94,8 @@ function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): R
     remarks: typeof raw.remarks === "string" ? raw.remarks : "",
     individualCommentary:
       typeof raw.individualCommentary === "string" ? raw.individualCommentary : "",
+    assignmentReflection:
+      typeof raw.assignmentReflection === "string" ? raw.assignmentReflection : "",
     riskAnalysis: typeof raw.riskAnalysis === "string" ? raw.riskAnalysis : "",
     valuationApproach: typeof raw.valuationApproach === "string" ? raw.valuationApproach : "",
     envIntro: typeof raw.envIntro === "string" ? raw.envIntro : "",

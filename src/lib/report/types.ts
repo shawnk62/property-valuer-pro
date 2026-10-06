@@ -152,6 +152,28 @@ export function annexPrintsInWorkingFile(photo: ReportPhoto): boolean {
   return photo.annexDestination === "working" || photo.annexDestination === "both";
 }
 
+export function extraAnnexGroups(
+  photos: ReportPhoto[] | null | undefined,
+): { id: string; title: string; pages: ReportPhoto[] }[] {
+  const pages = (photos ?? []).filter(isExtraAnnexPhoto);
+  const order: string[] = [];
+  const map = new Map<string, ReportPhoto[]>();
+  for (const page of pages) {
+    const title = annexDocumentTitle(page);
+    const id = page.annexGroup || (title ? `title:${title.toLowerCase()}` : page.id);
+    if (!map.has(id)) {
+      map.set(id, []);
+      order.push(id);
+    }
+    map.get(id)!.push(page);
+  }
+  return order.map((id, i) => {
+    const groupPages = map.get(id) ?? [];
+    const title = annexDocumentTitle(groupPages[0] ?? {}) || `Annexure document ${i + 1}`;
+    return { id, title, pages: groupPages };
+  });
+}
+
 export function extraAnnexGroupsOnReport(
   photos: ReportPhoto[] | null | undefined,
 ): { id: string; title: string; pages: ReportPhoto[] }[] {
@@ -309,6 +331,8 @@ export interface ReportNarrative {
   remarks: string;
   /** Shawn Exam — individual commentary (prints before appendices). */
   individualCommentary: string;
+  /** Assignment only. Written by the valuer. Not generated. Default excluded. */
+  assignmentReflection: string;
   /** PropertyPRO risk analysis — one paragraph per heading. */
   riskAnalysis: string;
   /** Direct comparison / valuation approach narrative. */

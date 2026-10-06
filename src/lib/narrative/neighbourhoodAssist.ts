@@ -95,6 +95,7 @@ export function narrativePrints(
 ): boolean {
   const map = meta?.printNarrative;
   if (map && map[key] !== undefined) return map[key] !== false;
+  if (key === "assignmentReflection") return false;
   if (key === "physicalAccess") {
     if (!values) return false;
     return isCommercialType(values) || isIndustrialType(values);

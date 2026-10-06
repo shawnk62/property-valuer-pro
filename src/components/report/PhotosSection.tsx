@@ -6,7 +6,7 @@ import { deletePhotoBlob, photoBlobKey, putPhotoBlob } from "@/lib/report/photo-
 import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
 import { nowPhotoTimestamp } from "@/lib/inspection/photoRequirements";
 import { confirmDelete } from "@/lib/confirmDelete";
-import { extraAnnexGroupsOnReport, annexPageLabel, mapSlotsForImport, photoSlotsForJob, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
+import { extraAnnexGroups, extraAnnexGroupsOnReport, annexPageLabel, mapSlotsForImport, photoSlotsForJob, type PhotoSlot, type ReportPhoto } from "@/lib/report/types";
 import { isPdfFile, rasterizePdfPages } from "@/lib/report/rasterizePdfPages";
 import { isVacantLand } from "@/lib/inspection/visibility";
 
@@ -236,7 +236,11 @@ function PhotoCard({
             onChange={(e) => onOmitFromReport(e.target.checked)}
             className="mt-0.5 size-3.5 shrink-0 rounded border-input"
           />
-          <span>Hold in working file (omit from report)</span>
+          <span>
+            {photo.annexDestination === "working" || photo.annexDestination === "both"
+              ? "Omit this page from field notes"
+              : "Hold in working file (omit from report)"}
+          </span>
         </label>
       ) : null}
     </div>
@@ -1049,7 +1053,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
         </div>
       </div>
 
-      {extraAnnexGroupsOnReport(photos).map((group) => (
+      {extraAnnexGroups(photos).map((group) => (
         <div key={group.id} className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <input

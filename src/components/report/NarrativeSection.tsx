@@ -1517,6 +1517,36 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         </Fragment>
         );
       })}
+      {shawnExam ? (
+        <div className="rounded-md border border-border bg-card p-4">
+          <h3 className="text-sm font-semibold text-foreground">Review of learning outcomes</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Assignment only. Write this yourself. It is not generated, and it does not print on any other report type. About one page.
+          </p>
+          <label className="mt-3 flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="mt-0.5 size-3.5 shrink-0 rounded border-input"
+              checked={draft.reportMeta.printNarrative?.assignmentReflection === true}
+              onChange={(e) =>
+                setMeta({
+                  printNarrative: {
+                    ...draft.reportMeta.printNarrative,
+                    assignmentReflection: e.target.checked,
+                  },
+                })
+              }
+            />
+            <span>Include this section in the assignment report</span>
+          </label>
+          <textarea
+            className="mt-3 min-h-64 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            value={draft.narrative.assignmentReflection}
+            onChange={(e) => setNarrative({ assignmentReflection: e.target.value })}
+            placeholder="How you approached the assignment, what was difficult, what you learned, and the skills you gained."
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

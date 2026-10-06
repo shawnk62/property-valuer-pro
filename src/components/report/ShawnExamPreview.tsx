@@ -528,6 +528,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     ...(show83 ? [{ id: "exam-8-3", label: `${major[7]}.${n8[2]} Final reconciliation of value` }] : []),
     ...(prints("disclaimer") ? [{ id: "exam-reliance", label: "Reliance and terms of use" }] : []),
     ...(show9 ? [{ id: "exam-9", label: t(major[8], "List of References") }] : []),
+    ...(narrativePrints(m, "assignmentReflection")
+      ? [{ id: "exam-reflection", label: "Review of learning outcomes" }]
+      : []),
     ...(hasAnnexures ? [{ id: "exam-10", label: t(major[9], "Annexures") }] : []),
   ];
 
@@ -1185,6 +1188,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep>
       </Lead> : null}
       </section>
+      {narrativePrints(m, "assignmentReflection") ? (
+        <section id="exam-reflection" className="report-section mt-8">
+          <H1>Review of learning outcomes</H1>
+          <Prose text={draft.narrative.assignmentReflection || ""} />
+        </section>
+      ) : null}
 
       {hasAnnexures ? <Lead id="exam-10" title={t(major[9], "Annexures")}>
       <ol className="ml-5 list-decimal space-y-0.5 text-sm">

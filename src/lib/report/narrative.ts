@@ -1389,6 +1389,7 @@ export function generateNarrative(
     highestBestUse: buildHighestBestUse(values),
     zoningPurpose: zoningPurposeSentence(String(values["prop_zoning_desc"] ?? "")),
     individualCommentary: "",
+    assignmentReflection: "",
     riskAnalysis: "",
     valuationApproach: buildValuationApproach(values),
     envIntro: buildEnvIntro(),
