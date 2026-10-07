@@ -382,17 +382,24 @@ export const inspectionStore = {
 async save(id: string, values: InspectionValues): Promise<void> {
     // Live form_values stay editable after submit so answers can be corrected.
     // submitted_form_values (first-submit snapshot) is left unchanged.
+    // Every form save passes through this function, so a blank payload cannot
+    // replace answers that are already stored.
+    await ensureFreshSession();
+    const existing = await this.get(id);
+    if (!existing) throw new Error("Inspection not found");
+    const stored = existing.values ?? {};
+    if (Object.keys(values ?? {}).length === 0 && Object.keys(stored).length > 0) return;
+    const merged: InspectionValues = { ...stored, ...values };
+    (Object.keys(stored) as (keyof InspectionValues)[]).forEach((key) => {
+      if (!(key in (values ?? {})) && stored[key] != null && stored[key] !== "") merged[key] = stored[key];
+    });
     const payload = {
-      form_values: sanitizeInspectionValues(values),
+      form_values: sanitizeInspectionValues(merged),
       schema_version: String(schema.version),
       updated_at: new Date().toISOString(),
     };
     const write = () =>
       supabase.from("inspections").update(payload).eq("id", id).select("id").maybeSingle();
-
-    await ensureFreshSession();
-    const existing = await this.get(id);
-    if (!existing) throw new Error("Inspection not found");
 
     let { data, error } = await write();
     if (error && isAuthFailure(`${error.message || ""} ${error.code || ""}`)) {
@@ -509,10 +516,37 @@ async save(id: string, values: InspectionValues): Promise<void> {
 
   async saveReportExtras(id: string, extras: ReportExtras): Promise<void> {
     await ensureFreshSession();
+    const stored = (await this.getReportExtras(id)) ?? {};
+    const next: ReportExtras = { ...stored, ...extras };
+    const storedNarrative = (stored.narrative ?? {}) as Record<string, string>;
+    const incomingNarrative = (extras.narrative ?? {}) as Record<string, string>;
+    next.narrative = { ...storedNarrative, ...incomingNarrative };
+    Object.keys(storedNarrative).forEach((key) => {
+      if (!String(incomingNarrative[key] ?? "").trim() && String(storedNarrative[key] ?? "").trim()) {
+        next.narrative = { ...(next.narrative as object), [key]: storedNarrative[key] };
+      }
+    });
+    if ((!extras.sales || extras.sales.length === 0) && stored.sales && stored.sales.length > 0) next.sales = stored.sales;
+    if ((!extras.photos || extras.photos.length === 0) && stored.photos && stored.photos.length > 0) next.photos = stored.photos;
+    const storedMeta = (stored.reportMeta ?? {}) as Record<string, unknown>;
+    const incomingMeta = (extras.reportMeta ?? {}) as Record<string, unknown>;
+    const meta = { ...storedMeta, ...incomingMeta };
+    ["valueAmount", "valueDate", "inspectionDate", "valuerName", "firmName"].forEach((key) => {
+      if (!String(incomingMeta[key] ?? "").trim() && String(storedMeta[key] ?? "").trim()) meta[key] = storedMeta[key];
+    });
+    if (!incomingMeta.manualNarrative && storedMeta.manualNarrative) meta.manualNarrative = storedMeta.manualNarrative;
+    if (
+      (!Array.isArray(incomingMeta.reportReferences) || incomingMeta.reportReferences.length === 0) &&
+      Array.isArray(storedMeta.reportReferences) &&
+      storedMeta.reportReferences.length > 0
+    ) {
+      meta.reportReferences = storedMeta.reportReferences;
+    }
+    next.reportMeta = meta;
     const { error } = await supabase
       .from("inspections")
       .update({
-        report_extras: extras,
+        report_extras: next,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id);
