@@ -2,6 +2,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { PausedTextarea } from "@/components/report/PausedTextarea";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import {
   generateNarrativeBlock,
@@ -1526,10 +1527,10 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             />
             <span>Include this section in the assignment report</span>
           </label>
-          <textarea
+          <PausedTextarea
             className="mt-3 min-h-64 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             value={draft.narrative.assignmentReflection}
-            onChange={(e) => setNarrative({ assignmentReflection: e.target.value })}
+            onCommit={(value) => setNarrative({ assignmentReflection: value })}
             placeholder="How you approached the assignment, what was difficult, what you learned, and the skills you gained."
           />
         </div>

@@ -13,6 +13,7 @@ import {
   type RiskScore,
 } from "@/lib/report/propertyRiskRatings";
 import { Button } from "@/components/ui/button";
+import { PausedTextarea } from "@/components/report/PausedTextarea";
 import {
   Sheet,
   SheetContent,
@@ -94,10 +95,10 @@ export function RiskRatingsPanel({ controller }: { controller: ReportDraftContro
                 {cat.heading}
                 {score ? ` — ${score} ${scoreLabel(score)}` : ""}
               </span>
-              <textarea
+              <PausedTextarea
                 className="mt-1 min-h-[4.5rem] w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
                 value={note}
-                onChange={(e) => saveNote(cat, e.target.value)}
+                onCommit={(text) => saveNote(cat, text)}
               />
             </label>
           );

@@ -7,6 +7,7 @@ import {
   useState,
   type SyntheticEvent,
 } from "react";
+import { PausedTextarea } from "@/components/report/PausedTextarea";
 import { toast } from "sonner";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { SalesCommentaryWorkspace } from "@/components/report/SalesCommentaryWorkspace";
@@ -2612,20 +2613,18 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                               )}
                             >
                               <div className="space-y-1">
-                                <textarea
+                                <PausedTextarea
                                   rows={expandedNarrativeId === sale.id ? 14 : 3}
                                   value={sale.narrative ?? ""}
                                   onFocus={() => {
-                                    // Click / focus → manual lock + expand for readable editing
                                     setExpandedNarrativeId(sale.id);
                                     if (!sale.narrativeManual) {
                                       patchSale(sale.id, { narrativeManual: true });
                                     }
                                   }}
-                                  onChange={(e) =>
+                                  onCommit={(value) =>
                                     patchSale(sale.id, {
-                                      narrative: e.target.value,
-                                      // Editing locks the text so auto/regenerate will not wipe it
+                                      narrative: value,
                                       narrativeManual: true,
                                     })
                                   }
@@ -2691,13 +2690,11 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                 "border-l border-border px-1 py-1",
                               )}
                             >
-                              <textarea
+                              <PausedTextarea
                                 rows={expandedWorkingNotesId === sale.id ? 12 : 3}
                                 value={sale.workingNotes ?? ""}
                                 onFocus={() => setExpandedWorkingNotesId(sale.id)}
-                                onChange={(e) =>
-                                  patchSale(sale.id, { workingNotes: e.target.value })
-                                }
+                                onCommit={(value) => patchSale(sale.id, { workingNotes: value })}
                                 placeholder="Private notes for this sale…"
                                 className={`w-full rounded border border-dashed border-input/80 bg-amber-50/40 px-1.5 py-1 text-[0.7rem] outline-none focus:border-input focus:bg-accent/40 ${
                                   expandedWorkingNotesId === sale.id
@@ -2733,12 +2730,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                 "border-l border-border px-1 py-1",
                               )}
                             >
-                              <textarea
+                              <PausedTextarea
                                 rows={2}
                                 value={sale.comments}
-                                onChange={(e) =>
-                                  patchSale(sale.id, { comments: e.target.value })
-                                }
+                                onCommit={(value) => patchSale(sale.id, { comments: value })}
                                 className="w-full resize-y rounded border border-transparent bg-transparent px-1.5 py-1 text-[0.7rem] outline-none focus:border-input focus:bg-accent/40"
                               />
                             </td>
