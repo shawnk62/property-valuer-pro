@@ -83,7 +83,26 @@ export function useInspection(id: string, opts?: { readOnly?: boolean }) {
     async (next: InspectionValues) => {
       if (readOnly) return;
       try {
-        await inspectionStore.save(id, next);
+        const current = await inspectionStore.get(id);
+        const stored = current?.values ?? {};
+        const merged = { ...stored, ...next };
+        (Object.keys(stored) as (keyof InspectionValues)[]).forEach((key) => {
+          const kept = stored[key];
+          const incoming = next[key];
+          const incomingEmpty =
+            incoming == null ||
+            incoming === "" ||
+            (Array.isArray(incoming) && incoming.length === 0);
+          const storedFilled =
+            kept != null &&
+            kept !== "" &&
+            !(Array.isArray(kept) && kept.length === 0);
+          if (incomingEmpty && storedFilled && (incoming == null || !(key in next))) merged[key] = kept;
+        });
+        if (Object.keys(next).length === 0 && Object.keys(stored).length > 0) {
+          return;
+        }
+        await inspectionStore.save(id, merged);
         setSavedAt(new Date().toISOString());
         setError(null);
       } catch (err: unknown) {

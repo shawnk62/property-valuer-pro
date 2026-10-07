@@ -96,9 +96,21 @@ export function TitleSearchImport({ inspectionId, values, onApply }: Props) {
           omitFromReport: !includeAnnex,
         });
       }
+      const latest = (await inspectionStore.getReportExtras(inspectionId)) ?? extras;
+      const latestPhotos = Array.isArray(latest.photos) ? latest.photos : [];
+      const keptLatest = latestPhotos.filter(
+        (p) =>
+          !(
+            p &&
+            typeof p === "object" &&
+            ((p as ReportPhoto).kind === "title" ||
+              /title search|certificate of title/i.test(String((p as ReportPhoto).caption ?? "")))
+          ),
+      );
+      const titlePages = next.filter((p) => p.kind === "title");
       await inspectionStore.saveReportExtras(inspectionId, {
-        ...extras,
-        photos: next.map((p) => ({
+        ...latest,
+        photos: [...keptLatest, ...titlePages].map((p) => ({
           id: p.id,
           slot: p.slot,
           caption: p.caption,

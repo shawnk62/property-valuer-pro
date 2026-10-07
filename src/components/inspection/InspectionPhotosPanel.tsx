@@ -93,7 +93,8 @@ async function loadPhotos(inspectionId: string): Promise<ReportPhoto[]> {
 
 async function persistPhotos(inspectionId: string, photos: ReportPhoto[]): Promise<void> {
   const existing = (await inspectionStore.getReportExtras(inspectionId)) ?? {};
-  // Keep narrative / sales / meta; only replace photos
+  const storedPhotos = Array.isArray(existing.photos) ? existing.photos : [];
+  if (photos.length === 0 && storedPhotos.length > 0) return;
   await inspectionStore.saveReportExtras(inspectionId, {
     ...existing,
     photos: photos.map((p) => ({

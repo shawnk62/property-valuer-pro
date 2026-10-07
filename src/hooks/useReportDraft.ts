@@ -541,7 +541,22 @@ export function useReportDraft(
       (Object.keys(narrative) as (keyof ReportNarrative)[]).forEach((key) => {
         if (!narrative[key]?.trim() && stored[key]?.trim()) narrative[key] = stored[key];
       });
-      await inspectionStore.saveReportExtras(d.inspectionId, toCloudExtras({ ...d, narrative }));
+      const payload = toCloudExtras({ ...d, narrative });
+      const storedSales = Array.isArray(existing?.sales) ? existing.sales : [];
+      if (payload.sales.length === 0 && storedSales.length > 0) payload.sales = storedSales;
+      const storedPhotos = Array.isArray(existing?.photos) ? existing.photos : [];
+      if (payload.photos.length === 0 && storedPhotos.length > 0) payload.photos = storedPhotos;
+      const storedMeta = (existing?.reportMeta ?? {}) as ReportMeta;
+      const meta = { ...payload.reportMeta };
+      (["valueAmount", "valueDate", "inspectionDate", "valuerName", "firmName"] as const).forEach((key) => {
+        if (!String(meta[key] ?? "").trim() && String(storedMeta[key] ?? "").trim()) meta[key] = storedMeta[key];
+      });
+      if (!meta.manualNarrative && storedMeta.manualNarrative) meta.manualNarrative = storedMeta.manualNarrative;
+      if ((!meta.reportReferences || meta.reportReferences.length === 0) && storedMeta.reportReferences?.length) {
+        meta.reportReferences = storedMeta.reportReferences;
+      }
+      payload.reportMeta = meta;
+      await inspectionStore.saveReportExtras(d.inspectionId, payload);
       setSavedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
       setDirty(false);
     } catch (err: unknown) {
