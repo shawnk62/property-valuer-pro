@@ -18,6 +18,33 @@ import { objectUrlFromPhotoBlob } from "@/lib/report/photo-idb";
  * so desktop and iPad share the same draft. localStorage is a cache only.
  */
 const storageKey = (id: string) => `report-draft:${id}`;
+const narrativeBackupKey = (id: string) => `report-narrative-backup:${id}`;
+
+function rememberNarrative(inspectionId: string, narrative: ReportNarrative) {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(narrativeBackupKey(inspectionId));
+    const prior = raw ? (JSON.parse(raw) as Partial<ReportNarrative>) : {};
+    const next = { ...prior };
+    (Object.keys(narrative) as (keyof ReportNarrative)[]).forEach((key) => {
+      const value = narrative[key];
+      if (typeof value === "string" && value.trim()) next[key] = value;
+    });
+    window.localStorage.setItem(narrativeBackupKey(inspectionId), JSON.stringify(next));
+  } catch {
+    /* private mode or quota */
+  }
+}
+
+function loadNarrativeBackup(inspectionId: string): Partial<ReportNarrative> | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(narrativeBackupKey(inspectionId));
+    return raw ? (JSON.parse(raw) as Partial<ReportNarrative>) : null;
+  } catch {
+    return null;
+  }
+}
 
 function emptyNarrative(): ReportNarrative {
   return {
@@ -383,14 +410,15 @@ export function useReportDraft(
         // Per-key merge: keep any non-empty text from cloud or local (never wipe a reopened report)
         const cloudNarrative = normalizeNarrative(cloud?.narrative as ReportNarrative | undefined);
         const localNarrative = normalizeNarrative(local?.narrative);
+        const backupNarrative = normalizeNarrative(loadNarrativeBackup(inspectionId));
         const narrative: ReportNarrative = emptyNarrative();
         for (const key of Object.keys(narrative) as (keyof ReportNarrative)[]) {
           const c = cloudNarrative[key]?.trim() ?? "";
           const l = localNarrative[key]?.trim() ?? "";
-          // Prefer longer/non-empty; cloud wins on equal non-empty to stay multi-device consistent
-          if (c) narrative[key] = c;
-          else if (l) narrative[key] = l;
+          const b = backupNarrative[key]?.trim() ?? "";
+          narrative[key] = c || l || b;
         }
+        rememberNarrative(inspectionId, narrative);
 
         const storedMeta =
           (cloud?.reportMeta as ReportMeta | undefined) ||
@@ -481,7 +509,9 @@ export function useReportDraft(
         const hydratedDraft = await hydrateLocalBlobs(next);
         if (cancelled) return;
         setDraft(hydratedDraft);
+        draftRef.current = hydratedDraft;
         writeLocalCache(hydratedDraft);
+        rememberNarrative(inspectionId, hydratedDraft.narrative);
         setLoaded(true);
         hydrated.current = true;
         setDirty(false);
@@ -499,20 +529,26 @@ export function useReportDraft(
 
   const persistCloud = useCallback(async (d: ReportDraft) => {
     writeLocalCache(d);
-    if (readOnly) {
+    rememberNarrative(d.inspectionId, d.narrative);
+    if (readOnly || !hydrated.current) {
       setDirty(true);
       return;
     }
     try {
-      await inspectionStore.saveReportExtras(d.inspectionId, toCloudExtras(d));
+      const existing = await inspectionStore.getReportExtras(d.inspectionId);
+      const stored = normalizeNarrative(existing?.narrative as ReportNarrative | undefined);
+      const narrative = { ...d.narrative };
+      (Object.keys(narrative) as (keyof ReportNarrative)[]).forEach((key) => {
+        if (!narrative[key]?.trim() && stored[key]?.trim()) narrative[key] = stored[key];
+      });
+      await inspectionStore.saveReportExtras(d.inspectionId, toCloudExtras({ ...d, narrative }));
       setSavedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
       setDirty(false);
     } catch (err: unknown) {
-      // Keep local cache; surface soft failure via dirty flag remaining true
       console.error("report_extras save failed", err);
       throw err;
     }
-  }, []);
+  }, [readOnly]);
 
   const scheduleCloudSave = useCallback(
     (d: ReportDraft) => {
