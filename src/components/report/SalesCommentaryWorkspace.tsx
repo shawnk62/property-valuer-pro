@@ -1,4 +1,4 @@
-import { useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import {
   adjustmentFeaturesForProperty,
@@ -142,12 +142,44 @@ function Editor({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const [text, setText] = useState(value);
+  const latest = useRef(value);
+  const focused = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  useEffect(() => {
+    if (focused.current) return;
+    latest.current = value;
+    setText(value);
+  }, [value]);
+
+  function commit(next: string) {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    onChangeRef.current(next);
+  }
+
   return (
     <label className="flex min-h-[16rem] flex-1 flex-col gap-1">
       <span className="text-sm font-medium text-foreground">{label}</span>
       <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        value={text}
+        onFocus={() => {
+          focused.current = true;
+        }}
+        onChange={(e) => {
+          const next = e.target.value;
+          latest.current = next;
+          setText(next);
+          if (timer.current) clearTimeout(timer.current);
+          timer.current = setTimeout(() => commit(next), 500);
+        }}
+        onBlur={() => {
+          focused.current = false;
+          commit(latest.current);
+        }}
         className="min-h-[16rem] w-full flex-1 resize-y rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed text-foreground outline-none focus:ring-1 focus:ring-ring"
       />
     </label>

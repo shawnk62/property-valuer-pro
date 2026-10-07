@@ -1274,10 +1274,16 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             </div>
           </div>
           <span className="mb-2 block text-sm text-muted-foreground">{block.hint}</span>
-          <textarea
+          <NarrativeField
             value={blockText}
-            onChange={(e) => {
-              const val = e.target.value;
+            rows={
+              block.key === "salesComments" || block.key === "valueReconciliation"
+                ? 16
+                : block.key === "remarks"
+                  ? 12
+                  : 7
+            }
+            onCommit={(val) => {
               if (block.key === "remarks") setLocalRemarks(val);
               setNarrative({ [block.key]: val });
               setMeta({
@@ -1286,29 +1292,10 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                   [block.key]: true,
                 },
               });
-              const start = e.target.selectionStart ?? 0;
-              const end = e.target.selectionEnd ?? 0;
-              const sel = val.slice(start, end);
-              setSelectionByKey((prev) => ({
-                ...prev,
-                [block.key]: sel.trim() ? sel : "",
-              }));
             }}
-            onSelect={(e) => {
-              const el = e.currentTarget;
-              const sel = el.value.slice(el.selectionStart ?? 0, el.selectionEnd ?? 0);
-              if (sel.trim()) {
-                setSelectionByKey((prev) => ({ ...prev, [block.key]: sel }));
-              }
+            onSelectText={(sel) => {
+              if (sel.trim()) setSelectionByKey((prev) => ({ ...prev, [block.key]: sel }));
             }}
-            rows={
-              block.key === "salesComments" || block.key === "valueReconciliation"
-                ? 16
-                : block.key === "remarks"
-                  ? 12
-                  : 7
-            }
-            className="w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm leading-relaxed text-foreground outline-none focus:ring-2 focus:ring-ring"
           />
           {block.key === "neighbourhood" &&
           (neighbourhoodAssistEnabled(String(draft.values["prop_assignment"] ?? "")) ||
@@ -1548,5 +1535,62 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         </div>
       ) : null}
     </div>
+  );
+}
+
+function NarrativeField({
+  value,
+  rows,
+  onCommit,
+  onSelectText,
+}: {
+  value: string;
+  rows: number;
+  onCommit: (value: string) => void;
+  onSelectText: (value: string) => void;
+}) {
+  const [text, setText] = useState(value);
+  const latest = useRef(value);
+  const focused = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const commitRef = useRef(onCommit);
+  commitRef.current = onCommit;
+
+  useEffect(() => {
+    if (focused.current) return;
+    latest.current = value;
+    setText(value);
+  }, [value]);
+
+  function commit(next: string) {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    commitRef.current(next);
+  }
+
+  return (
+    <textarea
+      value={text}
+      rows={rows}
+      onFocus={() => {
+        focused.current = true;
+      }}
+      onChange={(e) => {
+        const next = e.target.value;
+        latest.current = next;
+        setText(next);
+        if (timer.current) clearTimeout(timer.current);
+        timer.current = setTimeout(() => commit(next), 500);
+      }}
+      onBlur={() => {
+        focused.current = false;
+        commit(latest.current);
+      }}
+      onSelect={(e) => {
+        const el = e.currentTarget;
+        onSelectText(el.value.slice(el.selectionStart ?? 0, el.selectionEnd ?? 0));
+      }}
+      className="w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm leading-relaxed text-foreground outline-none focus:ring-2 focus:ring-ring"
+    />
   );
 }
