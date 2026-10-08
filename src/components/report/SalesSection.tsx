@@ -75,9 +75,7 @@ import {
 } from "@/lib/report/parsePlanningExtract";
 import {
   buildSaleNarrativePrompt,
-  loadAutoSaleNarratives,
   saleNarrativeFingerprint,
-  saveAutoSaleNarratives,
 } from "@/lib/report/saleNarrative";
 import { formatCurrencyDisplay, formatSalePrice, withRelativityNarrative, applyRelativityToSales } from "@/lib/report/salesRelativity";
 import type { ComparableSale, FeatureAdjustment } from "@/lib/report/types";
@@ -137,7 +135,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const cmaImportModeRef = useRef<"merge" | "replace">("merge");
   const [importing, setImporting] = useState(false);
   const [cmaPaste, setCmaPaste] = useState("");
-  const [autoNarratives, setAutoNarratives] = useState(true);
+  // Sale narratives are generated only when the valuer asks. A grid change must not call AI.
+  const [aiChoice, setAiChoice] = useState<{ saleIds: string[]; hasText: boolean } | null>(null);
   const [generating, setGenerating] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   /** Expanded report-narrative editor (manual working mode). */
@@ -207,10 +206,6 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         .join("|"),
     [draft.sales],
   );
-
-  useEffect(() => {
-    setAutoNarratives(loadAutoSaleNarratives());
-  }, []);
 
   useEffect(() => {
     if (!photoMenu) return;
@@ -975,7 +970,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   }
 
   const runNarratives = useCallback(
-    async (force = false) => {
+    async (saleIds?: string[], mode: "append" | "incorporate" | "replace" = "replace") => {
       const settings = loadAiSettings();
       if (!isAiConfigured(settings)) {
         setStatus("AI not configured — open Settings to enable sale narratives.");
@@ -983,14 +978,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       }
 
       const current = salesRef.current;
+      const wanted = saleIds ? new Set(saleIds) : null;
       const todo = current.filter((s) => {
+        if (wanted && !wanted.has(s.id)) return false;
         if (!s.address.trim() && !s.salePrice.trim()) return false;
-        // Manual lock: never overwrite, including Regenerate narratives
-        if (s.narrativeManual) return false;
-        const fp = saleNarrativeFingerprint(s);
-        if (!force && fingerprintsRef.current[s.id] === fp && s.narrative?.trim()) {
-          return false;
-        }
         return true;
       });
 
@@ -1016,6 +1007,12 @@ export function SalesSection({ controller }: { controller: ReportDraftController
             draft.values,
             draft.reportMeta,
           );
+          const modeLine =
+            mode === "append"
+              ? "Write a new note only. Do not repeat the existing note."
+              : mode === "incorporate"
+                ? "Write one note that keeps the valuer's existing wording and adds only the comparison points that are missing. This output replaces the existing note."
+                : "Write a new note. The existing note may be replaced.";
           const result = await generateSaleNarrative({
             data: {
               settings: {
@@ -1025,7 +1022,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                 ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
               },
               system,
-              prompt,
+              prompt: `${prompt}\n\nWRITE MODE: ${modeLine}`,
             },
           });
           const text =
@@ -1053,9 +1050,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
       if (Object.keys(updates).length) {
         replaceSales(
-          salesRef.current.map((s) =>
-            updates[s.id] ? { ...s, narrative: updates[s.id] } : s,
-          ),
+          salesRef.current.map((s) => {
+            const generated = updates[s.id];
+            if (!generated) return s;
+            const existing = String(s.narrative ?? "").trim();
+            const narrative =
+              mode === "append" && existing ? `${existing}\n\n${generated}` : generated;
+            return { ...s, narrative, narrativeManual: mode === "append" ? s.narrativeManual : false };
+          }),
         );
       }
 
@@ -1077,21 +1079,15 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     [draft.values, draft.reportMeta.valueAmount, draft.reportMeta.valueDate],
   );
 
-  // Auto-generate when sales / adjustments change (debounced). Default on.
-  useEffect(() => {
-    if (!autoNarratives) return;
-    if (!isAiConfigured()) return;
-    if (draft.sales.length === 0) return;
-
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      void runNarratives(false);
-    }, 1200);
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [autoNarratives, salesNarrativeKey, runNarratives, draft.sales.length]);
+  function askSaleNarratives(saleIds: string[]) {
+    const rows = salesRef.current.filter((s) => saleIds.includes(s.id));
+    const hasText = rows.some((s) => String(s.narrative ?? "").trim());
+    if (!hasText) {
+      void runNarratives(saleIds, "replace");
+      return;
+    }
+    setAiChoice({ saleIds, hasText: true });
+  }
 
   /**
    * Import sales from CMA text (paste or PDF-extracted).
@@ -1232,12 +1228,6 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           `Merged ${sourceLabel}: +${merged.added} new, ${merged.matched} already on file.`,
         );
       }
-      // Kick AI narratives after import (auto may also fire via salesNarrativeKey).
-      if (autoNarratives && isAiConfigured()) {
-        window.setTimeout(() => {
-          void runNarratives(true);
-        }, 400);
-      }
     } catch (err) {
       console.error("[CMA text import]", err);
       const message = err instanceof Error ? err.message : "Import failed";
@@ -1369,26 +1359,59 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           <p className="mt-1 text-sm text-muted-foreground">
             Shared across all report types. Import a CMA to add sales. A later extract is
             appended — CMA card numbers 1–4 are not used as identity. Same address + sale
-            date/price keeps the working row (photos, notes, adjustments). Use Replace all
-            only when you intend to wipe the list.
+            date/price keeps the working row (photos, notes, adjustments). Sale comments are
+            not generated when the grid changes. Use Generate this block with AI on a sale.
           </p>
-          <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              checked={autoNarratives}
-              onChange={(e) => {
-                const on = e.target.checked;
-                setAutoNarratives(on);
-                saveAutoSaleNarratives(on);
-                if (on) void runNarratives(false);
-              }}
-              className="size-4 rounded border-input"
-            />
-            <span>
-              Automatically generate sale narratives from grid marks
-              <span className="text-muted-foreground"> (default on — uncheck to turn off)</span>
-            </span>
-          </label>
+          {aiChoice ? (
+            <div className="mt-3 rounded-md border border-border bg-background p-3 text-sm">
+              <p className="font-medium text-foreground">This sale already has text.</p>
+              <p className="mt-1 text-muted-foreground">
+                Choose how the new text should be used. Nothing is replaced until you choose.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+                  onClick={() => {
+                    const ids = aiChoice.saleIds;
+                    setAiChoice(null);
+                    void runNarratives(ids, "append");
+                  }}
+                >
+                  Add below existing text
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+                  onClick={() => {
+                    const ids = aiChoice.saleIds;
+                    setAiChoice(null);
+                    void runNarratives(ids, "incorporate");
+                  }}
+                >
+                  Combine with existing text
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+                  onClick={() => {
+                    const ids = aiChoice.saleIds;
+                    setAiChoice(null);
+                    void runNarratives(ids, "replace");
+                  }}
+                >
+                  Replace with new text
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md px-2.5 py-1 text-xs text-muted-foreground"
+                  onClick={() => setAiChoice(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : null}
           {status ? (
             <p className="mt-2 text-xs text-muted-foreground">{status}</p>
           ) : null}
@@ -1432,10 +1455,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           <button
             type="button"
             disabled={generating || sales.length === 0}
-            onClick={() => void runNarratives(true)}
+            onClick={() => askSaleNarratives(sales.map((sale) => sale.id))}
             className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
           >
-            {generating ? "Generating…" : "Regenerate narratives"}
+            {generating ? "Generating…" : "Generate sale comments with AI"}
           </button>
           <button
             type="button"
@@ -2649,6 +2672,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                       Done
                                     </button>
                                   ) : null}
+                                <button
+                                  type="button"
+                                  disabled={generating}
+                                  onClick={() => askSaleNarratives([sale.id])}
+                                  className="rounded border border-input bg-card px-1.5 py-0.5 text-[0.65rem] font-medium text-foreground hover:bg-accent disabled:opacity-60"
+                                >
+                                  {generating ? "Generating…" : "Generate this block with AI"}
+                                </button>
                                   <button
                                     type="button"
                                     onClick={() =>

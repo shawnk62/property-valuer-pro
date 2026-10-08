@@ -340,6 +340,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [source, setSource] = useState<"template" | "ai" | null>(null);
   const [busy, setBusy] = useState<"template" | "ai" | keyof ReportNarrative | null>(null);
+  const [aiChoiceKey, setAiChoiceKey] = useState<keyof ReportNarrative | null>(null);
   const [lastStatus, setLastStatus] = useState<string | null>(null);
   // Local mirror so the Remarks textarea always updates even if a parent re-render races
   const [localRemarks, setLocalRemarks] = useState(() =>
@@ -367,6 +368,15 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   }, [loaded, shawnExam, draft.inspectionId, draft.narrative.executiveSummary, draft.values, setNarrative]);
   const narrativeRef = useRef(draft.narrative);
   narrativeRef.current = draft.narrative;
+
+  function askBlockAi(key: keyof ReportNarrative) {
+    const existing = String(narrativeRef.current[key] ?? "").trim();
+    if (!existing) {
+      void generateWithAi([key], true, "replace");
+      return;
+    }
+    setAiChoiceKey(key);
+  }
 
   function emptyNarrativeKeys(
     narrative: ReportDraftController["draft"]["narrative"] = narrativeRef.current,
@@ -621,19 +631,13 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       keys = keys.filter((k) => k !== "remarks");
     }
     if (keys.length === 0) return;
-    if (isAiConfigured()) {
-      void generateWithAi(keys, false);
-    } else {
-      void applyTemplateToEmptyKeys(keys).then((patch) => {
-        if (Object.keys(patch).length > 0) {
-          setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
-          setSource("template");
-          setLastStatus(
-            `Filled empty blocks from inspection data (AI not configured).`,
-          );
-        }
-      });
-    }
+    void applyTemplateToEmptyKeys(keys).then((patch) => {
+      if (Object.keys(patch).length > 0) {
+        setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
+        setSource("template");
+        setLastStatus("Filled empty blocks from inspection data. AI runs only when you ask.");
+      }
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once after load when empty blocks exist
   }, [loaded, draft.inspectionId]);
 
@@ -915,10 +919,12 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   /**
    * @param keys blocks to generate
    * @param overwrite when true (default for single-block), replace existing text
+   * @param mode append keeps existing text, incorporate asks AI to combine it, replace writes new text
    */
   async function generateWithAi(
     keys: (keyof ReportNarrative)[] = BLOCKS.map((b) => b.key),
     overwrite = keys.length === 1,
+    mode: "append" | "incorporate" | "replace" = "replace",
   ) {
     // Remarks never go through the AI RPC — always local structured text
     if (keys.length === 1 && keys[0] === "remarks") {
@@ -1041,6 +1047,11 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                 apiKey: settings.apiKey,
                 ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
               },
+              ...(mode === "incorporate" && String(narrativeRef.current[key] ?? "").trim()
+                ? {
+                    locationContext: `EXISTING VALUER TEXT (keep its facts and wording, then write one combined paragraph that replaces it):\n${String(narrativeRef.current[key]).trim()}`,
+                  }
+                : {}),
               blockKey: key,
               values,
               ...(key === "location"
@@ -1108,7 +1119,10 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       const current = narrativeRef.current;
       for (const [k, v] of Object.entries(next) as [keyof ReportNarrative, string][]) {
         if (!v.trim()) continue;
-        if (overwrite || !String(current[k] ?? "").trim()) safe[k] = australianiseSpelling(v);
+        const existing = String(current[k] ?? "").trim();
+        const generated = australianiseSpelling(v);
+        if (mode === "append" && existing) safe[k] = `${existing}\n\n${generated}`;
+        else if (overwrite || !existing) safe[k] = generated;
       }
 
       if (Object.keys(safe).length > 0) {
@@ -1209,7 +1223,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
           <button
             type="button"
             disabled={busy !== null}
-            onClick={() => void generateWithAi()}
+            onClick={() => void generateWithAi(undefined, false)}
             className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
           >
             {busy === "ai" ? "Generating with AI…" : "Generate with AI"}
@@ -1262,10 +1276,14 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                 disabled={busy !== null}
                 onClick={() => {
                   if (block.key === "remarks") {
+                    if (String(localRemarks || narrativeRef.current.remarks || "").trim()) {
+                      setAiChoiceKey(block.key);
+                      return;
+                    }
                     generateRemarksNow(true);
                     return;
                   }
-                  void generateWithAi([block.key]);
+                  askBlockAi(block.key);
                 }}
                 className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-60"
               >
@@ -1275,6 +1293,62 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             </div>
           </div>
           <span className="mb-2 block text-sm text-muted-foreground">{block.hint}</span>
+          {aiChoiceKey === block.key ? (
+            <div className="mb-2 rounded-md border border-border bg-background p-3 text-sm">
+              <p className="font-medium text-foreground">This block already has text.</p>
+              <p className="mt-1 text-muted-foreground">
+                Choose how the new text should be used. Nothing is replaced until you choose.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+                  onClick={() => {
+                    const key = block.key;
+                    setAiChoiceKey(null);
+                    if (key === "remarks") return;
+                    void generateWithAi([key], true, "append");
+                  }}
+                >
+                  Add below existing text
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+                  onClick={() => {
+                    const key = block.key;
+                    setAiChoiceKey(null);
+                    if (key === "remarks") return;
+                    void generateWithAi([key], true, "incorporate");
+                  }}
+                >
+                  Combine with existing text
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+                  onClick={() => {
+                    const key = block.key;
+                    setAiChoiceKey(null);
+                    if (key === "remarks") {
+                      generateRemarksNow(true);
+                      return;
+                    }
+                    void generateWithAi([key], true, "replace");
+                  }}
+                >
+                  Replace with new text
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md px-2.5 py-1 text-xs text-muted-foreground"
+                  onClick={() => setAiChoiceKey(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : null}
           <NarrativeField
             value={blockText}
             rows={
