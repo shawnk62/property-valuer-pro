@@ -46,6 +46,7 @@ import {
 } from "@/lib/report/adjustmentGrid";
 import {
   apaRetrieved,
+  citeLocalitySources,
   insertHarvardCitations,
   referencesForPrint,
   referenceStyleOf,
@@ -876,12 +877,16 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <H2>{subTitle(major[4], n5[1], "Locality")}</H2>
       {narrativePrints(m, "neighbourhood") ? (
       <Prose
-        text={stripLeadingHeading(
+        text={citeLocalitySources(
           stripLeadingHeading(
-            draft.narrative.neighbourhood?.trim() || get(v, "nbhd_description") || "",
-            "Neighbourhood",
+            stripLeadingHeading(
+              draft.narrative.neighbourhood?.trim() || get(v, "nbhd_description") || "",
+              "Neighbourhood",
+            ),
+            "Locality",
           ),
-          "Locality",
+          m,
+          v,
         )}
       />
       ) : null}
@@ -889,16 +894,18 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       {show53 ? (
         <Keep>
           {show53 ? <H2>{subTitle(major[4], n5[2], "Amenities")}</H2> : null}
-          <Prose text={draft.narrative.amenities?.trim() || get(v, "exam_amenities")} />
+          <Prose text={citeLocalitySources(draft.narrative.amenities?.trim() || get(v, "exam_amenities"), m, v)} />
         </Keep>
       ) : null}
       {show54 ? (
         <Keep>
           {show54 ? <H2>{subTitle(major[4], n5[3], "Popular destinations")}</H2> : null}
           <Prose
-            text={
-              draft.narrative.popularDestinations?.trim() || get(v, "exam_destinations")
-            }
+            text={citeLocalitySources(
+              draft.narrative.popularDestinations?.trim() || get(v, "exam_destinations"),
+              m,
+              v,
+            )}
           />
         </Keep>
       ) : null}

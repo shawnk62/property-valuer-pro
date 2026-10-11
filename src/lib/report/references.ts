@@ -452,7 +452,7 @@ export function referencesForPrint(
     return true;
   });
   cleaned.sort((a, b) => a.author.localeCompare(b.author, "en") || a.title.localeCompare(b.title, "en"));
-  const primary = [...primaryReportSources(values), ...standingShawnSources(), ...marketSourcesNamedIn(values, marketText)];
+  const primary = [...primaryReportSources(values), ...standingShawnSources(), ...marketSourcesNamedIn(values, marketText), ...localitySources(meta, values)];
   for (const item of primary) {
     const key = referenceKey(item);
     const sameAuthor = cleaned.findIndex((row) => row.author.toLowerCase() === item.author.toLowerCase());
@@ -477,6 +477,78 @@ export function referencesForPrint(
 }
 
 function australianViewed(raw = accessedLabel()): string {
+  const text = String(raw || "").trim();
+  if (/^\d{1,2} [A-Z][a-z]+ \d{4}$/.test(text)) return text;
+  const parsed = new Date(text);
+  if (!Number.isNaN(parsed.getTime())) return accessedLabel(parsed);
+  return accessedLabel();
+}
+
+function localitySources(meta: ReportMeta | undefined, values: InspectionValues): ReferenceParts[] {
+  const viewed = accessedLabel();
+  const suburb = String(values["prop_suburb"] ?? "the subject suburb").trim() || "the subject suburb";
+  const seen = new Set<string>();
+  const out: ReferenceParts[] = [];
+  for (const claim of claimLists(meta).filter((item) => item.accepted)) {
+    const raw = String(claim.source ?? "").trim();
+    if (!raw) continue;
+    const url = raw.match(/https?:\/\/\S+/i)?.[0]?.replace(/[.,;>)]+$/, "") ?? "";
+    let author = "";
+    if (url) {
+      try {
+        author = hostAuthor(new URL(url).hostname);
+      } catch {
+        author = "";
+      }
+    }
+    if (!author) author = expandAuthor(raw.replace(/https?:\/\/\S+/gi, "").trim()) || "Source";
+    if (!author || author === "Source" || /^com\.?$/i.test(author)) continue;
+    const key = author.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const year = raw.match(/\b(20\d{2})\b/)?.[1] ?? viewed.split(" ").pop() ?? "2026";
+    out.push({
+      author,
+      year,
+      title: `${suburb} locality profile`,
+      site: author,
+      url,
+      accessed: viewed,
+    });
+  }
+  return out;
+}
+
+/** Print-time only. Cites the accepted locality sources in the locality paragraph. */
+export function citeLocalitySources(
+  text: string,
+  meta: ReportMeta | undefined,
+  values: InspectionValues,
+): string {
+  const sources = localitySources(meta, values);
+  if (!text.trim() || sources.length === 0) return text;
+  let out = text;
+  for (const source of sources) {
+    const author = source.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`${author}\\s*\\(${source.year}\\)`, "i").test(out)) continue;
+    if (new RegExp(`\\(${author}\\s+${source.year}\\)`, "i").test(out)) continue;
+    const named = out.search(new RegExp(author, "i"));
+    if (named >= 0) {
+      const end = named + source.author.length;
+      out = `${out.slice(0, end)} (${source.year})${out.slice(end)}`;
+      continue;
+    }
+  }
+  const missing = sources.filter((source) => {
+    const author = source.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return !new RegExp(`${author}\\s*\\(${source.year}\\)|\\(${author}\\s+${source.year}\\)`, "i").test(out);
+  });
+  if (missing.length) {
+    const cites = missing.map((source) => `${source.author} (${source.year})`).join(" and ");
+    out = `${out.trim()}\n\nLocality description draws on ${cites}.`;
+  }
+  return out;
+}
   const text = String(raw || "").trim();
   if (/^\d{1,2} [A-Z][a-z]+ \d{4}$/.test(text)) return text;
   const parsed = new Date(text);
