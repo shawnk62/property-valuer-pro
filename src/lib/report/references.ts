@@ -452,7 +452,7 @@ export function referencesForPrint(
     return true;
   });
   cleaned.sort((a, b) => a.author.localeCompare(b.author, "en") || a.title.localeCompare(b.title, "en"));
-  const primary = [...primaryReportSources(values), ...standingShawnSources(), ...marketSourcesNamedIn(values, marketText), ...localitySources(meta, values)];
+  const primary = [...primaryReportSources(values), ...standingShawnSources(), ...marketSourcesNamedIn(values, marketText), ...localitySources(meta, values), ...sectionFallbackSources("location", values), ...sectionFallbackSources("state", values), ...sectionFallbackSources("region", values), ...sectionFallbackSources("locality", values)];
   for (const item of primary) {
     const key = referenceKey(item);
     const sameAuthor = cleaned.findIndex((row) => row.author.toLowerCase() === item.author.toLowerCase());
@@ -533,19 +533,22 @@ export function citeAcceptedNotes(
   claims: NbhdClaim[] | undefined,
   values: InspectionValues,
   label: string,
+  fallback: ReferenceParts[] = [],
 ): string {
-  const sources = (claims ?? [])
+  if (!text.trim()) return text;
+  const fromClaims = (claims ?? [])
     .filter((claim) => claim.accepted)
     .map((claim) => claimToReference(claim, values, label))
     .filter((item): item is ReferenceParts => Boolean(item));
-  if (!text.trim() || sources.length === 0) return text;
+  const sources = [...fromClaims, ...fallback];
   const seen = new Set<string>();
   const unique = sources.filter((source) => {
     const key = source.author.toLowerCase();
-    if (seen.has(key)) return false;
+    if (!source.author || seen.has(key)) return false;
     seen.add(key);
     return true;
   });
+  if (unique.length === 0) return text;
   let out = text;
   for (const source of unique) {
     const author = source.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -563,12 +566,65 @@ export function citeAcceptedNotes(
   });
   if (missing.length) {
     const cites = missing.map((source) => `${source.author} (${source.year})`).join("; ");
-    out = `${out.trim()}\n\nThis section draws on ${cites}.`;
+    out = `${out.trim()} (${cites}).`;
   }
   return out;
 }
 
 export function citeLocalitySources(
+  text: string,
+  meta: ReportMeta | undefined,
+  values: InspectionValues,
+): string {
+  return citeAcceptedNotes(text, meta?.nbhdClaims as NbhdClaim[] | undefined, values, "Locality profile");
+}
+
+export function sectionFallbackSources(
+  section: "location" | "state" | "region" | "locality",
+  values: InspectionValues,
+): ReferenceParts[] {
+  const viewed = accessedLabel();
+  const year = viewed.split(" ").pop() ?? "2026";
+  const council = String(values["prop_lga"] ?? "Local government").trim() || "Local government";
+  if (section === "location") {
+    return [{
+      author: "Google",
+      year,
+      title: "Maps distance measurement",
+      site: "Google Maps",
+      url: "https://maps.google.com/",
+      accessed: viewed,
+    }];
+  }
+  if (section === "state") {
+    return [{
+      author: "Queensland Government Statistician's Office",
+      year,
+      title: "Queensland regional profiles",
+      site: "Queensland Government",
+      url: "https://www.qgso.qld.gov.au/",
+      accessed: viewed,
+    }];
+  }
+  if (section === "region") {
+    return [{
+      author: council,
+      year,
+      title: "Regional market profile",
+      site: council,
+      url: "",
+      accessed: viewed,
+    }];
+  }
+  return [{
+    author: "PropTrack",
+    year: "2026",
+    title: "Home Price Index",
+    site: "PropTrack",
+    url: "https://www.proptrack.com.au/home-price-index/",
+    accessed: viewed,
+  }];
+}
   text: string,
   meta: ReportMeta | undefined,
   values: InspectionValues,
