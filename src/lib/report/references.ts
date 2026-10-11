@@ -517,7 +517,7 @@ function localitySources(meta: ReportMeta | undefined, values: InspectionValues,
   const seen = new Set<string>();
   const out: ReferenceParts[] = [];
   for (const claim of claimLists(meta).filter((item) => item.accepted && String(item.source ?? "").trim())) {
-    if (narrative && !claimMatchesSentence(claim.text, narrative)) continue;
+    if (narrative && claimMatchScore(claim.text, narrative, values) === 0) continue;
     const title = /market|price|index|rate/i.test(claim.text)
       ? "Market commentary"
       : `${suburb} locality profile`;
@@ -531,12 +531,28 @@ function localitySources(meta: ReportMeta | undefined, values: InspectionValues,
   return out;
 }
 
-function claimMatchesSentence(claimText: string, sentence: string): boolean {
-  const numbers = claimText.match(/\d[\d,]*(?:\.\d+)?/g) ?? [];
-  const distinctive = numbers.filter((n) => n.replace(/,/g, "").length >= 2);
-  if (distinctive.some((n) => sentence.includes(n) || sentence.includes(n.replace(/,/g, "")))) return true;
-  const names = claimText.match(/\b[A-Z][A-Za-z]{3,}(?:\s+[A-Z][A-Za-z]{3,})?\b/g) ?? [];
-  return names.some((name) => name.length > 4 && new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i").test(sentence));
+const COMMON_PLACE = /^(the|and|with|from|that|this|city|suburb|estate|gold|coast|queensland|australia|worongary|nerang|mudgeeraba|gilston|tallai|pacific|motorway)$/i;
+
+function distinctiveTokens(text: string, values?: InspectionValues): string[] {
+  const suburb = String(values?.["prop_suburb"] ?? "").trim().toLowerCase();
+  const city = String(values?.["prop_lga"] ?? values?.["prop_city"] ?? "").trim().toLowerCase();
+  const numbers = (text.match(/\d[\d,]*(?:\.\d+)?/g) ?? [])
+    .map((n) => n.replace(/,/g, ""))
+    .filter((n) => {
+      if (/^(19|20)\d{2}$/.test(n)) return false;
+      return n.replace(".", "").length >= 3;
+    });
+  const names = (text.match(/\b[A-Z][A-Za-z]{4,}\b/g) ?? [])
+    .map((name) => name.toLowerCase())
+    .filter((name) => !COMMON_PLACE.test(name) && name !== suburb && !city.includes(name));
+  return [...numbers, ...names];
+}
+
+function claimMatchScore(claimText: string, sentence: string, values?: InspectionValues): number {
+  const tokens = distinctiveTokens(claimText, values);
+  if (tokens.length === 0) return 0;
+  const hay = sentence.toLowerCase().replace(/,/g, "");
+  return tokens.filter((token) => hay.includes(token.toLowerCase())).length;
 }
 
 /** Print-time only. Cites a note only where its figure or name is used. */
@@ -554,20 +570,16 @@ export function citeAcceptedNotes(
   const cited = paragraphs.map((paragraph) => {
     const sentences = paragraph.split(/(?<=[.!?])\s+/);
     const next = sentences.map((sentence) => {
-      const matched: ReferenceParts[] = [];
-      for (const claim of usable) {
-        if (!claimMatchesSentence(claim.text, sentence)) continue;
-        const source = claimToReference(claim, values, label);
-        if (!source) continue;
-        if (matched.some((item) => item.author.toLowerCase() === source.author.toLowerCase())) continue;
-        matched.push(source);
-      }
-      if (matched.length === 0) return sentence;
-      const cites = matched
-        .filter((source) => !new RegExp(`${source.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\(?${source.year}\\)?`, "i").test(sentence))
-        .map((source) => inTextCitation(source.author, source.year, style));
-      if (cites.length === 0) return sentence;
-      return sentence.replace(/([.!?])?$/, ` (${cites.join("; ")})$1`);
+      const ranked = usable
+        .map((claim) => ({ claim, score: claimMatchScore(claim.text, sentence, values) }))
+        .filter((item) => item.score > 0)
+        .sort((a, b) => b.score - a.score);
+      const best = ranked[0];
+      if (!best) return sentence;
+      const source = claimToReference(best.claim, values, label);
+      if (!source) return sentence;
+      if (new RegExp(`${source.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\(?${source.year}\\)?`, "i").test(sentence)) return sentence;
+      return sentence.replace(/([.!?])?$/, ` (${inTextCitation(source.author, source.year, style)})$1`);
     });
     return next.join(" ");
   });
