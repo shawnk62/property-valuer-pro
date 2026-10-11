@@ -46,6 +46,7 @@ import {
 } from "@/lib/report/adjustmentGrid";
 import {
   apaRetrieved,
+  insertHarvardCitations,
   referencesForPrint,
   referenceStyleOf,
 } from "@/lib/report/references";
@@ -68,7 +69,7 @@ const STRIPE = EXAM.stripe;
 const RULE = EXAM.rule;
 
 const IVSC_MARKET_VALUE =
-  "Market Value is the estimated amount for which an asset or liability should exchange on the date of valuation between a willing buyer and a willing seller in an arm’s-length transaction after proper marketing where the parties had each acted knowledgeably, prudently and without compulsion. (IVS 2025)";
+  "Market Value is the estimated amount for which an asset or liability should exchange on the date of valuation between a willing buyer and a willing seller in an arm’s-length transaction after proper marketing where the parties had each acted knowledgeably, prudently and without compulsion (International Valuation Standards Council 2025).";
 
 function amountInWords(raw: string): string {
   const n = Number(String(raw).replace(/[^0-9.]/g, ""));
@@ -116,7 +117,7 @@ function Para({ children }: { children: React.ReactNode }) {
 }
 
 function Prose({ text }: { text: string }) {
-  const blocks = proseParagraphs(text);
+  const blocks = proseParagraphs(insertHarvardCitations(text));
   if (blocks.length === 0) return null;
   return (
     <>
@@ -133,7 +134,7 @@ function RiskAnalysisProse({ text }: { text: string }) {
   if (!text.trim()) return null;
   return (
     <>
-      {australianiseSpelling(text)
+      {australianiseSpelling(insertHarvardCitations(text))
         .split(/\n{2,}/)
         .map((block) => block.trim())
         .filter(Boolean)
@@ -199,7 +200,7 @@ function openWithFirstSubsection(node: ReactNode): {
   if (!prose) {
     return { title: subsectionTitle(heading), lead: rest, tail: null };
   }
-  const paras = proseParagraphs(prose.props.text || "");
+  const paras = proseParagraphs(insertHarvardCitations(prose.props.text || ""));
   const other = rest.filter((child) => child !== prose);
   return {
     title: subsectionTitle(heading),
@@ -261,7 +262,7 @@ function SectionOpen({
   sub?: React.ReactNode;
   text?: string;
 }) {
-  const paras = proseParagraphs(text || "");
+  const paras = proseParagraphs(insertHarvardCitations(text || ""));
   return (
     <>
       <div className="report-section-open">
@@ -293,7 +294,7 @@ function Keep({ children }: { children: React.ReactNode }) {
     (child) => isValidElement(child) && child.type === Prose,
   ) as ReactElement<{ text?: string }> | undefined;
   if (!heading || !prose) return <div className="report-keep-block">{children}</div>;
-  const paras = proseParagraphs(prose.props.text || "");
+  const paras = proseParagraphs(insertHarvardCitations(prose.props.text || ""));
   const other = inner.filter((child) => child !== heading && child !== prose);
   return (
     <>
@@ -1115,34 +1116,14 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           m,
           draft.narrative.references,
           v,
-          [
-            draft.narrative.marketAustralia,
-            draft.narrative.marketState,
-            draft.narrative.marketRegion,
-            draft.narrative.marketLocality,
-            draft.narrative.salesComments,
-            draft.narrative.marketAustralia,
-            draft.narrative.marketState,
-            draft.narrative.marketRegion,
-            draft.narrative.marketLocality,
-          ].join("\n"),
+          Object.values(draft.narrative).join("\n"),
         ).length ? (
           <div className="report-reference-list">
             {referencesForPrint(
               m,
               draft.narrative.references,
               v,
-              [
-                draft.narrative.marketAustralia,
-                draft.narrative.marketState,
-                draft.narrative.marketRegion,
-                draft.narrative.marketLocality,
-            draft.narrative.salesComments,
-            draft.narrative.marketAustralia,
-            draft.narrative.marketState,
-            draft.narrative.marketRegion,
-            draft.narrative.marketLocality,
-              ].join("\n"),
+              Object.values(draft.narrative).join("\n"),
             ).map((ref, i) => {
               const style = "harvard";
               const titled = ref.title && ref.title.toLowerCase() !== ref.author.toLowerCase();
@@ -1159,7 +1140,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                   ) : (
                     <>
                       {ref.author} ({ref.year}) <em>{ref.title}</em>, {ref.site || ref.author}, viewed {ref.accessed}
-                      {ref.url ? <>, {"<"}{ref.url}{">"}</> : null}.
+                      {ref.url ? <>, {ref.url}</> : null}.
                     </>
                   )}
                 </p>
@@ -1175,12 +1156,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         m,
         draft.narrative.references,
         v,
-        [
-          draft.narrative.marketAustralia,
-          draft.narrative.marketState,
-          draft.narrative.marketRegion,
-          draft.narrative.marketLocality,
-        ].join("\n"),
+        Object.values(draft.narrative).join("\n"),
       ).length &&
       !get(v, "exam_references") ? (
         <Para>List sources used for the market commentary, planning searches and sales evidence.</Para>

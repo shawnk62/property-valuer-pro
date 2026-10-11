@@ -276,12 +276,13 @@ export function formatApaReference(raw: string): string {
 /** Australian Harvard author-date webpage. Title is italicised by the print renderer. */
 export function formatHarvardReference(raw: string, accessed = accessedLabel()): string {
   const parts = referenceParts(raw, accessed);
-  const title = sameName(parts.title, parts.author) ? "" : parts.title;
+  const title = sameName(parts.title, parts.author) ? parts.author : parts.title;
+  const site = parts.site || parts.author;
+  const viewed = australianViewed(parts.accessed);
   if (parts.url) {
-    const site = parts.site || parts.author;
-    return `${parts.author} (${parts.year}) ${title ? `${title}, ` : ""}${site}, viewed ${parts.accessed}, <${parts.url}>.`;
+    return `${parts.author} (${parts.year}) ${title}, ${site}, viewed ${viewed}, ${parts.url}.`;
   }
-  return `${parts.author} (${parts.year})${title ? ` ${title}.` : "."}`;
+  return `${parts.author} (${parts.year}) ${title}, ${site}, viewed ${viewed}.`;
 }
 
 export function formatReference(raw: string, style: ReferenceStyle = "harvard"): string {
@@ -475,17 +476,54 @@ export function referencesForPrint(
   return cleaned.filter((row) => row.title && row.author !== row.url);
 }
 
-const MARKET_SOURCES: Array<{ test: RegExp; author: string; title: string; site: string }> = [
-  { test: /cotality|corelogic/i, author: "Cotality", title: "Home Value Index", site: "Cotality" },
-  { test: /proptrack/i, author: "PropTrack", title: "Home Price Index", site: "PropTrack" },
-  { test: /australian bureau of statistics|\bABS\b|bureau of statistics/i, author: "Australian Bureau of Statistics", title: "Total Value of Dwellings", site: "Australian Bureau of Statistics" },
-  { test: /westpac/i, author: "Westpac", title: "Westpac Housing Pulse", site: "Westpac" },
-  { test: /commbank|commonwealth bank/i, author: "Commonwealth Bank of Australia", title: "Housing market update", site: "Commonwealth Bank of Australia" },
-  { test: /\bNAB\b|national australia bank/i, author: "National Australia Bank", title: "NAB Residential Property Survey", site: "National Australia Bank" },
-  { test: /realestate\.com|rea group/i, author: "REA Group", title: "Suburb profile", site: "realestate.com.au" },
-  { test: /international valuation standards council|\bIVSC\b/, author: "International Valuation Standards Council", title: "International Valuation Standards", site: "International Valuation Standards Council" },
-  { test: /\bKPMG\b/i, author: "KPMG", title: "Residential Property Market Outlook", site: "KPMG" },
+function australianViewed(raw = accessedLabel()): string {
+  const text = String(raw || "").trim();
+  if (/^\d{1,2} [A-Z][a-z]+ \d{4}$/.test(text)) return text;
+  const parsed = new Date(text);
+  if (!Number.isNaN(parsed.getTime())) return accessedLabel(parsed);
+  return accessedLabel();
+}
+
+const SOURCE_CATALOGUE: Array<{
+  test: RegExp;
+  author: string;
+  year: string;
+  title: string;
+  site: string;
+  url: string;
+}> = [
+  { test: /cotality|corelogic/i, author: "Cotality", year: "2026", title: "Home Value Index", site: "Cotality", url: "https://www.cotality.com/au" },
+  { test: /proptrack/i, author: "PropTrack", year: "2026", title: "Home Price Index", site: "PropTrack", url: "https://www.proptrack.com.au/home-price-index/" },
+  { test: /australian bureau of statistics|\bABS\b|bureau of statistics/i, author: "Australian Bureau of Statistics", year: "2026", title: "Total Value of Dwellings", site: "Australian Bureau of Statistics", url: "https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/total-value-dwellings" },
+  { test: /reserve bank|\bRBA\b/i, author: "Reserve Bank of Australia", year: "2026", title: "Statement on Monetary Policy", site: "Reserve Bank of Australia", url: "https://www.rba.gov.au/publications/smp/" },
+  { test: /westpac/i, author: "Westpac", year: "2026", title: "Housing Pulse", site: "Westpac", url: "https://www.westpac.com.au/news/" },
+  { test: /commbank|commonwealth bank/i, author: "Commonwealth Bank of Australia", year: "2026", title: "Housing market update", site: "Commonwealth Bank of Australia", url: "https://www.commbank.com.au/" },
+  { test: /\bNAB\b|national australia bank/i, author: "National Australia Bank", year: "2026", title: "NAB Residential Property Survey", site: "National Australia Bank", url: "https://www.nab.com.au/" },
+  { test: /realestate\.com|rea group/i, author: "REA Group", year: "2026", title: "Suburb profile", site: "realestate.com.au", url: "https://www.realestate.com.au/" },
+  { test: /international valuation standards council|\bIVSC\b|international valuation standards/i, author: "International Valuation Standards Council", year: "2025", title: "International Valuation Standards", site: "International Valuation Standards Council", url: "https://www.ivsc.org/" },
+  { test: /\bKPMG\b/i, author: "KPMG", year: "2026", title: "Residential Property Market Outlook", site: "KPMG", url: "https://kpmg.com/au/en/home.html" },
 ];
+
+/** Print-time only. Adds a Harvard author-date citation after the first naming of a known source. */
+export function insertHarvardCitations(text: string): string {
+  if (!text.trim()) return text;
+  let out = text;
+  for (const source of SOURCE_CATALOGUE) {
+    const author = source.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`${author}\\s*\\(${source.year}\\)`, "i").test(out)) continue;
+    if (new RegExp(`\\(${author}\\s+${source.year}\\)`, "i").test(out)) continue;
+    const match = out.match(source.test);
+    if (!match || match.index == null) continue;
+    const end = match.index + match[0].length;
+    if (/^\s*\((?:19|20)\d{2}\)/.test(out.slice(end, end + 10))) continue;
+    const alias = /^(ABS|RBA|IVSC|NAB)$/i.test(match[0]);
+    const replacement = alias
+      ? `${source.author} (${source.year})`
+      : `${match[0]} (${source.year})`;
+    out = `${out.slice(0, match.index)}${replacement}${out.slice(end)}`;
+  }
+  return out;
+}
 
 function reaProfileUrl(values: InspectionValues): string {
   const suburb = String(values["prop_suburb"] ?? "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -507,36 +545,35 @@ function marketSourcesNamedIn(values: InspectionValues, extra = ""): ReferencePa
     .map((part) => String(part ?? ""))
     .join("\n");
   if (!text.trim()) return [];
-  const viewed = apaRetrieved();
+  const viewed = accessedLabel();
   const year = "2026";
-  return MARKET_SOURCES.filter((source) => source.test.test(text)).map((source) => ({
+  return SOURCE_CATALOGUE.filter((source) => source.test.test(text)).map((source) => ({
     author: source.author,
-    year,
+    year: source.year || year,
     title: source.author === "REA Group"
       ? `${String(values["prop_suburb"] ?? "Suburb").trim() || "Suburb"} suburb profile`
       : source.title,
     site: source.site,
-    url: source.author === "REA Group" ? reaProfileUrl(values) : "",
+    url: source.author === "REA Group" ? reaProfileUrl(values) : source.url,
     accessed: viewed,
   }));
 }
 
 function standingShawnSources(): ReferenceParts[] {
-  const viewed = apaRetrieved();
-  const year = viewed.split(" ").pop() ?? "";
+  const viewed = accessedLabel();
   return [
     {
       author: "International Valuation Standards Council",
-      year,
+      year: "2025",
       title: "International Valuation Standards",
       site: "International Valuation Standards Council",
-      url: "",
+      url: "https://www.ivsc.org/",
       accessed: viewed,
     },
   ];
 }
 function primaryReportSources(values: InspectionValues): ReferenceParts[] {
-  const viewed = apaRetrieved();
+  const viewed = accessedLabel();
   const out: ReferenceParts[] = [];
   const scheme = String(values["prop_planning_scheme"] ?? values["exam_planning_scheme"] ?? "").trim();
   if (scheme) {
@@ -544,7 +581,7 @@ function primaryReportSources(values: InspectionValues): ReferenceParts[] {
       author: String(values["prop_lga"] ?? "Planning authority").trim() || "Planning authority",
       year: scheme.match(/\b(20\d{2})\b/)?.[1] ?? viewed.split(" ").pop() ?? "",
       title: scheme,
-      site: "",
+      site: String(values["prop_lga"] ?? "Planning authority").trim() || "Planning authority",
       url: "",
       accessed: viewed,
     });
@@ -555,7 +592,7 @@ function primaryReportSources(values: InspectionValues): ReferenceParts[] {
       year: String(values["prop_title_search_date"] ?? values["exam_title_search_date"] ?? "").match(/\b(20\d{2})\b/)?.[1] ?? viewed.split(" ").pop() ?? "",
       title: "Current title search",
       site: "Titles Queensland",
-      url: "",
+      url: "https://www.titlesqld.com.au/",
       accessed: viewed,
     });
   }
@@ -564,8 +601,8 @@ function primaryReportSources(values: InspectionValues): ReferenceParts[] {
       author: "Queensland Government",
       year: viewed.split(" ").pop() ?? "",
       title: "Survey plan",
-      site: "",
-      url: "",
+      site: "Queensland Government",
+      url: "https://www.qld.gov.au/",
       accessed: viewed,
     });
   }
