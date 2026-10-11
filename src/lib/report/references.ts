@@ -569,15 +569,21 @@ export function citeAcceptedNotes(
   const paragraphs = text.split(/\n{2,}/);
   const cited = paragraphs.map((paragraph) => {
     const sentences = paragraph.split(/(?<=[.!?])\s+/);
+    let lastAuthor = "";
     const next = sentences.map((sentence) => {
       const ranked = usable
         .map((claim) => ({ claim, score: claimMatchScore(claim.text, sentence, values) }))
         .filter((item) => item.score > 0)
         .sort((a, b) => b.score - a.score);
       const best = ranked[0];
-      if (!best) return sentence;
+      if (!best) {
+        lastAuthor = "";
+        return sentence;
+      }
       const source = claimToReference(best.claim, values, label);
       if (!source) return sentence;
+      if (source.author.toLowerCase() === lastAuthor) return sentence;
+      lastAuthor = source.author.toLowerCase();
       if (new RegExp(`${source.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\(?${source.year}\\)?`, "i").test(sentence)) return sentence;
       return sentence.replace(/([.!?])?$/, ` (${inTextCitation(source.author, source.year, style)})$1`);
     });
