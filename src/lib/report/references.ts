@@ -261,28 +261,32 @@ function sameName(a: string, b: string): boolean {
   return a.replace(/\.$/, "").toLowerCase() === b.replace(/\.$/, "").toLowerCase();
 }
 
-/** APA 7th webpage. Title is italicised by the print renderer. */
+/** Bond Harvard (AUS): Author Year, title, sponsor, viewed day month year, <URL>. */
+export function formatHarvardReference(raw: string, accessed = accessedLabel()): string {
+  const parts = referenceParts(raw, accessed);
+  const title = sameName(parts.title, parts.author) ? parts.author : parts.title;
+  const site = parts.site && !sameName(parts.site, parts.author) ? `, ${parts.site}` : "";
+  const viewed = australianViewed(parts.accessed);
+  if (parts.url) {
+    return `${parts.author} ${parts.year}, ${title}${site}, viewed ${viewed}, <${parts.url}>.`;
+  }
+  return `${parts.author} ${parts.year}, ${title}${site}, viewed ${viewed}.`;
+}
+
+/** APA 7th webpage: Author, A. A. (Year). Title. Site Name. URL */
 export function formatApaReference(raw: string): string {
   const parts = referenceParts(raw);
-  const title = sameName(parts.title, parts.author) ? "" : parts.title;
+  const title = sameName(parts.title, parts.author) ? "" : sentenceCase(parts.title);
   const site = parts.site && !sameName(parts.site, parts.author) ? `${parts.site}. ` : "";
   const retrieved = parts.url && parts.year === "n.d." ? `Retrieved ${apaRetrieved()}, from ` : "";
   if (parts.url) {
-    return `${parts.author}. (${parts.year}). ${title ? `${title}. ` : ""}${site}${retrieved}${parts.url}`;
+    return `${parts.author}. (${parts.year}).${title ? ` ${title}. ` : " "}${site}${retrieved}${parts.url}`;
   }
   return `${parts.author}. (${parts.year}).${title ? ` ${title}.` : ""}`;
 }
 
-/** Australian Harvard author-date webpage. Title is italicised by the print renderer. */
-export function formatHarvardReference(raw: string, accessed = accessedLabel()): string {
-  const parts = referenceParts(raw, accessed);
-  const title = sameName(parts.title, parts.author) ? parts.author : parts.title;
-  const site = parts.site || parts.author;
-  const viewed = australianViewed(parts.accessed);
-  if (parts.url) {
-    return `${parts.author} (${parts.year}) ${title}, ${site}, viewed ${viewed}, ${parts.url}.`;
-  }
-  return `${parts.author} (${parts.year}) ${title}, ${site}, viewed ${viewed}.`;
+export function inTextCitation(author: string, year: string, style: ReferenceStyle = "harvard"): string {
+  return style === "apa" ? `${author}, ${year}` : `${author} ${year}`;
 }
 
 export function formatReference(raw: string, style: ReferenceStyle = "harvard"): string {
@@ -541,6 +545,7 @@ export function citeAcceptedNotes(
   claims: NbhdClaim[] | undefined,
   values: InspectionValues,
   label: string,
+  style: ReferenceStyle = "harvard",
 ): string {
   if (!text.trim()) return text;
   const usable = (claims ?? []).filter((claim) => claim.accepted && String(claim.source ?? "").trim());
@@ -559,8 +564,8 @@ export function citeAcceptedNotes(
       }
       if (matched.length === 0) return sentence;
       const cites = matched
-        .filter((source) => !new RegExp(`${source.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\(${source.year}\\)`, "i").test(sentence))
-        .map((source) => `${source.author} (${source.year})`);
+        .filter((source) => !new RegExp(`${source.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\(?${source.year}\\)?`, "i").test(sentence))
+        .map((source) => inTextCitation(source.author, source.year, style));
       if (cites.length === 0) return sentence;
       return sentence.replace(/([.!?])?$/, ` (${cites.join("; ")})$1`);
     });
@@ -573,8 +578,9 @@ export function citeLocalitySources(
   text: string,
   meta: ReportMeta | undefined,
   values: InspectionValues,
+  style: ReferenceStyle = "harvard",
 ): string {
-  return citeAcceptedNotes(text, meta?.nbhdClaims as NbhdClaim[] | undefined, values, "Locality profile");
+  return citeAcceptedNotes(text, meta?.nbhdClaims as NbhdClaim[] | undefined, values, "Locality profile", style);
 }
 
 const SOURCE_CATALOGUE: Array<{
