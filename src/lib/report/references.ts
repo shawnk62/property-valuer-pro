@@ -484,51 +484,70 @@ function australianViewed(raw = accessedLabel()): string {
   return accessedLabel();
 }
 
-function localitySources(meta: ReportMeta | undefined, values: InspectionValues): ReferenceParts[] {
+function claimToReference(claim: NbhdClaim, values: InspectionValues, title: string): ReferenceParts | null {
+  const raw = String(claim.source ?? "").trim();
+  if (!raw) return null;
   const viewed = accessedLabel();
+  const url = raw.match(/https?:\/\/\S+/i)?.[0]?.replace(/[.,;>)]+$/, "") ?? "";
+  let author = "";
+  if (url) {
+    try {
+      author = hostAuthor(new URL(url).hostname);
+    } catch {
+      author = "";
+    }
+  }
+  if (!author) author = expandAuthor(raw.replace(/https?:\/\/\S+/gi, "").trim());
+  if (!author || author === "Source" || /^com\.?$/i.test(author)) return null;
+  return {
+    author,
+    year: raw.match(/\b(20\d{2})\b/)?.[1] ?? viewed.split(" ").pop() ?? "2026",
+    title,
+    site: author,
+    url,
+    accessed: viewed,
+  };
+}
+
+function localitySources(meta: ReportMeta | undefined, values: InspectionValues): ReferenceParts[] {
   const suburb = String(values["prop_suburb"] ?? "the subject suburb").trim() || "the subject suburb";
   const seen = new Set<string>();
   const out: ReferenceParts[] = [];
   for (const claim of claimLists(meta).filter((item) => item.accepted)) {
-    const raw = String(claim.source ?? "").trim();
-    if (!raw) continue;
-    const url = raw.match(/https?:\/\/\S+/i)?.[0]?.replace(/[.,;>)]+$/, "") ?? "";
-    let author = "";
-    if (url) {
-      try {
-        author = hostAuthor(new URL(url).hostname);
-      } catch {
-        author = "";
-      }
-    }
-    if (!author) author = expandAuthor(raw.replace(/https?:\/\/\S+/gi, "").trim()) || "Source";
-    if (!author || author === "Source" || /^com\.?$/i.test(author)) continue;
-    const key = author.toLowerCase();
+    const title = /market|price|index|rate/i.test(claim.text)
+      ? "Market commentary"
+      : `${suburb} locality profile`;
+    const source = claimToReference(claim, values, title);
+    if (!source) continue;
+    const key = `${source.author}|${source.title}`.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    const year = raw.match(/\b(20\d{2})\b/)?.[1] ?? viewed.split(" ").pop() ?? "2026";
-    out.push({
-      author,
-      year,
-      title: `${suburb} locality profile`,
-      site: author,
-      url,
-      accessed: viewed,
-    });
+    out.push(source);
   }
   return out;
 }
 
-/** Print-time only. Cites the accepted locality sources in the locality paragraph. */
-export function citeLocalitySources(
+/** Print-time only. Cites the accepted notes that were used to write this block. */
+export function citeAcceptedNotes(
   text: string,
-  meta: ReportMeta | undefined,
+  claims: NbhdClaim[] | undefined,
   values: InspectionValues,
+  label: string,
 ): string {
-  const sources = localitySources(meta, values);
+  const sources = (claims ?? [])
+    .filter((claim) => claim.accepted)
+    .map((claim) => claimToReference(claim, values, label))
+    .filter((item): item is ReferenceParts => Boolean(item));
   if (!text.trim() || sources.length === 0) return text;
+  const seen = new Set<string>();
+  const unique = sources.filter((source) => {
+    const key = source.author.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
   let out = text;
-  for (const source of sources) {
+  for (const source of unique) {
     const author = source.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     if (new RegExp(`${author}\\s*\\(${source.year}\\)`, "i").test(out)) continue;
     if (new RegExp(`\\(${author}\\s+${source.year}\\)`, "i").test(out)) continue;
@@ -536,24 +555,25 @@ export function citeLocalitySources(
     if (named >= 0) {
       const end = named + source.author.length;
       out = `${out.slice(0, end)} (${source.year})${out.slice(end)}`;
-      continue;
     }
   }
-  const missing = sources.filter((source) => {
+  const missing = unique.filter((source) => {
     const author = source.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     return !new RegExp(`${author}\\s*\\(${source.year}\\)|\\(${author}\\s+${source.year}\\)`, "i").test(out);
   });
   if (missing.length) {
-    const cites = missing.map((source) => `${source.author} (${source.year})`).join(" and ");
-    out = `${out.trim()}\n\nLocality description draws on ${cites}.`;
+    const cites = missing.map((source) => `${source.author} (${source.year})`).join("; ");
+    out = `${out.trim()}\n\nThis section draws on ${cites}.`;
   }
   return out;
 }
-  const text = String(raw || "").trim();
-  if (/^\d{1,2} [A-Z][a-z]+ \d{4}$/.test(text)) return text;
-  const parsed = new Date(text);
-  if (!Number.isNaN(parsed.getTime())) return accessedLabel(parsed);
-  return accessedLabel();
+
+export function citeLocalitySources(
+  text: string,
+  meta: ReportMeta | undefined,
+  values: InspectionValues,
+): string {
+  return citeAcceptedNotes(text, meta?.nbhdClaims as NbhdClaim[] | undefined, values, "Locality profile");
 }
 
 const SOURCE_CATALOGUE: Array<{

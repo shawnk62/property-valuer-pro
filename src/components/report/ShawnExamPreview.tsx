@@ -18,7 +18,7 @@ import {
   joinValues,
 } from "@/lib/report/schema";
 import { surveyPlanAnnexureLabel } from "@/lib/report/annexures";
-import { narrativePrints } from "@/lib/narrative/neighbourhoodAssist";
+import { narrativePrints, type NbhdClaim } from "@/lib/narrative/neighbourhoodAssist";
 import {
   MAP_SLOTS,
   PHOTO_SLOTS,
@@ -46,6 +46,7 @@ import {
 } from "@/lib/report/adjustmentGrid";
 import {
   apaRetrieved,
+  citeAcceptedNotes,
   citeLocalitySources,
   insertHarvardCitations,
   referencesForPrint,
@@ -917,9 +918,14 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           sub={show61 ? subTitle(major[5], n6[0], "Australia") : undefined}
           text={
             show61
-              ? withoutSourceNotes(
-                  draft.narrative.marketAustralia?.trim() || get(v, "exam_market_australia"),
-                  printedSales,
+              ? citeAcceptedNotes(
+                  withoutSourceNotes(
+                    draft.narrative.marketAustralia?.trim() || get(v, "exam_market_australia"),
+                    printedSales,
+                  ),
+                  m.marketClaimsAustralia as NbhdClaim[] | undefined,
+                  v,
+                  "Australian market commentary",
                 )
               : ""
           }
@@ -928,19 +934,19 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       {show6 && show62 ? (
         <Keep>
           <H2>{subTitle(major[5], n6[1], "State")}</H2>
-          <Prose text={withoutSourceNotes(draft.narrative.marketState?.trim() || get(v, "exam_market_state"), printedSales)} />
+          <Prose text={citeAcceptedNotes(withoutSourceNotes(draft.narrative.marketState?.trim() || get(v, "exam_market_state"), printedSales), m.marketClaimsState as NbhdClaim[] | undefined, v, "State market commentary")} />
         </Keep>
       ) : null}
       {show6 && show63 ? (
         <Keep>
           <H2>{subTitle(major[5], n6[2], "Region")}</H2>
-          <Prose text={withoutSourceNotes(draft.narrative.marketRegion?.trim() || get(v, "exam_market_region"), printedSales)} />
+          <Prose text={citeAcceptedNotes(withoutSourceNotes(draft.narrative.marketRegion?.trim() || get(v, "exam_market_region"), printedSales), m.marketClaimsRegion as NbhdClaim[] | undefined, v, "Regional market commentary")} />
         </Keep>
       ) : null}
       {show6 && show64 ? (
         <Keep>
           <H2>{subTitle(major[5], n6[3], "Locality")}</H2>
-          <Prose text={withoutSourceNotes(draft.narrative.marketLocality?.trim() || get(v, "exam_market_local"), printedSales)} />
+          <Prose text={citeAcceptedNotes(withoutSourceNotes(draft.narrative.marketLocality?.trim() || get(v, "exam_market_local"), printedSales), m.marketClaimsLocality as NbhdClaim[] | undefined, v, "Locality market commentary")} />
         </Keep>
       ) : null}
       {show6 && !hasMarketParts ? (
