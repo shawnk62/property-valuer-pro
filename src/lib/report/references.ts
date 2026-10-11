@@ -531,14 +531,27 @@ function localitySources(meta: ReportMeta | undefined, values: InspectionValues,
   return out;
 }
 
-const COMMON_PLACE = /^(the|and|with|from|that|this|city|suburb|estate|gold|coast|queensland|australia|worongary|nerang|mudgeeraba|gilston|tallai|pacific|motorway)$/i;
+const COMMON_PLACE = /^(the|and|with|from|that|this|city|suburb|estate|gold|coast|queensland|australia|worongary|nerang|mudgeeraba|gilston|tallai|pacific|motorway|subject|property|located|within|between|eastern|western|northern|southern)$/i;
+
+function hasSpecificFigure(sentence: string, values?: InspectionValues): boolean {
+  const postcode = String(values?.["prop_postcode"] ?? "").trim();
+  const withoutPostcode = postcode ? sentence.replace(new RegExp(`\\b${postcode}\\b`, "g"), "") : sentence;
+  return /\d[\d,]*(?:\.\d+)?\s*(?:km²|km2|square kilometres|ha|hectares|people|persons|dwellings|lots|residents|census)\b|\b(?:area of|population of|covers)\s+\d/i.test(withoutPostcode);
+}
+
+function isCommonKnowledge(sentence: string, values?: InspectionValues): boolean {
+  if (hasSpecificFigure(sentence, values)) return false;
+  return /\b(is a suburb|lies within|postcode|situated in|located in|positioned|boundary follows|city of|in queensland|in australia)\b/i.test(sentence);
+}
 
 function distinctiveTokens(text: string, values?: InspectionValues): string[] {
   const suburb = String(values?.["prop_suburb"] ?? "").trim().toLowerCase();
   const city = String(values?.["prop_lga"] ?? values?.["prop_city"] ?? "").trim().toLowerCase();
+  const postcode = String(values?.["prop_postcode"] ?? "").trim();
   const numbers = (text.match(/\d[\d,]*(?:\.\d+)?/g) ?? [])
     .map((n) => n.replace(/,/g, ""))
     .filter((n) => {
+      if (postcode && n === postcode) return false;
       if (/^(19|20)\d{2}$/.test(n)) return false;
       return n.replace(".", "").length >= 3;
     });
@@ -571,6 +584,10 @@ export function citeAcceptedNotes(
     const sentences = paragraph.split(/(?<=[.!?])\s+/);
     let lastAuthor = "";
     const next = sentences.map((sentence) => {
+      if (isCommonKnowledge(sentence, values)) {
+        lastAuthor = "";
+        return sentence;
+      }
       const ranked = usable
         .map((claim) => ({ claim, score: claimMatchScore(claim.text, sentence, values) }))
         .filter((item) => item.score > 0)
