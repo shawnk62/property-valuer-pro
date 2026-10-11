@@ -51,7 +51,6 @@ import {
   insertHarvardCitations,
   referencesForPrint,
   referenceStyleOf,
-  sectionFallbackSources,
 } from "@/lib/report/references";
 import { purposeOfValuation } from "@/lib/report/reportTypes";
 import { buildExecutiveSummaryLead } from "@/lib/report/narrative";
@@ -867,7 +866,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       {show51 ? <H2>{subTitle(major[4], n5[0], "Location")}</H2> : null}
       {narrativePrints(m, "location") ? (
         <>
-      <Prose text={citeAcceptedNotes(stripLeadingHeading(draft.narrative.location?.trim() || "", "Location"), m.nbhdClaims as NbhdClaim[] | undefined, v, "Location", sectionFallbackSources("location", v))} />
+      <Prose text={citeAcceptedNotes(stripLeadingHeading(draft.narrative.location?.trim() || "", "Location"), m.nbhdClaims as NbhdClaim[] | undefined, v, "Location")} />
       {!draft.narrative.location?.trim() && addressLine ? (
         <Para>The property is located at {addressLine}.</Para>
       ) : null}
@@ -935,19 +934,19 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       {show6 && show62 ? (
         <Keep>
           <H2>{subTitle(major[5], n6[1], "State")}</H2>
-          <Prose text={citeAcceptedNotes(withoutSourceNotes(draft.narrative.marketState?.trim() || get(v, "exam_market_state"), printedSales), m.marketClaimsState as NbhdClaim[] | undefined, v, "State market commentary", sectionFallbackSources("state", v))} />
+          <Prose text={citeAcceptedNotes(withoutSourceNotes(draft.narrative.marketState?.trim() || get(v, "exam_market_state"), printedSales), m.marketClaimsState as NbhdClaim[] | undefined, v, "State market commentary")} />
         </Keep>
       ) : null}
       {show6 && show63 ? (
         <Keep>
           <H2>{subTitle(major[5], n6[2], "Region")}</H2>
-          <Prose text={citeAcceptedNotes(withoutSourceNotes(draft.narrative.marketRegion?.trim() || get(v, "exam_market_region"), printedSales), m.marketClaimsRegion as NbhdClaim[] | undefined, v, "Regional market commentary", sectionFallbackSources("region", v))} />
+          <Prose text={citeAcceptedNotes(withoutSourceNotes(draft.narrative.marketRegion?.trim() || get(v, "exam_market_region"), printedSales), m.marketClaimsRegion as NbhdClaim[] | undefined, v, "Regional market commentary")} />
         </Keep>
       ) : null}
       {show6 && show64 ? (
         <Keep>
           <H2>{subTitle(major[5], n6[3], "Locality")}</H2>
-          <Prose text={citeAcceptedNotes(withoutSourceNotes(draft.narrative.marketLocality?.trim() || get(v, "exam_market_local"), printedSales), m.marketClaimsLocality as NbhdClaim[] | undefined, v, "Locality market commentary", sectionFallbackSources("locality", v))} />
+          <Prose text={citeAcceptedNotes(withoutSourceNotes(draft.narrative.marketLocality?.trim() || get(v, "exam_market_local"), printedSales), m.marketClaimsLocality as NbhdClaim[] | undefined, v, "Locality market commentary")} />
         </Keep>
       ) : null}
       {show6 && !hasMarketParts ? (

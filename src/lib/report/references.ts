@@ -452,7 +452,7 @@ export function referencesForPrint(
     return true;
   });
   cleaned.sort((a, b) => a.author.localeCompare(b.author, "en") || a.title.localeCompare(b.title, "en"));
-  const primary = [...primaryReportSources(values), ...standingShawnSources(), ...marketSourcesNamedIn(values, marketText), ...localitySources(meta, values), ...sectionFallbackSources("location", values), ...sectionFallbackSources("state", values), ...sectionFallbackSources("region", values), ...sectionFallbackSources("locality", values)];
+  const primary = [...primaryReportSources(values), ...standingShawnSources(), ...marketSourcesNamedIn(values, marketText), ...localitySources(meta, values)];
   for (const item of primary) {
     const key = referenceKey(item);
     const sameAuthor = cleaned.findIndex((row) => row.author.toLowerCase() === item.author.toLowerCase());
@@ -460,17 +460,6 @@ export function referencesForPrint(
     else if (sameAuthor >= 0) continue;
     seen.add(key);
     cleaned.push(item);
-  }
-  if (/realestate\.com|rea group/i.test(marketText) && !cleaned.some((row) => row.author === "REA Group" && row.url)) {
-    const viewed = apaRetrieved();
-    cleaned.push({
-      author: "REA Group",
-      year: "2026",
-      title: `${String(values["prop_suburb"] ?? "Worongary").trim() || "Worongary"} suburb profile`,
-      site: "realestate.com.au",
-      url: reaProfileUrl(values),
-      accessed: viewed,
-    });
   }
   cleaned.sort((a, b) => a.author.localeCompare(b.author, "en") || a.title.localeCompare(b.title, "en"));
   return cleaned.filter((row) => row.title && row.author !== row.url);
@@ -527,23 +516,21 @@ function localitySources(meta: ReportMeta | undefined, values: InspectionValues)
   return out;
 }
 
-/** Print-time only. Cites the accepted notes that were used to write this block. */
+/** Print-time only. Cites a source only when that source is on an accepted note. */
 export function citeAcceptedNotes(
   text: string,
   claims: NbhdClaim[] | undefined,
   values: InspectionValues,
   label: string,
-  fallback: ReferenceParts[] = [],
 ): string {
   if (!text.trim()) return text;
-  const fromClaims = (claims ?? [])
-    .filter((claim) => claim.accepted)
+  const sources = (claims ?? [])
+    .filter((claim) => claim.accepted && String(claim.source ?? "").trim())
     .map((claim) => claimToReference(claim, values, label))
     .filter((item): item is ReferenceParts => Boolean(item));
-  const sources = [...fromClaims, ...fallback];
   const seen = new Set<string>();
   const unique = sources.filter((source) => {
-    const key = source.author.toLowerCase();
+    const key = `${source.author}|${source.url}`.toLowerCase();
     if (!source.author || seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -579,59 +566,6 @@ export function citeLocalitySources(
   return citeAcceptedNotes(text, meta?.nbhdClaims as NbhdClaim[] | undefined, values, "Locality profile");
 }
 
-export function sectionFallbackSources(
-  section: "location" | "state" | "region" | "locality",
-  values: InspectionValues,
-): ReferenceParts[] {
-  const viewed = accessedLabel();
-  const year = viewed.split(" ").pop() ?? "2026";
-  const council = String(values["prop_lga"] ?? "Local government").trim() || "Local government";
-  if (section === "location") {
-    return [{
-      author: "Google",
-      year,
-      title: "Maps distance measurement",
-      site: "Google Maps",
-      url: "https://maps.google.com/",
-      accessed: viewed,
-    }];
-  }
-  if (section === "state") {
-    return [{
-      author: "Queensland Government Statistician's Office",
-      year,
-      title: "Queensland regional profiles",
-      site: "Queensland Government",
-      url: "https://www.qgso.qld.gov.au/",
-      accessed: viewed,
-    }];
-  }
-  if (section === "region") {
-    return [{
-      author: council,
-      year,
-      title: "Regional market profile",
-      site: council,
-      url: "",
-      accessed: viewed,
-    }];
-  }
-  return [{
-    author: "PropTrack",
-    year: "2026",
-    title: "Home Price Index",
-    site: "PropTrack",
-    url: "https://www.proptrack.com.au/home-price-index/",
-    accessed: viewed,
-  }];
-}
-  text: string,
-  meta: ReportMeta | undefined,
-  values: InspectionValues,
-): string {
-  return citeAcceptedNotes(text, meta?.nbhdClaims as NbhdClaim[] | undefined, values, "Locality profile");
-}
-
 const SOURCE_CATALOGUE: Array<{
   test: RegExp;
   author: string;
@@ -652,25 +586,9 @@ const SOURCE_CATALOGUE: Array<{
   { test: /\bKPMG\b/i, author: "KPMG", year: "2026", title: "Residential Property Market Outlook", site: "KPMG", url: "https://kpmg.com/au/en/home.html" },
 ];
 
-/** Print-time only. Adds a Harvard author-date citation after the first naming of a known source. */
+/** Does not invent a citation. A source is cited only from an accepted note. */
 export function insertHarvardCitations(text: string): string {
-  if (!text.trim()) return text;
-  let out = text;
-  for (const source of SOURCE_CATALOGUE) {
-    const author = source.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    if (new RegExp(`${author}\\s*\\(${source.year}\\)`, "i").test(out)) continue;
-    if (new RegExp(`\\(${author}\\s+${source.year}\\)`, "i").test(out)) continue;
-    const match = out.match(source.test);
-    if (!match || match.index == null) continue;
-    const end = match.index + match[0].length;
-    if (/^\s*\((?:19|20)\d{2}\)/.test(out.slice(end, end + 10))) continue;
-    const alias = /^(ABS|RBA|IVSC|NAB)$/i.test(match[0]);
-    const replacement = alias
-      ? `${source.author} (${source.year})`
-      : `${match[0]} (${source.year})`;
-    out = `${out.slice(0, match.index)}${replacement}${out.slice(end)}`;
-  }
-  return out;
+  return text;
 }
 
 function reaProfileUrl(values: InspectionValues): string {
@@ -693,18 +611,7 @@ function marketSourcesNamedIn(values: InspectionValues, extra = ""): ReferencePa
     .map((part) => String(part ?? ""))
     .join("\n");
   if (!text.trim()) return [];
-  const viewed = accessedLabel();
-  const year = "2026";
-  return SOURCE_CATALOGUE.filter((source) => source.test.test(text)).map((source) => ({
-    author: source.author,
-    year: source.year || year,
-    title: source.author === "REA Group"
-      ? `${String(values["prop_suburb"] ?? "Suburb").trim() || "Suburb"} suburb profile`
-      : source.title,
-    site: source.site,
-    url: source.author === "REA Group" ? reaProfileUrl(values) : source.url,
-    accessed: viewed,
-  }));
+  return [];
 }
 
 function standingShawnSources(): ReferenceParts[] {
