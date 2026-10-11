@@ -452,7 +452,7 @@ export function referencesForPrint(
     return true;
   });
   cleaned.sort((a, b) => a.author.localeCompare(b.author, "en") || a.title.localeCompare(b.title, "en"));
-  const primary = [...primaryReportSources(values), ...standingShawnSources(), ...marketSourcesNamedIn(values, marketText), ...localitySources(meta, values)];
+  const primary = [...primaryReportSources(values), ...standingShawnSources(), ...marketSourcesNamedIn(values, marketText), ...localitySources(meta, values, marketText)];
   for (const item of primary) {
     const key = referenceKey(item);
     const sameAuthor = cleaned.findIndex((row) => row.author.toLowerCase() === item.author.toLowerCase());
@@ -498,17 +498,28 @@ function claimToReference(claim: NbhdClaim, values: InspectionValues, title: str
   };
 }
 
-function localitySources(meta: ReportMeta | undefined, values: InspectionValues): ReferenceParts[] {
+function localitySources(meta: ReportMeta | undefined, values: InspectionValues, extra = ""): ReferenceParts[] {
   const suburb = String(values["prop_suburb"] ?? "the subject suburb").trim() || "the subject suburb";
+  const narrative = [
+    extra,
+    values["nbhd_description"],
+    values["exam_amenities"],
+    values["exam_transport"],
+    values["exam_market_australia"],
+    values["exam_market_state"],
+    values["exam_market_region"],
+    values["exam_market_local"],
+  ].map((part) => String(part ?? "")).join("\n");
   const seen = new Set<string>();
   const out: ReferenceParts[] = [];
-  for (const claim of claimLists(meta).filter((item) => item.accepted)) {
+  for (const claim of claimLists(meta).filter((item) => item.accepted && String(item.source ?? "").trim())) {
+    if (narrative && !claimMatchesSentence(claim.text, narrative)) continue;
     const title = /market|price|index|rate/i.test(claim.text)
       ? "Market commentary"
       : `${suburb} locality profile`;
     const source = claimToReference(claim, values, title);
     if (!source) continue;
-    const key = `${source.author}|${source.title}`.toLowerCase();
+    const key = `${source.author}|${source.url}`.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(source);
@@ -516,7 +527,15 @@ function localitySources(meta: ReportMeta | undefined, values: InspectionValues)
   return out;
 }
 
-/** Print-time only. Cites a source only when that source is on an accepted note. */
+function claimMatchesSentence(claimText: string, sentence: string): boolean {
+  const numbers = claimText.match(/\d[\d,]*(?:\.\d+)?/g) ?? [];
+  const distinctive = numbers.filter((n) => n.replace(/,/g, "").length >= 2);
+  if (distinctive.some((n) => sentence.includes(n) || sentence.includes(n.replace(/,/g, "")))) return true;
+  const names = claimText.match(/\b[A-Z][A-Za-z]{3,}(?:\s+[A-Z][A-Za-z]{3,})?\b/g) ?? [];
+  return names.some((name) => name.length > 4 && new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i").test(sentence));
+}
+
+/** Print-time only. Cites a note only where its figure or name is used. */
 export function citeAcceptedNotes(
   text: string,
   claims: NbhdClaim[] | undefined,
@@ -524,38 +543,30 @@ export function citeAcceptedNotes(
   label: string,
 ): string {
   if (!text.trim()) return text;
-  const sources = (claims ?? [])
-    .filter((claim) => claim.accepted && String(claim.source ?? "").trim())
-    .map((claim) => claimToReference(claim, values, label))
-    .filter((item): item is ReferenceParts => Boolean(item));
-  const seen = new Set<string>();
-  const unique = sources.filter((source) => {
-    const key = `${source.author}|${source.url}`.toLowerCase();
-    if (!source.author || seen.has(key)) return false;
-    seen.add(key);
-    return true;
+  const usable = (claims ?? []).filter((claim) => claim.accepted && String(claim.source ?? "").trim());
+  if (usable.length === 0) return text;
+  const paragraphs = text.split(/\n{2,}/);
+  const cited = paragraphs.map((paragraph) => {
+    const sentences = paragraph.split(/(?<=[.!?])\s+/);
+    const next = sentences.map((sentence) => {
+      const matched: ReferenceParts[] = [];
+      for (const claim of usable) {
+        if (!claimMatchesSentence(claim.text, sentence)) continue;
+        const source = claimToReference(claim, values, label);
+        if (!source) continue;
+        if (matched.some((item) => item.author.toLowerCase() === source.author.toLowerCase())) continue;
+        matched.push(source);
+      }
+      if (matched.length === 0) return sentence;
+      const cites = matched
+        .filter((source) => !new RegExp(`${source.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\(${source.year}\\)`, "i").test(sentence))
+        .map((source) => `${source.author} (${source.year})`);
+      if (cites.length === 0) return sentence;
+      return sentence.replace(/([.!?])?$/, ` (${cites.join("; ")})$1`);
+    });
+    return next.join(" ");
   });
-  if (unique.length === 0) return text;
-  let out = text;
-  for (const source of unique) {
-    const author = source.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    if (new RegExp(`${author}\\s*\\(${source.year}\\)`, "i").test(out)) continue;
-    if (new RegExp(`\\(${author}\\s+${source.year}\\)`, "i").test(out)) continue;
-    const named = out.search(new RegExp(author, "i"));
-    if (named >= 0) {
-      const end = named + source.author.length;
-      out = `${out.slice(0, end)} (${source.year})${out.slice(end)}`;
-    }
-  }
-  const missing = unique.filter((source) => {
-    const author = source.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    return !new RegExp(`${author}\\s*\\(${source.year}\\)|\\(${author}\\s+${source.year}\\)`, "i").test(out);
-  });
-  if (missing.length) {
-    const cites = missing.map((source) => `${source.author} (${source.year})`).join("; ");
-    out = `${out.trim()} (${cites}).`;
-  }
-  return out;
+  return cited.join("\n\n");
 }
 
 export function citeLocalitySources(
