@@ -20,6 +20,7 @@ import {
 import { australianiseSpelling } from "@/lib/report/australianEnglish";
 import { isShawnExamType } from "@/lib/report/reportTypes";
 import { SHAWN_EXAM_STYLE } from "@/lib/report/shawnExamStyle";
+import { generateShawnDocx } from "@/lib/report/generateShawnDocx";
 import { formatNarrativeDate, formatNarrativeDateOr } from "@/lib/report/dates";
 import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { buildPhilRemarks, buildMurrayRemarks, buildSummaryDescription } from "@/lib/report/narrative";
@@ -314,6 +315,8 @@ async function pushInlineMap(
 }
 
 export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
+  const assignment = String(draft.values["prop_assignment"] ?? "");
+  if (isShawnExamType(assignment)) return generateShawnDocx(draft);
   const m = draft.meta;
   const v = draft.values;
   const assignment = String(v["prop_assignment"] ?? "");
