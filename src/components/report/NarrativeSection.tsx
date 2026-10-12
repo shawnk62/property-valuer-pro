@@ -1231,6 +1231,24 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         </div>
       </div>
 
+      {shawnExam ? (
+        <div className="rounded-md border border-border bg-card p-4">
+          <h3 className="text-sm font-semibold text-foreground">Bond assessment cover sheet</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Required for Bond submissions. Off by default. Tick to place it as the first page of this report only.
+          </p>
+          <label className="mt-3 flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="mt-0.5 size-3.5 shrink-0 rounded border-input"
+              checked={draft.reportMeta.includeAcademicCover === true}
+              onChange={(e) => setMeta({ includeAcademicCover: e.target.checked })}
+            />
+            <span>Include the Bond assessment cover sheet</span>
+          </label>
+        </div>
+      ) : null}
+
       {BLOCKS.map((block) => {
         const blockText =
           block.key === "remarks"

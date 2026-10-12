@@ -556,6 +556,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       id="report-preview-sheet"
       className="report-sheet report-type-exam mx-auto max-w-[52rem] px-8 py-10 shadow-sm sm:px-12 sm:py-14"
     >
+      {m.includeAcademicCover ? <AcademicCoverSheet draft={draft} /> : null}
       <section className="exam-cover break-after-page text-left">
         <div className="exam-wordmark">
           <img
@@ -1288,6 +1289,80 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       ))}
       {showWorkingFile ? <WorkingNotesAnnex draft={draft} /> : null}
     </article>
+  );
+}
+
+function AcademicCoverSheet({ draft }: { draft: ReportDraft }) {
+  const v = draft.values;
+  const m = draft.reportMeta;
+  const name = get(v, "exam_student_name") || m.valuerName || get(v, "insp_valuer") || "";
+  const studentNo = get(v, "exam_student_number");
+  const sig =
+    typeof v["sign_sig"] === "string" && v["sign_sig"].startsWith("data:image") ? v["sign_sig"] : "";
+  const address = [
+    get(v, "prop_address"),
+    [get(v, "prop_suburb"), get(v, "prop_state"), get(v, "prop_postcode")].filter(Boolean).join(" "),
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const date = formatNarrativeDateOr(m.valueDate, "");
+  return (
+    <section className="exam-cover break-after-page text-left text-sm leading-relaxed">
+      <p className="text-base font-semibold">Bond University</p>
+      <h1 className="mt-2 text-lg font-semibold">Assessment Cover Sheet</h1>
+      <p className="mt-4"><strong>Subject</strong> — Graduate Diploma of Valuation and Property Development</p>
+      <p><strong>Assessment task title</strong> — Valuation report{address ? `: ${address}` : ""}</p>
+      <p><strong>Type of assessment</strong> — Valuation report</p>
+      <p><strong>Due date</strong> — {date || "—"}</p>
+
+      <h2 className="mt-5 text-base font-semibold">Academic Integrity</h2>
+      <p className="mt-1">
+        Academic Integrity at Bond means adhering, in words and actions and across all aspects of student life, to an academic moral code bound by the seven integrity principles of honesty, trust, fairness, respect, responsibility, courage, and professionalism. Breaches of academic integrity are known as academic misconduct or academic dishonesty.
+      </p>
+      <p className="mt-2">
+        The University supports Academic Integrity by providing students with resources and support. Visit Academic Integrity at Bond or seek support from your educators, BondCare support services including the Academic Skills Centre, or Library services.
+      </p>
+
+      <h2 className="mt-5 text-base font-semibold">Use of Generative AI in this Assessment</h2>
+      <p className="mt-1">
+        The University acknowledges that Generative Artificial Intelligence (AI) tools are an important facet of contemporary life. Their use in assessment is considered in line with students’ development of the skills and knowledge which demonstrate the learning outcomes and underpin study and career success. This statement follows Bond University Artificial Intelligence Policy TL 3.5.4 and the Academic Integrity Policy TL 3.5.2. The assessment is treated as AI-Supported under the Bond AI Assessment Framework: AI is used as a directed drafting aid, and the submitted work is the student’s own after critical review.
+      </p>
+      <p className="mt-2 font-semibold">What the application does</p>
+      <p className="mt-1">
+        The report was prepared in Property Valuer-Pro. A generative AI tool is available inside that application. It acts only when the student asks. It drafts narrative text for a block the student selects, using the inspection form and the notes the student has accepted. It drafts a comment for a comparable sale the student selects. It rewrites only the suburb and market notes the student has ticked. At print, it places an in-text citation beside a sentence that uses a figure from an accepted note, and it lists a source only when a ticked note or a named source in the text supports it. Existing text is not replaced unless the student confirms that it should be.
+      </p>
+      <p className="mt-2 font-semibold">What the application does not do</p>
+      <p className="mt-1">
+        It does not form the opinion of value. It does not select the comparable sales. It does not make the adjustments. It does not sign the report. It does not invent a source, a figure, or a citation. It does not generate text unless the student asks. It does not overwrite a manual edit without a confirmation. The maps are from Google Maps. The photographs are the student’s. The assessed value, the adjustments, the reconciliation and the signature are the student’s own work.
+      </p>
+      <p className="mt-2">
+        The student has reviewed every AI-assisted passage, corrected it where required, and takes responsibility for the content submitted. All additional sources used are listed in the references.
+      </p>
+
+      <h2 className="mt-5 text-base font-semibold">Submission declaration</h2>
+      <p className="mt-1 italic">
+        I have read and understand the Student Code of Conduct and the Student Roles and Responsibilities outlined in the Academic Integrity Policy.
+      </p>
+      <p className="mt-1 italic">
+        I declare that this assessment is my original work, except where acknowledgement of sources is made.
+      </p>
+      <p className="mt-1 italic">
+        I declare that in completing this assessment task I have adhered to the instructions for use and acknowledgement of Generative AI outlined in this Assessment Cover Sheet.
+      </p>
+
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <p><strong>Name</strong> — {name || "—"}</p>
+        <p><strong>Student ID</strong> — {studentNo || "—"}</p>
+        <p>
+          <strong>Signature</strong>
+          {sig ? <img src={sig} alt="Signature" className="mt-1 h-12 w-auto" /> : " —"}
+        </p>
+        <p><strong>Date</strong> — {date || "—"}</p>
+      </div>
+      <p className="mt-3 text-xs">
+        Both handwritten and typed signatures are considered legal signatures. You may use either form of signature on this document.
+      </p>
+    </section>
   );
 }
 

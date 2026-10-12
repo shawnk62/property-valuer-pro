@@ -455,6 +455,8 @@ export interface ReportMeta {
   }>;
   /** Reference list style. Missing means Harvard. */
   referenceStyle?: "harvard" | "apa";
+  /** Bond assessment cover sheet. Missing or false means it is not printed. */
+  includeAcademicCover?: boolean;
   salesMapPins?: Array<{
     id: string;
     label: string;
