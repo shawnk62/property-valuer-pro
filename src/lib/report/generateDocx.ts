@@ -347,7 +347,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
 
   children.push(
     p("Valuation Summary", { center: true, bold: true, size: 28, after: 60 }),
-    p("Residential Valuation Report", { center: true, size: 18, after: 200 }),
+    p(isShawnExamType(assignment) ? "Valuation Report" : "Residential Valuation Report", { center: true, size: 18, after: 200 }),
   );
 
   // Bordered address / value band
