@@ -18,6 +18,8 @@ import {
   WidthType,
 } from "docx";
 import { australianiseSpelling } from "@/lib/report/australianEnglish";
+import { isShawnExamType } from "@/lib/report/reportTypes";
+import { SHAWN_EXAM_STYLE } from "@/lib/report/shawnExamStyle";
 import { formatNarrativeDate, formatNarrativeDateOr } from "@/lib/report/dates";
 import { BOILERPLATE } from "@/lib/report/boilerplate";
 import { buildPhilRemarks, buildMurrayRemarks, buildSummaryDescription } from "@/lib/report/narrative";
@@ -312,6 +314,10 @@ async function pushInlineMap(
 }
 
 export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
+  const m = draft.meta;
+  const v = draft.values;
+  const assignment = String(v["prop_assignment"] ?? "");
+  const firmFallback = isShawnExamType(assignment) ? SHAWN_EXAM_STYLE.firmName : "";
   const v = draft.values;
   const m = draft.reportMeta;
   const addr = addressLine(draft);
@@ -328,7 +334,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
           type: "jpg",
           transformation: { width: 180, height: 80 },
           altText: {
-            title: "Peterson Property Valuations",
+            title: isShawnExamType(assignment) ? SHAWN_EXAM_STYLE.firmName : "Valuation Report",
             description: "Company logo",
             name: "ppv-logo",
           },
@@ -397,7 +403,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   // Signature block (preview)
   children.push(p(m.valuerName || get(v, "insp_valuer") || "", { bold: true, after: 40, before: 200 }));
   if (get(v, "sign_member")) children.push(p(get(v, "sign_member"), { size: 18, after: 40 }));
-  children.push(p(m.firmName || get(v, "insp_firm") || "PETERSON PROPERTY VALUATIONS PTY LTD", { size: 18, after: 40 }));
+  children.push(p(m.firmName || get(v, "insp_firm") || firmFallback, { size: 18, after: 40 }));
   if (m.valueDate) children.push(p(formatNarrativeDate(m.valueDate), { size: 18, after: 200 }));
 
   // ---- TOC (same visibility rules as Preview) ----
@@ -965,7 +971,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   }
   children.push(p(m.valuerName || get(v, "insp_valuer") || "", { bold: true, after: 40, before: 200 }));
   if (get(v, "sign_member")) children.push(p(get(v, "sign_member"), { size: 18, after: 40 }));
-  children.push(p(m.firmName || get(v, "insp_firm") || "PETERSON PROPERTY VALUATIONS PTY LTD", { size: 18, after: 40 }));
+  children.push(p(m.firmName || get(v, "insp_firm") || firmFallback, { size: 18, after: 40 }));
   const annexures = resolveAnnexures(draft);
   const photosAnnex = annexureById(annexures, "photos");
   const mapsAnnex = annexureById(annexures, "maps");
@@ -1115,7 +1121,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   }
 
   const doc = new Document({
-    creator: m.firmName || "Peterson Property Valuations",
+    creator: m.firmName || firmFallback || "Valuation Report",
     title: addr ? `Valuation — ${addr}` : "Valuation Report",
     description: "Queensland residential valuation report",
     styles: {
