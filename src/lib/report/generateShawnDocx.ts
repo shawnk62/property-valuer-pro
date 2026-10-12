@@ -55,7 +55,7 @@ function prose(body: string): Paragraph[] {
 }
 
 export async function generateShawnDocx(draft: ReportDraft): Promise<Blob> {
-  const m = draft.meta;
+  const m = draft.reportMeta;
   const v = draft.values;
   const n = draft.narrative;
   const address = [get(v, "prop_address"), get(v, "prop_suburb"), get(v, "prop_state"), get(v, "prop_postcode")]
