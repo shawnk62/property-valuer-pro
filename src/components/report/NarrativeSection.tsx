@@ -49,6 +49,7 @@ import {
   type ReportReference,
 } from "@/lib/report/references";
 import { CannedCommentsBar } from "@/components/report/CannedCommentsBar";
+import { defaultAcademicCoverText } from "@/components/report/ShawnExamPreview";
 import { RiskRatingsPanel } from "@/components/report/RiskRatingsPanel";
 import { isShawnExamType, getReportTypeConfig } from "@/lib/report/reportTypes";
 
@@ -1246,6 +1247,14 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             />
             <span>Include the Bond assessment cover sheet</span>
           </label>
+          {draft.reportMeta.includeAcademicCover ? (
+            <PausedTextarea
+              className="mt-3 min-h-64 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={draft.reportMeta.academicCoverText || defaultAcademicCoverText()}
+              onCommit={(value) => setMeta({ academicCoverText: value })}
+              placeholder="Edit the cover sheet text."
+            />
+          ) : null}
         </div>
       ) : null}
 

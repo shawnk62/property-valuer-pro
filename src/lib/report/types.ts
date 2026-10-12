@@ -457,6 +457,8 @@ export interface ReportMeta {
   referenceStyle?: "harvard" | "apa";
   /** Bond assessment cover sheet. Missing or false means it is not printed. */
   includeAcademicCover?: boolean;
+  /** Editable body of the Bond cover sheet. Empty means the default text. */
+  academicCoverText?: string;
   salesMapPins?: Array<{
     id: string;
     label: string;
