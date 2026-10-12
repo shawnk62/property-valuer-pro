@@ -319,10 +319,7 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   if (isShawnExamType(assignment)) return generateShawnDocx(draft);
   const m = draft.meta;
   const v = draft.values;
-  const assignment = String(v["prop_assignment"] ?? "");
   const firmFallback = isShawnExamType(assignment) ? SHAWN_EXAM_STYLE.firmName : "";
-  const v = draft.values;
-  const m = draft.reportMeta;
   const addr = addressLine(draft);
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], "");
   const usableSiteArea = formatUsableSiteAreaIfDifferent(v);
