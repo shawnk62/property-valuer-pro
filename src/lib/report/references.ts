@@ -473,7 +473,7 @@ export function referencesForPrint(
     cleaned.push(item);
   }
   cleaned.sort((a, b) => a.author.localeCompare(b.author, "en") || a.title.localeCompare(b.title, "en"));
-  return cleaned.filter((row) => row.title && row.author !== row.url);
+  return cleaned.filter((row) => row.title && row.url && row.author !== row.url);
 }
 
 function australianViewed(raw = accessedLabel()): string {
@@ -490,13 +490,15 @@ function claimToReference(claim: NbhdClaim, values: InspectionValues, title: str
   const viewed = accessedLabel();
   const known = SOURCE_CATALOGUE.find((item) => item.test.test(raw));
   const url = raw.match(/https?:\/\/\S+/i)?.[0]?.replace(/[.,;>)]+$/, "") ?? known?.url ?? "";
+  if (!url) return null;
   const author = known?.author || expandAuthor(raw);
   if (!author || author === "Source" || /^com\.?$/i.test(author)) return null;
   const year = raw.match(/\b(20\d{2})\b/)?.[1] ?? known?.year ?? viewed.split(" ").pop() ?? "2026";
+  const pageTitle = known?.title || (title && !/market commentary|locality profile/i.test(title) ? title : author);
   return {
     author,
     year,
-    title: known?.title || title,
+    title: pageTitle,
     site: known?.site || author,
     url,
     accessed: viewed,
@@ -627,16 +629,20 @@ const SOURCE_CATALOGUE: Array<{
   site: string;
   url: string;
 }> = [
-  { test: /cotality|corelogic/i, author: "Cotality", year: "2026", title: "Home Value Index", site: "Cotality", url: "https://www.cotality.com/au" },
+  { test: /cotality|corelogic/i, author: "Cotality", year: "2026", title: "Home Value Index", site: "Cotality", url: "https://www.cotality.com/au/insights/articles/2025-delivers-strong-housing-gains-but-2026-set-for-a-softer-landing-as-rate-fears-and-affordability-bite" },
   { test: /proptrack/i, author: "PropTrack", year: "2026", title: "Home Price Index", site: "PropTrack", url: "https://www.proptrack.com.au/home-price-index/" },
-  { test: /australian bureau of statistics|\bABS\b|bureau of statistics/i, author: "Australian Bureau of Statistics", year: "2026", title: "Total Value of Dwellings", site: "Australian Bureau of Statistics", url: "https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/total-value-dwellings" },
+  { test: /australian bureau of statistics|\bABS\b|bureau of statistics/i, author: "Australian Bureau of Statistics", year: "2026", title: "Total Value of Dwellings, June Quarter 2026", site: "Australian Bureau of Statistics", url: "https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/total-value-dwellings/latest-release" },
   { test: /reserve bank|\bRBA\b/i, author: "Reserve Bank of Australia", year: "2026", title: "Statement on Monetary Policy", site: "Reserve Bank of Australia", url: "https://www.rba.gov.au/publications/smp/" },
-  { test: /westpac/i, author: "Westpac", year: "2026", title: "Housing Pulse", site: "Westpac", url: "https://www.westpac.com.au/news/" },
-  { test: /commbank|commonwealth bank/i, author: "Commonwealth Bank of Australia", year: "2026", title: "Housing market update", site: "Commonwealth Bank of Australia", url: "https://www.commbank.com.au/" },
-  { test: /\bNAB\b|national australia bank/i, author: "National Australia Bank", year: "2026", title: "NAB Residential Property Survey", site: "National Australia Bank", url: "https://www.nab.com.au/" },
+  { test: /westpac/i, author: "Westpac", year: "2026", title: "Housing Pulse", site: "Westpac", url: "https://www.westpac.com.au/news/in-depth/housing-pulse/" },
+  { test: /commbank|commonwealth bank/i, author: "Commonwealth Bank of Australia", year: "2026", title: "Housing market update", site: "Commonwealth Bank of Australia", url: "https://www.commbank.com.au/articles/newsroom/2026/housing-market.html" },
+  { test: /\bNAB\b|national australia bank/i, author: "National Australia Bank", year: "2026", title: "NAB Residential Property Survey", site: "National Australia Bank", url: "https://www.nab.com.au/business/industry/residential-property-survey" },
   { test: /realestate\.com|rea group/i, author: "REA Group", year: "2026", title: "Suburb profile", site: "realestate.com.au", url: "https://www.realestate.com.au/" },
-  { test: /international valuation standards council|\bIVSC\b|international valuation standards/i, author: "International Valuation Standards Council", year: "2025", title: "International Valuation Standards", site: "International Valuation Standards Council", url: "https://www.ivsc.org/" },
-  { test: /\bKPMG\b/i, author: "KPMG", year: "2026", title: "Residential Property Market Outlook", site: "KPMG", url: "https://kpmg.com/au/en/home.html" },
+  { test: /international valuation standards council|\bIVSC\b|international valuation standards/i, author: "International Valuation Standards Council", year: "2025", title: "International Valuation Standards", site: "International Valuation Standards Council", url: "https://www.ivsc.org/standards/" },
+  { test: /\bKPMG\b/i, author: "KPMG", year: "2026", title: "Residential Property Market Outlook", site: "KPMG", url: "https://kpmg.com/au/en/home/insights/2026/residential-property-market-outlook.html" },
+  { test: /gold coast info|goldcoastinfo/i, author: "City of Gold Coast", year: "2026", title: "Worongary suburb profile", site: "City of Gold Coast", url: "https://www.goldcoast.qld.gov.au/About-our-city/About-the-Gold-Coast/Suburbs/Worongary" },
+  { test: /queensland government statistician|qgso/i, author: "Queensland Government Statistician's Office", year: "2026", title: "Queensland population estimates", site: "Queensland Treasury", url: "https://www.qgso.qld.gov.au/statistics/theme/population" },
+  { test: /ray white/i, author: "Ray White", year: "2026", title: "Gold Coast market report", site: "Ray White", url: "https://www.raywhite.com/research/" },
+  { test: /areasearch/i, author: "AreaSearch", year: "2026", title: "Worongary suburb profile", site: "AreaSearch", url: "https://www.areasearch.com.au/qld/worongary" },
 ];
 
 /** Does not invent a citation. A source is cited only from an accepted note. */
@@ -675,7 +681,7 @@ function standingShawnSources(): ReferenceParts[] {
       year: "2025",
       title: "International Valuation Standards",
       site: "International Valuation Standards Council",
-      url: "https://www.ivsc.org/",
+      url: "https://www.ivsc.org/standards/",
       accessed: viewed,
     },
   ];
@@ -684,13 +690,17 @@ function primaryReportSources(values: InspectionValues): ReferenceParts[] {
   const viewed = accessedLabel();
   const out: ReferenceParts[] = [];
   const scheme = String(values["prop_planning_scheme"] ?? values["exam_planning_scheme"] ?? "").trim();
+  const lga = String(values["prop_lga"] ?? "Planning authority").trim() || "Planning authority";
   if (scheme) {
+    const goldCoast = /gold coast/i.test(lga) || /gold coast/i.test(scheme);
     out.push({
-      author: String(values["prop_lga"] ?? "Planning authority").trim() || "Planning authority",
+      author: lga,
       year: scheme.match(/\b(20\d{2})\b/)?.[1] ?? viewed.split(" ").pop() ?? "",
       title: scheme,
-      site: String(values["prop_lga"] ?? "Planning authority").trim() || "Planning authority",
-      url: "",
+      site: lga,
+      url: goldCoast
+        ? "https://www.goldcoast.qld.gov.au/Planning-building/Planning-our-city/Gold-Coast-City-Plan"
+        : "",
       accessed: viewed,
     });
   }
@@ -700,7 +710,7 @@ function primaryReportSources(values: InspectionValues): ReferenceParts[] {
       year: String(values["prop_title_search_date"] ?? values["exam_title_search_date"] ?? "").match(/\b(20\d{2})\b/)?.[1] ?? viewed.split(" ").pop() ?? "",
       title: "Current title search",
       site: "Titles Queensland",
-      url: "https://www.titlesqld.com.au/",
+      url: "https://www.titlesqld.com.au/title-searches/",
       accessed: viewed,
     });
   }
@@ -709,12 +719,12 @@ function primaryReportSources(values: InspectionValues): ReferenceParts[] {
       author: "Queensland Government",
       year: viewed.split(" ").pop() ?? "",
       title: "Survey plan",
-      site: "Queensland Government",
-      url: "https://www.qld.gov.au/",
+      site: "Queensland Globe",
+      url: "https://qldglobe.information.qld.gov.au/",
       accessed: viewed,
     });
   }
-  return out.filter((item) => item.title && item.year && item.year !== "n.d.");
+  return out.filter((item) => item.title && item.year && item.year !== "n.d." && item.url);
 }
 
 export function referenceStyleOf(meta: ReportMeta | undefined): ReferenceStyle {
