@@ -495,12 +495,15 @@ function claimToReference(claim: NbhdClaim, values: InspectionValues, title: str
   if (!author || author === "Source" || /^com\.?$/i.test(author)) return null;
   const year = raw.match(/\b(20\d{2})\b/)?.[1] ?? known?.year ?? viewed.split(" ").pop() ?? "2026";
   const pageTitle = known?.title || (title && !/market commentary|locality profile/i.test(title) ? title : author);
+  const suburb = String(values["prop_suburb"] ?? "").trim();
+  const titled = /rea group/i.test(author) && suburb ? `${suburb} suburb profile` : pageTitle;
+  const reaUrl = /rea group/i.test(author) ? reaProfileUrl(values) : url;
   return {
     author,
     year,
-    title: pageTitle,
+    title: titled,
     site: known?.site || author,
-    url,
+    url: reaUrl,
     accessed: viewed,
   };
 }
@@ -636,7 +639,7 @@ const SOURCE_CATALOGUE: Array<{
   { test: /westpac/i, author: "Westpac", year: "2026", title: "Housing Pulse", site: "Westpac", url: "https://www.westpac.com.au/news/in-depth/housing-pulse/" },
   { test: /commbank|commonwealth bank/i, author: "Commonwealth Bank of Australia", year: "2026", title: "Housing market update", site: "Commonwealth Bank of Australia", url: "https://www.commbank.com.au/articles/newsroom/2026/housing-market.html" },
   { test: /\bNAB\b|national australia bank/i, author: "National Australia Bank", year: "2026", title: "NAB Residential Property Survey", site: "National Australia Bank", url: "https://www.nab.com.au/business/industry/residential-property-survey" },
-  { test: /realestate\.com|rea group/i, author: "REA Group", year: "2026", title: "Suburb profile", site: "realestate.com.au", url: "https://www.realestate.com.au/" },
+  { test: /realestate\.com|rea group/i, author: "REA Group", year: "2026", title: "Worongary suburb profile", site: "realestate.com.au", url: "https://www.realestate.com.au/qld/worongary-4213/" },
   { test: /international valuation standards council|\bIVSC\b|international valuation standards/i, author: "International Valuation Standards Council", year: "2025", title: "International Valuation Standards", site: "International Valuation Standards Council", url: "https://www.ivsc.org/standards/" },
   { test: /\bKPMG\b/i, author: "KPMG", year: "2026", title: "Residential Property Market Outlook", site: "KPMG", url: "https://kpmg.com/au/en/home/insights/2026/residential-property-market-outlook.html" },
   { test: /gold coast info|goldcoastinfo/i, author: "City of Gold Coast", year: "2026", title: "Worongary suburb profile", site: "City of Gold Coast", url: "https://www.goldcoast.qld.gov.au/About-our-city/About-the-Gold-Coast/Suburbs/Worongary" },
@@ -718,7 +721,7 @@ function primaryReportSources(values: InspectionValues): ReferenceParts[] {
     out.push({
       author: "Queensland Government",
       year: viewed.split(" ").pop() ?? "",
-      title: "Survey plan",
+      title: `Survey plan ${String(values["prop_lotplan"] ?? values["prop_plan"] ?? "").trim()}`.trim(),
       site: "Queensland Globe",
       url: "https://qldglobe.information.qld.gov.au/",
       accessed: viewed,

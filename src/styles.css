@@ -721,6 +721,10 @@
     text-decoration: none !important;
     color: inherit !important;
   }
+  .report-ref-title,
+  .report-reference-list em {
+    font-style: italic !important;
+  }
 
   /* Page 1: cover only. Do not break-before — that prints blank pages first. */
   #report-cover {
@@ -1705,6 +1709,10 @@
   padding-left: 1.5rem;
   text-indent: -1.5rem;
   text-align: left;
+}
+.report-ref-title,
+.report-reference-list em {
+  font-style: italic !important;
 }
 
 /* Working-report blank lines become the gap between printed paragraphs. */
