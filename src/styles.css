@@ -724,9 +724,11 @@
   .report-sheet .report-ref-title,
   .report-sheet .report-reference-list em,
   .report-ref-title,
-  .report-reference-list em {
+  .report-reference-list em,
+  .report-reference-list i {
     font-style: italic !important;
-    font-family: Arial, Helvetica, sans-serif !important;
+    font-synthesis: style !important;
+    font-family: "Arial", "Helvetica", sans-serif !important;
   }
 
   /* Page 1: cover only. Do not break-before — that prints blank pages first. */

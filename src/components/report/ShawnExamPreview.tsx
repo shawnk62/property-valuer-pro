@@ -1139,7 +1139,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           Object.values(draft.narrative).join("\n"),
         ).length ? (
           <div className="report-reference-list">
-            <style>{`.report-reference-list em, .report-ref-title { font-style: italic !important; }`}</style>
+            <style>{`.report-reference-list i, .report-reference-list em, .report-ref-title { font-style: italic !important; font-synthesis: style !important; }`}</style>
             {referencesForPrint(
               m,
               draft.narrative.references,
@@ -1160,7 +1160,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                     </>
                   ) : (
                     <>
-                      {ref.author} {ref.year}, <em className="report-ref-title" style={{ fontStyle: "italic", fontFamily: "Arial, Helvetica, sans-serif" }}>{ref.title}</em>
+                      {ref.author} {ref.year}, <i className="report-ref-title" style={{ fontStyle: "italic" }}>{ref.title}</i>
                       {site ? <>, {ref.site}</> : null}, viewed {ref.accessed}
                       {ref.url ? <>, {"<"}{ref.url}{">"}</> : null}.
                     </>
