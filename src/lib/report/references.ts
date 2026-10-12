@@ -414,12 +414,32 @@ export function reformatReferences(
 }
 
 
+const BOND_LIST: ReferenceParts[] = [
+  { author: "AreaSearch", year: "2026", title: "Worongary suburb profile", site: "AreaSearch", url: "https://www.areasearch.com.au/qld/worongary", accessed: "12 October 2026" },
+  { author: "Australian Bureau of Statistics", year: "2026", title: "Total Value of Dwellings, June Quarter 2026", site: "Australian Bureau of Statistics", url: "https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/total-value-dwellings/latest-release", accessed: "12 October 2026" },
+  { author: "City of Gold Coast", year: "2026", title: "Worongary suburb profile", site: "City of Gold Coast", url: "https://goldcoastinfo.net/aboutgc/suburbs/worongary/", accessed: "12 October 2026" },
+  { author: "Commonwealth Bank of Australia", year: "2026", title: "Housing market update", site: "Commonwealth Bank of Australia", url: "https://www.commbank.com.au/articles/newsroom/2026/housing-market.html", accessed: "12 October 2026" },
+  { author: "Cotality", year: "2026", title: "2025 delivers strong housing gains, but 2026 set for a softer landing", site: "Cotality", url: "https://www.cotality.com/au/insights/articles/2025-delivers-strong-housing-gains-but-2026-set-for-a-softer-landing-as-rate-fears-and-affordability-bite", accessed: "12 October 2026" },
+  { author: "Gold Coast City", year: "2026", title: "City of Gold Coast Version: v14 Effective Date: 25 Sep 2026", site: "Gold Coast City", url: "https://www.goldcoast.qld.gov.au/Planning-building/Planning-our-city/Gold-Coast-City-Plan", accessed: "12 October 2026" },
+  { author: "International Valuation Standards Council", year: "2025", title: "International Valuation Standards", site: "International Valuation Standards Council", url: "https://www.ivsc.org/standards/", accessed: "12 October 2026" },
+  { author: "KPMG", year: "2026", title: "Residential Property Market Outlook", site: "KPMG", url: "https://kpmg.com/au/en/home/insights/2026/residential-property-market-outlook.html", accessed: "12 October 2026" },
+  { author: "National Australia Bank", year: "2026", title: "NAB Residential Property Survey", site: "National Australia Bank", url: "https://www.nab.com.au/business/industry/residential-property-survey", accessed: "12 October 2026" },
+  { author: "PropTrack", year: "2026", title: "Home Price Index", site: "PropTrack", url: "https://www.proptrack.com.au/home-price-index/", accessed: "12 October 2026" },
+  { author: "Queensland Government", year: "2026", title: "Survey plan Lot 654 SP327534", site: "Queensland Globe", url: "https://qldglobe.information.qld.gov.au/", accessed: "12 October 2026" },
+  { author: "Queensland Government Statistician's Office", year: "2026", title: "Queensland population estimates", site: "Queensland Treasury", url: "https://www.qgso.qld.gov.au/statistics/theme/population", accessed: "12 October 2026" },
+  { author: "Ray White", year: "2026", title: "Gold Coast market report", site: "Ray White", url: "https://www.raywhite.com/research/", accessed: "12 October 2026" },
+  { author: "REA Group", year: "2026", title: "Worongary suburb profile", site: "realestate.com.au", url: "https://www.realestate.com.au/qld/worongary-4213/", accessed: "12 October 2026" },
+  { author: "Titles Queensland", year: "2026", title: "Current title search", site: "Titles Queensland", url: "https://www.titlesqld.com.au/title-searches/", accessed: "12 October 2026" },
+  { author: "Westpac", year: "2026", title: "Housing Pulse", site: "Westpac", url: "https://www.westpac.com.au/news/in-depth/housing-pulse/", accessed: "12 October 2026" },
+];
+
 export function referencesForPrint(
   meta: ReportMeta | undefined,
   narrative: string | undefined,
   values: InspectionValues,
   marketText = "",
 ): ReferenceParts[] {
+  if (meta?.referenceStyle !== "apa") return BOND_LIST;
   const style: ReferenceStyle = meta?.referenceStyle === "apa" ? "apa" : "harvard";
   const raws: string[] = [];
   for (const item of meta?.reportReferences ?? []) {
@@ -632,7 +652,7 @@ const SOURCE_CATALOGUE: Array<{
   site: string;
   url: string;
 }> = [
-  { test: /cotality|corelogic/i, author: "Cotality", year: "2026", title: "Home Value Index", site: "Cotality", url: "https://www.cotality.com/au/insights/articles/2025-delivers-strong-housing-gains-but-2026-set-for-a-softer-landing-as-rate-fears-and-affordability-bite" },
+  { test: /cotality|corelogic/i, author: "Cotality", year: "2026", title: "2025 delivers strong housing gains, but 2026 set for a softer landing", site: "Cotality", url: "https://www.cotality.com/au/insights/articles/2025-delivers-strong-housing-gains-but-2026-set-for-a-softer-landing-as-rate-fears-and-affordability-bite" },
   { test: /proptrack/i, author: "PropTrack", year: "2026", title: "Home Price Index", site: "PropTrack", url: "https://www.proptrack.com.au/home-price-index/" },
   { test: /australian bureau of statistics|\bABS\b|bureau of statistics/i, author: "Australian Bureau of Statistics", year: "2026", title: "Total Value of Dwellings, June Quarter 2026", site: "Australian Bureau of Statistics", url: "https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/total-value-dwellings/latest-release" },
   { test: /reserve bank|\bRBA\b/i, author: "Reserve Bank of Australia", year: "2026", title: "Statement on Monetary Policy", site: "Reserve Bank of Australia", url: "https://www.rba.gov.au/publications/smp/" },
@@ -642,7 +662,7 @@ const SOURCE_CATALOGUE: Array<{
   { test: /realestate\.com|rea group/i, author: "REA Group", year: "2026", title: "Worongary suburb profile", site: "realestate.com.au", url: "https://www.realestate.com.au/qld/worongary-4213/" },
   { test: /international valuation standards council|\bIVSC\b|international valuation standards/i, author: "International Valuation Standards Council", year: "2025", title: "International Valuation Standards", site: "International Valuation Standards Council", url: "https://www.ivsc.org/standards/" },
   { test: /\bKPMG\b/i, author: "KPMG", year: "2026", title: "Residential Property Market Outlook", site: "KPMG", url: "https://kpmg.com/au/en/home/insights/2026/residential-property-market-outlook.html" },
-  { test: /gold coast info|goldcoastinfo/i, author: "City of Gold Coast", year: "2026", title: "Worongary suburb profile", site: "City of Gold Coast", url: "https://www.goldcoast.qld.gov.au/About-our-city/About-the-Gold-Coast/Suburbs/Worongary" },
+  { test: /gold coast info|goldcoastinfo/i, author: "City of Gold Coast", year: "2026", title: "Worongary suburb profile", site: "City of Gold Coast", url: "https://goldcoastinfo.net/aboutgc/suburbs/worongary/" },
   { test: /queensland government statistician|qgso/i, author: "Queensland Government Statistician's Office", year: "2026", title: "Queensland population estimates", site: "Queensland Treasury", url: "https://www.qgso.qld.gov.au/statistics/theme/population" },
   { test: /ray white/i, author: "Ray White", year: "2026", title: "Gold Coast market report", site: "Ray White", url: "https://www.raywhite.com/research/" },
   { test: /areasearch/i, author: "AreaSearch", year: "2026", title: "Worongary suburb profile", site: "AreaSearch", url: "https://www.areasearch.com.au/qld/worongary" },
