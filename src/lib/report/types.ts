@@ -286,9 +286,15 @@ export interface ComparableSale {
   omitFromReport?: boolean;
 }
 
-/** Sales that print and appear in the compact grid. */
+/** Sales that print and appear in the compact grid. Empty placeholders are dropped. */
 export function salesOnReport(sales: ComparableSale[] | null | undefined): ComparableSale[] {
-  return (sales ?? []).filter((s) => s.omitFromReport !== true);
+  return (sales ?? []).filter((s) => {
+    if (s.omitFromReport === true) return false;
+    const address = String(s.address ?? "").replace(/[—–-]/g, "").trim();
+    const price = String(s.salePrice ?? "").replace(/[—–-]/g, "").trim();
+    const site = String(s.landArea ?? "").replace(/[—–-]/g, "").trim();
+    return Boolean(address || price || site);
+  });
 }
 
 /** Sales held in the working file only. */
