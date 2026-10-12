@@ -123,16 +123,23 @@ function hostAuthor(host: string): string {
 }
 
 function expandAuthor(raw: string): string {
-  const cleaned = raw
+  const primary = raw
+    .split(/\bvia\b/i)[0]!
+    .replace(/https?:\/\/\S+/gi, "")
+    .replace(/\b[\w.-]+\.(?:com|com\.au|org|org\.au|gov|gov\.au|net|au)\b/gi, "")
     .replace(/\(\s*(n\.d\.|\d{4}(?:\s*[,–-]\s*\d{4})?)\s*\)/gi, "")
+    .replace(/\b(20\d{2})\b/g, "")
+    .replace(/[,;/].*$/, "")
     .replace(/\.\s*$/, "")
     .replace(/\s+/g, " ")
     .trim();
-  if (!cleaned || /^(com|web source|source|n\.d)$/i.test(cleaned)) return "";
-  const alias = AUTHOR_ALIASES[cleaned.toLowerCase()];
+  if (!primary || /^(com|web source|source|n\.d)$/i.test(primary)) return "";
+  const alias = AUTHOR_ALIASES[primary.toLowerCase()];
   if (alias) return alias;
-  if (/^abs\b/i.test(cleaned) && cleaned.length < 12) return "Australian Bureau of Statistics";
-  return cleaned;
+  if (/^abs\b/i.test(primary)) return "Australian Bureau of Statistics";
+  const known = SOURCE_CATALOGUE.find((item) => item.test.test(primary));
+  if (known) return known.author;
+  return primary;
 }
 
 function sentenceCase(raw: string): string {
@@ -481,22 +488,16 @@ function claimToReference(claim: NbhdClaim, values: InspectionValues, title: str
   const raw = String(claim.source ?? "").trim();
   if (!raw) return null;
   const viewed = accessedLabel();
-  const url = raw.match(/https?:\/\/\S+/i)?.[0]?.replace(/[.,;>)]+$/, "") ?? "";
-  let author = "";
-  if (url) {
-    try {
-      author = hostAuthor(new URL(url).hostname);
-    } catch {
-      author = "";
-    }
-  }
-  if (!author) author = expandAuthor(raw.replace(/https?:\/\/\S+/gi, "").trim());
+  const known = SOURCE_CATALOGUE.find((item) => item.test.test(raw));
+  const url = raw.match(/https?:\/\/\S+/i)?.[0]?.replace(/[.,;>)]+$/, "") ?? known?.url ?? "";
+  const author = known?.author || expandAuthor(raw);
   if (!author || author === "Source" || /^com\.?$/i.test(author)) return null;
+  const year = raw.match(/\b(20\d{2})\b/)?.[1] ?? known?.year ?? viewed.split(" ").pop() ?? "2026";
   return {
     author,
-    year: raw.match(/\b(20\d{2})\b/)?.[1] ?? viewed.split(" ").pop() ?? "2026",
-    title,
-    site: author,
+    year,
+    title: known?.title || title,
+    site: known?.site || author,
     url,
     accessed: viewed,
   };
