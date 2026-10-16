@@ -218,6 +218,7 @@ const SearchNbhdInput = z.object({
   city: z.string().optional(),
   address: z.string().optional(),
   estate: z.string().optional(),
+  part: z.enum(["suburb", "estate"]).optional(),
 });
 
 export const searchNeighbourhoodFacts = createServerFn({ method: "POST" })
@@ -305,15 +306,20 @@ Include every sourced detail you find: estate name, developer, stages, dwelling 
     }
 
     if (settings.provider === "xai") {
-      const suburbRaw = await xaiSearch(prompt);
-      const estateRaw = await xaiSearch(estatePrompt);
-      return { raw: `${suburbRaw}\n\n${estateRaw}` };
+      const part = data.part ?? "suburb";
+      if (part === "estate") {
+        return { raw: await xaiSearch(estatePrompt) };
+      }
+      return { raw: await xaiSearch(prompt) };
     }
 
     const model = createModel(settings);
-    const first = await generateText({ model, prompt });
-    const second = await generateText({ model, prompt: estatePrompt });
-    return { raw: `${first.text.trim()}\n\n${second.text.trim()}` };
+    const part = data.part ?? "suburb";
+    const first = await generateText({
+      model,
+      prompt: part === "estate" ? estatePrompt : prompt,
+    });
+    return { raw: first.text.trim() || "[]" };
   });
 
 const SearchMarketInput = z.object({

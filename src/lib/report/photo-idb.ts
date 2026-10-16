@@ -7,12 +7,27 @@ function openDb(): Promise<IDBDatabase> {
       reject(new Error("IndexedDB is not available"));
       return;
     }
-    const req = indexedDB.open(DB_NAME, 1);
+    const req = indexedDB.open(DB_NAME, 2);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
     };
-    req.onsuccess = () => resolve(req.result);
+    req.onsuccess = () => {
+      const db = req.result;
+      if (db.objectStoreNames.contains(STORE)) {
+        resolve(db);
+        return;
+      }
+      db.close();
+      indexedDB.deleteDatabase(DB_NAME);
+      const retry = indexedDB.open(DB_NAME, 2);
+      retry.onupgradeneeded = () => {
+        const next = retry.result;
+        if (!next.objectStoreNames.contains(STORE)) next.createObjectStore(STORE);
+      };
+      retry.onsuccess = () => resolve(retry.result);
+      retry.onerror = () => reject(retry.error || new Error("IndexedDB open failed"));
+    };
     req.onerror = () => reject(req.error || new Error("IndexedDB open failed"));
   });
 }

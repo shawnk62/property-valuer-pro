@@ -847,26 +847,30 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
 
       const settings = loadAiSettings();
       if (isAiConfigured(settings)) {
-        try {
-          const searched = await searchNeighbourhoodFacts({
-            data: {
-              settings: {
-                provider: settings.provider,
-                model: settings.model,
-                apiKey: settings.apiKey,
-                ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
-              },
-              suburb: suburb || String(draft.values["prop_address"] ?? "subject suburb"),
-              city: String(draft.values["prop_lga"] ?? ""),
-              address: subjectAddressLine(draft.values),
-              estate:
-                String(draft.reportMeta.nbhdEstateHint ?? "").trim() ||
-                String(draft.values["nbhd_estate"] ?? ""),
-            },
-          });
-          claims.push(...parseNbhdClaims(searched.raw));
-        } catch (searchErr) {
-          console.warn("[nbhd search]", searchErr);
+        const aiPayload = {
+          settings: {
+            provider: settings.provider,
+            model: settings.model,
+            apiKey: settings.apiKey,
+            ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
+          },
+          suburb: suburb || String(draft.values["prop_address"] ?? "subject suburb"),
+          city: String(draft.values["prop_lga"] ?? ""),
+          address: subjectAddressLine(draft.values),
+          estate:
+            String(draft.reportMeta.nbhdEstateHint ?? "").trim() ||
+            String(draft.values["nbhd_estate"] ?? ""),
+        };
+        for (const part of ["suburb", "estate"] as const) {
+          try {
+            setLastStatus(part === "suburb" ? "Searching suburb sources…" : "Searching estate sources…");
+            const searched = await searchNeighbourhoodFacts({
+              data: { ...aiPayload, part },
+            });
+            claims.push(...parseNbhdClaims(searched.raw));
+          } catch (searchErr) {
+            console.warn("[nbhd search]", part, searchErr);
+          }
         }
       }
 
@@ -1016,25 +1020,29 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             !(draft.reportMeta.nbhdClaims ?? []).length
           ) {
             try {
-              setLastStatus("Searching suburb sources…");
               const suburb = String(draft.values["prop_suburb"] ?? "");
-              const searched = await searchNeighbourhoodFacts({
-                data: {
-                  settings: {
-                    provider: settings.provider,
-                    model: settings.model,
-                    apiKey: settings.apiKey,
-                    ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
-                  },
-                  suburb: suburb || String(draft.values["prop_address"] ?? "subject suburb"),
-                  city: String(draft.values["prop_lga"] ?? ""),
-                  address: subjectAddressLine(draft.values),
-                  estate:
-                String(draft.reportMeta.nbhdEstateHint ?? "").trim() ||
-                String(draft.values["nbhd_estate"] ?? ""),
+              const aiPayload = {
+                settings: {
+                  provider: settings.provider,
+                  model: settings.model,
+                  apiKey: settings.apiKey,
+                  ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
                 },
-              });
-              const claims = parseNbhdClaims(searched.raw);
+                suburb: suburb || String(draft.values["prop_address"] ?? "subject suburb"),
+                city: String(draft.values["prop_lga"] ?? ""),
+                address: subjectAddressLine(draft.values),
+                estate:
+                  String(draft.reportMeta.nbhdEstateHint ?? "").trim() ||
+                  String(draft.values["nbhd_estate"] ?? ""),
+              };
+              const claims: NbhdClaim[] = [];
+              for (const part of ["suburb", "estate"] as const) {
+                setLastStatus(part === "suburb" ? "Searching suburb sources…" : "Searching estate sources…");
+                const searched = await searchNeighbourhoodFacts({
+                  data: { ...aiPayload, part },
+                });
+                claims.push(...parseNbhdClaims(searched.raw));
+              }
               setMeta({ nbhdClaims: claims });
             } catch (searchErr) {
               console.warn("[nbhd search]", searchErr);
