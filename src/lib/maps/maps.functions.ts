@@ -234,12 +234,12 @@ export const fetchPlaceTextSearch = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const body: Record<string, unknown> = { textQuery: data.query };
     if (data.lat != null && data.lng != null) {
-      body.locationBias = {
-        circle: {
-          center: { latitude: data.lat, longitude: data.lng },
-          radius: data.radiusM ?? 15000,
-        },
+      const circle = {
+        center: { latitude: data.lat, longitude: data.lng },
+        radius: data.radiusM ?? 15000,
       };
+      if (data.radiusM != null) body.locationRestriction = { circle };
+      else body.locationBias = { circle };
     }
     const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
       method: "POST",
@@ -253,5 +253,5 @@ export const fetchPlaceTextSearch = createServerFn({ method: "POST" })
     });
     const json = (await res.json()) as { places?: NewPlace[] };
     if (!res.ok) return { results: [] as PlaceHit[] };
-    return { results: mapNewPlaces(json.places, 5) };
+    return { results: mapNewPlaces(json.places, 10) };
   });

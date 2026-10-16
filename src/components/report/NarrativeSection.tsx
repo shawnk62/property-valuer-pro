@@ -70,12 +70,16 @@ const NON_K12_TYPE = new Set([
   "sports_coaching",
   "sports_school",
   "university",
+  "spa",
+  "yoga_studio",
+  "wellness_center",
 ]);
 
-const NON_K12_NAME =
-  /\b(fitness|gym|crossfit|pilates|yoga|martial arts|dance studio|personal training|sports club|university|college|tafe|institute of technology)\b/i;
-
-const UNIVERSITY_NAME = /\b(university|college|tafe|institute of technology)\b/i;
+const SCHOOL_NAME = /\b(school|college|academy|grammar|kindergarten|kindy)\b/i;
+const NOT_SCHOOL_NAME =
+  /\b(wellbeing|well being|well-being|wellness|yoga|meditation|fitness|gym|crossfit|pilates|martial arts|dance studio|personal training|sports club|university|tafe|institute of technology)\b/i;
+const UNIVERSITY_NAME = /\b(university|tafe|institute of technology)\b/i;
+const SCHOOLISH_NAME = /\b(school|college|academy|grammar)\b/i;
 
 function placeKey(place: AmenityHit): string {
   if (place.lat != null && place.lng != null) {
@@ -84,11 +88,18 @@ function placeKey(place: AmenityHit): string {
   return place.name.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
 
+function placeTypes(place: AmenityHit): string[] {
+  return [place.primaryType, ...(place.types ?? [])].filter(Boolean) as string[];
+}
+
 function isK12School(place: AmenityHit): boolean {
-  const types = [place.primaryType, ...(place.types ?? [])].filter(Boolean) as string[];
+  if (!place.name || place.lat == null || place.lng == null) return false;
+  const types = placeTypes(place);
   if (types.some((type) => NON_K12_TYPE.has(type))) return false;
-  if (NON_K12_NAME.test(place.name)) return false;
-  return Boolean(place.name && place.lat != null && place.lng != null);
+  if (NOT_SCHOOL_NAME.test(place.name)) return false;
+  const typedK12 = types.includes("primary_school") || types.includes("secondary_school");
+  if (typedK12) return true;
+  return SCHOOL_NAME.test(place.name);
 }
 
 function rankedK12Schools(
@@ -111,17 +122,21 @@ function rankedK12Schools(
     .sort((a, b) => a.d.km - b.d.km);
 }
 
+function isUniversity(place: AmenityHit): boolean {
+  if (!place.name || place.lat == null || place.lng == null) return false;
+  if (SCHOOLISH_NAME.test(place.name) && !UNIVERSITY_NAME.test(place.name)) return false;
+  if (NOT_SCHOOL_NAME.test(place.name) && !UNIVERSITY_NAME.test(place.name)) return false;
+  const types = placeTypes(place);
+  return types.includes("university") || UNIVERSITY_NAME.test(place.name);
+}
+
 function rankedUniversities(
   origin: { lat: number; lng: number },
   places: AmenityHit[],
 ) {
   const seen = new Set<string>();
   return places
-    .filter((place) => place.name && place.lat != null && place.lng != null)
-    .filter((place) => {
-      const types = [place.primaryType, ...(place.types ?? [])].filter(Boolean) as string[];
-      return types.includes("university") || UNIVERSITY_NAME.test(place.name);
-    })
+    .filter(isUniversity)
     .filter((place) => {
       const key = placeKey(place);
       if (seen.has(key)) return false;
@@ -133,6 +148,27 @@ function rankedUniversities(
       d: claimDistanceKm(origin, { lat: place.lat!, lng: place.lng! }),
     }))
     .sort((a, b) => a.d.km - b.d.km);
+}
+
+function nearestWithin(
+  origin: { lat: number; lng: number },
+  places: AmenityHit[],
+  maxKm: number,
+  prefer?: (name: string) => boolean,
+) {
+  const ranked = places
+    .filter((place) => place.name && place.lat != null && place.lng != null)
+    .map((place) => ({
+      ...place,
+      d: claimDistanceKm(origin, { lat: place.lat!, lng: place.lng! }),
+    }))
+    .filter((place) => place.d.km <= maxKm)
+    .sort((a, b) => a.d.km - b.d.km);
+  if (prefer) {
+    const preferred = ranked.filter((place) => prefer(place.name));
+    if (preferred.length) return preferred[0]!;
+  }
+  return ranked[0] ?? null;
 }
 
 function narrativeBlocks(murray: boolean, shawnExam: boolean): {
@@ -901,15 +937,25 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         const near = suburb || subjectAddressLine(draft.values) || "Queensland";
         try {
           const m1 = await fetchPlaceTextSearch({
-            data: { apiKey: key, query: `M1 motorway exit near ${near}`, lat: origin.lat, lng: origin.lng },
+            data: {
+              apiKey: key,
+              query: `M1 motorway exit near ${near}`,
+              lat: origin.lat,
+              lng: origin.lng,
+              radiusM: 40000,
+            },
           });
-          const hit = m1.results[0];
-          if (hit?.name && hit.lat != null && hit.lng != null) {
-            const d = claimDistanceKm(origin, { lat: hit.lat, lng: hit.lng });
+          const hit = nearestWithin(
+            origin,
+            m1.results ?? [],
+            40,
+            (name) => /\b(m1|motorway|exit|interchange|on-?ramp)\b/i.test(name),
+          );
+          if (hit) {
             incoming.push(
               measuredClaim(
                 "transport",
-                `${hit.name} is approximately ${d.label} ${d.dir} of the property.`,
+                `${hit.name} is approximately ${hit.d.label} ${hit.d.dir} of the property.`,
               ),
             );
           }
@@ -918,15 +964,25 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         }
         try {
           const ramp = await fetchPlaceTextSearch({
-            data: { apiKey: key, query: `nearest highway on-ramp near ${near}`, lat: origin.lat, lng: origin.lng },
+            data: {
+              apiKey: key,
+              query: `nearest highway on-ramp near ${near}`,
+              lat: origin.lat,
+              lng: origin.lng,
+              radiusM: 40000,
+            },
           });
-          const hit = ramp.results[0];
-          if (hit?.name && hit.lat != null && hit.lng != null) {
-            const d = claimDistanceKm(origin, { lat: hit.lat, lng: hit.lng });
+          const hit = nearestWithin(
+            origin,
+            ramp.results ?? [],
+            40,
+            (name) => /\b(on-?ramp|interchange|exit|motorway|highway)\b/i.test(name),
+          );
+          if (hit) {
             incoming.push(
               measuredClaim(
                 "transport",
-                `Nearest highway on-ramp is ${hit.name}, approximately ${d.label} ${d.dir} of the property.`,
+                `Nearest highway on-ramp is ${hit.name}, approximately ${hit.d.label} ${hit.d.dir} of the property.`,
               ),
             );
           }
