@@ -380,16 +380,16 @@ Rules:
 
 ${
   isShawnAssignment(values)
-    ? `STRUCTURE (mandatory for Shawn reports). Write connected professional valuation prose, in the voice of a valuer. Not a list, and not one sentence per fact.
-Open with one sentence that places the property in Australia, Queensland and the local government area. Do not open with the street address. Do not write "Australia is the country of location."
-Then, in this order, only where accepted facts exist:
-- The suburb: position among neighbouring suburbs, character, and the official population if an accepted note gives one. Say leafy, hinterland or acreage once if several notes say it.
-- The named estate, using the accepted estate facts in ordinary sentences.
-- Neighbouring development, in qualitative terms only (predominantly, a few, some). Do not quote percentages.
-- Amenities: school count and the nearest school, shopping, each with distance and bearing from the subject.
-- Transport: bus or station, the motorway or highway on-ramp if one was measured nearby, and any relevant airport or port. Every distance includes the bearing from the subject. Do not reverse it.
-Do not describe the road construction, kerb, footpath, street lighting, site shape, topography or zoning. Those belong in other sections.
-Weave every accepted fact into these paragraphs. Do not paste a trailing list. Do not invent a place, a distance or a citation.`
+    ? `STRUCTURE (mandatory for Shawn reports). One paragraph per level that has data, then separate paragraphs for amenities and for transport:
+1. Country: Australia.
+2. State / city or regional centre.
+3. Suburb character, accepted population, accepted change.
+4. Immediate locality and named estate if recorded.
+5. Neighbouring development — qualitative land use only.
+6. Amenities — weave in every accepted amenities fact (school count, named centres, distances and directions).
+7. Transport — weave in every accepted transport fact (station, bus, M1, airport/port).
+Do not open with the street address. Do not compress this into three short paragraphs if accepted facts remain unused.
+Professional valuation prose. Start at Australia, then Queensland, then the local government area, then the suburb, then the estate. Use qualitative land-use terms (predominantly, a few, some). Do not use exact percentages. Include every ticked accepted fact. Do not append raw facts as their own sentences. Do not invent citations.`
     : `Required content only:
 - the immediate locality, and
 - neighbouring development,
@@ -405,16 +405,16 @@ ${sectionAnswers(stripLandUsePercentages(values), ["1A"])}
 ${extras?.locationContext?.trim() || ""}
 
 Rules:
-- Every measured distance must state the bearing from the subject property to the place. Do not reverse it. Use the city centre as the principal employment centre when the measured block does; use the nearest regional centre when the city is too far. Always include the nearest highway on-ramp with its measured distance and bearing. Do not invent a distance. Do not omit a measured shopping, school, transport, highway or employment distance.
+- Do not state CBD or town distances. That belongs under Location unless they appear under ACCEPTED FACTS.
 - Do not describe site shape, topography, access, services or zoning.
 - Use only qualitative phrases (predominantly, mainly, some, a few). Never quote land-use percentages, built-up percentages, or similar figures. An official suburb population may be used only if it is an ACCEPTED FACT.
-- MUST INCLUDE each distinct fact from ACCEPTED FACTS / MUST INCLUDE. Paraphrase into valuation prose. Merge duplicates. Do not paste the list.
+- MUST INCLUDE every item listed under ACCEPTED FACTS / MUST INCLUDE. Paraphrase allowed; omission is not.
 - Ignore unverified search notes that are not in that list.
 - Use GOOGLE / accepted amenity and transport wording as recorded (names, counts, distances, directions). Do not invent extras.
 - Name positive or negative features only if they appear in the data.
 - ${
   isShawnAssignment(values)
-    ? "Shawn: several short paragraphs, grouped by topic, in the voice of a valuer. Not one sentence per fact, and not a pasted note at the end."
+    ? "Shawn: write a complete locality section (typically 6–10 short paragraphs). Brevity rules for Murray or Phil do not apply."
     : "Murray: 1–3 short sentences. Phil Stamp Duty: one tight paragraph if data exists."
 }
 - No marketing language.`,

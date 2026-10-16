@@ -80,9 +80,6 @@ const NOT_SCHOOL_NAME =
   /\b(well[\s-]?beings?|wellbeing|wellness|yoga|meditation|fitness|gym|crossfit|pilates|martial arts|dance studio|personal training|sports club|university|tafe|institute of technology)\b/i;
 const UNIVERSITY_NAME = /\b(university|tafe|institute of technology)\b/i;
 const SCHOOLISH_NAME = /\b(school|college|academy|grammar)\b/i;
-const RAMP_NAME = /\b(on-?ramp|interchange|exit|motorway|highway)\b/i;
-const NOT_RAMP_NAME = /\b(jetty|wharf|pier|marina|boat ramp|ferry)\b/i;
-const M1_NAME = /\b(m1|pacific motorway|motorway)\b/i;
 
 function placeKey(place: AmenityHit): string {
   if (place.lat != null && place.lng != null) {
@@ -165,24 +162,6 @@ function claimUsable(text: string): boolean {
   if (/\b(on-?ramp|highway)\b/.test(t) && /\b(jetty|wharf|pier|marina)\b/.test(t)) return false;
   if (/\bm1\b/.test(t) && /\b(\d{3,})\s*kilomet/.test(t)) return false;
   return true;
-}
-
-function nearestMatching(
-  origin: { lat: number; lng: number },
-  places: AmenityHit[],
-  maxKm: number,
-  accept: (name: string) => boolean,
-) {
-  return (
-    places
-      .filter((place) => place.name && place.lat != null && place.lng != null && accept(place.name))
-      .map((place) => ({
-        ...place,
-        d: claimDistanceKm(origin, { lat: place.lat!, lng: place.lng! }),
-      }))
-      .filter((place) => place.d.km <= maxKm)
-      .sort((a, b) => a.d.km - b.d.km)[0] ?? null
-  );
 }
 
 function narrativeBlocks(murray: boolean, shawnExam: boolean): {
@@ -951,57 +930,20 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         const near = suburb || subjectAddressLine(draft.values) || "Queensland";
         try {
           const m1 = await fetchPlaceTextSearch({
-            data: {
-              apiKey: key,
-              query: `M1 motorway exit near ${near}`,
-              lat: origin.lat,
-              lng: origin.lng,
-              radiusM: 40000,
-            },
+            data: { apiKey: key, query: `M1 motorway exit near ${near}`, lat: origin.lat, lng: origin.lng },
           });
-          const hit = nearestMatching(
-            origin,
-            m1.results ?? [],
-            40,
-            (name) => M1_NAME.test(name) && !NOT_RAMP_NAME.test(name),
-          );
-          if (hit) {
+          const hit = m1.results[0];
+          if (hit?.name && hit.lat != null && hit.lng != null) {
+            const d = claimDistanceKm(origin, { lat: hit.lat, lng: hit.lng });
             incoming.push(
               measuredClaim(
                 "transport",
-                `${hit.name} is approximately ${hit.d.label} ${hit.d.dir} of the property.`,
+                `${hit.name} is approximately ${d.label} ${d.dir} of the property.`,
               ),
             );
           }
         } catch {
           /* text search optional */
-        }
-        try {
-          const ramp = await fetchPlaceTextSearch({
-            data: {
-              apiKey: key,
-              query: `nearest highway on-ramp near ${near}`,
-              lat: origin.lat,
-              lng: origin.lng,
-              radiusM: 40000,
-            },
-          });
-          const hit = nearestMatching(
-            origin,
-            ramp.results ?? [],
-            40,
-            (name) => RAMP_NAME.test(name) && !NOT_RAMP_NAME.test(name),
-          );
-          if (hit) {
-            incoming.push(
-              measuredClaim(
-                "transport",
-                `Nearest highway on-ramp is ${hit.name}, approximately ${hit.d.label} ${hit.d.dir} of the property.`,
-              ),
-            );
-          }
-        } catch {
-          /* optional */
         }
         if (industrial) {
           for (const q of [`airport near ${near}`, `port near ${near}`]) {
