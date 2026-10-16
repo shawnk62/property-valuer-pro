@@ -385,7 +385,7 @@ ${
 - Suburb: character, position among the neighbouring suburbs, and the official population if an accepted note gives one. If several notes say leafy, hinterland or acreage, say it once.
 - Immediate locality and the named estate, using the accepted estate facts (lot count, area, lot sizes) in ordinary sentences.
 - Neighbouring development, in qualitative terms only.
-- Amenities and transport. Use the accepted notes and the MEASURED DISTANCES block. Name the nearest shopping centre, school and public transport, and always name the principal employment centre, the nearest regional centre and the nearest town centre with the measured distance and direction. Include those centres even when they are a long way from the subject. Do not invent a distance or a place. Do not leave a listed centre out.
+- Amenities and transport. Use the accepted notes and the MEASURED DISTANCES block. Name the nearest shopping centre, school, public transport and the nearest highway on-ramp. Name the principal employment centre: the city centre when it is within a reasonable distance, otherwise the nearest regional centre. Also name the nearest regional centre and nearest town centre. Every distance must include the bearing from the subject property to that place. Do not reverse the bearing. Do not invent a distance or a place. Do not leave a listed centre or the highway on-ramp out.
 Weave every accepted fact into these paragraphs. Do not leave a trailing list of leftover facts. Do not write a fact as "The area of X is N square kilometres." or "X postcode is N." unless that figure is needed in a proper sentence.`
     : `Required content only:
 - the immediate locality, and
@@ -402,7 +402,7 @@ ${sectionAnswers(stripLandUsePercentages(values), ["1A"])}
 ${extras?.locationContext?.trim() || ""}
 
 Rules:
-- Always state the principal employment centre, the nearest regional centre and the nearest town centre with the measured distance and direction, regardless of how far they are. Do not invent a distance. Do not omit a measured shopping, school, transport or employment distance.
+- Every measured distance must state the bearing from the subject property to the place. Do not reverse it. Use the city centre as the principal employment centre when the measured block does; use the nearest regional centre when the city is too far. Always include the nearest highway on-ramp with its measured distance and bearing. Do not invent a distance. Do not omit a measured shopping, school, transport, highway or employment distance.
 - Do not describe site shape, topography, access, services or zoning.
 - Use only qualitative phrases (predominantly, mainly, some, a few). Never quote land-use percentages, built-up percentages, or similar figures. An official suburb population may be used only if it is an ACCEPTED FACT.
 - MUST INCLUDE each distinct fact from ACCEPTED FACTS / MUST INCLUDE. Paraphrase into valuation prose. Merge duplicates. Do not paste the list.

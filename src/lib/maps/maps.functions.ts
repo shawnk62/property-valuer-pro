@@ -204,6 +204,7 @@ const TextSearchInput = z.object({
   query: z.string().min(3),
   lat: z.number().optional(),
   lng: z.number().optional(),
+  radiusM: z.number().int().min(1000).max(50000).optional(),
 });
 
 export const fetchPlaceTextSearch = createServerFn({ method: "POST" })
@@ -214,7 +215,7 @@ export const fetchPlaceTextSearch = createServerFn({ method: "POST" })
       body.locationBias = {
         circle: {
           center: { latitude: data.lat, longitude: data.lng },
-          radius: 15000,
+          radius: data.radiusM ?? 15000,
         },
       };
     }

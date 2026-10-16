@@ -804,7 +804,9 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         seen.add(key);
         if (origin && lat != null && lng != null) {
           const d = claimDistanceKm(origin, { lat, lng });
-          lines.push(`${label}: ${name}, approximately ${d.label} ${d.dir} of the subject.`);
+          lines.push(
+            `${label}: ${name} lies approximately ${d.label} ${d.dir} of the subject (bearing from the subject to the place).`,
+          );
           return;
         }
         lines.push(`${label}: ${name}.`);
@@ -838,30 +840,43 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         } catch {
           /* nearby search optional */
         }
-        const queries: Array<[string, string]> = [
-          [suburb ? `${suburb} shopping centre` : "nearest shopping centre", "Shopping centre"],
-          [suburb ? `${suburb} town centre` : "nearest town centre", "Town centre"],
-          [suburb ? `major employment centre near ${suburb}` : "nearest major employment centre", "Employment centre"],
-          [suburb ? `business park near ${suburb}` : "nearest business park", "Employment centre"],
-          [suburb ? `industrial estate near ${suburb}` : "nearest industrial estate", "Industrial estate"],
-          [suburb ? `M1 motorway exit near ${suburb}` : "nearest motorway exit", "Motorway access"],
+        const queries: Array<[string, string, number]> = [
+          [suburb ? `${suburb} shopping centre` : "nearest shopping centre", "Shopping centre", 20000],
+          [suburb ? `${suburb} town centre` : "nearest town centre", "Town centre", 25000],
+          ["nearest motorway on-ramp", "Highway on-ramp", 40000],
+          ["nearest highway interchange", "Highway on-ramp", 40000],
+          ["Pacific Motorway on-ramp", "Highway on-ramp", 40000],
+          ["Bruce Highway on-ramp", "Highway on-ramp", 40000],
         ];
-        for (const [query, label] of queries) {
+        let nearestRamp: { name: string; lat: number; lng: number; km: number } | null = null;
+        for (const [query, label, radiusM] of queries) {
           try {
             const found = await fetchPlaceTextSearch({
-              data: { apiKey: key, query, lat: origin.lat, lng: origin.lng },
+              data: { apiKey: key, query, lat: origin.lat, lng: origin.lng, radiusM },
             });
-            const hit = found.results?.[0];
-            if (hit?.name) addMeasured(label, hit.name, hit.lat, hit.lng);
+            for (const hit of found.results ?? []) {
+              if (!hit?.name || hit.lat == null || hit.lng == null) continue;
+              if (label !== "Highway on-ramp") {
+                addMeasured(label, hit.name, hit.lat, hit.lng);
+                break;
+              }
+              const km = claimDistanceKm(origin, { lat: hit.lat, lng: hit.lng }).km;
+              if (!nearestRamp || km < nearestRamp.km) {
+                nearestRamp = { name: hit.name, lat: hit.lat, lng: hit.lng, km };
+              }
+            }
           } catch {
             /* one query failing must not drop the others */
           }
+        }
+        if (nearestRamp) {
+          addMeasured("Nearest highway on-ramp", nearestRamp.name, nearestRamp.lat, nearestRamp.lng);
         }
       } else if (!isGoogleMapsConfigured()) {
         lines.push("Google Maps key is not saved, so shop and employment distances were not measured.");
       }
       const measured = lines.length
-        ? `MEASURED DISTANCES from Google Maps. Use these names, distances and directions. Do not invent others, and do not omit a shopping, school, transport or employment distance that is listed.\n${lines.join("\n")}`
+        ? `MEASURED DISTANCES. Every bearing is from the subject property to the place. Do not reverse it. Use the city centre as the employment centre when it is named; use the regional centre when the city is too far. Include the highway on-ramp. Do not invent others, and do not omit a listed distance.\n${lines.join("\n")}`
         : "";
       setLastStatus(
         lines.length

@@ -60,28 +60,47 @@ export function nearestEmploymentCentreFacts(coords: {
   lat: number;
   lng: number;
 }): string[] {
-  const ranked = QLD_CENTRES.map((c) => withDistance(coords, c)).sort((a, b) => a.km - b.km);
-  const brisbane = ranked.find((c) => c.kind === "cbd");
+  const ranked = QLD_CENTRES.map((centre) => {
+    const km = haversineKm(coords, centre);
+    return {
+      ...centre,
+      km,
+      dir: compassToward(coords, centre),
+      label: formatDistanceFromSubject(km),
+    };
+  }).sort((a, b) => a.km - b.km);
+  const city = ranked.find((c) => c.kind === "cbd");
   const regional = ranked.find((c) => c.kind === "regional");
   const town = ranked.find((c) => c.kind === "town");
+  const cityIsNear = city != null && city.km <= 80;
   const lines: string[] = [];
-  if (brisbane) {
+  const line = (label: string, name: string, labelKm: string, dir: string) =>
+    `${label}: ${name} lies approximately ${labelKm} ${dir} of the subject (bearing from the subject to the centre).`;
+  if (cityIsNear && city) {
+    lines.push(line("Principal employment centre (city centre)", city.name, city.label, city.dir));
+  } else if (regional) {
     lines.push(
-      `Principal employment centre: ${brisbane.name}, approximately ${brisbane.label} ${brisbane.dir} of the subject.`,
+      line(
+        "Principal employment centre (nearest regional centre; the city centre is beyond a reasonable commuting distance)",
+        regional.name,
+        regional.label,
+        regional.dir,
+      ),
     );
   }
-  if (regional) {
-    lines.push(
-      `Nearest regional centre: ${regional.name}, approximately ${regional.label} ${regional.dir} of the subject.`,
-    );
+  if (regional && cityIsNear) {
+    lines.push(line("Nearest regional centre", regional.name, regional.label, regional.dir));
+  }
+  if (city && !cityIsNear) {
+    lines.push(line("State capital", city.name, city.label, city.dir));
   }
   if (town && town.name !== regional?.name) {
-    lines.push(
-      `Nearest town centre: ${town.name}, approximately ${town.label} ${town.dir} of the subject.`,
-    );
+    lines.push(line("Nearest town centre", town.name, town.label, town.dir));
   }
   return lines;
 }
+
+export function subjectCoordsFromPins(
   pins: SalesMapPin[] | null | undefined,
 ): { lat: number; lng: number } | null {
   const subject = (pins ?? []).find((p) => p.kind === "subject");
