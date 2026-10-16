@@ -55,6 +55,86 @@ import { defaultAcademicCoverText } from "@/components/report/ShawnExamPreview";
 import { RiskRatingsPanel } from "@/components/report/RiskRatingsPanel";
 import { isShawnExamType, getReportTypeConfig } from "@/lib/report/reportTypes";
 
+type AmenityHit = {
+  name: string;
+  lat?: number;
+  lng?: number;
+  primaryType?: string;
+  types?: string[];
+};
+
+const NON_K12_TYPE = new Set([
+  "fitness_center",
+  "gym",
+  "sports_club",
+  "sports_coaching",
+  "sports_school",
+  "university",
+]);
+
+const NON_K12_NAME =
+  /\b(fitness|gym|crossfit|pilates|yoga|martial arts|dance studio|personal training|sports club|university|college|tafe|institute of technology)\b/i;
+
+const UNIVERSITY_NAME = /\b(university|college|tafe|institute of technology)\b/i;
+
+function placeKey(place: AmenityHit): string {
+  if (place.lat != null && place.lng != null) {
+    return `${place.lat.toFixed(4)},${place.lng.toFixed(4)}`;
+  }
+  return place.name.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function isK12School(place: AmenityHit): boolean {
+  const types = [place.primaryType, ...(place.types ?? [])].filter(Boolean) as string[];
+  if (types.some((type) => NON_K12_TYPE.has(type))) return false;
+  if (NON_K12_NAME.test(place.name)) return false;
+  return Boolean(place.name && place.lat != null && place.lng != null);
+}
+
+function rankedK12Schools(
+  origin: { lat: number; lng: number },
+  places: AmenityHit[],
+) {
+  const seen = new Set<string>();
+  return places
+    .filter(isK12School)
+    .filter((place) => {
+      const key = placeKey(place);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((place) => ({
+      ...place,
+      d: claimDistanceKm(origin, { lat: place.lat!, lng: place.lng! }),
+    }))
+    .sort((a, b) => a.d.km - b.d.km);
+}
+
+function rankedUniversities(
+  origin: { lat: number; lng: number },
+  places: AmenityHit[],
+) {
+  const seen = new Set<string>();
+  return places
+    .filter((place) => place.name && place.lat != null && place.lng != null)
+    .filter((place) => {
+      const types = [place.primaryType, ...(place.types ?? [])].filter(Boolean) as string[];
+      return types.includes("university") || UNIVERSITY_NAME.test(place.name);
+    })
+    .filter((place) => {
+      const key = placeKey(place);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((place) => ({
+      ...place,
+      d: claimDistanceKm(origin, { lat: place.lat!, lng: place.lng! }),
+    }))
+    .sort((a, b) => a.d.km - b.d.km);
+}
+
 function narrativeBlocks(murray: boolean, shawnExam: boolean): {
   key: keyof ReportNarrative;
   label: string;
@@ -740,13 +820,45 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
           const nearby = await fetchNearbyAmenities({
             data: { apiKey: key, lat: origin.lat, lng: origin.lng, radiusM: 5000 },
           });
-          const schools = nearby.school ?? [];
-          if (schools.length) {
-            const named = schools[0]?.name ? ` Nearest recorded is ${schools[0].name}.` : "";
+          let schoolPlaces = [
+            ...(nearby.primary_school ?? []),
+            ...(nearby.secondary_school ?? []),
+            ...(nearby.school ?? []),
+          ];
+          let k12 = rankedK12Schools(origin, schoolPlaces);
+          if (!k12.length || k12[0]!.d.km > 1.5) {
+            try {
+              const found = await fetchPlaceTextSearch({
+                data: {
+                  apiKey: key,
+                  query: "primary school or secondary school",
+                  lat: origin.lat,
+                  lng: origin.lng,
+                  radiusM: 3000,
+                },
+              });
+              schoolPlaces = [...schoolPlaces, ...(found.results ?? [])];
+              k12 = rankedK12Schools(origin, schoolPlaces);
+            } catch {
+              /* text search optional */
+            }
+          }
+          if (k12.length) {
+            const nearest = k12[0]!;
             incoming.push(
               measuredClaim(
                 "amenities",
-                `There are ${schools.length} school${schools.length === 1 ? "" : "s"} within about five kilometres of the property.${named}`,
+                `There are ${k12.length} school${k12.length === 1 ? "" : "s"} within about five kilometres of the property. Nearest is ${nearest.name}, approximately ${nearest.d.label} ${nearest.d.dir} of the property.`,
+              ),
+            );
+          }
+          const universities = rankedUniversities(origin, nearby.university ?? []);
+          if (universities.length) {
+            const nearest = universities[0]!;
+            incoming.push(
+              measuredClaim(
+                "amenities",
+                `Nearest university or college is ${nearest.name}, approximately ${nearest.d.label} ${nearest.d.dir} of the property.`,
               ),
             );
           }

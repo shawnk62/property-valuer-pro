@@ -124,12 +124,16 @@ type PlaceHit = {
   vicinity?: string;
   lat?: number;
   lng?: number;
+  primaryType?: string;
+  types?: string[];
 };
 
 type NewPlace = {
   displayName?: { text?: string };
   formattedAddress?: string;
   location?: { latitude?: number; longitude?: number };
+  primaryType?: string;
+  types?: string[];
 };
 
 function mapNewPlaces(places: NewPlace[] | undefined, limit: number): PlaceHit[] {
@@ -140,6 +144,8 @@ function mapNewPlaces(places: NewPlace[] | undefined, limit: number): PlaceHit[]
       vicinity: p.formattedAddress,
       lat: p.location?.latitude,
       lng: p.location?.longitude,
+      primaryType: p.primaryType,
+      types: Array.isArray(p.types) ? p.types : undefined,
     }))
     .filter((p) => p.name);
 }
@@ -151,6 +157,7 @@ export const fetchNearbyAmenities = createServerFn({ method: "POST" })
       "school",
       "primary_school",
       "secondary_school",
+      "university",
       "supermarket",
       "shopping_mall",
       "train_station",
@@ -158,10 +165,12 @@ export const fetchNearbyAmenities = createServerFn({ method: "POST" })
       "transit_station",
       "hospital",
     ] as const;
+    const schoolTypes = new Set(["school", "primary_school", "secondary_school"]);
     const out: Record<(typeof types)[number], PlaceHit[]> = {
       school: [],
       primary_school: [],
       secondary_school: [],
+      university: [],
       supermarket: [],
       shopping_mall: [],
       train_station: [],
@@ -171,23 +180,36 @@ export const fetchNearbyAmenities = createServerFn({ method: "POST" })
     };
     for (const type of types) {
       try {
+        const body: Record<string, unknown> = {
+          includedTypes: [type],
+          maxResultCount: 20,
+          rankPreference: "DISTANCE",
+          locationRestriction: {
+            circle: {
+              center: { latitude: data.lat, longitude: data.lng },
+              radius: data.radiusM,
+            },
+          },
+        };
+        if (schoolTypes.has(type)) {
+          body.excludedTypes = [
+            "fitness_center",
+            "gym",
+            "sports_club",
+            "sports_coaching",
+            "sports_school",
+            "university",
+          ];
+        }
         const res = await fetch("https://places.googleapis.com/v1/places:searchNearby", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "X-Goog-Api-Key": data.apiKey.trim(),
-            "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location",
+            "X-Goog-FieldMask":
+              "places.displayName,places.formattedAddress,places.location,places.primaryType,places.types",
           },
-          body: JSON.stringify({
-            includedTypes: [type],
-            maxResultCount: 20,
-            locationRestriction: {
-              circle: {
-                center: { latitude: data.lat, longitude: data.lng },
-                radius: data.radiusM,
-              },
-            },
-          }),
+          body: JSON.stringify(body),
         });
         const json = (await res.json()) as { places?: NewPlace[]; error?: { message?: string } };
         if (!res.ok) continue;
@@ -224,7 +246,8 @@ export const fetchPlaceTextSearch = createServerFn({ method: "POST" })
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": data.apiKey.trim(),
-        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location",
+        "X-Goog-FieldMask":
+          "places.displayName,places.formattedAddress,places.location,places.primaryType,places.types",
       },
       body: JSON.stringify(body),
     });
