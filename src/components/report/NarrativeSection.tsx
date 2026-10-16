@@ -789,12 +789,14 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       const text = australianiseSpelling(
         ensureAcceptedFactsInProse(result.text.trim(), accepted),
       );
-      setNarrative({ neighbourhood: text });
-      narrativeRef.current = { ...narrativeRef.current, neighbourhood: text };
-      setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
-      setSource("ai");
-      setLastStatus("Neighbourhood rewritten from accepted notes.");
-      toast.success("Neighbourhood rewritten");
+      window.setTimeout(() => {
+        setNarrative({ neighbourhood: text });
+        narrativeRef.current = { ...narrativeRef.current, neighbourhood: text };
+        setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
+        setSource("ai");
+        setLastStatus("Neighbourhood rewritten from accepted notes.");
+        toast.success("Neighbourhood rewritten");
+      }, 0);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setLastStatus(`Rewrite failed: ${message}`);
@@ -1370,9 +1372,9 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                       {group.label}
                     </p>
-                    {rows.map((claim) => (
+                    {rows.map((claim, index) => (
                 <label
-                  key={claim.id}
+                  key={claim.id || `${group.kind}-${index}`}
                   className="flex items-start gap-2 rounded bg-amber-100/80 px-2 py-1.5 text-xs dark:bg-amber-900/40"
                 >
                   <input

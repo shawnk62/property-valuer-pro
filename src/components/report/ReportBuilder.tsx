@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Component, useEffect, useState, type ReactNode } from "react";
 import {
   downloadBlob,
   generateValuationDocx,
@@ -32,6 +32,37 @@ const TABS = [
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
+
+class SectionGuard extends Component<
+  { children: ReactNode },
+  { error: string }
+> {
+  state = { error: "" };
+
+  static getDerivedStateFromError(error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { error: message || "This section failed to render." };
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="rounded-md border border-amber-400 bg-amber-50 p-4 text-sm text-foreground">
+          <p className="font-medium">This section hit an error and was stopped.</p>
+          <p className="mt-1 text-xs text-muted-foreground">{this.state.error}</p>
+          <button
+            type="button"
+            className="mt-3 rounded-md border border-input bg-card px-3 py-1 text-xs"
+            onClick={() => this.setState({ error: "" })}
+          >
+            Show it again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
   const navigate = useNavigate();
@@ -328,12 +359,26 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
             tab === "preview" ? "px-2 sm:px-6" : "mx-auto max-w-7xl px-4 sm:px-6"
           }
         >
-          {tab === "subject" ? <SubjectSection controller={controller} /> : null}
+          {tab === "subject" ? (
+            <SectionGuard>
+              <SubjectSection controller={controller} />
+            </SectionGuard>
+          ) : null}
           <div className={tab === "narrative" ? "" : "hidden"} aria-hidden={tab !== "narrative"}>
-            <NarrativeSection controller={controller} />
+            <SectionGuard>
+              <NarrativeSection controller={controller} />
+            </SectionGuard>
           </div>
-          {tab === "photos" ? <PhotosSection controller={controller} /> : null}
-          {tab === "sales" ? <SalesSection controller={controller} /> : null}
+          {tab === "photos" ? (
+            <SectionGuard>
+              <PhotosSection controller={controller} />
+            </SectionGuard>
+          ) : null}
+          {tab === "sales" ? (
+            <SectionGuard>
+              <SalesSection controller={controller} />
+            </SectionGuard>
+          ) : null}
           {tab === "signature" ? (
             <div className="mx-auto max-w-xl space-y-4 rounded-lg border border-border bg-card p-5">
               <h2 className="text-lg font-semibold text-foreground">Final signature</h2>
@@ -367,7 +412,9 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
             }
             aria-hidden={tab !== "preview"}
           >
-            <ReportPreview draft={draft} />
+            <SectionGuard>
+              <ReportPreview draft={draft} />
+            </SectionGuard>
           </div>
         </div>
       </main>
