@@ -936,7 +936,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             incoming.push(
               measuredClaim(
                 "transport",
-                `Access to the M1 is via ${hit.ramp}, approximately ${drive} driving distance (${d.label} ${d.dir} of the property).`,
+                `Access to the nearest freeway or motorway, ${hit.name}, is approximately ${drive} driving distance (${d.label} ${d.dir} of the property).`,
               ),
             );
           }

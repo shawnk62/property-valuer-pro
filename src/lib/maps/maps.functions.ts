@@ -269,7 +269,7 @@ type RouteStep = {
   navigationInstruction?: { instructions?: string };
 };
 
-/** Driving distance from the subject to the nearest M1 on-ramp, via Routes. */
+/** Driving distance from the subject to the nearest freeway or motorway on-ramp, via Routes. */
 export const fetchNearestMotorwayAccess = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => MotorwayInput.parse(input))
   .handler(async ({ data }) => {
@@ -282,9 +282,9 @@ export const fetchNearestMotorwayAccess = createServerFn({ method: "POST" })
         "X-Goog-FieldMask": "places.displayName,places.location",
       },
       body: JSON.stringify({
-        textQuery: `M1 motorway exit near ${data.suburb}`,
+        textQuery: `nearest freeway or motorway exit near ${data.suburb}`,
         locationBias: {
-          circle: { center: { latitude: data.lat, longitude: data.lng }, radius: 20000 },
+          circle: { center: { latitude: data.lat, longitude: data.lng }, radius: 25000 },
         },
       }),
     });
@@ -336,7 +336,7 @@ export const fetchNearestMotorwayAccess = createServerFn({ method: "POST" })
       for (const step of steps) {
         metres += step.distanceMeters ?? 0;
         const text = step.navigationInstruction?.instructions ?? "";
-        if (/\b(m1|motorway|on-?ramp|ramp onto)\b/i.test(text)) {
+        if (/\b(freeway|motorway|highway|on-?ramp|ramp onto)\b/i.test(text)) {
           ramp = text.replace(/<[^>]+>/g, "").trim() || ramp;
           const start = step.startLocation?.latLng;
           if (start?.latitude != null && start?.longitude != null) {

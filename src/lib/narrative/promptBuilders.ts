@@ -81,13 +81,12 @@ This is a Joint Family Law – Phil valuation. Match the Currimundi jointly-appo
 This is a Shawn valuation report.
 Neighbourhood / locality is a flowing valuation section, not a list of notes.
 Write from the largest area to the smallest, then amenities and transport:
-1. Country — Australia.
-2. State / region and city (or regional centre).
-3. Suburb — one or two paragraphs covering position in the city, character, accepted population and change. Do not restate the same character in five sentences.
-4. Immediate locality and named estate if recorded.
-5. Neighbouring development in qualitative terms only.
-6. Amenities (schools, shopping) — names and measured distances woven into one paragraph.
-7. Access to transport — station, bus, motorway, airport/port in one paragraph.
+1. Open with the state, the city or regional centre and the local government area in one sentence. Name Australia in that sentence. Do not write "Australia" or "The property is located in Australia" as its own sentence or paragraph.
+2. Suburb — one or two paragraphs covering position in the city, character, accepted population and change. Do not restate the same character in five sentences.
+3. Immediate locality and named estate if recorded.
+4. Neighbouring development in qualitative terms only.
+5. Amenities (schools, shopping) — names and measured distances woven into one paragraph.
+6. Access to transport — station, bus, the nearest freeway or motorway, airport/port in one paragraph.
 Cover each distinct accepted fact once. Merge overlapping character lines. Do not drop unique names, distances or official population figures.
 Do not start consecutive sentences with the suburb name. Vary openings (The suburb / The locality / Neighbouring development / Services and amenities / Access).
 No brochure language (peaceful lifestyle, lush surroundings, family-friendly feel) unless that wording is the only accepted fact and then tone it down to valuation English.
@@ -381,15 +380,14 @@ Rules:
 ${
   isShawnAssignment(values)
     ? `STRUCTURE (mandatory for Shawn reports). One paragraph per level that has data, then separate paragraphs for amenities and for transport:
-1. Country: Australia.
-2. State / city or regional centre.
-3. Suburb character, accepted population, accepted change.
-4. Immediate locality and named estate if recorded.
-5. Neighbouring development — qualitative land use only.
-6. Amenities — weave in every accepted amenities fact (school count, named centres, distances and directions).
-7. Transport — weave in every accepted transport fact (station, bus, M1, airport/port).
+1. Open with Queensland, the city or regional centre and the local government area in one sentence. Name Australia in that sentence. Do not write "Australia" or "The property is located in Australia" as its own sentence or paragraph.
+2. Suburb character, accepted population, accepted change.
+3. Immediate locality and named estate if recorded.
+4. Neighbouring development — qualitative land use only.
+5. Amenities — weave in every accepted amenities fact (school count, named centres, distances and directions).
+6. Transport — weave in every accepted transport fact (station, bus, the nearest freeway or motorway, airport/port).
 Do not open with the street address. Do not compress this into three short paragraphs if accepted facts remain unused.
-Professional valuation prose. Start at Australia, then Queensland, then the local government area, then the suburb, then the estate. Use qualitative land-use terms (predominantly, a few, some). Do not use exact percentages. Include every ticked accepted fact. Do not append raw facts as their own sentences. Do not invent citations.`
+Professional valuation prose. Start with the state and the local government area, then the suburb, then the estate. Use qualitative land-use terms (predominantly, a few, some). Do not use exact percentages. Include every ticked accepted fact. Do not append raw facts as their own sentences. Do not invent citations.`
     : `Required content only:
 - the immediate locality, and
 - neighbouring development,
