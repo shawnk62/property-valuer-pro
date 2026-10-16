@@ -28,7 +28,7 @@ import {
 import { subjectAddressLine, type SalesMapPin } from "@/lib/maps/salesMapPins";
 import { buildBlockPrompt } from "@/lib/narrative/promptBuilders";
 import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
-import { geocodeGoogleAddresses, fetchNearbyAmenities, fetchPlaceTextSearch } from "@/lib/maps/maps.functions";
+import { geocodeGoogleAddresses, fetchNearbyAmenities, fetchPlaceTextSearch, fetchNearestMotorwayAccess } from "@/lib/maps/maps.functions";
 import { buildSubjectLocationMap } from "@/lib/maps/generateMaps";
 import {
   mergeNbhdClaims,
@@ -929,28 +929,25 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
 
         const near = suburb || subjectAddressLine(draft.values) || "Queensland";
         try {
-          const m1 = await fetchPlaceTextSearch({
-            data: { apiKey: key, query: `M1 motorway exit near ${near}`, lat: origin.lat, lng: origin.lng },
+          const access = await fetchNearestMotorwayAccess({
+            data: { apiKey: key, lat: origin.lat, lng: origin.lng, suburb: near },
           });
-          const ranked = (m1.results ?? [])
-            .filter((place) => place.name && place.lat != null && place.lng != null)
-            .map((place) => ({
-              place,
-              d: claimDistanceKm(origin, { lat: place.lat!, lng: place.lng! }),
-            }))
-            .filter((row) => row.d.km <= 40)
-            .sort((a, b) => a.d.km - b.d.km);
-          const nearest = ranked[0];
-          if (nearest) {
+          const hit = access.access;
+          if (hit) {
+            const d = claimDistanceKm(origin, { lat: hit.lat, lng: hit.lng });
+            const drive =
+              hit.driveKm < 1
+                ? `${Math.round(hit.driveKm * 1000)} metres`
+                : `${hit.driveKm.toFixed(1)} kilometres`;
             incoming.push(
               measuredClaim(
                 "transport",
-                `${nearest.place.name} is approximately ${nearest.d.label} ${nearest.d.dir} of the property.`,
+                `Access to the M1 is via ${hit.ramp}, approximately ${drive} driving distance (${d.label} ${d.dir} of the property).`,
               ),
             );
           }
         } catch {
-          /* text search optional */
+          /* routes optional */
         }
         if (industrial) {
           for (const q of [`airport near ${near}`, `port near ${near}`]) {

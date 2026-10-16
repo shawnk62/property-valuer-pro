@@ -255,3 +255,102 @@ export const fetchPlaceTextSearch = createServerFn({ method: "POST" })
     if (!res.ok) return { results: [] as PlaceHit[] };
     return { results: mapNewPlaces(json.places, 10) };
   });
+
+const MotorwayInput = z.object({
+  apiKey: z.string().min(8),
+  lat: z.number(),
+  lng: z.number(),
+  suburb: z.string().min(1),
+});
+
+type RouteStep = {
+  distanceMeters?: number;
+  startLocation?: { latLng?: { latitude?: number; longitude?: number } };
+  navigationInstruction?: { instructions?: string };
+};
+
+/** Driving distance from the subject to the nearest M1 on-ramp, via Routes. */
+export const fetchNearestMotorwayAccess = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => MotorwayInput.parse(input))
+  .handler(async ({ data }) => {
+    const key = data.apiKey.trim();
+    const search = await fetch("https://places.googleapis.com/v1/places:searchText", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": key,
+        "X-Goog-FieldMask": "places.displayName,places.location",
+      },
+      body: JSON.stringify({
+        textQuery: `M1 motorway exit near ${data.suburb}`,
+        locationBias: {
+          circle: { center: { latitude: data.lat, longitude: data.lng }, radius: 20000 },
+        },
+      }),
+    });
+    const found = (await search.json()) as { places?: NewPlace[] };
+    const candidates = (found.places ?? [])
+      .map((p) => ({
+        name: String(p.displayName?.text ?? "").trim(),
+        lat: p.location?.latitude,
+        lng: p.location?.longitude,
+      }))
+      .filter((p) => p.name && p.lat != null && p.lng != null)
+      .slice(0, 5);
+    if (!candidates.length) return { access: null as null };
+
+    let best: {
+      name: string;
+      ramp: string;
+      driveKm: number;
+      lat: number;
+      lng: number;
+    } | null = null;
+
+    for (const place of candidates) {
+      const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": key,
+          "X-Goog-FieldMask": "routes.legs.steps",
+        },
+        body: JSON.stringify({
+          origin: { location: { latLng: { latitude: data.lat, longitude: data.lng } } },
+          destination: { location: { latLng: { latitude: place.lat, longitude: place.lng } } },
+          travelMode: "DRIVE",
+          routingPreference: "TRAFFIC_UNAWARE",
+          units: "METRIC",
+        }),
+      });
+      if (!res.ok) continue;
+      const json = (await res.json()) as {
+        routes?: Array<{ legs?: Array<{ steps?: RouteStep[] }> }>;
+      };
+      const steps = json.routes?.[0]?.legs?.[0]?.steps ?? [];
+      if (!steps.length) continue;
+      let metres = 0;
+      let ramp = place.name;
+      let rampLat = place.lat!;
+      let rampLng = place.lng!;
+      for (const step of steps) {
+        metres += step.distanceMeters ?? 0;
+        const text = step.navigationInstruction?.instructions ?? "";
+        if (/\b(m1|motorway|on-?ramp|ramp onto)\b/i.test(text)) {
+          ramp = text.replace(/<[^>]+>/g, "").trim() || ramp;
+          const start = step.startLocation?.latLng;
+          if (start?.latitude != null && start?.longitude != null) {
+            rampLat = start.latitude;
+            rampLng = start.longitude;
+          }
+          break;
+        }
+      }
+      const driveKm = metres / 1000;
+      if (driveKm > 40) continue;
+      if (!best || driveKm < best.driveKm) {
+        best = { name: place.name, ramp, driveKm, lat: rampLat, lng: rampLng };
+      }
+    }
+    return { access: best };
+  });
