@@ -380,16 +380,16 @@ Rules:
 
 ${
   isShawnAssignment(values)
-    ? `STRUCTURE (mandatory for Shawn reports). One paragraph per level that has data, then separate paragraphs for amenities and for transport:
-1. Country: Australia.
-2. State / city or regional centre.
-3. Suburb character, accepted population, accepted change.
-4. Immediate locality and named estate if recorded.
-5. Neighbouring development — qualitative land use only.
-6. Amenities — weave in every accepted amenities fact (school count, named centres, distances and directions).
-7. Transport — weave in every accepted transport fact (station, bus, M1, highway on-ramp, airport/port).
-Do not open with the street address. Do not compress this into three short paragraphs if accepted facts remain unused.
-Professional valuation prose, not app-like sentences. Start at Australia, then Queensland, then the local government area, then the suburb, then the estate. Use qualitative land-use terms (predominantly, a few, some). Do not use exact percentages. Include every ticked accepted fact. Do not append raw facts as their own sentences. Do not invent citations.`
+    ? `STRUCTURE (mandatory for Shawn reports). Write connected professional valuation prose, in the voice of a valuer. Not a list, and not one sentence per fact.
+Open with one sentence that places the property in Australia, Queensland and the local government area. Do not open with the street address. Do not write "Australia is the country of location."
+Then, in this order, only where accepted facts exist:
+- The suburb: position among neighbouring suburbs, character, and the official population if an accepted note gives one. Say leafy, hinterland or acreage once if several notes say it.
+- The named estate, using the accepted estate facts in ordinary sentences.
+- Neighbouring development, in qualitative terms only (predominantly, a few, some). Do not quote percentages.
+- Amenities: school count and the nearest school, shopping, each with distance and bearing from the subject.
+- Transport: bus or station, the motorway or highway on-ramp if one was measured nearby, and any relevant airport or port. Every distance includes the bearing from the subject. Do not reverse it.
+Do not describe the road construction, kerb, footpath, street lighting, site shape, topography or zoning. Those belong in other sections.
+Weave every accepted fact into these paragraphs. Do not paste a trailing list. Do not invent a place, a distance or a citation.`
     : `Required content only:
 - the immediate locality, and
 - neighbouring development,

@@ -77,9 +77,12 @@ const NON_K12_TYPE = new Set([
 
 const SCHOOL_NAME = /\b(school|college|academy|grammar|kindergarten|kindy)\b/i;
 const NOT_SCHOOL_NAME =
-  /\b(wellbeing|well being|well-being|wellness|yoga|meditation|fitness|gym|crossfit|pilates|martial arts|dance studio|personal training|sports club|university|tafe|institute of technology)\b/i;
+  /\b(well[\s-]?beings?|wellbeing|wellness|yoga|meditation|fitness|gym|crossfit|pilates|martial arts|dance studio|personal training|sports club|university|tafe|institute of technology)\b/i;
 const UNIVERSITY_NAME = /\b(university|tafe|institute of technology)\b/i;
 const SCHOOLISH_NAME = /\b(school|college|academy|grammar)\b/i;
+const RAMP_NAME = /\b(on-?ramp|interchange|exit|motorway|highway)\b/i;
+const NOT_RAMP_NAME = /\b(jetty|wharf|pier|marina|boat ramp|ferry)\b/i;
+const M1_NAME = /\b(m1|pacific motorway|motorway)\b/i;
 
 function placeKey(place: AmenityHit): string {
   if (place.lat != null && place.lng != null) {
@@ -94,12 +97,11 @@ function placeTypes(place: AmenityHit): string[] {
 
 function isK12School(place: AmenityHit): boolean {
   if (!place.name || place.lat == null || place.lng == null) return false;
+  if (NOT_SCHOOL_NAME.test(place.name)) return false;
+  if (!SCHOOL_NAME.test(place.name)) return false;
   const types = placeTypes(place);
   if (types.some((type) => NON_K12_TYPE.has(type))) return false;
-  if (NOT_SCHOOL_NAME.test(place.name)) return false;
-  const typedK12 = types.includes("primary_school") || types.includes("secondary_school");
-  if (typedK12) return true;
-  return SCHOOL_NAME.test(place.name);
+  return true;
 }
 
 function rankedK12Schools(
@@ -124,10 +126,9 @@ function rankedK12Schools(
 
 function isUniversity(place: AmenityHit): boolean {
   if (!place.name || place.lat == null || place.lng == null) return false;
-  if (SCHOOLISH_NAME.test(place.name) && !UNIVERSITY_NAME.test(place.name)) return false;
-  if (NOT_SCHOOL_NAME.test(place.name) && !UNIVERSITY_NAME.test(place.name)) return false;
-  const types = placeTypes(place);
-  return types.includes("university") || UNIVERSITY_NAME.test(place.name);
+  if (!UNIVERSITY_NAME.test(place.name)) return false;
+  if (SCHOOLISH_NAME.test(place.name) && !/\buniversity\b/i.test(place.name)) return false;
+  return true;
 }
 
 function rankedUniversities(
@@ -150,25 +151,38 @@ function rankedUniversities(
     .sort((a, b) => a.d.km - b.d.km);
 }
 
-function nearestWithin(
+function claimUsable(text: string): boolean {
+  const t = text.toLowerCase();
+  if (/\b(well[\s-]?beings?|wellbeing|wellness|yoga|meditation|fitness|gym)\b/.test(t) && /\bschool/.test(t)) {
+    return false;
+  }
+  if (/\bnearest school\b|\bschools within\b/.test(t) && /\b(well[\s-]?beings?|wellbeing|wellness)\b/.test(t)) {
+    return false;
+  }
+  if (/\buniversity or college\b/.test(t) && /\b(private school|state school|primary school|secondary school)\b/.test(t)) {
+    return false;
+  }
+  if (/\b(on-?ramp|highway)\b/.test(t) && /\b(jetty|wharf|pier|marina)\b/.test(t)) return false;
+  if (/\bm1\b/.test(t) && /\b(\d{3,})\s*kilomet/.test(t)) return false;
+  return true;
+}
+
+function nearestMatching(
   origin: { lat: number; lng: number },
   places: AmenityHit[],
   maxKm: number,
-  prefer?: (name: string) => boolean,
+  accept: (name: string) => boolean,
 ) {
-  const ranked = places
-    .filter((place) => place.name && place.lat != null && place.lng != null)
-    .map((place) => ({
-      ...place,
-      d: claimDistanceKm(origin, { lat: place.lat!, lng: place.lng! }),
-    }))
-    .filter((place) => place.d.km <= maxKm)
-    .sort((a, b) => a.d.km - b.d.km);
-  if (prefer) {
-    const preferred = ranked.filter((place) => prefer(place.name));
-    if (preferred.length) return preferred[0]!;
-  }
-  return ranked[0] ?? null;
+  return (
+    places
+      .filter((place) => place.name && place.lat != null && place.lng != null && accept(place.name))
+      .map((place) => ({
+        ...place,
+        d: claimDistanceKm(origin, { lat: place.lat!, lng: place.lng! }),
+      }))
+      .filter((place) => place.d.km <= maxKm)
+      .sort((a, b) => a.d.km - b.d.km)[0] ?? null
+  );
 }
 
 function narrativeBlocks(murray: boolean, shawnExam: boolean): {
@@ -945,11 +959,11 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               radiusM: 40000,
             },
           });
-          const hit = nearestWithin(
+          const hit = nearestMatching(
             origin,
             m1.results ?? [],
             40,
-            (name) => /\b(m1|motorway|exit|interchange|on-?ramp)\b/i.test(name),
+            (name) => M1_NAME.test(name) && !NOT_RAMP_NAME.test(name),
           );
           if (hit) {
             incoming.push(
@@ -972,11 +986,11 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               radiusM: 40000,
             },
           });
-          const hit = nearestWithin(
+          const hit = nearestMatching(
             origin,
             ramp.results ?? [],
             40,
-            (name) => /\b(on-?ramp|interchange|exit|motorway|highway)\b/i.test(name),
+            (name) => RAMP_NAME.test(name) && !NOT_RAMP_NAME.test(name),
           );
           if (hit) {
             incoming.push(
@@ -1124,7 +1138,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       return;
     }
     const accepted = ((draft.reportMeta.nbhdClaims as NbhdClaim[] | undefined) ?? []).filter(
-      (c) => c.accepted && c.text.trim(),
+      (c) => c.accepted && c.text.trim() && claimUsable(c.text),
     );
     if (!accepted.length) {
       toast.error("Tick at least one suburb note first.");
@@ -1138,14 +1152,8 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         .slice(0, 24)
         .map((c, i) => `${i + 1}. ${c.text.trim()}`)
         .join("\n");
-      const located = await locationFactsResolved();
       const built = buildBlockPrompt("neighbourhood", draft.values, {
-        locationContext: [
-          `ACCEPTED FACTS. Weave every one of these into the paragraphs. Do not paste them as a trailing list:\n${facts}`,
-          located.promptBlock,
-        ]
-          .filter(Boolean)
-          .join("\n\n"),
+        locationContext: `ACCEPTED FACTS. Weave every one of these into the paragraphs. Do not paste them as a trailing list:\n${facts}`,
       });
       const result = await completePrompt({
         data: {
