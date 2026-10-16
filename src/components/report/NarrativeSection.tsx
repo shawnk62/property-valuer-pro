@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { PausedTextarea } from "@/components/report/PausedTextarea";
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import {
+  completePrompt,
   generateNarrativeBlock,
   searchMarketFacts,
   searchNeighbourhoodFacts,
@@ -24,7 +25,7 @@ import {
   subjectCoordsFromPins,
 } from "@/lib/narrative/locationFacts";
 import { subjectAddressLine, type SalesMapPin } from "@/lib/maps/salesMapPins";
-import { skipAiNarrativeBlock } from "@/lib/inspection/visibility";
+import { buildBlockPrompt } from "@/lib/narrative/promptBuilders";
 import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
 import { geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
 import {
@@ -746,6 +747,63 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     }
   }
 
+  async function rewriteNeighbourhood() {
+    const settings = loadAiSettings();
+    if (!isAiConfigured(settings)) {
+      toast.error("AI is not configured", {
+        description: "Open Settings, add an API key, then try again.",
+      });
+      return;
+    }
+    const accepted = ((draft.reportMeta.nbhdClaims as NbhdClaim[] | undefined) ?? []).filter(
+      (c) => c.accepted && c.text.trim(),
+    );
+    if (!accepted.length) {
+      toast.error("Tick at least one suburb note first.");
+      return;
+    }
+    setBusy("neighbourhood");
+    setLastStatus("Rewriting neighbourhood from accepted notes…");
+    try {
+      const facts = accepted
+        .slice(0, 24)
+        .map((c, i) => `${i + 1}. ${c.text.trim()}`)
+        .join("\n");
+      const built = buildBlockPrompt("neighbourhood", draft.values, {
+        locationContext: `ACCEPTED FACTS. Use these and do not invent others:\n${facts}`,
+      });
+      const result = await completePrompt({
+        data: {
+          settings: {
+            provider: settings.provider,
+            model: settings.model,
+            apiKey: settings.apiKey,
+            ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
+          },
+          prompt: `${built.system}\n\n${built.prompt}`.slice(0, 11000),
+        },
+      });
+      if (result.error || !result.text.trim()) {
+        throw new Error(result.error || "No neighbourhood text was returned.");
+      }
+      const text = australianiseSpelling(
+        ensureAcceptedFactsInProse(result.text.trim(), accepted),
+      );
+      setNarrative({ neighbourhood: text });
+      narrativeRef.current = { ...narrativeRef.current, neighbourhood: text };
+      setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
+      setSource("ai");
+      setLastStatus("Neighbourhood rewritten from accepted notes.");
+      toast.success("Neighbourhood rewritten");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setLastStatus(`Rewrite failed: ${message}`);
+      toast.error("Rewrite failed", { description: message });
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function generateFromTemplate() {
     setBusy("template");
     setLastStatus(null);
@@ -1347,10 +1405,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                 type="button"
                 disabled={busy !== null}
                 onClick={() => {
-                  void generateWithAi(["neighbourhood"]).catch((err) => {
-                    const message = err instanceof Error ? err.message : String(err);
-                    toast.error("Rewrite failed", { description: message });
-                  });
+                  void rewriteNeighbourhood();
                 }}
                 className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
               >

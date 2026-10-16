@@ -189,6 +189,27 @@ function parseGenerateBlockInput(input: unknown) {
   return GenerateBlockInput.parse(raw);
 }
 
+const CompletePromptInput = z.object({
+  settings: SettingsInput,
+  prompt: z.string().min(1).max(12000),
+});
+
+export const completePrompt = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => CompletePromptInput.parse(input))
+  .handler(async ({ data }) => {
+    try {
+      const settings = asAiSettings(data.settings);
+      const model = createModel(settings);
+      const { text } = await generateText({
+        model,
+        prompt: data.prompt,
+      });
+      return { text: text.trim(), error: "" };
+    } catch (err) {
+      return { text: "", error: formatAiError(err) };
+    }
+  });
+
 export const generateNarrativeBlock = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => parseGenerateBlockInput(input))
   .handler(async ({ data }) => {
