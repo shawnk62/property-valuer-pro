@@ -343,6 +343,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [source, setSource] = useState<"template" | "ai" | null>(null);
   const [busy, setBusy] = useState<"template" | "ai" | keyof ReportNarrative | null>(null);
+  const [nbhdAction, setNbhdAction] = useState<"search" | "rewrite" | null>(null);
   const [aiChoiceKey, setAiChoiceKey] = useState<keyof ReportNarrative | null>(null);
   const [lastStatus, setLastStatus] = useState<string | null>(null);
   // Local mirror so the Remarks textarea always updates even if a parent re-render races
@@ -690,6 +691,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   async function runNbhdSearch() {
     const settings = loadAiSettings();
     setBusy("neighbourhood");
+    setNbhdAction("search");
     setLastStatus("Collecting measured amenities, transport and locality…");
     try {
       const incoming: NbhdClaim[] = [];
@@ -937,6 +939,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       toast.error("Suburb search failed", { description: message });
     } finally {
       setBusy(null);
+      setNbhdAction(null);
     }
   }
 
@@ -960,6 +963,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       return;
     }
     setBusy("neighbourhood");
+    setNbhdAction("rewrite");
     setLastStatus("Rewriting neighbourhood from accepted notes…");
     try {
       const facts = accepted
@@ -1004,6 +1008,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       toast.error("Rewrite failed", { description: message });
     } finally {
       setBusy(null);
+      setNbhdAction(null);
     }
   }
 
@@ -1559,9 +1564,9 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                 type="button"
                 disabled={busy !== null}
                 onClick={() => void runNbhdSearch()}
-                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium disabled:opacity-60"
               >
-                {busy === "neighbourhood" ? "Searching…" : "Find suburb notes"}
+                {nbhdAction === "search" ? "Searching…" : "Find suburb notes"}
               </button>
               {NBHD_CLAIM_GROUPS.map((group) => {
                 const rows = ((draft.reportMeta.nbhdClaims as NbhdClaim[] | undefined) ?? []).filter(
@@ -1610,9 +1615,9 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                 onClick={() => {
                   void rewriteNeighbourhood();
                 }}
-                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium disabled:opacity-60"
               >
-                Rewrite neighbourhood with accepted facts
+                {nbhdAction === "rewrite" ? "Rewriting…" : "Rewrite neighbourhood with accepted facts"}
               </button>
             </div>
           ) : null}
