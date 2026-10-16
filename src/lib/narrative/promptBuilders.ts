@@ -2,6 +2,7 @@ import { fieldKeys, labelForField, sections } from "@/lib/inspection/schema";
 import type { InspectionField, InspectionValues } from "@/lib/inspection/types";
 import { describeLandUseMix, stripLandUsePercentages } from "@/lib/narrative/landUseMix";
 import { titleAdviceFacts } from "@/lib/report/titleAdvices";
+import { getReportTypeConfig, isShawnExamType } from "@/lib/report/reportTypes";
 
 export interface BlockPrompt {
   system: string;
@@ -11,6 +12,11 @@ export interface BlockPrompt {
 function assignmentType(values: InspectionValues): string {
   const v = values["prop_assignment"];
   return typeof v === "string" ? v : "valuation report";
+}
+
+function isShawnAssignment(values: InspectionValues): boolean {
+  const assignment = assignmentType(values);
+  return /shawn/i.test(assignment) || isShawnExamType(getReportTypeConfig(assignment).id);
 }
 
 /**
@@ -373,7 +379,7 @@ Rules:
         prompt: `Write section 5.2 Neighbourhood / Locality for a ${type} valuation report.
 
 ${
-  type.toLowerCase().includes("shawn")
+  isShawnAssignment(values)
     ? `STRUCTURE for Shawn reports. Write connected professional valuation prose. Do not copy the notes as a list, and do not give each fact its own sentence.
 - Open with one sentence that places the property in Australia, the state and the local government area. Do not put "Australia." on a line by itself.
 - Suburb: character, position among the neighbouring suburbs, and the official population if an accepted note gives one. If several notes say leafy, hinterland or acreage, say it once.
@@ -404,7 +410,7 @@ Rules:
 - Use GOOGLE / accepted amenity and transport wording as recorded (names, counts, distances, directions). Do not invent extras.
 - Name positive or negative features only if they appear in the data.
 - ${
-  type.toLowerCase().includes("shawn")
+  isShawnAssignment(values)
     ? "Shawn: several short paragraphs, grouped by topic, in the voice of a valuer. Not one sentence per fact, and not a pasted note at the end."
     : "Murray: 1–3 short sentences. Phil Stamp Duty: one tight paragraph if data exists."
 }

@@ -260,7 +260,8 @@ export function isMurrayReportType(id: ReportTypeId | string): boolean {
 }
 
 export function isShawnExamType(id: ReportTypeId | string): boolean {
-  return id === "shawn-exam";
+  const value = String(id ?? "").toLowerCase();
+  return value === "shawn-exam" || value.startsWith("shawn-");
 }
 
 /** Inspection-form Purpose of Report when set; otherwise the report-type default. */
