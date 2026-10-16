@@ -932,13 +932,20 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
           const m1 = await fetchPlaceTextSearch({
             data: { apiKey: key, query: `M1 motorway exit near ${near}`, lat: origin.lat, lng: origin.lng },
           });
-          const hit = m1.results[0];
-          if (hit?.name && hit.lat != null && hit.lng != null) {
-            const d = claimDistanceKm(origin, { lat: hit.lat, lng: hit.lng });
+          const ranked = (m1.results ?? [])
+            .filter((place) => place.name && place.lat != null && place.lng != null)
+            .map((place) => ({
+              place,
+              d: claimDistanceKm(origin, { lat: place.lat!, lng: place.lng! }),
+            }))
+            .filter((row) => row.d.km <= 40)
+            .sort((a, b) => a.d.km - b.d.km);
+          const nearest = ranked[0];
+          if (nearest) {
             incoming.push(
               measuredClaim(
                 "transport",
-                `${hit.name} is approximately ${d.label} ${d.dir} of the property.`,
+                `${nearest.place.name} is approximately ${nearest.d.label} ${nearest.d.dir} of the property.`,
               ),
             );
           }
@@ -1042,20 +1049,27 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         });
       }
 
-      const mergedNbhd = mergeNbhdClaims(
-        (draft.reportMeta.nbhdClaims as NbhdClaim[] | undefined) ?? [],
-        incoming,
-      );
-      setMeta({ nbhdClaims: mergedNbhd });
-      refreshReferences({ nbhdClaims: mergedNbhd });
-      const estateN = mergedNbhd.filter((c) => c.kind === "estate").length;
+      const usable = incoming.filter((c) => claimUsable(c.text));
+      const manual = draft.reportMeta.manualNarrative?.neighbourhood === true;
+      if (manual) {
+        const ok = window.confirm(
+          "The neighbourhood has a manual edit. Replace the suburb notes with a fresh search?",
+        );
+        if (!ok) {
+          toast.message("Existing suburb notes kept.");
+          return;
+        }
+      }
+      setMeta({ nbhdClaims: usable });
+      refreshReferences({ nbhdClaims: usable });
+      const estateN = usable.filter((c) => c.kind === "estate").length;
       setLastStatus(
-        mergedNbhd.length
-          ? `Notes on file: ${mergedNbhd.length}. Estate lines: ${estateN}. Untick what you do not want.`
+        usable.length
+          ? `Notes on file: ${usable.length}. Estate lines: ${estateN}. Untick what you do not want.`
           : "No suburb notes were returned.",
       );
       toast.message(
-        incoming.length ? `Prepared ${incoming.length} suburb note(s)` : "No suburb notes found",
+        usable.length ? `Prepared ${usable.length} suburb note(s)` : "No suburb notes found",
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
