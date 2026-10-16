@@ -56,7 +56,32 @@ function withDistance(subject: { lat: number; lng: number }, centre: QldCentre) 
   };
 }
 
-export function subjectCoordsFromPins(
+export function nearestEmploymentCentreFacts(coords: {
+  lat: number;
+  lng: number;
+}): string[] {
+  const ranked = QLD_CENTRES.map((c) => withDistance(coords, c)).sort((a, b) => a.km - b.km);
+  const brisbane = ranked.find((c) => c.kind === "cbd");
+  const regional = ranked.find((c) => c.kind === "regional");
+  const town = ranked.find((c) => c.kind === "town");
+  const lines: string[] = [];
+  if (brisbane) {
+    lines.push(
+      `Principal employment centre: ${brisbane.name}, approximately ${brisbane.label} ${brisbane.dir} of the subject.`,
+    );
+  }
+  if (regional) {
+    lines.push(
+      `Nearest regional centre: ${regional.name}, approximately ${regional.label} ${regional.dir} of the subject.`,
+    );
+  }
+  if (town && town.name !== regional?.name) {
+    lines.push(
+      `Nearest town centre: ${town.name}, approximately ${town.label} ${town.dir} of the subject.`,
+    );
+  }
+  return lines;
+}
   pins: SalesMapPin[] | null | undefined,
 ): { lat: number; lng: number } | null {
   const subject = (pins ?? []).find((p) => p.kind === "subject");

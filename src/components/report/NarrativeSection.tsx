@@ -22,6 +22,7 @@ import type { ReportNarrative } from "@/lib/report/types";
 import {
   buildLocationFacts,
   locationFactsFromDraft,
+  nearestEmploymentCentreFacts,
   subjectCoordsFromPins,
 } from "@/lib/narrative/locationFacts";
 import { subjectAddressLine, type SalesMapPin } from "@/lib/maps/salesMapPins";
@@ -808,6 +809,9 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         }
         lines.push(`${label}: ${name}.`);
       };
+      if (origin) {
+        for (const line of nearestEmploymentCentreFacts(origin)) lines.push(line);
+      }
       if (isGoogleMapsConfigured() && origin) {
         setLastStatus("Measuring shops, schools, transport and centres from Google Maps…");
         const key = loadGoogleMapsKey();
@@ -837,6 +841,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         const queries: Array<[string, string]> = [
           [suburb ? `${suburb} shopping centre` : "nearest shopping centre", "Shopping centre"],
           [suburb ? `${suburb} town centre` : "nearest town centre", "Town centre"],
+          [suburb ? `major employment centre near ${suburb}` : "nearest major employment centre", "Employment centre"],
           [suburb ? `business park near ${suburb}` : "nearest business park", "Employment centre"],
           [suburb ? `industrial estate near ${suburb}` : "nearest industrial estate", "Industrial estate"],
           [suburb ? `M1 motorway exit near ${suburb}` : "nearest motorway exit", "Motorway access"],

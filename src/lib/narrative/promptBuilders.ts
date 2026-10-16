@@ -385,7 +385,7 @@ ${
 - Suburb: character, position among the neighbouring suburbs, and the official population if an accepted note gives one. If several notes say leafy, hinterland or acreage, say it once.
 - Immediate locality and the named estate, using the accepted estate facts (lot count, area, lot sizes) in ordinary sentences.
 - Neighbouring development, in qualitative terms only.
-- Amenities and transport. Use the accepted notes and the MEASURED DISTANCES block. Name the nearest shopping centre, school, public transport and the nearest town or employment centre, with the measured distance and direction. Do not invent a distance or a place. Do not leave these out if they are in the measured block.
+- Amenities and transport. Use the accepted notes and the MEASURED DISTANCES block. Name the nearest shopping centre, school and public transport, and always name the principal employment centre, the nearest regional centre and the nearest town centre with the measured distance and direction. Include those centres even when they are a long way from the subject. Do not invent a distance or a place. Do not leave a listed centre out.
 Weave every accepted fact into these paragraphs. Do not leave a trailing list of leftover facts. Do not write a fact as "The area of X is N square kilometres." or "X postcode is N." unless that figure is needed in a proper sentence.`
     : `Required content only:
 - the immediate locality, and
@@ -402,7 +402,7 @@ ${sectionAnswers(stripLandUsePercentages(values), ["1A"])}
 ${extras?.locationContext?.trim() || ""}
 
 Rules:
-- Use the measured distances supplied for the nearest town, regional centre, shopping and employment places. Do not invent a distance. Do not omit a measured shopping, school, transport or employment distance.
+- Always state the principal employment centre, the nearest regional centre and the nearest town centre with the measured distance and direction, regardless of how far they are. Do not invent a distance. Do not omit a measured shopping, school, transport or employment distance.
 - Do not describe site shape, topography, access, services or zoning.
 - Use only qualitative phrases (predominantly, mainly, some, a few). Never quote land-use percentages, built-up percentages, or similar figures. An official suburb population may be used only if it is an ACCEPTED FACT.
 - MUST INCLUDE each distinct fact from ACCEPTED FACTS / MUST INCLUDE. Paraphrase into valuation prose. Merge duplicates. Do not paste the list.
