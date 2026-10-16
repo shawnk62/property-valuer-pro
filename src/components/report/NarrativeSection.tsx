@@ -26,11 +26,8 @@ import {
 import { subjectAddressLine, type SalesMapPin } from "@/lib/maps/salesMapPins";
 import { skipAiNarrativeBlock } from "@/lib/inspection/visibility";
 import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
-import { fetchNearbyAmenities, fetchPlaceTextSearch, geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
-import { buildSubjectLocationMap } from "@/lib/maps/generateMaps";
+import { geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
 import {
-  claimDistanceKm,
-  measuredClaim,
   mergeNbhdClaims,
   ensureAcceptedFactsInProse,
   MARKET_ASSIST,
@@ -686,210 +683,59 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   }
 
   async function runNbhdSearch() {
+    const settings = loadAiSettings();
+    if (!isAiConfigured(settings)) {
+      toast.error("AI is not configured", {
+        description: "Open Settings, add an API key, then search again.",
+      });
+      return;
+    }
     setBusy("neighbourhood");
-    setLastStatus("Collecting suburb, amenity and transport notes…");
-    const claims: NbhdClaim[] = [];
+    setLastStatus("Searching suburb sources…");
     try {
-      const facts = await locationFactsResolved();
-      if (facts.sentence) {
-        claims.push(measuredClaim("city", facts.sentence, "Google geocode / measured centres"));
-      }
-
-      const lat = draft.reportMeta.subjectLat;
-      const lng = draft.reportMeta.subjectLng;
-      const origin =
-        lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng)
-          ? { lat, lng }
-          : subjectCoordsFromPins(
-              (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null,
-            );
       const suburb = String(draft.values["prop_suburb"] ?? "");
-      const industrial = Boolean(String(draft.values["prop_type_industrial"] ?? "").trim());
-
-      if (isGoogleMapsConfigured() && origin) {
-        try {
-          const nearby = await fetchNearbyAmenities({
-            data: { apiKey: loadGoogleMapsKey(), lat: origin.lat, lng: origin.lng, radiusM: 5000 },
-          });
-          const schools = nearby.school ?? [];
-          if (schools.length) {
-            const named = schools[0]?.name ? ` Nearest recorded is ${schools[0].name}.` : "";
-            claims.push(
-              measuredClaim(
-                "amenities",
-                `There are ${schools.length} school${schools.length === 1 ? "" : "s"} within about five kilometres of the property.${named}`,
-              ),
-            );
-          }
-          const shops = [...(nearby.supermarket ?? []), ...(nearby.shopping_mall ?? [])].slice(0, 4);
-          shops.forEach((shop, i) => {
-            if (!shop.name) return;
-            if (shop.lat != null && shop.lng != null) {
-              const d = claimDistanceKm(origin, { lat: shop.lat, lng: shop.lng });
-              claims.push(
-                measuredClaim(
-                  "amenities",
-                  `${i === 0 ? "Nearest shopping" : "Shopping"} includes ${shop.name}, approximately ${d.label} ${d.dir} of the property.`,
-                ),
-              );
-            } else {
-              claims.push(measuredClaim("amenities", `Shopping recorded includes ${shop.name}.`));
-            }
-          });
-          const station = nearby.train_station?.[0];
-          if (station?.name && station.lat != null && station.lng != null) {
-            const d = claimDistanceKm(origin, { lat: station.lat, lng: station.lng });
-            claims.push(
-              measuredClaim(
-                "transport",
-                `${station.name} is approximately ${d.label} ${d.dir} of the property.`,
-              ),
-            );
-          }
-          const bus = nearby.bus_station?.[0] || nearby.transit_station?.[0];
-          if (bus?.name && bus.lat != null && bus.lng != null) {
-            const d = claimDistanceKm(origin, { lat: bus.lat, lng: bus.lng });
-            claims.push(
-              measuredClaim(
-                "transport",
-                `A bus stop at ${bus.name} is approximately ${d.label} ${d.dir} of the property.`,
-              ),
-            );
-          }
-        } catch {
-          /* Places optional */
-        }
-
-        const key = loadGoogleMapsKey();
-        const near = suburb || subjectAddressLine(draft.values) || "Queensland";
-        for (const q of [
-          `M1 motorway exit near ${near}`,
-          `railway station near ${near}`,
-          `shopping centre near ${near}`,
-          `housing estate near ${near}`,
-          `master planned community near ${near}`,
-        ]) {
-        try {
-          const m1 = await fetchPlaceTextSearch({
-            data: { apiKey: key, query: q, lat: origin.lat, lng: origin.lng },
-          });
-          const hit = m1.results[0];
-          if (hit?.name && hit.lat != null && hit.lng != null) {
-            const d = claimDistanceKm(origin, { lat: hit.lat, lng: hit.lng });
-            claims.push(
-              measuredClaim(
-                /shop/i.test(q) ? "amenities" : /estate|planned/i.test(q) ? "estate" : "transport",
-                `${hit.name} is approximately ${d.label} ${d.dir} of the property.`,
-              ),
-            );
-          }
-        } catch {
-          /* text search optional */
-        }
-        }
-        if (industrial) {
-          for (const q of [`airport near ${near}`, `port near ${near}`]) {
-            try {
-              const found = await fetchPlaceTextSearch({
-                data: { apiKey: key, query: q, lat: origin.lat, lng: origin.lng },
-              });
-              const hit = found.results[0];
-              if (hit?.name && hit.lat != null && hit.lng != null) {
-                const d = claimDistanceKm(origin, { lat: hit.lat, lng: hit.lng });
-                claims.push(
-                  measuredClaim(
-                    "transport",
-                    `${hit.name} is approximately ${d.label} ${d.dir} of the property.`,
-                  ),
-                );
-              }
-            } catch {
-              /* optional */
-            }
-          }
-        }
-
-        const hasLocMap = draft.photos.some((p) => p.slot === "map_location" && p.url);
-        if (!hasLocMap) {
-          try {
-            const built = await buildSubjectLocationMap({
-              apiKey: key,
-              subject: {
-                id: "pin-subject",
-                label: subjectAddressLine(draft.values) || suburb || "Subject",
-                shortLabel: "S",
-                lat: origin.lat,
-                lng: origin.lng,
-                kind: "subject",
-              },
-            });
-            const dataUrl = await new Promise<string>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(String(reader.result ?? ""));
-              reader.onerror = () => reject(new Error("map read failed"));
-              reader.readAsDataURL(built.file);
-            });
-            setPhotos((prev) => [
-              ...prev.filter((p) => p.slot !== "map_location"),
-              {
-                id: "photo-map-location",
-                slot: "map_location",
-                caption: `Locality map — subject and ${built.centreName}`,
-                url: dataUrl,
-                kind: "map",
-              },
-            ]);
-          } catch {
-            /* map optional */
-          }
-        }
+      const payload = {
+        settings: {
+          provider: settings.provider,
+          model: settings.model,
+          apiKey: settings.apiKey,
+          ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
+        },
+        suburb: suburb || String(draft.values["prop_address"] ?? "subject suburb"),
+        city: String(draft.values["prop_lga"] ?? ""),
+        address: subjectAddressLine(draft.values),
+        estate:
+          String(draft.reportMeta.nbhdEstateHint ?? "").trim() ||
+          String(draft.values["nbhd_estate"] ?? ""),
+      };
+      const incoming: NbhdClaim[] = [];
+      const suburbResult = await searchNeighbourhoodFacts({
+        data: { ...payload, part: "suburb" },
+      });
+      incoming.push(...parseNbhdClaims(suburbResult.raw));
+      setLastStatus("Searching estate sources…");
+      try {
+        const estateResult = await searchNeighbourhoodFacts({
+          data: { ...payload, part: "estate" },
+        });
+        incoming.push(...parseNbhdClaims(estateResult.raw));
+      } catch (estateErr) {
+        console.warn("[nbhd estate]", estateErr);
       }
-
-      const settings = loadAiSettings();
-      if (isAiConfigured(settings)) {
-        const aiPayload = {
-          settings: {
-            provider: settings.provider,
-            model: settings.model,
-            apiKey: settings.apiKey,
-            ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
-          },
-          suburb: suburb || String(draft.values["prop_address"] ?? "subject suburb"),
-          city: String(draft.values["prop_lga"] ?? ""),
-          address: subjectAddressLine(draft.values),
-          estate:
-            String(draft.reportMeta.nbhdEstateHint ?? "").trim() ||
-            String(draft.values["nbhd_estate"] ?? ""),
-        };
-        for (const part of ["suburb", "estate"] as const) {
-          try {
-            setLastStatus(part === "suburb" ? "Searching suburb sources…" : "Searching estate sources…");
-            const searched = await searchNeighbourhoodFacts({
-              data: { ...aiPayload, part },
-            });
-            claims.push(...parseNbhdClaims(searched.raw));
-          } catch (searchErr) {
-            console.warn("[nbhd search]", part, searchErr);
-          }
-        }
-      }
-
       const mergedNbhd = mergeNbhdClaims(
         (draft.reportMeta.nbhdClaims as NbhdClaim[] | undefined) ?? [],
-        claims,
+        incoming,
       );
-      setMeta({
-        nbhdClaims: mergedNbhd,
-      });
+      setMeta({ nbhdClaims: mergedNbhd });
       refreshReferences({ nbhdClaims: mergedNbhd });
       const estateN = mergedNbhd.filter((c) => c.kind === "estate").length;
       setLastStatus(
         mergedNbhd.length
-          ? `Notes on file: ${merged.length}. Estate lines: ${estateN}. Untick what you do not want.`
+          ? `Notes on file: ${mergedNbhd.length}. Estate lines: ${estateN}. Untick what you do not want.`
           : "No suburb notes were returned.",
       );
       toast.message(
-        claims.length ? `Prepared ${claims.length} suburb note(s)` : "No suburb notes found",
+        incoming.length ? `Prepared ${incoming.length} suburb note(s)` : "No suburb notes found",
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
