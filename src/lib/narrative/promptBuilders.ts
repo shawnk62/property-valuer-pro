@@ -380,13 +380,16 @@ Rules:
 
 ${
   isShawnAssignment(values)
-    ? `STRUCTURE for Shawn reports. Write connected professional valuation prose. Do not copy the notes as a list, and do not give each fact its own sentence.
-- Open with one sentence that places the property in Australia, the state and the local government area. Do not put "Australia." on a line by itself.
-- Suburb: character, position among the neighbouring suburbs, and the official population if an accepted note gives one. If several notes say leafy, hinterland or acreage, say it once.
-- Immediate locality and the named estate, using the accepted estate facts (lot count, area, lot sizes) in ordinary sentences.
-- Neighbouring development, in qualitative terms only.
-- Amenities and transport. Use the accepted notes and the MEASURED DISTANCES block. Name the nearest shopping centre, school, public transport and the nearest highway on-ramp. Name the principal employment centre: the city centre when it is within a reasonable distance, otherwise the nearest regional centre. Also name the nearest regional centre and nearest town centre. Every distance must include the bearing from the subject property to that place. Do not reverse the bearing. Do not invent a distance or a place. Do not leave a listed centre or the highway on-ramp out.
-Weave every accepted fact into these paragraphs. Do not leave a trailing list of leftover facts. Do not write a fact as "The area of X is N square kilometres." or "X postcode is N." unless that figure is needed in a proper sentence.`
+    ? `STRUCTURE (mandatory for Shawn reports). One paragraph per level that has data, then separate paragraphs for amenities and for transport:
+1. Country: Australia.
+2. State / city or regional centre.
+3. Suburb character, accepted population, accepted change.
+4. Immediate locality and named estate if recorded.
+5. Neighbouring development — qualitative land use only.
+6. Amenities — weave in every accepted amenities fact (school count, named centres, distances and directions).
+7. Transport — weave in every accepted transport fact (station, bus, M1, highway on-ramp, airport/port).
+Do not open with the street address. Do not compress this into three short paragraphs if accepted facts remain unused.
+Professional valuation prose, not app-like sentences. Start at Australia, then Queensland, then the local government area, then the suburb, then the estate. Use qualitative land-use terms (predominantly, a few, some). Do not use exact percentages. Include every ticked accepted fact. Do not append raw facts as their own sentences. Do not invent citations.`
     : `Required content only:
 - the immediate locality, and
 - neighbouring development,
