@@ -153,7 +153,9 @@ function claimUsable(text: string): boolean {
   if (NOT_SCHOOL_NAME.test(t) && /\b(nearest school|schools within|nearest is)\b/.test(t)) return false;
   if (/\bnearest university or college is\b/.test(t) && !UNIVERSITY_NAME.test(t)) return false;
   if (/\buniversity or college\b/.test(t) && SCHOOLISH_NAME.test(t) && !/\buniversity\b/.test(t)) return false;
-  if (/\b(on-?ramp|highway)\b/.test(t) && /\b(jetty|wharf|pier|marina)\b/.test(t)) return false;
+  if (/\bnearest freeway or motorway\b/.test(t) && !/\b(motorway|freeway|pacific|gateway|ipswich|logan|centenary|bruce|m1|m3)\b/.test(t)) {
+    return false;
+  }
   if (/\bm1\b/.test(t) && /\b(\d{3,})\s*kilomet/.test(t)) return false;
   return true;
 }

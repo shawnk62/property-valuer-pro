@@ -274,29 +274,46 @@ export const fetchNearestMotorwayAccess = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => MotorwayInput.parse(input))
   .handler(async ({ data }) => {
     const key = data.apiKey.trim();
-    const search = await fetch("https://places.googleapis.com/v1/places:searchText", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": key,
-        "X-Goog-FieldMask": "places.displayName,places.location",
-      },
-      body: JSON.stringify({
-        textQuery: `nearest freeway or motorway exit near ${data.suburb}`,
-        locationBias: {
-          circle: { center: { latitude: data.lat, longitude: data.lng }, radius: 25000 },
+    const isMotorway = (name: string) =>
+      /\b(motorway|freeway|pacific motorway|gateway motorway|ipswich motorway|logan motorway|centenary motorway|bruce highway|m1|m3)\b/i.test(
+        name,
+      ) && !/\b(yamaha|moto|motors?|dealer|shop|store|cafe|restaurant)\b/i.test(name);
+
+    const queries = [
+      `Pacific Motorway near ${data.suburb}`,
+      `Gateway Motorway near ${data.suburb}`,
+      `Ipswich Motorway near ${data.suburb}`,
+      `Logan Motorway near ${data.suburb}`,
+      `Centenary Motorway near ${data.suburb}`,
+    ];
+    const candidates: Array<{ name: string; lat: number; lng: number }> = [];
+    for (const textQuery of queries) {
+      const search = await fetch("https://places.googleapis.com/v1/places:searchText", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": key,
+          "X-Goog-FieldMask": "places.displayName,places.location",
         },
-      }),
-    });
-    const found = (await search.json()) as { places?: NewPlace[] };
-    const candidates = (found.places ?? [])
-      .map((p) => ({
-        name: String(p.displayName?.text ?? "").trim(),
-        lat: p.location?.latitude,
-        lng: p.location?.longitude,
-      }))
-      .filter((p) => p.name && p.lat != null && p.lng != null)
-      .slice(0, 5);
+        body: JSON.stringify({
+          textQuery,
+          locationBias: {
+            circle: { center: { latitude: data.lat, longitude: data.lng }, radius: 30000 },
+          },
+        }),
+      });
+      const found = (await search.json()) as { places?: NewPlace[] };
+      for (const p of found.places ?? []) {
+        const name = String(p.displayName?.text ?? "").trim();
+        const lat = p.location?.latitude;
+        const lng = p.location?.longitude;
+        if (!name || lat == null || lng == null || !isMotorway(name)) continue;
+        if (candidates.some((c) => c.name === name)) continue;
+        candidates.push({ name, lat, lng });
+        if (candidates.length >= 6) break;
+      }
+      if (candidates.length >= 6) break;
+    }
     if (!candidates.length) return { access: null as null };
 
     let best: {
@@ -331,12 +348,12 @@ export const fetchNearestMotorwayAccess = createServerFn({ method: "POST" })
       if (!steps.length) continue;
       let metres = 0;
       let ramp = place.name;
-      let rampLat = place.lat!;
-      let rampLng = place.lng!;
+      let rampLat = place.lat;
+      let rampLng = place.lng;
       for (const step of steps) {
         metres += step.distanceMeters ?? 0;
         const text = step.navigationInstruction?.instructions ?? "";
-        if (/\b(freeway|motorway|highway|on-?ramp|ramp onto)\b/i.test(text)) {
+        if (/\b(freeway|motorway|on-?ramp|ramp onto)\b/i.test(text)) {
           ramp = text.replace(/<[^>]+>/g, "").trim() || ramp;
           const start = step.startLocation?.latLng;
           if (start?.latitude != null && start?.longitude != null) {
