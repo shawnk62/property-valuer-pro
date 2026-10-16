@@ -27,7 +27,7 @@ import {
 import { subjectAddressLine, type SalesMapPin } from "@/lib/maps/salesMapPins";
 import { buildBlockPrompt } from "@/lib/narrative/promptBuilders";
 import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
-import { geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
+import { geocodeGoogleAddresses, fetchNearbyAmenities } from "@/lib/maps/maps.functions";
 import {
   mergeNbhdClaims,
   ensureAcceptedFactsInProse,
@@ -769,8 +769,61 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         .slice(0, 24)
         .map((c, i) => `${i + 1}. ${c.text.trim()}`)
         .join("\n");
+      const located = await locationFactsResolved();
+      let measured = "";
+      if (isGoogleMapsConfigured()) {
+        try {
+          const coords =
+            subjectCoordsFromPins(
+              (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null,
+            ) ||
+            (draft.reportMeta.subjectLat != null && draft.reportMeta.subjectLng != null
+              ? { lat: draft.reportMeta.subjectLat, lng: draft.reportMeta.subjectLng }
+              : null);
+          if (coords) {
+            const places = await fetchNearbyAmenities({
+              data: {
+                apiKey: loadGoogleMapsKey(),
+                lat: coords.lat,
+                lng: coords.lng,
+                radiusM: 5000,
+              },
+            });
+            const lines: string[] = [];
+            const labels: Record<string, string> = {
+              school: "School",
+              supermarket: "Supermarket",
+              shopping_mall: "Shopping centre",
+              train_station: "Railway station",
+              bus_station: "Bus station",
+              transit_station: "Public transport",
+            };
+            for (const [kind, hits] of Object.entries(places)) {
+              for (const hit of (hits ?? []).slice(0, 3)) {
+                if (!hit?.name || hit.lat == null || hit.lng == null) continue;
+                const km = haversineKm(coords, { lat: hit.lat, lng: hit.lng });
+                const dir = compassToward(coords, { lat: hit.lat, lng: hit.lng });
+                lines.push(
+                  `${labels[kind] || kind}: ${hit.name}, ${km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`} ${dir} of the subject.`,
+                );
+              }
+            }
+            if (lines.length) {
+              measured = `MEASURED PLACES from Google Maps. Use these names and distances. Do not invent others.\n${lines.join("\n")}`;
+            }
+          }
+        } catch {
+          /* rewrite from the accepted notes if Places is unavailable */
+        }
+      }
       const built = buildBlockPrompt("neighbourhood", draft.values, {
-        locationContext: `ACCEPTED FACTS. Use these and do not invent others:\n${facts}`,
+        locationContext: [
+          `ACCEPTED FACTS. Weave every one of these into the paragraphs. Do not paste them as a trailing list:\n${facts}`,
+          located.promptBlock,
+          measured,
+        ]
+          .filter(Boolean)
+          .join("\n\n"),
       });
       const result = await completePrompt({
         data: {
@@ -786,9 +839,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       if (result.error || !result.text.trim()) {
         throw new Error(result.error || "No neighbourhood text was returned.");
       }
-      const text = australianiseSpelling(
-        ensureAcceptedFactsInProse(result.text.trim(), accepted),
-      );
+      const text = australianiseSpelling(result.text.trim());
       window.setTimeout(() => {
         setNarrative({ neighbourhood: text });
         narrativeRef.current = { ...narrativeRef.current, neighbourhood: text };

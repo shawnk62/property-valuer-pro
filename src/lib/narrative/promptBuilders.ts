@@ -374,15 +374,13 @@ Rules:
 
 ${
   type.toLowerCase().includes("shawn")
-    ? `STRUCTURE (mandatory for Shawn reports). Synthesise the MUST INCLUDE list into connected paragraphs. Do not copy the list sentence-by-sentence.
-1. Country: Australia.
-2. State / city or regional centre.
-3. Suburb: combine character, population and change into at most two paragraphs. If several notes repeat "leafy / hinterland / acreage / family", say that once.
-4. Immediate locality and named estate.
-5. Neighbouring development — qualitative land use only.
-6. Amenities paragraph.
-7. Transport paragraph.
-Do not open with the street address. Do not begin every sentence with the suburb name.`
+    ? `STRUCTURE for Shawn reports. Write connected professional valuation prose. Do not copy the notes as a list, and do not give each fact its own sentence.
+- Open with one sentence that places the property in Australia, the state and the local government area. Do not put "Australia." on a line by itself.
+- Suburb: character, position among the neighbouring suburbs, and the official population if an accepted note gives one. If several notes say leafy, hinterland or acreage, say it once.
+- Immediate locality and the named estate, using the accepted estate facts (lot count, area, lot sizes) in ordinary sentences.
+- Neighbouring development, in qualitative terms only.
+- Amenities and transport. Use the accepted notes and any MEASURED PLACES below. Name the place and, where a distance is given, the distance and direction. Do not invent a distance or a place.
+Weave every accepted fact into these paragraphs. Do not leave a trailing list of leftover facts. Do not write a fact as "The area of X is N square kilometres." or "X postcode is N." unless that figure is needed in a proper sentence.`
     : `Required content only:
 - the immediate locality, and
 - neighbouring development,
@@ -407,7 +405,7 @@ Rules:
 - Name positive or negative features only if they appear in the data.
 - ${
   type.toLowerCase().includes("shawn")
-    ? "Shawn: write the locality in short paragraphs, one topic each. Keep it complete but concise so it can be edited. If a unique accepted name or official figure is missing, the draft is incomplete."
+    ? "Shawn: several short paragraphs, grouped by topic, in the voice of a valuer. Not one sentence per fact, and not a pasted note at the end."
     : "Murray: 1–3 short sentences. Phil Stamp Duty: one tight paragraph if data exists."
 }
 - No marketing language.`,
