@@ -1076,8 +1076,13 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       return;
     }
     if (draft.reportMeta.manualNarrative?.neighbourhood) {
-      toast.message("Neighbourhood has a manual edit — not overwritten.");
-      return;
+      const ok = window.confirm(
+        "This neighbourhood has a manual edit. Overwrite it with the rewrite from accepted notes?",
+      );
+      if (!ok) {
+        toast.message("Manual neighbourhood kept.");
+        return;
+      }
     }
     const accepted = ((draft.reportMeta.nbhdClaims as NbhdClaim[] | undefined) ?? []).filter(
       (c) => c.accepted && c.text.trim() && claimUsable(c.text),
@@ -1115,6 +1120,12 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       window.setTimeout(() => {
         setNarrative({ neighbourhood: text });
         narrativeRef.current = { ...narrativeRef.current, neighbourhood: text };
+        setMeta({
+          manualNarrative: {
+            ...(draft.reportMeta.manualNarrative ?? {}),
+            neighbourhood: false,
+          },
+        });
         setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
         setSource("ai");
         setLastStatus("Neighbourhood rewritten from accepted notes.");
