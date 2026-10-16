@@ -777,6 +777,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     overwrite = keys.length === 1,
     mode: "append" | "incorporate" | "replace" = "replace",
   ) {
+    try {
     // Remarks never go through the AI RPC — always local structured text
     if (keys.length === 1 && keys[0] === "remarks") {
       generateRemarksNow(overwrite);
@@ -784,7 +785,17 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     }
 
     const settings = loadAiSettings();
-    const opts = await narrativeOpts();
+    const opts =
+      keys.length === 1 && keys[0] === "neighbourhood"
+        ? {
+            salesCount: Array.isArray(draft.sales) ? draft.sales.length : 0,
+            valueAmount:
+              typeof draft.reportMeta?.valueAmount === "string"
+                ? draft.reportMeta.valueAmount
+                : "",
+            brief: String(narrativeRef.current.brief ?? "").trim() || undefined,
+          }
+        : await narrativeOpts();
 
     // If bulk includes remarks, fill it first locally
     if (keys.includes("remarks")) {
@@ -938,6 +949,13 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               : result && typeof result === "object" && "text" in result
                 ? String((result as { text: unknown }).text ?? "")
                 : "";
+          const blockError =
+            result && typeof result === "object" && "error" in result
+              ? String((result as { error?: unknown }).error ?? "")
+              : "";
+          if (blockError && !text.trim()) {
+            throw new Error(blockError);
+          }
 
           if (text.trim()) {
             next[key] =
@@ -1025,6 +1043,12 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         toast.error("Generation failed", { description: message });
       }
     } finally {
+      setBusy(null);
+    }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setLastStatus(`Failed: ${message}`);
+      toast.error("Generation failed", { description: message });
       setBusy(null);
     }
   }
@@ -1322,7 +1346,12 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               <button
                 type="button"
                 disabled={busy !== null}
-                onClick={() => void generateWithAi(["neighbourhood"])}
+                onClick={() => {
+                  void generateWithAi(["neighbourhood"]).catch((err) => {
+                    const message = err instanceof Error ? err.message : String(err);
+                    toast.error("Rewrite failed", { description: message });
+                  });
+                }}
                 className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
               >
                 Rewrite neighbourhood with accepted facts

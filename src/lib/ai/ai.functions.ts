@@ -206,9 +206,9 @@ export const generateNarrativeBlock = createServerFn({ method: "POST" })
         prompt: foldSystemIntoPrompt(system, prompt),
       });
 
-      return { text: text.trim() };
+      return { text: text.trim(), error: "" };
     } catch (err) {
-      throw new Error(formatAiError(err));
+      return { text: "", error: formatAiError(err) };
     }
   });
 
