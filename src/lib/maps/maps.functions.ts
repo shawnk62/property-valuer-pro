@@ -149,19 +149,25 @@ export const fetchNearbyAmenities = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const types = [
       "school",
+      "primary_school",
+      "secondary_school",
       "supermarket",
       "shopping_mall",
       "train_station",
       "bus_station",
       "transit_station",
+      "hospital",
     ] as const;
     const out: Record<(typeof types)[number], PlaceHit[]> = {
       school: [],
+      primary_school: [],
+      secondary_school: [],
       supermarket: [],
       shopping_mall: [],
       train_station: [],
       bus_station: [],
       transit_station: [],
+      hospital: [],
     };
     for (const type of types) {
       try {
