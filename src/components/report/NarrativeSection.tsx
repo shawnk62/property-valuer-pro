@@ -77,7 +77,7 @@ const NON_K12_TYPE = new Set([
 
 const SCHOOL_NAME = /\b(school|college|academy|grammar|kindergarten|kindy)\b/i;
 const NOT_SCHOOL_NAME =
-  /\b(well[\s-]?beings?|wellbeing|wellness|yoga|meditation|fitness|gym|crossfit|pilates|martial arts|dance studio|personal training|sports club|university|tafe|institute of technology)\b/i;
+  /\b(well[\s-]?beings?|wellbeing|wellness|yoga|meditation|fitness|gym|crossfit|pilates|martial arts|dance|music|studio|tutoring|tutor|coaching|charm|jewellery|jewelry|personal training|sports club|university|tafe|institute of technology)\b/i;
 const UNIVERSITY_NAME = /\b(university|tafe|institute of technology)\b/i;
 const SCHOOLISH_NAME = /\b(school|college|academy|grammar)\b/i;
 
@@ -150,15 +150,9 @@ function rankedUniversities(
 
 function claimUsable(text: string): boolean {
   const t = text.toLowerCase();
-  if (/\b(well[\s-]?beings?|wellbeing|wellness|yoga|meditation|fitness|gym)\b/.test(t) && /\bschool/.test(t)) {
-    return false;
-  }
-  if (/\bnearest school\b|\bschools within\b/.test(t) && /\b(well[\s-]?beings?|wellbeing|wellness)\b/.test(t)) {
-    return false;
-  }
-  if (/\buniversity or college\b/.test(t) && /\b(private school|state school|primary school|secondary school)\b/.test(t)) {
-    return false;
-  }
+  if (NOT_SCHOOL_NAME.test(t) && /\b(nearest school|schools within|nearest is)\b/.test(t)) return false;
+  if (/\bnearest university or college is\b/.test(t) && !UNIVERSITY_NAME.test(t)) return false;
+  if (/\buniversity or college\b/.test(t) && SCHOOLISH_NAME.test(t) && !/\buniversity\b/.test(t)) return false;
   if (/\b(on-?ramp|highway)\b/.test(t) && /\b(jetty|wharf|pier|marina)\b/.test(t)) return false;
   if (/\bm1\b/.test(t) && /\b(\d{3,})\s*kilomet/.test(t)) return false;
   return true;
@@ -855,15 +849,15 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             ...(nearby.school ?? []),
           ];
           let k12 = rankedK12Schools(origin, schoolPlaces);
-          if (!k12.length || k12[0]!.d.km > 1.5) {
+          if (!k12.length || k12[0]!.d.km > 0.4 || !/\b(state school|state high|primary school|secondary)\b/i.test(k12[0]!.name)) {
             try {
               const found = await fetchPlaceTextSearch({
                 data: {
                   apiKey: key,
-                  query: "primary school or secondary school",
+                  query: "state school or state high school",
                   lat: origin.lat,
                   lng: origin.lng,
-                  radiusM: 3000,
+                  radiusM: 2000,
                 },
               });
               schoolPlaces = [...schoolPlaces, ...(found.results ?? [])];
