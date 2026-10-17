@@ -266,7 +266,7 @@ const MotorwayInput = z.object({
 type RouteStep = {
   distanceMeters?: number;
   startLocation?: { latLng?: { latitude?: number; longitude?: number } };
-  navigationInstruction?: { instructions?: string };
+  navigationInstruction?: { instructions?: string; maneuver?: string };
 };
 
 /** Driving distance to the nearest freeway or motorway on-ramp, from Routes steps. */
@@ -285,13 +285,17 @@ export const fetchNearestMotorwayAccess = createServerFn({ method: "POST" })
     ];
 
     const clean = (text: string) => text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-    const isJoin = (text: string) =>
-      /\b(motorway|freeway)\b/i.test(text) && /\b(ramp|merge|onto|continue|take)\b/i.test(text);
+    const isRamp = (maneuver: string, text: string) =>
+      /^(RAMP_|MERGE|FORK_)/.test(maneuver) || /\b(ramp|merge onto|onto the)\b/i.test(text);
+    const isMotorwayRoad = (text: string) =>
+      /\b(motorway|freeway)\b/i.test(text) || /\bM\d{1,2}\b/.test(text);
     const roadName = (text: string) => {
-      const m = text.match(/(?:onto|on)\s+(?:the\s+)?(.+?(?:motorway|freeway))/i);
-      if (m) return m[1].replace(/^the\s+/i, "").trim();
-      const m2 = text.match(/([\w\s'-]+(?:motorway|freeway))/i);
-      return m2 ? m2[1].trim() : text;
+      const named = text.match(/(?:onto|on)\s+(?:the\s+)?(.+?(?:motorway|freeway))/i);
+      if (named) return named[1].replace(/^the\s+/i, "").trim();
+      const route = text.match(/\b(M\d{1,2})\b/);
+      if (route) return route[1];
+      const onto = text.match(/(?:onto|on)\s+(?:the\s+)?([^,]+)/i);
+      return onto ? onto[1].replace(/^the\s+/i, "").trim() : text;
     };
 
     let best: {
@@ -309,7 +313,8 @@ export const fetchNearestMotorwayAccess = createServerFn({ method: "POST" })
           headers: {
             "Content-Type": "application/json",
             "X-Goog-Api-Key": key,
-            "X-Goog-FieldMask": "routes.legs.steps",
+            "X-Goog-FieldMask":
+              "routes.legs.steps.distanceMeters,routes.legs.steps.startLocation,routes.legs.steps.navigationInstruction",
           },
           body: JSON.stringify({
             origin: { location: { latLng: { latitude: data.lat, longitude: data.lng } } },
@@ -330,7 +335,8 @@ export const fetchNearestMotorwayAccess = createServerFn({ method: "POST" })
         for (const step of steps) {
           metres += step.distanceMeters ?? 0;
           const text = clean(step.navigationInstruction?.instructions ?? "");
-          if (!isJoin(text)) continue;
+          const maneuver = step.navigationInstruction?.maneuver ?? "";
+          if (!isRamp(maneuver, text) || !isMotorwayRoad(text)) continue;
           const start = step.startLocation?.latLng;
           if (start?.latitude == null || start?.longitude == null) continue;
           const driveKm = metres / 1000;
