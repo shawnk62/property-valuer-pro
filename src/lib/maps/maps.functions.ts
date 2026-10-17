@@ -269,45 +269,30 @@ type RouteStep = {
   navigationInstruction?: { instructions?: string };
 };
 
-/** Driving distance from the subject to the nearest freeway or motorway, by road type. */
+/** Driving distance to the nearest freeway or motorway on-ramp, from Routes steps. */
 export const fetchNearestMotorwayAccess = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => MotorwayInput.parse(input))
   .handler(async ({ data }) => {
     const key = data.apiKey.trim();
-    const isMotorway = (name: string) =>
-      /\b(motorway|freeway)\b/i.test(name) &&
-      !/\b(yamaha|moto|dealer|shop|store|cafe|restaurant|motors)\b/i.test(name);
+    const probeKm = 120;
+    const dLat = probeKm / 111;
+    const dLng = probeKm / (111 * Math.max(0.2, Math.cos((data.lat * Math.PI) / 180)));
+    const destinations = [
+      { lat: data.lat + dLat, lng: data.lng },
+      { lat: data.lat - dLat, lng: data.lng },
+      { lat: data.lat, lng: data.lng + dLng },
+      { lat: data.lat, lng: data.lng - dLng },
+    ];
 
-    const queries = [`motorway near ${data.suburb}`, `freeway near ${data.suburb}`];
-    const candidates: Array<{ name: string; lat: number; lng: number }> = [];
-    for (const textQuery of queries) {
-      const search = await fetch("https://places.googleapis.com/v1/places:searchText", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": key,
-          "X-Goog-FieldMask": "places.displayName,places.location,places.primaryType,places.types",
-        },
-        body: JSON.stringify({
-          textQuery,
-          locationBias: {
-            circle: { center: { latitude: data.lat, longitude: data.lng }, radius: 40000 },
-          },
-        }),
-      });
-      const found = (await search.json()) as { places?: NewPlace[] };
-      for (const p of found.places ?? []) {
-        const name = String(p.displayName?.text ?? "").trim();
-        const lat = p.location?.latitude;
-        const lng = p.location?.longitude;
-        if (!name || lat == null || lng == null || !isMotorway(name)) continue;
-        if (candidates.some((c) => c.name === name)) continue;
-        candidates.push({ name, lat, lng });
-        if (candidates.length >= 8) break;
-      }
-      if (candidates.length >= 8) break;
-    }
-    if (!candidates.length) return { access: null as null };
+    const clean = (text: string) => text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const isJoin = (text: string) =>
+      /\b(motorway|freeway)\b/i.test(text) && /\b(ramp|merge|onto|continue|take)\b/i.test(text);
+    const roadName = (text: string) => {
+      const m = text.match(/(?:onto|on)\s+(?:the\s+)?(.+?(?:motorway|freeway))/i);
+      if (m) return m[1].replace(/^the\s+/i, "").trim();
+      const m2 = text.match(/([\w\s'-]+(?:motorway|freeway))/i);
+      return m2 ? m2[1].trim() : text;
+    };
 
     let best: {
       name: string;
@@ -317,53 +302,51 @@ export const fetchNearestMotorwayAccess = createServerFn({ method: "POST" })
       lng: number;
     } | null = null;
 
-    for (const place of candidates) {
-      const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": key,
-          "X-Goog-FieldMask": "routes.legs.steps",
-        },
-        body: JSON.stringify({
-          origin: { location: { latLng: { latitude: data.lat, longitude: data.lng } } },
-          destination: { location: { latLng: { latitude: place.lat, longitude: place.lng } } },
-          travelMode: "DRIVE",
-          routingPreference: "TRAFFIC_UNAWARE",
-          units: "METRIC",
-          regionCode: "AU",
-        }),
-      });
-      if (!res.ok) continue;
-      const json = (await res.json()) as {
-        routes?: Array<{ legs?: Array<{ steps?: RouteStep[] }> }>;
-      };
-      const steps = json.routes?.[0]?.legs?.[0]?.steps ?? [];
-      if (!steps.length) continue;
-      let metres = 0;
-      let ramp = place.name;
-      let rampLat = place.lat;
-      let rampLng = place.lng;
-      let joined = false;
-      for (const step of steps) {
-        metres += step.distanceMeters ?? 0;
-        const text = step.navigationInstruction?.instructions ?? "";
-        if (/\b(motorway|freeway)\b/i.test(text)) {
-          ramp = text.replace(/<[^>]+>/g, "").trim() || ramp;
+    for (const dest of destinations) {
+      try {
+        const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": key,
+            "X-Goog-FieldMask": "routes.legs.steps",
+          },
+          body: JSON.stringify({
+            origin: { location: { latLng: { latitude: data.lat, longitude: data.lng } } },
+            destination: { location: { latLng: { latitude: dest.lat, longitude: dest.lng } } },
+            travelMode: "DRIVE",
+            routingPreference: "TRAFFIC_UNAWARE",
+            units: "METRIC",
+            regionCode: "AU",
+            languageCode: "en-AU",
+          }),
+        });
+        if (!res.ok) continue;
+        const json = (await res.json()) as {
+          routes?: Array<{ legs?: Array<{ steps?: RouteStep[] }> }>;
+        };
+        const steps = json.routes?.[0]?.legs?.[0]?.steps ?? [];
+        let metres = 0;
+        for (const step of steps) {
+          metres += step.distanceMeters ?? 0;
+          const text = clean(step.navigationInstruction?.instructions ?? "");
+          if (!isJoin(text)) continue;
           const start = step.startLocation?.latLng;
-          if (start?.latitude != null && start?.longitude != null) {
-            rampLat = start.latitude;
-            rampLng = start.longitude;
+          if (start?.latitude == null || start?.longitude == null) continue;
+          const driveKm = metres / 1000;
+          if (!best || driveKm < best.driveKm) {
+            best = {
+              name: roadName(text),
+              ramp: text,
+              driveKm,
+              lat: start.latitude,
+              lng: start.longitude,
+            };
           }
-          joined = true;
           break;
         }
-      }
-      if (!joined && !isMotorway(place.name)) continue;
-      const driveKm = metres / 1000;
-      if (driveKm > 50) continue;
-      if (!best || driveKm < best.driveKm) {
-        best = { name: place.name, ramp, driveKm, lat: rampLat, lng: rampLng };
+      } catch {
+        /* this direction optional */
       }
     }
     return { access: best };
