@@ -21,6 +21,7 @@ import { australianiseSpelling } from "@/lib/report/australianEnglish";
 import type { ReportNarrative } from "@/lib/report/types";
 import {
   buildLocationFacts,
+  haversineKm,
   locationFactsFromDraft,
   nearestEmploymentCentreFacts,
   subjectCoordsFromPins,
@@ -503,35 +504,39 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     });
   }
 
-  async function locationFactsResolved() {
-    const existing = locationFacts();
-    if (
+  async function resolveSubjectOrigin(): Promise<{ lat: number; lng: number } | null> {
+    const stored =
       subjectCoordsFromPins(
         (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null,
       ) ||
-      (draft.reportMeta.subjectLat != null && draft.reportMeta.subjectLng != null)
-    ) {
-      return existing;
-    }
-    if (!isGoogleMapsConfigured()) return existing;
+      (draft.reportMeta.subjectLat != null &&
+      draft.reportMeta.subjectLng != null &&
+      Number.isFinite(draft.reportMeta.subjectLat) &&
+      Number.isFinite(draft.reportMeta.subjectLng)
+        ? { lat: draft.reportMeta.subjectLat, lng: draft.reportMeta.subjectLng }
+        : null);
+    if (!isGoogleMapsConfigured()) return stored;
     const address = subjectAddressLine(draft.values);
-    if (!address) return existing;
+    if (!address) return stored;
     try {
       const geo = await geocodeGoogleAddresses({
         data: { apiKey: loadGoogleMapsKey(), addresses: [address] },
       });
       const hit = geo.results[0];
-      if (hit?.lat != null && hit.lng != null) {
-        setMeta({ subjectLat: hit.lat, subjectLng: hit.lng });
-        return buildLocationFacts({
-          values: draft.values,
-          coords: { lat: hit.lat, lng: hit.lng },
-        });
-      }
+      if (hit?.lat == null || hit?.lng == null) return stored;
+      const geocoded = { lat: hit.lat, lng: hit.lng };
+      if (stored && haversineKm(stored, geocoded) <= 10) return stored;
+      setMeta({ subjectLat: geocoded.lat, subjectLng: geocoded.lng });
+      return geocoded;
     } catch {
-      /* keep address-only facts */
+      return stored;
     }
-    return existing;
+  }
+
+  async function locationFactsResolved() {
+    const origin = await resolveSubjectOrigin();
+    if (!origin) return locationFacts();
+    return buildLocationFacts({ values: draft.values, coords: origin });
   }
 
   async function neighbourhoodContext(acceptedOnly: boolean): Promise<string> {
@@ -798,34 +803,12 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     setLastStatus("Collecting measured amenities, transport and locality…");
     try {
       const incoming: NbhdClaim[] = [];
-      const facts = await locationFactsResolved();
+      const origin = await resolveSubjectOrigin();
+      const facts = origin
+        ? buildLocationFacts({ values: draft.values, coords: origin })
+        : locationFacts();
       if (facts.sentence) {
         incoming.push(measuredClaim("city", facts.sentence, "Google geocode / measured centres"));
-      }
-
-      let origin =
-        subjectCoordsFromPins(
-          (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null,
-        ) ||
-        (draft.reportMeta.subjectLat != null && draft.reportMeta.subjectLng != null
-          ? { lat: draft.reportMeta.subjectLat, lng: draft.reportMeta.subjectLng }
-          : null);
-      if (!origin && isGoogleMapsConfigured()) {
-        const address = subjectAddressLine(draft.values);
-        if (address) {
-          try {
-            const geo = await geocodeGoogleAddresses({
-              data: { apiKey: loadGoogleMapsKey(), addresses: [address] },
-            });
-            const hit = geo.results[0];
-            if (hit?.lat != null && hit.lng != null) {
-              origin = { lat: hit.lat, lng: hit.lng };
-              setMeta({ subjectLat: hit.lat, subjectLng: hit.lng });
-            }
-          } catch {
-            /* measured places need coordinates */
-          }
-        }
       }
 
       const suburb = String(draft.values["prop_suburb"] ?? "");
