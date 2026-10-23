@@ -28,6 +28,7 @@ import {
 } from "@/lib/narrative/locationFacts";
 import { subjectAddressLine, type SalesMapPin } from "@/lib/maps/salesMapPins";
 import { buildBlockPrompt } from "@/lib/narrative/promptBuilders";
+import { skipAiNarrativeBlock } from "@/lib/inspection/visibility";
 import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
 import { geocodeGoogleAddresses, fetchNearbyAmenities, fetchPlaceTextSearch, fetchNearestMotorwayAccess } from "@/lib/maps/maps.functions";
 import { buildSubjectLocationMap } from "@/lib/maps/generateMaps";
