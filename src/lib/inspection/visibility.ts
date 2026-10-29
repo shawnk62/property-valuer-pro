@@ -135,6 +135,9 @@ export function sectionIsVisible(section: InspectionSection, values: InspectionV
   }
   if (DWELLING_SECTION_IDS.has(section.id)) {
     if (isVacantLand(values)) return false;
+    if (section.id === "3" && isShawnExamAssignment(values) && (isCommercialType(values) || isIndustrialType(values))) {
+      return true;
+    }
     if (isIndustrialType(values) && !isMixedUseCommercial(values)) return false;
     if (isCommercialType(values) && !isMixedUseCommercial(values)) return false;
     return true;
@@ -177,6 +180,23 @@ export function fieldIsVisible(field: InspectionField, values: InspectionValues)
   if (keys.some((k) => COMMERCIAL_INDUSTRIAL_FIELD_NAMES.has(k))) {
     const commercialOrIndustrial = isCommercialType(values) || isIndustrialType(values);
     return commercialOrIndustrial && !isVacantLand(values) && isShawnExamAssignment(values);
+  }
+  // Commercial / industrial Shawn Full: section 3 is open only so roof coverings can be recorded.
+  // Hide every other section-3 field for those jobs.
+  if (
+    isShawnExamAssignment(values) &&
+    (isCommercialType(values) || isIndustrialType(values)) &&
+    !isMixedUseCommercial(values) &&
+    !isVacantLand(values)
+  ) {
+    const roofKeys = new Set(["rc", "rc_cond", "rc_notes"]);
+    if (!keys.some((k) => roofKeys.has(k))) {
+      // Only suppress if this field is one of the section-3 dwelling fields.
+      const section3Prefixes = ["imp_", "win_", "found_", "rd_", "ext", "area_", "accom", "ceil", "flr", "il", "am", "light", "vent", "floor_", "wall_"];
+      if (keys.some((k) => section3Prefixes.some((p) => k.startsWith(p)) || k === "roof_framing_type" || k === "roof_framing_cond" || k === "roof_framing_notes")) {
+        return false;
+      }
+    }
   }
   return true;
 }

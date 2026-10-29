@@ -1074,6 +1074,7 @@
           "options": [
             "Barrier kerb and channel",
             "Mountable kerb and channel",
+            "Mountable kerb",
             "Semi-mountable kerb and channel",
             "Flush kerb",
             "Kerb only",
@@ -2996,6 +2997,10 @@
             {
               "id": "rc_trimdek",
               "label": "Trimdek"
+            },
+            {
+              "id": "rc_translucent",
+              "label": "Translucent panel"
             },
             {
               "id": "rc_other",
