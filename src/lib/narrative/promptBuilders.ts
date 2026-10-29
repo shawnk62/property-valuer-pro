@@ -615,6 +615,73 @@ Rules:
 - State that the opinion is as at the date of valuation and is not to be read after the reliance period without a review.
 - Do not repeat the heading.`,
       };
+    case "occupancyOutgoings":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write the Occupancy and Outgoings section for a commercial or industrial ${type} valuation report.
+
+Use only recorded inspection data. State occupancy, passing rent, outgoings, lease term or WALE, and vacancy if recorded. Do not invent dollar amounts, lease terms, or tenant names.
+
+Inspection data:
+Occupancy: ${formatValueLine("Occupancy", values["comm_occupancy"]) || "not recorded"}
+Passing rent: ${formatValueLine("Passing rent", values["comm_passing_rent"]) || "not recorded"}
+Outgoings: ${formatValueLine("Outgoings", values["comm_outgoings"]) || "not recorded"}
+Lease term: ${formatValueLine("Lease term", values["comm_lease_term"]) || "not recorded"}
+WALE: ${formatValueLine("WALE", values["comm_wale"]) || "not recorded"}
+Vacancy: ${formatValueLine("Vacancy", values["comm_vacancy"]) || "not recorded"}
+
+One or two short professional paragraphs. Do not repeat the heading.`,
+      };
+    case "swotAnalysis":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write a SWOT analysis for the industrial or commercial property in this ${type} valuation report.
+
+Draw only from recorded market notes, locality facts, and inspection data. Four short paragraphs or a compact table-style list: Strengths, Weaknesses, Opportunities, Threats. Do not invent market statistics, vacancy rates, or construction costs.
+
+Recorded market and locality context:
+${sectionAnswers(values, ["1", "2"])}
+
+Do not repeat the heading.`,
+      };
+    case "leaseEvidence":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write the Lease Evidence commentary for a commercial or industrial ${type} valuation report.
+
+Use only recorded leasing facts. Describe the leasing evidence considered, the adopted net equivalent market rent if recorded, and any material differences. Do not invent rents, incentives, or comparable addresses.
+
+Inspection data:
+${sectionAnswers(values, ["2C"])}
+
+One or two short paragraphs. Do not quote a capital value. Do not repeat the heading.`,
+      };
+    case "capitalisationApproach":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write the Capitalisation Approach commentary for a commercial or industrial ${type} valuation report.
+
+State that the income approach converts the annual net income into a capital value. Use only recorded rent, outgoings, vacancy, and WALE. Do not invent a capitalisation rate or dollar amounts. If insufficient income data is recorded, write one short sentence that the approach is available where income evidence supports it.
+
+Inspection data:
+${sectionAnswers(values, ["2C"])}
+
+One or two short paragraphs. Do not repeat the heading.`,
+      };
+    case "costApproach":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write the Cost Approach commentary for a commercial or industrial ${type} valuation report.
+
+Describe the depreciated replacement cost method in one short paragraph. Use only recorded building area, structure, and condition. Do not invent construction costs or depreciation rates. If insufficient data is recorded, write one short sentence that the approach is available as a check method where cost evidence supports it.
+
+Inspection data:
+Structure: ${formatValueLine("Structure", values["comm_structure"]) || "not recorded"}
+Gross building area: ${formatValueLine("GBA", values["comm_gba"]) || "not recorded"}
+Net lettable area: ${formatValueLine("NLA", values["comm_nla"]) || "not recorded"}
+
+Do not repeat the heading.`,
+      };
     case "highestBestUse":
       return {
         system: BASE_RULES + styleGuide(type),

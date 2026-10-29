@@ -297,6 +297,21 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           hint: "Prints under 6.4 Locality.",
         },
         {
+          key: "swotAnalysis",
+          label: "SWOT Analysis",
+          hint: "Prints under Market Commentary for commercial and industrial. Strengths, weaknesses, opportunities and threats from recorded market notes. Manual text is kept.",
+        },
+        {
+          key: "occupancyOutgoings",
+          label: "Occupancy and Outgoings",
+          hint: "Prints for commercial and industrial. Occupancy, passing rent, outgoings and WALE as recorded. Manual text is kept.",
+        },
+        {
+          key: "leaseEvidence",
+          label: "Lease Evidence",
+          hint: "Prints under Valuation Approach for commercial and industrial. Leasing comparables as recorded. Manual text is kept.",
+        },
+        {
           key: "valuationApproach",
           label: "8.0 Valuation Approach",
           hint: "Prints at the start of 8.0 Valuation Approach.",
@@ -310,6 +325,16 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           key: "valueReconciliation",
           label: "8.3 Final reconciliation of value",
           hint: "Prints immediately after the comments on comparable sales.",
+        },
+        {
+          key: "capitalisationApproach",
+          label: "Capitalisation Approach",
+          hint: "Prints under Valuation Approach for commercial and industrial. Income capitalisation from recorded rent and yield. Manual text is kept.",
+        },
+        {
+          key: "costApproach",
+          label: "Cost Approach",
+          hint: "Prints under Valuation Approach for commercial and industrial. Depreciated replacement cost where recorded. Manual text is kept.",
         },
         {
           key: "salesAnalysis",
@@ -444,7 +469,13 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
   const shawnExam =
     isShawnExamType(getReportTypeConfig(String(draft.values["prop_assignment"] ?? "")).id) ||
     isShawnReportAssignment(String(draft.values["prop_assignment"] ?? ""));
-  const BLOCKS = narrativeBlocks(murray, shawnExam);
+  const BLOCKS = narrativeBlocks(murray, shawnExam).filter((b) => {
+    if (!shawnExam) return true;
+    const commercial = Boolean(String(draft.values["prop_type_commercial"] ?? "").trim());
+    const industrial = Boolean(String(draft.values["prop_type_industrial"] ?? "").trim());
+    if (commercial || industrial) return true;
+    return !["occupancyOutgoings", "swotAnalysis", "leaseEvidence", "capitalisationApproach", "costApproach"].includes(b.key);
+  });
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [source, setSource] = useState<"template" | "ai" | null>(null);
   const [busy, setBusy] = useState<"template" | "ai" | keyof ReportNarrative | null>(null);

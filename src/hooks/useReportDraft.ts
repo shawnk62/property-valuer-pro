@@ -82,6 +82,11 @@ function emptyNarrative(): ReportNarrative {
     valueReconciliation: "",
     disclaimer: "",
     assumptions: "",
+    occupancyOutgoings: "",
+    swotAnalysis: "",
+    leaseEvidence: "",
+    capitalisationApproach: "",
+    costApproach: "",
     references: "",
   };
 }
@@ -141,6 +146,11 @@ function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): R
       typeof raw.valueReconciliation === "string" ? raw.valueReconciliation : "",
     disclaimer: typeof raw.disclaimer === "string" ? raw.disclaimer : "",
     assumptions: typeof raw.assumptions === "string" ? raw.assumptions : "",
+    occupancyOutgoings: typeof raw.occupancyOutgoings === "string" ? raw.occupancyOutgoings : "",
+    swotAnalysis: typeof raw.swotAnalysis === "string" ? raw.swotAnalysis : "",
+    leaseEvidence: typeof raw.leaseEvidence === "string" ? raw.leaseEvidence : "",
+    capitalisationApproach: typeof raw.capitalisationApproach === "string" ? raw.capitalisationApproach : "",
+    costApproach: typeof raw.costApproach === "string" ? raw.costApproach : "",
     references: typeof raw.references === "string" ? raw.references : "",
   };
 }

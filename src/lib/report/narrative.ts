@@ -1408,6 +1408,11 @@ export function generateNarrative(
     valueReconciliation: "",
     disclaimer: v(values, "exam_limitations") || buildRelianceTerms(values),
     assumptions: v(values, "exam_assumptions"),
+    occupancyOutgoings: "",
+    swotAnalysis: "",
+    leaseEvidence: "",
+    capitalisationApproach: "",
+    costApproach: "",
     references: "",
     remarks: buildRemarks(values, {
       salesCount: opts?.salesCount,

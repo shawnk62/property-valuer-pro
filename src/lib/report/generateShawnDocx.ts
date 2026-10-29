@@ -92,6 +92,15 @@ export async function generateShawnDocx(draft: ReportDraft): Promise<Blob> {
   children.push(sub("1.4 Date of Valuation"));
   children.push(p(`The subject property was inspected on ${formatNarrativeDateOr(m.inspectionDate, "the date recorded in this report")}. The valuation is effective as at ${formatNarrativeDateOr(m.valueDate, "the date of valuation")} only.`));
 
+  const commercial = Boolean(String(v["prop_type_commercial"] ?? "").trim());
+  const industrial = Boolean(String(v["prop_type_industrial"] ?? "").trim());
+  const commercialOrIndustrial = commercial || industrial;
+
+  if (n.assumptions?.trim()) {
+    children.push(heading("Assumptions and Limitations"));
+    children.push(...prose(n.assumptions));
+  }
+
   children.push(heading("2. Title and Property Details"));
   children.push(sub("2.1 Property Description"));
   if (n.sitePhysical?.trim()) children.push(...prose(n.sitePhysical));
@@ -104,6 +113,8 @@ export async function generateShawnDocx(draft: ReportDraft): Promise<Blob> {
   if (n.siteIdentification?.trim()) children.push(...prose(n.siteIdentification));
   children.push(sub("2.3 Particulars of Land"));
   if (n.sitePhysical?.trim()) children.push(...prose(n.sitePhysical));
+  if (n.servicesAmenities?.trim()) children.push(...prose(n.servicesAmenities));
+  if (n.improvements?.trim()) children.push(...prose(n.improvements));
 
   children.push(heading("3. Planning Controls"));
   if (n.zoningPurpose?.trim()) children.push(...prose(n.zoningPurpose));
@@ -118,12 +129,31 @@ export async function generateShawnDocx(draft: ReportDraft): Promise<Blob> {
   children.push(heading("5. Locality and Location"));
   if (n.location?.trim()) children.push(...prose(n.location));
   if (n.neighbourhood?.trim()) children.push(...prose(n.neighbourhood));
+  if (n.amenities?.trim()) children.push(...prose(n.amenities));
+
+  if (commercialOrIndustrial) {
+    children.push(heading("Occupancy and Outgoings"));
+    if (n.occupancyOutgoings?.trim()) {
+      children.push(...prose(n.occupancyOutgoings));
+    } else {
+      const occ = String(v["comm_occupancy"] ?? "").trim();
+      const rent = String(v["comm_passing_rent"] ?? "").trim();
+      const out = String(v["comm_outgoings"] ?? "").trim();
+      if (occ || rent || out) {
+        children.push(p([occ && `Occupancy is recorded as ${occ.toLowerCase()}.`, rent && `Passing rent is ${rent}.`, out && `Outgoings are recorded as ${out}.`].filter(Boolean).join(" ")));
+      }
+    }
+  }
 
   children.push(heading("6. Market Commentary"));
   if (n.marketAustralia?.trim()) children.push(...prose(n.marketAustralia));
   if (n.marketState?.trim()) children.push(...prose(n.marketState));
   if (n.marketRegion?.trim()) children.push(...prose(n.marketRegion));
   if (n.marketLocality?.trim()) children.push(...prose(n.marketLocality));
+  if (commercialOrIndustrial && n.swotAnalysis?.trim()) {
+    children.push(sub("SWOT Analysis"));
+    children.push(...prose(n.swotAnalysis));
+  }
 
   children.push(heading("7. Risk Assessment"));
   if (n.riskAnalysis?.trim()) children.push(...prose(n.riskAnalysis));
@@ -137,6 +167,18 @@ export async function generateShawnDocx(draft: ReportDraft): Promise<Blob> {
   if (n.valueReconciliation?.trim()) {
     children.push(sub("8.3 Final reconciliation of value"));
     children.push(...prose(n.valueReconciliation));
+  }
+  if (commercialOrIndustrial && n.capitalisationApproach?.trim()) {
+    children.push(sub("Capitalisation Approach"));
+    children.push(...prose(n.capitalisationApproach));
+  }
+  if (commercialOrIndustrial && n.costApproach?.trim()) {
+    children.push(sub("Cost Approach"));
+    children.push(...prose(n.costApproach));
+  }
+  if (commercialOrIndustrial && n.leaseEvidence?.trim()) {
+    children.push(sub("Lease Evidence"));
+    children.push(...prose(n.leaseEvidence));
   }
 
   const sales = salesOnReport(draft.sales);

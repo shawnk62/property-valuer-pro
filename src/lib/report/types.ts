@@ -362,6 +362,16 @@ export interface ReportNarrative {
   valueReconciliation: string;
   disclaimer: string;
   assumptions: string;
+  /** Commercial / industrial — occupancy and outgoings. */
+  occupancyOutgoings: string;
+  /** Commercial / industrial — SWOT analysis. */
+  swotAnalysis: string;
+  /** Commercial / industrial — lease evidence commentary. */
+  leaseEvidence: string;
+  /** Commercial / industrial — capitalisation approach. */
+  capitalisationApproach: string;
+  /** Commercial / industrial — cost approach. */
+  costApproach: string;
   references: string;
 }
 
