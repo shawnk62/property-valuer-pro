@@ -15,6 +15,7 @@ import { get } from "@/lib/report/schema";
 import { formatCurrencyDisplay } from "@/lib/report/salesRelativity";
 import { salesOnReport, type ReportDraft } from "@/lib/report/types";
 import { referencesForPrint } from "@/lib/report/references";
+import { formatCostLines, formatIncomeLines, costIndication, incomeStatement } from "@/lib/report/commercialCalculations";
 
 const PAGE_WIDTH = 11906;
 const PAGE_HEIGHT = 16838;
@@ -141,6 +142,22 @@ export async function generateShawnDocx(draft: ReportDraft): Promise<Blob> {
       const out = String(v["comm_outgoings"] ?? "").trim();
       if (occ || rent || out) {
         children.push(p([occ && `Occupancy is recorded as ${occ.toLowerCase()}.`, rent && `Passing rent is ${rent}.`, out && `Outgoings are recorded as ${out}.`].filter(Boolean).join(" ")));
+      }
+    }
+    const income = incomeStatement(v, m);
+    const incomeLines = formatIncomeLines(income).filter((l) => l.value !== "—");
+    if (incomeLines.length) {
+      children.push(sub("Income capitalisation calculation"));
+      for (const line of incomeLines) {
+        children.push(p(`${line.label}: ${line.value}`));
+      }
+    }
+    const cost = costIndication(v, m, null);
+    const costLines = formatCostLines(cost).filter((l) => l.value !== "—");
+    if (costLines.length) {
+      children.push(sub("Cost approach calculation"));
+      for (const line of costLines) {
+        children.push(p(`${line.label}: ${line.value}`));
       }
     }
   }

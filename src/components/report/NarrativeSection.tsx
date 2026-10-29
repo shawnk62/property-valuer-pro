@@ -55,6 +55,7 @@ import {
 import { CannedCommentsBar } from "@/components/report/CannedCommentsBar";
 import { defaultAcademicCoverText } from "@/components/report/ShawnExamPreview";
 import { RiskRatingsPanel } from "@/components/report/RiskRatingsPanel";
+import { CommercialAnalysisPanel } from "@/components/report/CommercialAnalysisPanel";
 import { isShawnExamType, getReportTypeConfig } from "@/lib/report/reportTypes";
 
 type AmenityHit = {
@@ -1560,6 +1561,13 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         <Fragment key={block.key}>
         {shawnExam && block.key === "valuationApproach" ? (
           <RiskRatingsPanel controller={controller} />
+        ) : null}
+        {shawnExam && block.key === "capitalisationApproach" && (Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
+          <CommercialAnalysisPanel
+            values={draft.values}
+            meta={draft.reportMeta}
+            onMeta={setMeta}
+          />
         ) : null}
         <div className="block">
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2">

@@ -485,6 +485,19 @@ export interface ReportMeta {
     saleId?: string;
     address?: string;
   }>;
+  /** Commercial / industrial Shawn Full — analytical inputs (not subject facts). */
+  ciMarketRent?: string;
+  ciVacancyAllowance?: string;
+  ciRecoverableOutgoings?: string;
+  ciNonRecoverableExpenses?: string;
+  ciReplacementReserves?: string;
+  ciCapRate?: string;
+  ciExitCapRate?: string;
+  ciReplacementCostRate?: string;
+  ciEntrepreneurialIncentive?: string;
+  ciPhysicalDepreciation?: string;
+  ciFunctionalObsolescence?: string;
+  ciExternalObsolescence?: string;
 }
 
 export interface ReportDraft {

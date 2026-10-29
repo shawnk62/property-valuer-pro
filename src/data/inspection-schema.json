@@ -66,7 +66,7 @@
             "Heavy / high-impact / noxious industry (including abattoirs)",
             "Warehouses and bulk stores",
             "Transport terminals and depots",
-            "Builders’ / contractors’ yards",
+            "Builders\u2019 / contractors\u2019 yards",
             "Cold stores"
           ]
         },
@@ -146,7 +146,7 @@
         },
         {
           "name": "risk_location",
-          "label": "Risk rating — Location / Neighbourhood",
+          "label": "Risk rating \u2014 Location / Neighbourhood",
           "type": "select",
           "options": [
             "1",
@@ -158,7 +158,7 @@
         },
         {
           "name": "risk_land",
-          "label": "Risk rating — Land (planning & title)",
+          "label": "Risk rating \u2014 Land (planning & title)",
           "type": "select",
           "options": [
             "1",
@@ -170,7 +170,7 @@
         },
         {
           "name": "risk_environment",
-          "label": "Risk rating — Environmental issues",
+          "label": "Risk rating \u2014 Environmental issues",
           "type": "select",
           "options": [
             "1",
@@ -182,7 +182,7 @@
         },
         {
           "name": "risk_improvements",
-          "label": "Risk rating — Improvements",
+          "label": "Risk rating \u2014 Improvements",
           "type": "select",
           "options": [
             "1",
@@ -194,7 +194,7 @@
         },
         {
           "name": "risk_market_direction",
-          "label": "Risk rating — Recent market direction",
+          "label": "Risk rating \u2014 Recent market direction",
           "type": "select",
           "options": [
             "1",
@@ -206,7 +206,7 @@
         },
         {
           "name": "risk_volatility",
-          "label": "Risk rating — Market volatility",
+          "label": "Risk rating \u2014 Market volatility",
           "type": "select",
           "options": [
             "1",
@@ -218,7 +218,7 @@
         },
         {
           "name": "risk_local_economy",
-          "label": "Risk rating — Local / regional economy",
+          "label": "Risk rating \u2014 Local / regional economy",
           "type": "select",
           "options": [
             "1",
@@ -230,7 +230,7 @@
         },
         {
           "name": "risk_segment",
-          "label": "Risk rating — Market segment conditions",
+          "label": "Risk rating \u2014 Market segment conditions",
           "type": "select",
           "options": [
             "1",
@@ -468,7 +468,7 @@
         },
         {
           "name": "prop_dimensions_other",
-          "label": "Dimensions — other (manual)",
+          "label": "Dimensions \u2014 other (manual)",
           "type": "text",
           "multiline": true,
           "placeholder": "Manual dimensions wording. Used instead of the Survey Plan referral when the allotment is not rectangular or trapezoidal."
@@ -559,7 +559,7 @@
         },
         {
           "name": "prop_hbu_vacant_notes",
-          "label": "Highest & Best Use as vacant — other",
+          "label": "Highest & Best Use as vacant \u2014 other",
           "type": "text",
           "multiline": true,
           "placeholder": "Describe the highest and best use if not the current zoning"
@@ -697,7 +697,7 @@
         },
         {
           "name": "yield_gfa",
-          "label": "Potential GFA (m²)",
+          "label": "Potential GFA (m\u00b2)",
           "type": "text",
           "multiline": false
         },
@@ -898,31 +898,31 @@
         },
         {
           "name": "nbhd_use_one",
-          "label": "Present Land Use % – One-Unit",
+          "label": "Present Land Use % \u2013 One-Unit",
           "type": "text",
           "multiline": false
         },
         {
           "name": "nbhd_use_24",
-          "label": "Present Land Use % – 2-4 Unit",
+          "label": "Present Land Use % \u2013 2-4 Unit",
           "type": "text",
           "multiline": false
         },
         {
           "name": "nbhd_use_mf",
-          "label": "Present Land Use % – Multi-Family",
+          "label": "Present Land Use % \u2013 Multi-Family",
           "type": "text",
           "multiline": false
         },
         {
           "name": "nbhd_use_comm",
-          "label": "Present Land Use % – Commercial",
+          "label": "Present Land Use % \u2013 Commercial",
           "type": "text",
           "multiline": false
         },
         {
           "name": "nbhd_use_vacant",
-          "label": "Present Land Use % – Vacant",
+          "label": "Present Land Use % \u2013 Vacant",
           "type": "text",
           "multiline": false
         },
@@ -2312,7 +2312,7 @@
           "label": "Rainfall band",
           "type": "text",
           "multiline": false,
-          "placeholder": "e.g. 900–1100 mm"
+          "placeholder": "e.g. 900\u20131100 mm"
         },
         {
           "name": "rural_water",
@@ -2399,13 +2399,13 @@
       "fields": [
         {
           "name": "comm_nla",
-          "label": "Net lettable area (m²)",
+          "label": "Net lettable area (m\u00b2)",
           "type": "text",
           "multiline": false
         },
         {
           "name": "comm_gba",
-          "label": "Gross building area (m²)",
+          "label": "Gross building area (m\u00b2)",
           "type": "text",
           "multiline": false
         },
@@ -2524,6 +2524,38 @@
           "label": "Licence / use notes",
           "type": "text",
           "multiline": true
+        },
+        {
+          "name": "comm_clear_height",
+          "label": "Clear height (m)",
+          "type": "text",
+          "multiline": false,
+          "placeholder": "e.g. 8.5"
+        },
+        {
+          "name": "comm_hardstand",
+          "label": "Hardstand area (m\u00b2)",
+          "type": "text",
+          "multiline": false
+        },
+        {
+          "name": "comm_loading_config",
+          "label": "Loading configuration",
+          "type": "select",
+          "options": [
+            "On-grade",
+            "Dock-high",
+            "Both",
+            "None",
+            "Unknown"
+          ]
+        },
+        {
+          "name": "comm_floor_loading",
+          "label": "Floor loading",
+          "type": "text",
+          "multiline": false,
+          "placeholder": "e.g. 50 kPa or notes"
         }
       ]
     },
@@ -2763,7 +2795,7 @@
         },
         {
           "name": "win_mat",
-          "label": "Windows — Material",
+          "label": "Windows \u2014 Material",
           "type": "checkbox_group",
           "items": [
             {
@@ -2800,7 +2832,7 @@
         },
         {
           "name": "win_type",
-          "label": "Windows — Type",
+          "label": "Windows \u2014 Type",
           "type": "checkbox_group",
           "items": [
             {
@@ -2865,7 +2897,7 @@
         },
         {
           "name": "win_glaze",
-          "label": "Windows — Glazing",
+          "label": "Windows \u2014 Glazing",
           "type": "checkbox_group",
           "items": [
             {
@@ -3173,55 +3205,55 @@
         },
         {
           "name": "imp_gla",
-          "label": "GLA m²",
+          "label": "GLA m\u00b2",
           "type": "text",
           "multiline": false
         },
         {
           "name": "area_living_upstairs",
-          "label": "Living Area Upstairs (m²)",
+          "label": "Living Area Upstairs (m\u00b2)",
           "type": "text",
           "multiline": false
         },
         {
           "name": "area_living_downstairs",
-          "label": "Living Area Downstairs (m²)",
+          "label": "Living Area Downstairs (m\u00b2)",
           "type": "text",
           "multiline": false
         },
         {
           "name": "area_verandahs",
-          "label": "Verandahs (m²)",
+          "label": "Verandahs (m\u00b2)",
           "type": "text",
           "multiline": false
         },
         {
           "name": "area_covered_front_patio",
-          "label": "Covered Front Patio / Deck (m²)",
+          "label": "Covered Front Patio / Deck (m\u00b2)",
           "type": "text",
           "multiline": false
         },
         {
           "name": "area_covered_rear_patio",
-          "label": "Covered Rear Patio / Deck (m²)",
+          "label": "Covered Rear Patio / Deck (m\u00b2)",
           "type": "text",
           "multiline": false
         },
         {
           "name": "area_garage",
-          "label": "Garage (m²)",
+          "label": "Garage (m\u00b2)",
           "type": "text",
           "multiline": false
         },
         {
           "name": "area_carport",
-          "label": "Carport (m²)",
+          "label": "Carport (m\u00b2)",
           "type": "text",
           "multiline": false
         },
         {
           "name": "area_shed",
-          "label": "Shed/s (m²)",
+          "label": "Shed/s (m\u00b2)",
           "type": "text",
           "multiline": false
         },
@@ -3577,7 +3609,7 @@
         },
         {
           "name": "am_bir_count",
-          "label": "Built-in wardrobes — number",
+          "label": "Built-in wardrobes \u2014 number",
           "type": "select",
           "options": [
             "Select",
@@ -3589,7 +3621,7 @@
         },
         {
           "name": "am_wir_count",
-          "label": "Walk-in wardrobes — number",
+          "label": "Walk-in wardrobes \u2014 number",
           "type": "select",
           "options": [
             "Select",
@@ -3984,7 +4016,7 @@
         },
         {
           "name": "design_features_notes",
-          "label": "Design metrics and clearances (column spacing, clear spans, internal height, roof frame clearances, door clearances H × W)",
+          "label": "Design metrics and clearances (column spacing, clear spans, internal height, roof frame clearances, door clearances H \u00d7 W)",
           "type": "text",
           "multiline": true
         }

@@ -37,6 +37,30 @@ const RURAL_FIELD_NAMES = new Set([
 
 const INDUSTRIAL_FIELD_NAMES = new Set(["ind_power_kva", "ind_bdouble"]);
 
+const COMMERCIAL_INDUSTRIAL_FIELD_NAMES = new Set([
+  "comm_nla",
+  "comm_gba",
+  "comm_storeys",
+  "comm_structure",
+  "comm_office_split",
+  "comm_parking",
+  "comm_occupancy",
+  "comm_passing_rent",
+  "comm_outgoings",
+  "comm_lease_term",
+  "comm_wale",
+  "comm_vacancy",
+  "comm_shopfront",
+  "comm_awning",
+  "comm_loading",
+  "comm_keys",
+  "comm_licence",
+  "comm_clear_height",
+  "comm_hardstand",
+  "comm_loading_config",
+  "comm_floor_loading",
+]);
+
 function str(values: InspectionValues, key: string): string {
   const raw = values[key];
   return typeof raw === "string" ? raw.trim() : "";
@@ -106,7 +130,8 @@ export function skipAiNarrativeBlock(values: InspectionValues, key: string): boo
 
 export function sectionIsVisible(section: InspectionSection, values: InspectionValues): boolean {
   if (section.id === "2C") {
-    return isCommercialType(values) && !isVacantLand(values);
+    const commercialOrIndustrial = isCommercialType(values) || isIndustrialType(values);
+    return commercialOrIndustrial && !isVacantLand(values) && isShawnExamAssignment(values);
   }
   if (DWELLING_SECTION_IDS.has(section.id)) {
     if (isVacantLand(values)) return false;
@@ -147,7 +172,11 @@ export function fieldIsVisible(field: InspectionField, values: InspectionValues)
   }
   if (keys.some((k) => RURAL_FIELD_NAMES.has(k))) return isRuralType(values);
   if (keys.some((k) => INDUSTRIAL_FIELD_NAMES.has(k))) {
-    return isIndustrialType(values) || /energy generation/i.test(str(values, "prop_type_specialised"));
+    return (isIndustrialType(values) || /energy generation/i.test(str(values, "prop_type_specialised"))) && isShawnExamAssignment(values);
+  }
+  if (keys.some((k) => COMMERCIAL_INDUSTRIAL_FIELD_NAMES.has(k))) {
+    const commercialOrIndustrial = isCommercialType(values) || isIndustrialType(values);
+    return commercialOrIndustrial && !isVacantLand(values) && isShawnExamAssignment(values);
   }
   return true;
 }
