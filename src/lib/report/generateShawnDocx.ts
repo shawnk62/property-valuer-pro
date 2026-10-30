@@ -198,7 +198,7 @@ export async function generateShawnDocx(draft: ReportDraft): Promise<Blob> {
     children.push(...prose(n.costApproach));
   }
   if (commercialOrIndustrial && n.leaseEvidence?.trim()) {
-    children.push(sub("Rental Comparables"));
+    children.push(sub("Lease Evidence"));
     children.push(...prose(n.leaseEvidence));
   }
 

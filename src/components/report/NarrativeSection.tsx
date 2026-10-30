@@ -309,8 +309,8 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
         },
         {
           key: "leaseEvidence",
-          label: "Rental Comparables",
-          hint: "Prints under Valuation Approach for commercial and industrial. Rental evidence and adopted market rent. Manual text is kept.",
+          label: "Lease Evidence",
+          hint: "Prints under Valuation Approach for commercial and industrial. Leasing comparables as recorded. Manual text is kept.",
         },
         {
           key: "valuationApproach",

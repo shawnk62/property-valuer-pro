@@ -647,9 +647,9 @@ Do not repeat the heading.`,
     case "leaseEvidence":
       return {
         system: BASE_RULES + styleGuide(type),
-        prompt: `Write the Rental Comparables commentary for a commercial or industrial ${type} valuation report.
+        prompt: `Write the Lease Evidence commentary for a commercial or industrial ${type} valuation report.
 
-Use only recorded leasing facts. Describe the rental evidence considered, the adopted net equivalent market rent if recorded, and any material differences in location, size, condition, or lease terms. Do not invent rents, incentives, or comparable addresses.
+Use only recorded leasing facts. Describe the leasing evidence considered, the adopted net equivalent market rent if recorded, and any material differences. Do not invent rents, incentives, or comparable addresses.
 
 Inspection data:
 ${sectionAnswers(values, ["2C"])}
