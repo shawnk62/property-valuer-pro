@@ -11,6 +11,7 @@ import { PausedTextarea } from "@/components/report/PausedTextarea";
 import { toast } from "sonner";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { CommercialAnalysisPanel } from "@/components/report/CommercialAnalysisPanel";
+import { SalesCommentaryWorkspace } from "@/components/report/SalesCommentaryWorkspace";
 import { narrativePrints } from "@/lib/narrative/neighbourhoodAssist";
 import { SalesMapEditor } from "@/components/report/SalesMapEditor";
 import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";

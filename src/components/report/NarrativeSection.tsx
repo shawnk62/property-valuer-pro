@@ -50,12 +50,12 @@ import {
   collectReportReferences,
   referencesProse,
   reformatReferences,
+  citeAcceptedNotes,
   type ReportReference,
 } from "@/lib/report/references";
 import { CannedCommentsBar } from "@/components/report/CannedCommentsBar";
 import { defaultAcademicCoverText } from "@/components/report/ShawnExamPreview";
 import { RiskRatingsPanel } from "@/components/report/RiskRatingsPanel";
-import { CommercialAnalysisPanel } from "@/components/report/CommercialAnalysisPanel";
 import { isShawnExamType, getReportTypeConfig } from "@/lib/report/reportTypes";
 
 type AmenityHit = {
@@ -1379,13 +1379,20 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
           }
 
           if (text.trim()) {
+            const marketKey = key === "marketAustralia" || key === "marketState" || key === "marketRegion" || key === "marketLocality";
+            const claims = marketKey
+              ? ((draft.reportMeta[`marketClaims${key === "marketAustralia" ? "Australia" : key === "marketState" ? "State" : key === "marketRegion" ? "Region" : "Locality"}` as keyof typeof draft.reportMeta] as NbhdClaim[] | undefined) ?? [])
+              : [];
+            const cited = marketKey
+              ? citeAcceptedNotes(text.trim(), claims, draft.values, "Market commentary")
+              : text.trim();
             next[key] =
               key === "neighbourhood"
                 ? ensureAcceptedFactsInProse(
                     text.trim(),
                     (draft.reportMeta.nbhdClaims as NbhdClaim[] | undefined) ?? [],
                   )
-                : text.trim();
+                : cited;
           } else applyInspectionFill([key]);
         } catch (err) {
           console.error("[narrative AI]", key, err);
@@ -1422,6 +1429,18 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       if (Object.keys(safe).length > 0) {
         setNarrative(safe);
         narrativeRef.current = { ...narrativeRef.current, ...safe };
+        const marketKeys = ["marketAustralia", "marketState", "marketRegion", "marketLocality"] as const;
+        if (marketKeys.some((k) => safe[k])) {
+          const collected = collectReportReferences(draft.reportMeta, draft.values, draft.reportMeta.reportReferences);
+          const prose = Object.values({ ...narrativeRef.current, ...safe }).join("\n");
+          const ticked = collected.map((ref) => {
+            const author = ref.text.split(/[,(]/)[0]?.trim() ?? "";
+            const year = ref.text.match(/\b(20\d{2}|19\d{2})\b/)?.[1] ?? "";
+            const cited = author && year && new RegExp(`${author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\(?${year}\\)?`, "i").test(prose);
+            return { ...ref, accepted: cited };
+          });
+          setMeta({ reportReferences: ticked });
+        }
         setGeneratedAt(new Date().toLocaleTimeString("en-AU", { hour12: false }));
         if (quotaHit) {
           setSource("template");
@@ -1566,14 +1585,6 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
         <Fragment key={block.key}>
         {shawnExam && block.key === "valuationApproach" ? (
           <RiskRatingsPanel controller={controller} />
-        ) : null}
-        {shawnExam && block.key === "capitalisationApproach" && (Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
-          <CommercialAnalysisPanel
-            values={draft.values}
-            meta={draft.reportMeta}
-            sales={draft.sales}
-            onMeta={setMeta}
-          />
         ) : null}
         <div className="block">
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
