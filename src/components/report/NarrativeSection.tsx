@@ -1571,6 +1571,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
           <CommercialAnalysisPanel
             values={draft.values}
             meta={draft.reportMeta}
+            sales={draft.sales}
             onMeta={setMeta}
           />
         ) : null}

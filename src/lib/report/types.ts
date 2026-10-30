@@ -496,11 +496,32 @@ export interface ReportMeta {
   ciCapRate?: string;
   ciExitCapRate?: string;
   ciDcfHorizon?: string;
+  /** Letting-up: months of gross rent loss while vacant. */
+  ciLettingUpMonths?: string;
+  /** Letting-up: months of net incentives. */
+  ciIncentiveMonths?: string;
+  /** Letting-up: agent's commission as % of first-year net income. */
+  ciAgentCommissionPct?: string;
+  /** Below-the-line immediate capital expenditure. */
+  ciCapex?: string;
+  /** Below-the-line: PV of under-market rent (negative = loss). */
+  ciRentDifferencePv?: string;
+  /** Below-the-line: PV of non-core income. */
+  ciNonCoreIncomePv?: string;
+  /** Round adopted capitalised value to nearest (e.g. 25000). */
+  ciAdoptRoundTo?: string;
   ciReplacementCostRate?: string;
   ciEntrepreneurialIncentive?: string;
   ciPhysicalDepreciation?: string;
   ciFunctionalObsolescence?: string;
   ciExternalObsolescence?: string;
+  /** Optional cost components. When present, used instead of the single-rate path. */
+  ciCostComponents?: Array<{
+    name: string;
+    area: string;
+    rate: string;
+    depreciation: string;
+  }>;
 }
 
 export interface ReportDraft {
