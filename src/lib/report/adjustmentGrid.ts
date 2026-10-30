@@ -146,6 +146,23 @@ export const ADJUSTMENT_FEATURES: AdjustmentFeature[] = [
   { id: "other2", label: "Other" },
 ];
 
+/** Commercial / industrial sales comparison rows. Residential features are not used. */
+export const COMMERCIAL_ADJUSTMENT_FEATURES: AdjustmentFeature[] = [
+  { id: "dateOfSale", label: "Date of sale / market conditions" },
+  { id: "location", label: "Location / access" },
+  { id: "site", label: "Land area", subjectKeys: ["prop_usable_sitearea", "prop_sitearea"] },
+  { id: "grossLivingArea", label: "Building area (NLA)", subjectKeys: ["comm_nla", "comm_gba"] },
+  { id: "clearHeight", label: "Clear height", subjectKeys: ["comm_clear_height"] },
+  { id: "loading", label: "Loading / truck access", subjectKeys: ["comm_loading_config", "ind_bdouble"] },
+  { id: "office", label: "Office component", subjectKeys: ["comm_office_split"] },
+  { id: "condition", label: "Condition / age", subjectKeys: ["overall_cond"] },
+  { id: "hardstand", label: "Hardstand", subjectKeys: ["comm_hardstand"] },
+  { id: "power", label: "Power capacity", subjectKeys: ["ind_power_kva"] },
+  { id: "leaseStatus", label: "Lease status / WALE", subjectKeys: ["comm_occupancy", "comm_wale"] },
+  { id: "other1", label: "Other" },
+  { id: "other2", label: "Other" },
+];
+
 const VACANT_FEATURE_IDS = new Set([
   "saleOrFinancing",
   "concessions",
@@ -167,10 +184,8 @@ export function adjustmentFeaturesForProperty(
   if (isVacantLand(values)) {
     return ADJUSTMENT_FEATURES.filter((f) => VACANT_FEATURE_IDS.has(f.id)).filter(hideSplitTerms);
   }
-  if (isCommercialType(values) && !isMixedUseCommercial(values)) {
-    return ADJUSTMENT_FEATURES.filter(hideSplitTerms).filter(
-      (f) => f.id !== "basement" && f.id !== "aboveGradeRoomCount" && f.id !== "porchPatioDeck",
-    );
+  if ((isCommercialType(values) || Boolean(String(values["prop_type_industrial"] ?? "").trim())) && !isMixedUseCommercial(values)) {
+    return COMMERCIAL_ADJUSTMENT_FEATURES;
   }
   return ADJUSTMENT_FEATURES.filter((f) => f.id !== "basement" && hideSplitTerms(f));
 }

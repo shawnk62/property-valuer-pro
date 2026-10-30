@@ -522,6 +522,20 @@ export interface ReportMeta {
     rate: string;
     depreciation: string;
   }>;
+  /** Lease evidence comparables for commercial / industrial. */
+  ciLeaseComps?: Array<{
+    id: string;
+    address: string;
+    date: string;
+    nla: string;
+    netRentPerM2: string;
+    term: string;
+    incentives: string;
+    outgoings: string;
+    notes: string;
+  }>;
+  /** Adopted net equivalent market rent $/m² from the lease evidence. */
+  ciAdoptedRentPerM2?: string;
 }
 
 export interface ReportDraft {

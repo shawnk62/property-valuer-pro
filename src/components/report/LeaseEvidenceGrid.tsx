@@ -1,0 +1,131 @@
+/**
+ * Lease evidence grid for commercial / industrial Shawn Full.
+ * Subject facts stay on the inspection form. These are market lettings.
+ */
+import type { ReportMeta } from "@/lib/report/types";
+
+interface LeaseComp {
+  id: string;
+  address: string;
+  date: string;
+  nla: string;
+  netRentPerM2: string;
+  term: string;
+  incentives: string;
+  outgoings: string;
+  notes: string;
+}
+
+function blank(): LeaseComp {
+  return {
+    id: crypto.randomUUID(),
+    address: "",
+    date: "",
+    nla: "",
+    netRentPerM2: "",
+    term: "",
+    incentives: "",
+    outgoings: "",
+    notes: "",
+  };
+}
+
+export function LeaseEvidenceGrid({
+  meta,
+  onMeta,
+}: {
+  meta: ReportMeta;
+  onMeta: (patch: Partial<ReportMeta>) => void;
+}) {
+  const comps = meta.ciLeaseComps ?? [];
+
+  function update(id: string, patch: Partial<LeaseComp>) {
+    onMeta({
+      ciLeaseComps: comps.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+    });
+  }
+
+  function remove(id: string) {
+    onMeta({ ciLeaseComps: comps.filter((c) => c.id !== id) });
+  }
+
+  return (
+    <div className="mt-2">
+      <div className="text-sm font-semibold text-slate-700 mb-1">Lease evidence</div>
+      <p className="text-xs text-slate-500 mb-2">
+        Record comparable lettings. Adopt a net equivalent market rent from the evidence.
+      </p>
+      {comps.length === 0 ? (
+        <p className="text-xs text-slate-400 mb-2">No lease comparables yet.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 text-left text-slate-500">
+                <th className="py-1 pr-2">Address</th>
+                <th className="py-1 pr-2">Date</th>
+                <th className="py-1 pr-2">NLA m²</th>
+                <th className="py-1 pr-2">Net rent $/m²</th>
+                <th className="py-1 pr-2">Term</th>
+                <th className="py-1 pr-2">Incentives</th>
+                <th className="py-1 pr-2">Outgoings</th>
+                <th className="py-1 pr-2">Notes</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {comps.map((c) => (
+                <tr key={c.id} className="border-b border-slate-100">
+                  <td className="py-1 pr-1">
+                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.address} onChange={(e) => update(c.id, { address: e.target.value })} />
+                  </td>
+                  <td className="py-1 pr-1">
+                    <input className="w-20 border border-slate-300 rounded px-1 py-0.5" value={c.date} onChange={(e) => update(c.id, { date: e.target.value })} />
+                  </td>
+                  <td className="py-1 pr-1">
+                    <input className="w-16 border border-slate-300 rounded px-1 py-0.5" value={c.nla} onChange={(e) => update(c.id, { nla: e.target.value })} />
+                  </td>
+                  <td className="py-1 pr-1">
+                    <input className="w-16 border border-slate-300 rounded px-1 py-0.5" value={c.netRentPerM2} onChange={(e) => update(c.id, { netRentPerM2: e.target.value })} />
+                  </td>
+                  <td className="py-1 pr-1">
+                    <input className="w-20 border border-slate-300 rounded px-1 py-0.5" value={c.term} onChange={(e) => update(c.id, { term: e.target.value })} />
+                  </td>
+                  <td className="py-1 pr-1">
+                    <input className="w-20 border border-slate-300 rounded px-1 py-0.5" value={c.incentives} onChange={(e) => update(c.id, { incentives: e.target.value })} />
+                  </td>
+                  <td className="py-1 pr-1">
+                    <input className="w-20 border border-slate-300 rounded px-1 py-0.5" value={c.outgoings} onChange={(e) => update(c.id, { outgoings: e.target.value })} />
+                  </td>
+                  <td className="py-1 pr-1">
+                    <input className="w-24 border border-slate-300 rounded px-1 py-0.5" value={c.notes} onChange={(e) => update(c.id, { notes: e.target.value })} />
+                  </td>
+                  <td className="py-1">
+                    <button type="button" className="text-slate-400 hover:text-red-600" onClick={() => remove(c.id)}>×</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <div className="mt-2 flex items-center gap-3">
+        <button
+          type="button"
+          className="text-xs text-slate-600 underline"
+          onClick={() => onMeta({ ciLeaseComps: [...comps, blank()] })}
+        >
+          Add lease comparable
+        </button>
+        <label className="flex items-center gap-1 text-xs">
+          <span className="text-slate-500">Adopted net rent $/m²</span>
+          <input
+            className="w-20 border border-slate-300 rounded px-1 py-0.5"
+            value={meta.ciAdoptedRentPerM2 ?? ""}
+            onChange={(e) => onMeta({ ciAdoptedRentPerM2: e.target.value })}
+          />
+        </label>
+      </div>
+    </div>
+  );
+}

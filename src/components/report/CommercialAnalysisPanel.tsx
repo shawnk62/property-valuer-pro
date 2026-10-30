@@ -5,6 +5,7 @@
 import { useMemo } from "react";
 import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/types";
 import { comparableBuildingRate, comparableSiteRate } from "@/lib/report/adjustmentGrid";
+import { LeaseEvidenceGrid } from "@/components/report/LeaseEvidenceGrid";
 import {
   costIndication,
   formatCostLines,
@@ -106,23 +107,53 @@ export function CommercialAnalysisPanel({ values, meta, sales, onMeta, landValue
         <Field label="External obsolescence (%)" value={meta.ciExternalObsolescence ?? ""} onChange={(v) => onMeta({ ciExternalObsolescence: v })} />
       </div>
       {rateLines.length ? <Table title="Direct comparison rates (land and building)" lines={rateLines} /> : null}
+      <LeaseEvidenceGrid meta={meta} onMeta={onMeta} />
       <Table title="Income capitalisation" lines={formatIncomeLines(income)} />
       <div className="mt-3">
-        <div className="text-sm font-semibold text-slate-700 mb-1">Cost components (optional)</div>
-        <p className="text-xs text-slate-500 mb-1">Leave empty to use the single replacement-cost rate above.</p>
+        <div className="text-sm font-semibold text-slate-700 mb-1">Cost approach — summation</div>
+        <p className="text-xs text-slate-500 mb-1">
+          Land value plus depreciated replacement of building components and ancillary items. Leave empty to use the single rate above.
+        </p>
+        {(meta.ciCostComponents ?? []).length === 0 ? (
+          <button
+            type="button"
+            className="text-xs text-slate-600 underline mb-2"
+            onClick={() =>
+              onMeta({
+                ciCostComponents: [
+                  { name: "Land (vacant value)", area: "", rate: "", depreciation: "" },
+                  { name: "Warehouse / factory", area: "", rate: "", depreciation: "" },
+                  { name: "Office and amenities", area: "", rate: "", depreciation: "" },
+                  { name: "Mezzanine", area: "", rate: "", depreciation: "" },
+                  { name: "Awning", area: "", rate: "", depreciation: "" },
+                  { name: "Lift (nominal)", area: "", rate: "", depreciation: "" },
+                  { name: "Outbuildings", area: "", rate: "", depreciation: "" },
+                  { name: "Hardstand", area: "", rate: "", depreciation: "" },
+                  { name: "Lights", area: "", rate: "", depreciation: "" },
+                  { name: "Fencing", area: "", rate: "", depreciation: "" },
+                  { name: "Bollards", area: "", rate: "", depreciation: "" },
+                  { name: "Landscaping (nominal)", area: "", rate: "", depreciation: "" },
+                  { name: "Gate (nominal)", area: "", rate: "", depreciation: "" },
+                ],
+              })
+            }
+          >
+            Start with industrial component list
+          </button>
+        ) : null}
         {(meta.ciCostComponents ?? []).map((c, i) => (
           <div key={i} className="grid grid-cols-4 gap-1 mb-1">
-            <input className="border border-slate-300 rounded px-1 py-0.5 text-xs" placeholder="Name" value={c.name} onChange={(e) => {
+            <input className="border border-slate-300 rounded px-1 py-0.5 text-xs" placeholder="Component" value={c.name} onChange={(e) => {
               const next = [...(meta.ciCostComponents ?? [])];
               next[i] = { ...next[i], name: e.target.value };
               onMeta({ ciCostComponents: next });
             }} />
-            <input className="border border-slate-300 rounded px-1 py-0.5 text-xs" placeholder="Area" value={c.area} onChange={(e) => {
+            <input className="border border-slate-300 rounded px-1 py-0.5 text-xs" placeholder="Qty / m²" value={c.area} onChange={(e) => {
               const next = [...(meta.ciCostComponents ?? [])];
               next[i] = { ...next[i], area: e.target.value };
               onMeta({ ciCostComponents: next });
             }} />
-            <input className="border border-slate-300 rounded px-1 py-0.5 text-xs" placeholder="$/m²" value={c.rate} onChange={(e) => {
+            <input className="border border-slate-300 rounded px-1 py-0.5 text-xs" placeholder="Rate" value={c.rate} onChange={(e) => {
               const next = [...(meta.ciCostComponents ?? [])];
               next[i] = { ...next[i], rate: e.target.value };
               onMeta({ ciCostComponents: next });
