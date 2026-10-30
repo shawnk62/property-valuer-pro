@@ -47,7 +47,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
   const subjectClear = String(values["comm_clear_height"] ?? "");
   const subjectHardstand = String(values["comm_hardstand"] ?? "");
   const subjectLoading = String(values["comm_loading_config"] ?? "");
-  const subjectOffice = String(values["comm_office_split"] ?? "");
+  const subjectOfficeRaw = String(values["comm_office_split"] ?? "");
+  const subjectOffice = /\d|%|office/i.test(subjectOfficeRaw) ? subjectOfficeRaw : "";
 
   const income = useMemo(() => incomeStatement(values, meta), [values, meta]);
   const cost = useMemo(() => costIndication(values, meta, null), [values, meta]);
