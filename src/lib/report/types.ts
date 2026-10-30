@@ -250,7 +250,13 @@ export interface ComparableSale {
   beds?: string;
   baths?: string;
   cars?: string;
-  /** URAR: Proximity to Subject. */
+  /** Commercial / industrial comparison items. Unused on residential sales. */
+  clearHeight?: string;
+  loading?: string;
+  officeRatio?: string;
+  condition?: string;
+  hardstand?: string;
+  yield?: string;
   proximity?: string;
   /** URAR: Data Source(s). */
   dataSource?: string;
@@ -536,6 +542,10 @@ export interface ReportMeta {
   }>;
   /** Adopted net equivalent market rent $/m² from the lease evidence. */
   ciAdoptedRentPerM2?: string;
+  /** Adopted building rate $/m² for direct comparison. */
+  ciAdoptedBuildingRate?: string;
+  /** Adopted land rate $/m² for direct comparison. */
+  ciAdoptedLandRate?: string;
 }
 
 export interface ReportDraft {

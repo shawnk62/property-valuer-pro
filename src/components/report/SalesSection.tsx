@@ -11,6 +11,7 @@ import { PausedTextarea } from "@/components/report/PausedTextarea";
 import { toast } from "sonner";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { CommercialAnalysisPanel } from "@/components/report/CommercialAnalysisPanel";
+import { CommercialValuationTables } from "@/components/report/CommercialValuationTables";
 import { SalesCommentaryWorkspace } from "@/components/report/SalesCommentaryWorkspace";
 import { narrativePrints } from "@/lib/narrative/neighbourhoodAssist";
 import { SalesMapEditor } from "@/components/report/SalesMapEditor";
@@ -1322,6 +1323,16 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
     <div className="space-y-4">
       <SalesCommentaryWorkspace controller={controller} />
+      {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
+        <CommercialValuationTables
+          values={draft.values}
+          sales={draft.sales}
+          meta={draft.reportMeta}
+          onSales={setSales}
+          onMeta={setMeta}
+        />
+      ) : null}
+      {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? null : (
       <div
         className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-4"
         onDragOver={(e) => {
@@ -1471,6 +1482,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           </button>
         </div>
       </div>
+      )}
 
       <div className="rounded-md border border-border bg-card p-4 space-y-2">
         <label className="text-sm font-medium text-foreground" htmlFor="cma-paste">

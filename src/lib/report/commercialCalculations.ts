@@ -52,7 +52,7 @@ export interface IncomeStatement {
 
 export function incomeStatement(values: InspectionValues, meta: ReportMeta): IncomeStatement {
   const nla = num(values["comm_nla"]);
-  const marketRentPerM2 = num(meta.ciMarketRent);
+  const marketRentPerM2 = num(meta.ciAdoptedRentPerM2) ?? num(meta.ciMarketRent);
   const passingRent = num(values["comm_passing_rent"]);
   const vacancyPct = num(meta.ciVacancyAllowance);
   const recoverable = num(meta.ciRecoverableOutgoings);
