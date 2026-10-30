@@ -541,6 +541,22 @@ export function comparableSiteRate(sale: ComparableSale): { area: string; rate: 
   };
 }
 
+/** Building rate ($/m²) for commercial / industrial: sale price ÷ NLA (or GLA field). */
+export function comparableBuildingRate(sale: ComparableSale): { area: string; rate: string } {
+  const raw = String(sale.gla ?? "").trim();
+  const price = computeSaleAdjustmentTotals(sale).salePrice;
+  if (!raw) return { area: "—", rate: "—" };
+  const token = raw.replace(/,/g, "").match(/(\d+(?:\.\d+)?)/);
+  const n = token ? Number(token[1]) : null;
+  if (n == null || !Number.isFinite(n) || n <= 0 || price == null) {
+    return { area: raw, rate: "—" };
+  }
+  return {
+    area: /m²|m2/i.test(raw) ? raw : `${raw} m²`,
+    rate: `${formatRate(price / n)}/m²`,
+  };
+}
+
 function formatRate(n: number): string {
   const formatted = n.toLocaleString("en-AU", {
     minimumFractionDigits: 2,

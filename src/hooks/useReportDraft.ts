@@ -86,6 +86,7 @@ function emptyNarrative(): ReportNarrative {
     swotAnalysis: "",
     leaseEvidence: "",
     capitalisationApproach: "",
+    dcfApproach: "",
     costApproach: "",
     references: "",
   };
@@ -150,6 +151,7 @@ function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): R
     swotAnalysis: typeof raw.swotAnalysis === "string" ? raw.swotAnalysis : "",
     leaseEvidence: typeof raw.leaseEvidence === "string" ? raw.leaseEvidence : "",
     capitalisationApproach: typeof raw.capitalisationApproach === "string" ? raw.capitalisationApproach : "",
+    dcfApproach: typeof raw.dcfApproach === "string" ? raw.dcfApproach : "",
     costApproach: typeof raw.costApproach === "string" ? raw.costApproach : "",
     references: typeof raw.references === "string" ? raw.references : "",
   };

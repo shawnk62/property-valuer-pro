@@ -370,6 +370,8 @@ export interface ReportNarrative {
   leaseEvidence: string;
   /** Commercial / industrial — capitalisation approach. */
   capitalisationApproach: string;
+  /** Commercial / industrial — discounted cash flow. */
+  dcfApproach: string;
   /** Commercial / industrial — cost approach. */
   costApproach: string;
   references: string;
@@ -493,6 +495,7 @@ export interface ReportMeta {
   ciReplacementReserves?: string;
   ciCapRate?: string;
   ciExitCapRate?: string;
+  ciDcfHorizon?: string;
   ciReplacementCostRate?: string;
   ciEntrepreneurialIncentive?: string;
   ciPhysicalDepreciation?: string;

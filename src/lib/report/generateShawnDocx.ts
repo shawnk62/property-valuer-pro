@@ -189,12 +189,16 @@ export async function generateShawnDocx(draft: ReportDraft): Promise<Blob> {
     children.push(sub("Capitalisation Approach"));
     children.push(...prose(n.capitalisationApproach));
   }
+  if (commercialOrIndustrial && n.dcfApproach?.trim()) {
+    children.push(sub("Discounted Cash Flow"));
+    children.push(...prose(n.dcfApproach));
+  }
   if (commercialOrIndustrial && n.costApproach?.trim()) {
     children.push(sub("Cost Approach"));
     children.push(...prose(n.costApproach));
   }
   if (commercialOrIndustrial && n.leaseEvidence?.trim()) {
-    children.push(sub("Lease Evidence"));
+    children.push(sub("Rental Comparables"));
     children.push(...prose(n.leaseEvidence));
   }
 

@@ -76,6 +76,8 @@ export function CommercialAnalysisPanel({ values, meta, onMeta, landValue }: Pro
         <Field label="Non-recoverable expenses (p.a.)" value={meta.ciNonRecoverableExpenses ?? ""} onChange={(v) => onMeta({ ciNonRecoverableExpenses: v })} />
         <Field label="Replacement reserves (p.a.)" value={meta.ciReplacementReserves ?? ""} onChange={(v) => onMeta({ ciReplacementReserves: v })} />
         <Field label="Capitalisation rate (%)" value={meta.ciCapRate ?? ""} onChange={(v) => onMeta({ ciCapRate: v })} placeholder="e.g. 6.5" />
+        <Field label="Exit capitalisation rate (%)" value={meta.ciExitCapRate ?? ""} onChange={(v) => onMeta({ ciExitCapRate: v })} placeholder="e.g. 7.0" />
+        <Field label="DCF horizon (years)" value={meta.ciDcfHorizon ?? ""} onChange={(v) => onMeta({ ciDcfHorizon: v })} placeholder="e.g. 10" />
         <Field label="Replacement cost rate ($/m²)" value={meta.ciReplacementCostRate ?? ""} onChange={(v) => onMeta({ ciReplacementCostRate: v })} />
         <Field label="Entrepreneurial incentive (%)" value={meta.ciEntrepreneurialIncentive ?? ""} onChange={(v) => onMeta({ ciEntrepreneurialIncentive: v })} />
         <Field label="Physical depreciation (%)" value={meta.ciPhysicalDepreciation ?? ""} onChange={(v) => onMeta({ ciPhysicalDepreciation: v })} />

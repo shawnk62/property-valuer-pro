@@ -1412,6 +1412,7 @@ export function generateNarrative(
     swotAnalysis: "",
     leaseEvidence: "",
     capitalisationApproach: "",
+    dcfApproach: "",
     costApproach: "",
     references: "",
     remarks: buildRemarks(values, {

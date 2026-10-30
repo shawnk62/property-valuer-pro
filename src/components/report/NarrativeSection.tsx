@@ -309,8 +309,8 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
         },
         {
           key: "leaseEvidence",
-          label: "Lease Evidence",
-          hint: "Prints under Valuation Approach for commercial and industrial. Leasing comparables as recorded. Manual text is kept.",
+          label: "Rental Comparables",
+          hint: "Prints under Valuation Approach for commercial and industrial. Rental evidence and adopted market rent. Manual text is kept.",
         },
         {
           key: "valuationApproach",
@@ -331,6 +331,11 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           key: "capitalisationApproach",
           label: "Capitalisation Approach",
           hint: "Prints under Valuation Approach for commercial and industrial. Income capitalisation from recorded rent and yield. Manual text is kept.",
+        },
+        {
+          key: "dcfApproach",
+          label: "Discounted Cash Flow",
+          hint: "Prints under Valuation Approach for commercial and industrial. DCF from recorded cash flows and exit rate. Manual text is kept.",
         },
         {
           key: "costApproach",
@@ -475,7 +480,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     const commercial = Boolean(String(draft.values["prop_type_commercial"] ?? "").trim());
     const industrial = Boolean(String(draft.values["prop_type_industrial"] ?? "").trim());
     if (commercial || industrial) return true;
-    return !["occupancyOutgoings", "swotAnalysis", "leaseEvidence", "capitalisationApproach", "costApproach"].includes(b.key);
+    return !["occupancyOutgoings", "swotAnalysis", "leaseEvidence", "capitalisationApproach", "dcfApproach", "costApproach"].includes(b.key);
   });
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [source, setSource] = useState<"template" | "ai" | null>(null);

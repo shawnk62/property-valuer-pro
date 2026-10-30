@@ -647,9 +647,9 @@ Do not repeat the heading.`,
     case "leaseEvidence":
       return {
         system: BASE_RULES + styleGuide(type),
-        prompt: `Write the Lease Evidence commentary for a commercial or industrial ${type} valuation report.
+        prompt: `Write the Rental Comparables commentary for a commercial or industrial ${type} valuation report.
 
-Use only recorded leasing facts. Describe the leasing evidence considered, the adopted net equivalent market rent if recorded, and any material differences. Do not invent rents, incentives, or comparable addresses.
+Use only recorded leasing facts. Describe the rental evidence considered, the adopted net equivalent market rent if recorded, and any material differences in location, size, condition, or lease terms. Do not invent rents, incentives, or comparable addresses.
 
 Inspection data:
 ${sectionAnswers(values, ["2C"])}
@@ -662,6 +662,18 @@ One or two short paragraphs. Do not quote a capital value. Do not repeat the hea
         prompt: `Write the Capitalisation Approach commentary for a commercial or industrial ${type} valuation report.
 
 State that the income approach converts the annual net income into a capital value. Use only recorded rent, outgoings, vacancy, and WALE. Do not invent a capitalisation rate or dollar amounts. If insufficient income data is recorded, write one short sentence that the approach is available where income evidence supports it.
+
+Inspection data:
+${sectionAnswers(values, ["2C"])}
+
+One or two short paragraphs. Do not repeat the heading.`,
+      };
+    case "dcfApproach":
+      return {
+        system: BASE_RULES + styleGuide(type),
+        prompt: `Write the Discounted Cash Flow commentary for a commercial or industrial ${type} valuation report.
+
+State that the DCF projects net cash flows over a holding period and discounts them, with a terminal value from an exit capitalisation rate. Use only recorded rent, outgoings, vacancy, WALE, and any exit rate or horizon recorded in the analysis inputs. Do not invent rates, cash flows, or dollar amounts. If insufficient data is recorded, write one short sentence that the approach is available where multi-year cash flow evidence supports it.
 
 Inspection data:
 ${sectionAnswers(values, ["2C"])}
