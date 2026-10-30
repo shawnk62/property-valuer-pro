@@ -10,7 +10,8 @@ import {
 import { PausedTextarea } from "@/components/report/PausedTextarea";
 import { toast } from "sonner";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
-import { SalesCommentaryWorkspace } from "@/components/report/SalesCommentaryWorkspace";
+import { CommercialAnalysisPanel } from "@/components/report/CommercialAnalysisPanel";
+import { narrativePrints } from "@/lib/narrative/neighbourhoodAssist";
 import { SalesMapEditor } from "@/components/report/SalesMapEditor";
 import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
 import {
@@ -104,7 +105,7 @@ function parseAmountInput(raw: string): number | null {
 }
 
 export function SalesSection({ controller }: { controller: ReportDraftController }) {
-  const { draft, setSales, setMeta, setPhotos, setValue, loaded } = controller;
+  const { draft, setSales, setMeta, setPhotos, setValue, setNarrative, loaded } = controller;
   const sales = draft.sales.map(ensureSaleAdjustments);
   const gridSales = salesOnReport(sales);
   const heldSales = salesHeldBack(sales);
@@ -2848,6 +2849,112 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           </ul>
         </div>
       ) : null}
+
+      {/* Income and Cost approaches — calculations visible while writing comments, with print toggles */}
+      <div className="space-y-6 rounded-md border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold text-foreground">Income and Cost Approaches</h3>
+        <p className="text-xs text-muted-foreground">
+          Supporting calculations stay visible while the narrative is written. Tick a section to include it on the report.
+        </p>
+
+        <CommercialAnalysisPanel
+          values={draft.values}
+          meta={draft.reportMeta}
+          onMeta={setMeta}
+          landValue={null}
+        />
+
+        <div className="space-y-4">
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={narrativePrints(draft.reportMeta, "leaseEvidence")}
+              onChange={(e) =>
+                setMeta({
+                  printNarrative: {
+                    ...(draft.reportMeta.printNarrative ?? {}),
+                    leaseEvidence: e.target.checked,
+                  },
+                })
+              }
+            />
+            Include Lease Evidence on report
+          </label>
+          <PausedTextarea
+            value={draft.narrative.leaseEvidence ?? ""}
+            onChange={(v) => setNarrative({ leaseEvidence: v })}
+            placeholder="Lease evidence commentary…"
+            className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm"
+          />
+
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={narrativePrints(draft.reportMeta, "capitalisationApproach")}
+              onChange={(e) =>
+                setMeta({
+                  printNarrative: {
+                    ...(draft.reportMeta.printNarrative ?? {}),
+                    capitalisationApproach: e.target.checked,
+                  },
+                })
+              }
+            />
+            Include Capitalisation Approach on report
+          </label>
+          <PausedTextarea
+            value={draft.narrative.capitalisationApproach ?? ""}
+            onChange={(v) => setNarrative({ capitalisationApproach: v })}
+            placeholder="Capitalisation approach commentary…"
+            className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm"
+          />
+
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={narrativePrints(draft.reportMeta, "dcfApproach")}
+              onChange={(e) =>
+                setMeta({
+                  printNarrative: {
+                    ...(draft.reportMeta.printNarrative ?? {}),
+                    dcfApproach: e.target.checked,
+                  },
+                })
+              }
+            />
+            Include Discounted Cash Flow on report
+          </label>
+          <PausedTextarea
+            value={draft.narrative.dcfApproach ?? ""}
+            onChange={(v) => setNarrative({ dcfApproach: v })}
+            placeholder="Discounted cash flow commentary…"
+            className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm"
+          />
+
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={narrativePrints(draft.reportMeta, "costApproach")}
+              onChange={(e) =>
+                setMeta({
+                  printNarrative: {
+                    ...(draft.reportMeta.printNarrative ?? {}),
+                    costApproach: e.target.checked,
+                  },
+                })
+              }
+            />
+            Include Cost Approach on report
+          </label>
+          <PausedTextarea
+            value={draft.narrative.costApproach ?? ""}
+            onChange={(v) => setNarrative({ costApproach: v })}
+            placeholder="Cost approach commentary…"
+            className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm"
+          />
+        </div>
+      </div>
     </div>
   );
 }
+
