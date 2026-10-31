@@ -238,13 +238,48 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 ))}
               </tr>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Yield %</td>
+                <td className="py-1 pr-2 text-slate-500">Passing rent</td>
                 <td className="py-1 pr-2">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.saleYield ?? ""} onChange={(e) => patchSale(s.id, { saleYield: e.target.value })} />
+                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.passingRent ?? ""} onChange={(e) => patchSale(s.id, { passingRent: e.target.value })} />
                   </td>
                 ))}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="py-1 pr-2 text-slate-500">Market rent</td>
+                <td className="py-1 pr-2">—</td>
+                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
+                  <td key={s.id} className="py-1 pr-1">
+                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.marketRent ?? ""} onChange={(e) => {
+                      const marketRent = e.target.value;
+                      const price = num(s.salePrice);
+                      const rent = num(marketRent);
+                      const calculated = price && rent ? ((rent / price) * 100).toFixed(2) : "";
+                      patchSale(s.id, s.saleYieldManual ? { marketRent } : { marketRent, saleYield: calculated });
+                    }} />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100 bg-slate-50">
+                <td className="py-1 pr-2 text-slate-500">Yield %</td>
+                <td className="py-1 pr-2">—</td>
+                {sales.filter((s) => s.omitFromReport !== true).map((s) => {
+                  const price = num(s.salePrice);
+                  const rent = num(s.marketRent);
+                  const calculated = price && rent ? ((rent / price) * 100).toFixed(2) : "";
+                  const shown = s.saleYieldManual ? (s.saleYield ?? "") : (calculated || s.saleYield || "");
+                  return (
+                    <td key={s.id} className="py-1 pr-1">
+                      <input
+                        className="w-full border border-slate-300 rounded px-1 py-0.5"
+                        value={shown}
+                        onChange={(e) => patchSale(s.id, { saleYield: e.target.value, saleYieldManual: true })}
+                        title={s.saleYieldManual ? "Manual override" : "Calculated from market rent"}
+                      />
+                    </td>
+                  );
+                })}
               </tr>
               <tr className="border-b border-slate-100">
                 <td className="py-1 pr-2 text-slate-500">Clear height</td>

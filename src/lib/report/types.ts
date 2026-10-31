@@ -256,7 +256,13 @@ export interface ComparableSale {
   officeRatio?: string;
   condition?: string;
   hardstand?: string;
+  /** Passing (actual) rent for the sale. */
+  passingRent?: string;
+  /** Market rent / NOI used to calculate yield. */
+  marketRent?: string;
   saleYield?: string;
+  /** When true, saleYield is a manual override and is not recalculated. */
+  saleYieldManual?: boolean;
   proximity?: string;
   /** URAR: Data Source(s). */
   dataSource?: string;
