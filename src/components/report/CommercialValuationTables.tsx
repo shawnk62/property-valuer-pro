@@ -150,6 +150,31 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
             </thead>
             <tbody>
               <tr className="border-b border-slate-100">
+                <td className="py-1 pr-2 text-slate-500">Photo</td>
+                <td className="py-1 pr-2">—</td>
+                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
+                  <td key={s.id} className="py-1 pr-1">
+                    {s.photoUrl ? (
+                      <div className="relative">
+                        <img src={s.photoUrl} alt={s.address} className="w-full max-h-28 rounded object-contain bg-slate-50" />
+                        <button type="button" className="absolute right-0.5 top-0.5 rounded bg-white/90 px-1 text-[0.6rem] text-red-600" onClick={() => patchSale(s.id, { photoUrl: "" })}>Remove</button>
+                      </div>
+                    ) : (
+                      <label className="flex h-20 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50">
+                        Add photo
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = () => patchSale(s.id, { photoUrl: String(reader.result ?? "") });
+                          reader.readAsDataURL(file);
+                        }} />
+                      </label>
+                    )}
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100">
                 <td className="py-1 pr-2 text-slate-500">Use as lease evidence</td>
                 <td className="py-1 pr-2">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
@@ -267,11 +292,11 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 ))}
               </tr>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Comment</td>
+                <td className="py-1 pr-2 text-slate-500">Notes</td>
                 <td className="py-1 pr-2">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.comments} onChange={(e) => patchSale(s.id, { comments: e.target.value })} />
+                    <textarea className="w-full min-h-[4rem] border border-slate-300 rounded px-1 py-0.5" value={s.comments} onChange={(e) => patchSale(s.id, { comments: e.target.value })} />
                   </td>
                 ))}
               </tr>

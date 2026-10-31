@@ -79,6 +79,7 @@ export function LeaseEvidenceGrid({
                 <th className="py-1 pr-2">Term</th>
                 <th className="py-1 pr-2">Incentives</th>
                 <th className="py-1 pr-2">Outgoings</th>
+                <th className="py-1 pr-2">Photo</th>
                 <th className="py-1 pr-2">Notes</th>
                 <th />
               </tr>
@@ -108,7 +109,26 @@ export function LeaseEvidenceGrid({
                     <input className="w-20 border border-slate-300 rounded px-1 py-0.5" value={c.outgoings} onChange={(e) => update(c.id, { outgoings: e.target.value })} />
                   </td>
                   <td className="py-1 pr-1">
-                    <input className="w-24 border border-slate-300 rounded px-1 py-0.5" value={c.notes} onChange={(e) => update(c.id, { notes: e.target.value })} />
+                    {c.photoUrl ? (
+                      <div className="relative">
+                        <img src={c.photoUrl} alt={c.address} className="w-full max-h-20 rounded object-contain bg-slate-50" />
+                        <button type="button" className="absolute right-0.5 top-0.5 rounded bg-white/90 px-1 text-[0.6rem] text-red-600" onClick={() => update(c.id, { photoUrl: "" })}>Remove</button>
+                      </div>
+                    ) : (
+                      <label className="flex h-14 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50">
+                        Add
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = () => update(c.id, { photoUrl: String(reader.result ?? "") });
+                          reader.readAsDataURL(file);
+                        }} />
+                      </label>
+                    )}
+                  </td>
+                  <td className="py-1 pr-1">
+                    <textarea className="w-28 min-h-[3rem] border border-slate-300 rounded px-1 py-0.5" value={c.notes} onChange={(e) => update(c.id, { notes: e.target.value })} />
                   </td>
                   <td className="py-1 whitespace-nowrap">
                     <button type="button" className="text-slate-500 mr-1" onClick={() => move(c.id, -1)}>←</button>
