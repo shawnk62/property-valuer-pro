@@ -66,6 +66,31 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
     onSales(sales.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   }
 
+  function toggleLeaseEvidence(sale: ComparableSale, checked: boolean) {
+    const existing = meta.ciLeaseComps ?? [];
+    if (checked) {
+      if (existing.some((c) => c.id === sale.id)) return;
+      onMeta({
+        ciLeaseComps: [
+          ...existing,
+          {
+            id: sale.id,
+            address: sale.address,
+            date: sale.saleDate,
+            nla: sale.gla ?? "",
+            netRentPerM2: "",
+            term: "",
+            incentives: "",
+            outgoings: "",
+            notes: "",
+          },
+        ],
+      });
+    } else {
+      onMeta({ ciLeaseComps: existing.filter((c) => c.id !== sale.id) });
+    }
+  }
+
   const reconciliation = [
     { label: "Direct comparison (building rate)", value: money(buildingIndication) },
     { label: "Direct comparison (land rate)", value: money(landIndication) },
@@ -93,6 +118,19 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
             </thead>
             <tbody>
               <tr className="border-b border-slate-100">
+                <td className="py-1 pr-2 text-slate-500">Use as lease evidence</td>
+                <td className="py-1 pr-2">—</td>
+                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
+                  <td key={s.id} className="py-1 pr-1 text-center">
+                    <input
+                      type="checkbox"
+                      checked={(meta.ciLeaseComps ?? []).some((c) => c.id === s.id)}
+                      onChange={(e) => toggleLeaseEvidence(s, e.target.checked)}
+                    />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100">
                 <td className="py-1 pr-2 text-slate-500">Date</td>
                 <td className="py-1 pr-2">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
@@ -119,6 +157,13 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                   </td>
                 ))}
               </tr>
+              <tr className="border-b border-slate-100 bg-slate-50">
+                <td className="py-1 pr-2 text-slate-500">Land rate $/m²</td>
+                <td className="py-1 pr-2">—</td>
+                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
+                  <td key={s.id} className="py-1 pr-2">{rate(s.salePrice, s.landArea)}</td>
+                ))}
+              </tr>
               <tr className="border-b border-slate-100">
                 <td className="py-1 pr-2 text-slate-500">Building area m²</td>
                 <td className="py-1 pr-2">{subjectBuilding || "—"}</td>
@@ -126,13 +171,6 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.gla ?? ""} onChange={(e) => patchSale(s.id, { gla: e.target.value })} />
                   </td>
-                ))}
-              </tr>
-              <tr className="border-b border-slate-100 bg-slate-50">
-                <td className="py-1 pr-2 text-slate-500">Land rate $/m²</td>
-                <td className="py-1 pr-2">—</td>
-                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
-                  <td key={s.id} className="py-1 pr-2">{rate(s.salePrice, s.landArea)}</td>
                 ))}
               </tr>
               <tr className="border-b border-slate-100 bg-slate-50">
