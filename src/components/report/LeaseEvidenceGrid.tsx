@@ -27,6 +27,7 @@ function blank(): LeaseComp {
     incentives: "",
     outgoings: "",
     notes: "",
+    photoUrl: "",
   };
 }
 
@@ -125,6 +126,57 @@ export function LeaseEvidenceGrid({
             onChange={(e) => onMeta({ ciAdoptedRentPerM2: e.target.value })}
           />
         </label>
+      </div>
+
+      {comps.length > 0 ? (
+        <div className="mt-3">
+          <div className="text-xs font-medium text-slate-600 mb-1">Lease evidence photos</div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {comps.map((c, idx) => (
+              <div key={c.id} className="rounded border border-slate-200 p-1.5">
+                <p className="text-[0.65rem] font-medium truncate">{c.address || `Lease ${idx + 1}`}</p>
+                {c.photoUrl ? (
+                  <div className="relative mt-1">
+                    <img src={c.photoUrl} alt={c.address} className="max-h-24 w-full rounded object-contain bg-slate-50" />
+                    <button type="button" className="absolute right-0.5 top-0.5 rounded bg-white/90 px-1 text-[0.6rem] text-red-600" onClick={() => update(c.id, { photoUrl: "" })}>Remove</button>
+                  </div>
+                ) : (
+                  <label className="mt-1 flex h-16 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50">
+                    Add photo
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => update(c.id, { photoUrl: String(reader.result ?? "") });
+                      reader.readAsDataURL(file);
+                    }} />
+                  </label>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mt-3">
+        <div className="text-xs font-medium text-slate-600 mb-1">Lease evidence map</div>
+        {meta.ciLeaseMapUrl ? (
+          <div className="relative">
+            <img src={meta.ciLeaseMapUrl} alt="Lease evidence map" className="max-h-48 w-full rounded object-contain bg-slate-50" />
+            <button type="button" className="absolute right-1 top-1 rounded bg-white/90 px-1.5 py-0.5 text-[0.65rem] text-red-600" onClick={() => onMeta({ ciLeaseMapUrl: "" })}>Remove</button>
+          </div>
+        ) : (
+          <label className="flex h-20 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-xs text-slate-400 hover:bg-slate-50">
+            Add lease map
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onload = () => onMeta({ ciLeaseMapUrl: String(reader.result ?? "") });
+              reader.readAsDataURL(file);
+            }} />
+          </label>
+        )}
       </div>
     </div>
   );

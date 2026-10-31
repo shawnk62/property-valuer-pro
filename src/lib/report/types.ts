@@ -539,7 +539,10 @@ export interface ReportMeta {
     incentives: string;
     outgoings: string;
     notes: string;
+    photoUrl?: string;
   }>;
+  /** Map of lease evidence locations. */
+  ciLeaseMapUrl?: string;
   /** Adopted net equivalent market rent $/m² from the lease evidence. */
   ciAdoptedRentPerM2?: string;
   /** Adopted building rate $/m² for direct comparison. */
