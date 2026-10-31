@@ -46,6 +46,15 @@ export function LeaseEvidenceGrid({
     });
   }
 
+  function move(id: string, direction: -1 | 1) {
+    const idx = comps.findIndex((c) => c.id === id);
+    const target = idx + direction;
+    if (idx < 0 || target < 0 || target >= comps.length) return;
+    const next = [...comps];
+    [next[idx], next[target]] = [next[target], next[idx]];
+    onMeta({ ciLeaseComps: next });
+  }
+
   function remove(id: string) {
     onMeta({ ciLeaseComps: comps.filter((c) => c.id !== id) });
   }
@@ -101,8 +110,10 @@ export function LeaseEvidenceGrid({
                   <td className="py-1 pr-1">
                     <input className="w-24 border border-slate-300 rounded px-1 py-0.5" value={c.notes} onChange={(e) => update(c.id, { notes: e.target.value })} />
                   </td>
-                  <td className="py-1">
-                    <button type="button" className="text-slate-400 hover:text-red-600" onClick={() => remove(c.id)}>×</button>
+                  <td className="py-1 whitespace-nowrap">
+                    <button type="button" className="text-slate-500 mr-1" onClick={() => move(c.id, -1)}>←</button>
+                    <button type="button" className="text-slate-500 mr-1" onClick={() => move(c.id, 1)}>→</button>
+                    <button type="button" className="text-red-500" onClick={() => remove(c.id)}>×</button>
                   </td>
                 </tr>
               ))}

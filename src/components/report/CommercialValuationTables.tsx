@@ -66,6 +66,30 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
     onSales(sales.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   }
 
+  function moveSale(id: string, direction: -1 | 1) {
+    const visible = sales.filter((s) => s.omitFromReport !== true);
+    const idx = visible.findIndex((s) => s.id === id);
+    const target = idx + direction;
+    if (idx < 0 || target < 0 || target >= visible.length) return;
+    const a = visible[idx];
+    const b = visible[target];
+    const next = [...sales];
+    const ia = next.findIndex((s) => s.id === a.id);
+    const ib = next.findIndex((s) => s.id === b.id);
+    [next[ia], next[ib]] = [next[ib], next[ia]];
+    onSales(next);
+  }
+
+  function archiveSale(id: string) {
+    onSales(sales.map((s) => (s.id === id ? { ...s, omitFromReport: true } : s)));
+  }
+
+  function deleteSale(id: string) {
+    if (!window.confirm("Delete this comparable from the working file?")) return;
+    onSales(sales.filter((s) => s.id !== id));
+    onMeta({ ciLeaseComps: (meta.ciLeaseComps ?? []).filter((c) => c.id !== id) });
+  }
+
   function toggleLeaseEvidence(sale: ComparableSale, checked: boolean) {
     const existing = meta.ciLeaseComps ?? [];
     if (checked) {
@@ -111,8 +135,16 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
               <tr className="border-b border-slate-200 text-left text-slate-500">
                 <th className="py-1 pr-2">Item</th>
                 <th className="py-1 pr-2">Subject</th>
-                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
-                  <th key={s.id} className="py-1 pr-2 min-w-[8rem]">{s.address || "Sale"}</th>
+                {sales.filter((s) => s.omitFromReport !== true).map((s, idx, arr) => (
+                  <th key={s.id} className="py-1 pr-2 min-w-[8rem]">
+                    <div className="truncate">{s.address || "Sale"}</div>
+                    <div className="mt-0.5 flex gap-1 text-[0.65rem] font-normal">
+                      <button type="button" disabled={idx === 0} className="text-slate-500 disabled:opacity-30" onClick={() => moveSale(s.id, -1)}>←</button>
+                      <button type="button" disabled={idx === arr.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => moveSale(s.id, 1)}>→</button>
+                      <button type="button" className="text-slate-500" onClick={() => archiveSale(s.id)} title="Hold in working file">Archive</button>
+                      <button type="button" className="text-red-500" onClick={() => deleteSale(s.id)}>×</button>
+                    </div>
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -258,6 +290,18 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
           </label>
           <span className="text-slate-600">→ {money(landIndication)}</span>
         </div>
+        {sales.some((s) => s.omitFromReport === true) ? (
+          <div className="mt-2 text-xs text-slate-500">
+            <div className="font-medium mb-1">Archived (not on report)</div>
+            {sales.filter((s) => s.omitFromReport === true).map((s) => (
+              <div key={s.id} className="flex items-center gap-2">
+                <span className="truncate">{s.address || "Sale"}</span>
+                <button type="button" className="underline" onClick={() => patchSale(s.id, { omitFromReport: false })}>Restore</button>
+                <button type="button" className="text-red-500" onClick={() => deleteSale(s.id)}>×</button>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <LeaseEvidenceGrid meta={meta} onMeta={onMeta} />
