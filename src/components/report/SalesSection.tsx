@@ -1484,7 +1484,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       </div>
       )}
 
-      {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? null : (
+      {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? null : (<>
       <div className="rounded-md border border-border bg-card p-4 space-y-2">
         <label className="text-sm font-medium text-foreground" htmlFor="cma-paste">
           Or paste Comparable Sales text from the CMA
@@ -2863,7 +2863,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           </ul>
         </div>
       ) : null}
-      )}
+      </>)}
 
       {/* Income and Cost approaches — calculations visible while writing comments, with print toggles */}
       <div className="space-y-6 rounded-md border border-border bg-card p-4">
