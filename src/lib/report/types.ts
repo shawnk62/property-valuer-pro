@@ -256,7 +256,7 @@ export interface ComparableSale {
   officeRatio?: string;
   condition?: string;
   hardstand?: string;
-  yield?: string;
+  saleYield?: string;
   proximity?: string;
   /** URAR: Data Source(s). */
   dataSource?: string;

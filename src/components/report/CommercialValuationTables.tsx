@@ -147,7 +147,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 <td className="py-1 pr-2">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.yield ?? ""} onChange={(e) => patchSale(s.id, { yield: e.target.value })} />
+                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.saleYield ?? ""} onChange={(e) => patchSale(s.id, { saleYield: e.target.value })} />
                   </td>
                 ))}
               </tr>
