@@ -3,6 +3,7 @@ import type { InspectionField, InspectionValues } from "@/lib/inspection/types";
 import { describeLandUseMix, stripLandUsePercentages } from "@/lib/narrative/landUseMix";
 import { titleAdviceFacts } from "@/lib/report/titleAdvices";
 import { getReportTypeConfig, isShawnExamType } from "@/lib/report/reportTypes";
+import { isCommercialType, isIndustrialType } from "@/lib/inspection/visibility";
 
 export interface BlockPrompt {
   system: string;
@@ -373,12 +374,24 @@ Rules:
       };
     case "neighbourhood": {
       const landUse = describeLandUseMix(values);
+      const commercialOrIndustrial = isCommercialType(values) || isIndustrialType(values);
+      const kindLabel = isIndustrialType(values) ? "industrial" : "commercial";
       return {
         system: BASE_RULES + styleGuide(type),
         prompt: `Write section 5.2 Neighbourhood / Locality for a ${type} valuation report.
 
 ${
-  isShawnAssignment(values)
+  isShawnAssignment(values) && commercialOrIndustrial
+    ? `STRUCTURE (mandatory for Shawn commercial and industrial reports). One paragraph per level that has data, then separate paragraphs for amenities and for transport:
+1. Open with Queensland, the city or regional centre and the local government area in one sentence. Name Australia in that sentence. Do not write "Australia" or "The property is located in Australia" as its own sentence or paragraph.
+2. Suburb or precinct character, accepted population, accepted change. Describe the area as a ${kindLabel} or mixed-employment locality, not as a residential suburb.
+3. Immediate locality and named estate or industrial precinct if recorded.
+4. Neighbouring development — qualitative land use only. Prefer neighbouring employment uses (warehouse, factory, office, retail, logistics) over dwelling types.
+5. Amenities — weave in every accepted amenities fact (school count, named centres, distances and directions).
+6. Transport — weave in every accepted transport fact (station, bus, the nearest freeway or motorway, airport/port). Note loading and heavy-vehicle access only if recorded.
+Do not open with the street address. Do not compress this into three short paragraphs if accepted facts remain unused.
+Professional valuation prose. Start with the state and the local government area, then the suburb or precinct, then the estate. Use qualitative land-use terms (predominantly, a few, some). Do not use exact percentages. Include every ticked accepted fact. Do not append raw facts as their own sentences. Do not invent citations.`
+    : isShawnAssignment(values)
     ? `STRUCTURE (mandatory for Shawn reports). One paragraph per level that has data, then separate paragraphs for amenities and for transport:
 1. Open with Queensland, the city or regional centre and the local government area in one sentence. Name Australia in that sentence. Do not write "Australia" or "The property is located in Australia" as its own sentence or paragraph.
 2. Suburb character, accepted population, accepted change.
@@ -430,14 +443,24 @@ Rules:
             : blockKey === "marketRegion"
               ? "6.3 Region"
               : "6.4 Locality";
+      const commercialOrIndustrial = isCommercialType(values) || isIndustrialType(values);
+      const kindLabel = isIndustrialType(values) ? "industrial" : "commercial";
       const focus =
-        blockKey === "marketAustralia"
-          ? "national Australian residential market conditions only"
-          : blockKey === "marketState"
-            ? "state residential market conditions only (Queensland unless the inspection records another state)"
-            : blockKey === "marketRegion"
-              ? "the city or regional market that contains the subject suburb — not national commentary and not the street-level locality"
-              : "the suburb or immediate locality market only — prices, demand and supply for similar property, not the 5.2 physical locality description";
+        commercialOrIndustrial
+          ? blockKey === "marketAustralia"
+            ? `national Australian ${kindLabel} market conditions only — occupancy, vacancy, net effective rents, incentives, yields, land values and building rates`
+            : blockKey === "marketState"
+              ? `state ${kindLabel} market conditions only (Queensland unless the inspection records another state) — occupancy, vacancy, net effective rents, incentives, yields, land values and building rates`
+              : blockKey === "marketRegion"
+                ? `the city or regional ${kindLabel} market that contains the subject suburb — not national commentary and not the street-level locality`
+                : `the suburb or immediate locality ${kindLabel} market only — rents, yields, vacancy, demand and supply for similar property, not the 5.2 physical locality description`
+          : blockKey === "marketAustralia"
+            ? "national Australian residential market conditions only"
+            : blockKey === "marketState"
+              ? "state residential market conditions only (Queensland unless the inspection records another state)"
+              : blockKey === "marketRegion"
+                ? "the city or regional market that contains the subject suburb — not national commentary and not the street-level locality"
+                : "the suburb or immediate locality market only — prices, demand and supply for similar property, not the 5.2 physical locality description";
       return {
         system: BASE_RULES + styleGuide(type),
         prompt: `Write ${scale} market commentary for a ${type} valuation report. Confine the commentary to ${focus}.

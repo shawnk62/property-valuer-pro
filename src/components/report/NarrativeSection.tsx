@@ -673,6 +673,11 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
           city: String(draft.values["prop_lga"] ?? ""),
           state: String(draft.values["prop_state"] ?? "Queensland"),
           address: subjectAddressLine(draft.values),
+          propertyKind: String(draft.values["prop_type_industrial"] ?? "").trim()
+            ? "industrial"
+            : String(draft.values["prop_type_commercial"] ?? "").trim()
+              ? "commercial"
+              : "residential",
         },
       });
       const incoming = parseNbhdClaims(searched.raw).map((claim) => ({

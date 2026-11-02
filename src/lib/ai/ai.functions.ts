@@ -350,6 +350,7 @@ const SearchMarketInput = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   address: z.string().optional(),
+  propertyKind: z.enum(["residential", "commercial", "industrial"]).optional(),
 });
 
 export const searchMarketFacts = createServerFn({ method: "POST" })
@@ -360,8 +361,66 @@ export const searchMarketFacts = createServerFn({ method: "POST" })
     const city = (data.city || "").trim();
     const suburb = (data.suburb || "").trim();
     const place = [suburb, city, state, "Australia"].filter(Boolean).join(", ");
+    const isCommercial = data.propertyKind === "commercial" || data.propertyKind === "industrial";
+    const kindLabel = data.propertyKind === "industrial" ? "industrial" : "commercial";
     const scalePrompt =
-      data.scale === "australia"
+      isCommercial
+        ? data.scale === "australia"
+          ? `Search the public web for current Australian ${kindLabel} property market commentary suitable for a valuation report.
+Collect sourced notes on, where available:
+- macro conditions: interest rates, credit / finance availability, inflation or other significant economic matters affecting commercial and industrial property
+- national supply, demand, vacancy and absorption for commercial and industrial property
+- condition of the commercial and industrial market versus the previous 12–24 months
+- net effective rents, incentives, yields and capitalisation rates
+- land values and building rates for similar property
+- buyer and tenant profile if a source states it (owner-occupier, investor, institutional)
+- main national market drivers for commercial and industrial property
+- any major environmental event (flood, cyclone, bushfire) cited as affecting commercial or industrial property
+- distressed or mortgagee activity if a reputable source comments
+Prefer RBA, ABS, CoreLogic, PropTrack, JLL, CBRE, Colliers, Knight Frank, Treasury and major bank research.`
+          : data.scale === "state"
+            ? `Search the public web for current ${state} ${kindLabel} property market commentary suitable for a valuation report.
+Collect sourced notes on, where available:
+- state economic and commercial-credit conditions
+- supply, demand, vacancy and absorption
+- state market condition versus the previous 12–24 months
+- net effective rents, incentives, yields and capitalisation rates
+- land values and building rates
+- buyer and tenant profile if stated
+- state-level market drivers for commercial and industrial property
+- environmental events cited as affecting the ${state} commercial or industrial market
+- distressed or mortgagee activity if published
+Prefer Queensland Government, QGSO, CoreLogic state pages, JLL, CBRE, Colliers and major bank state reports.`
+            : data.scale === "region"
+              ? `Search the public web for current ${kindLabel} property market commentary for the region around ${place}.
+Collect sourced notes on, where available:
+- regional supply, demand, vacancy and absorption
+- market condition versus the previous 12–24 months
+- competing industrial or commercial precincts in the region
+- net effective rents, incentives, yields and building rates
+- land values and price range of similar property
+- volume of similar property advertised or leased
+- buyer and tenant profile and main regional drivers (employment, transport, infrastructure)
+- environmental events affecting regional demand
+- distressed or mortgagee activity if reported
+Prefer council, CoreLogic city/region pages, JLL, CBRE and state government regional notes.`
+              : `Search the public web for current ${kindLabel} property market commentary for the suburb or immediate locality of ${place}${
+                  data.address ? ` (near ${data.address})` : ""
+                }.
+Collect sourced notes on, where available:
+- local supply, demand, vacancy and absorption in the suburb or named precinct
+- market condition versus the previous 12–24 months
+- net effective rents, incentives and yields
+- land values and building rates for similar property
+- competing industrial or commercial precincts nearby
+- buyer and tenant profile in this segment
+- local market drivers (employment, transport, infrastructure, zoning)
+- environmental issues affecting local marketability
+- volume of similar property on the market or leased
+- distressed or mortgagee activity if reported
+Prefer CoreLogic / PropTrack suburb pages, council, JLL, CBRE and reputable local market notes.
+Do not write a physical amenity tour. Precinct names and competing estates belong here when they affect the market.`
+        : data.scale === "australia"
         ? `Search the public web for current Australian residential property market commentary suitable for a valuation report.
 Collect sourced notes on, where available:
 - macro conditions: interest rates, credit / finance availability, inflation or other significant economic matters
