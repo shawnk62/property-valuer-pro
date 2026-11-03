@@ -59,6 +59,8 @@ const COMMERCIAL_INDUSTRIAL_FIELD_NAMES = new Set([
   "comm_hardstand",
   "comm_loading_config",
   "comm_floor_loading",
+  "func_adequacy",
+  "func_adequacy_notes",
 ]);
 
 function str(values: InspectionValues, key: string): string {

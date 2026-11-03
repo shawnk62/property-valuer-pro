@@ -2557,6 +2557,22 @@
           "type": "text",
           "multiline": false,
           "placeholder": "e.g. 50 kPa or notes"
+        },
+        {
+          "name": "func_adequacy",
+          "label": "Functional adequacy for the use",
+          "type": "checkbox_group",
+          "items": [
+            { "id": "func_clear_height", "label": "Clear height adequate for the use" },
+            { "id": "func_column_spacing", "label": "Column spacing adequate" },
+            { "id": "func_loading", "label": "Loading adequate (dock or on-grade)" },
+            { "id": "func_hardstand", "label": "Hardstand and turning adequate" },
+            { "id": "func_power", "label": "Power capacity adequate" },
+            { "id": "func_office", "label": "Office component adequate" },
+            { "id": "func_floor_loading", "label": "Floor loading adequate" },
+            { "id": "func_heavy_vehicle", "label": "Access for heavy vehicles adequate" }
+          ],
+          "notes_field": "func_adequacy_notes"
         }
       ]
     },
