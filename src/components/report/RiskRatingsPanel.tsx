@@ -11,6 +11,7 @@ import {
   scoreLabel,
   type RiskCategory,
   type RiskScore,
+  type SwotClaimLike,
 } from "@/lib/report/propertyRiskRatings";
 import { Button } from "@/components/ui/button";
 import { PausedTextarea } from "@/components/report/PausedTextarea";
@@ -25,6 +26,7 @@ import {
 export function RiskRatingsPanel({ controller }: { controller: ReportDraftController }) {
   const { draft, setValue } = controller;
   const [openId, setOpenId] = useState<string | null>(null);
+  const swotClaims = (draft.reportMeta.swotClaims ?? []) as SwotClaimLike[];
 
   const openCat = useMemo(
     () => RISK_CATEGORIES.find((c) => c.id === openId) ?? null,
@@ -75,7 +77,7 @@ export function RiskRatingsPanel({ controller }: { controller: ReportDraftContro
                 key={cat.id}
                 category={cat}
                 selected={parseRiskScore(draft.values[cat.field])}
-                hint={hintForCategory(cat, draft.values)}
+                hint={hintForCategory(cat, draft.values, swotClaims)}
                 onOpen={() => setOpenId(cat.id)}
                 onSelect={(score) => applyBand(cat, score)}
               />
@@ -112,11 +114,11 @@ export function RiskRatingsPanel({ controller }: { controller: ReportDraftContro
               <SheetTitle>{openCat.heading}</SheetTitle>
               <SheetDescription>{openCat.purpose}</SheetDescription>
             </SheetHeader>
-            <OpenHint category={openCat} values={draft.values} />
+            <OpenHint category={openCat} values={draft.values} swotClaims={swotClaims} />
             <ul className="mt-4 space-y-2">
               {RISK_SCALE.map((col) => {
                 const selected = parseRiskScore(draft.values[openCat.field]) === col.score;
-                const hint = hintForCategory(openCat, draft.values);
+                const hint = hintForCategory(openCat, draft.values, swotClaims);
                 const inHint =
                   hint != null && col.score >= hint.min && col.score <= hint.max;
                 return (
@@ -161,11 +163,13 @@ export function RiskRatingsPanel({ controller }: { controller: ReportDraftContro
 function OpenHint({
   category,
   values,
+  swotClaims,
 }: {
   category: RiskCategory;
   values: ReportDraftController["draft"]["values"];
+  swotClaims: SwotClaimLike[];
 }) {
-  const hint = hintForCategory(category, values);
+  const hint = hintForCategory(category, values, swotClaims);
   if (!hint) return null;
   return (
     <p className="mt-3 text-sm text-sky-800">

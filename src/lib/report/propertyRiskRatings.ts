@@ -4,7 +4,7 @@
  */
 
 import type { InspectionValues } from "@/lib/inspection/types";
-import { isVacantLand } from "@/lib/inspection/visibility";
+import { isCommercialType, isIndustrialType, isVacantLand } from "@/lib/inspection/visibility";
 
 export const RISK_SCALE = [
   { score: 1, label: "Low" },
@@ -268,6 +268,23 @@ export interface RiskHint {
   reason: string;
 }
 
+export interface SwotClaimLike {
+  text: string;
+  accepted: boolean;
+}
+
+function isCommercialOrIndustrial(values: InspectionValues): boolean {
+  return isCommercialType(values) || isIndustrialType(values);
+}
+
+function acceptedSwot(claims: SwotClaimLike[] | undefined): string[] {
+  return (claims ?? []).filter((c) => c.accepted && c.text.trim()).map((c) => c.text.trim());
+}
+
+function swotMentions(texts: string[], pattern: RegExp): string[] {
+  return texts.filter((t) => pattern.test(t));
+}
+
 function str(values: InspectionValues, key: string): string {
   const v = values[key];
   if (typeof v === "string") return v.trim();
@@ -290,6 +307,7 @@ function yesish(raw: string): boolean {
 export function hintForCategory(
   category: RiskCategory,
   values: InspectionValues,
+  swotClaims?: SwotClaimLike[],
 ): RiskHint | null {
   const flood = `${str(values, "prop_flood")} ${str(values, "prop_flood_map")}`;
   const adverse = str(values, "prop_adverse_site");
@@ -300,6 +318,8 @@ export function hintForCategory(
   const zoningComp = str(values, "prop_zoning_comp");
   const overall = str(values, "overall_cond");
   const defects = str(values, "defects_notes");
+  const commercial = isCommercialOrIndustrial(values);
+  const swot = commercial ? acceptedSwot(swotClaims) : [];
 
   if (category.id === "environment") {
     const reasons: string[] = [];
@@ -372,6 +392,13 @@ export function hintForCategory(
       min = Math.max(min, 3) as RiskScore;
       reasons.push("adverse site features are recorded");
     }
+    if (commercial) {
+      const local = swotMentions(swot, /competing supply|infrastructure|overlay|precinct|estate under construction/i);
+      if (local.length) {
+        min = Math.max(min, 2) as RiskScore;
+        reasons.push("accepted SWOT notes record competing supply or infrastructure in the locality");
+      }
+    }
     if (reasons.length === 0) return null;
     const max: RiskScore = min >= 4 ? 5 : ((min + 1) as RiskScore);
     return { min, max, reason: reasons.join("; ") };
@@ -395,9 +422,71 @@ export function hintForCategory(
       min = Math.max(min, 3) as RiskScore;
       reasons.push("defect notes are recorded");
     }
+    if (commercial) {
+      const relative = str(values, "comm_condition_relative");
+      if (/inferior/i.test(relative)) {
+        min = Math.max(min, 3) as RiskScore;
+        reasons.push("condition relative to competing stock is recorded as inferior");
+      }
+      const selected = values["func_adequacy"];
+      const selectedIds = Array.isArray(selected) ? selected.map(String) : [];
+      const expected = [
+        "func_clear_height",
+        "func_column_spacing",
+        "func_loading",
+        "func_hardstand",
+        "func_power",
+        "func_office",
+        "func_floor_loading",
+        "func_heavy_vehicle",
+      ];
+      const missing = expected.filter((id) => !selectedIds.includes(id));
+      if (selectedIds.length > 0 && missing.length > 0) {
+        min = Math.max(min, 2) as RiskScore;
+        reasons.push("functional adequacy is not recorded for every item");
+      }
+      const funcNotes = str(values, "func_adequacy_notes");
+      if (funcNotes) {
+        min = Math.max(min, 2) as RiskScore;
+        reasons.push("a functional limitation is recorded");
+      }
+    }
     if (reasons.length === 0) return null;
     const max: RiskScore = min >= 5 ? 5 : ((min + 1) as RiskScore);
     return { min, max, reason: reasons.join("; ") };
+  }
+
+  if (commercial && category.id === "segment") {
+    const reasons: string[] = [];
+    let min: RiskScore = 1;
+    const term = Number(str(values, "comm_remaining_term"));
+    if (Number.isFinite(term) && term > 0 && term < 2) {
+      min = 3;
+      reasons.push("remaining lease term is under two years");
+    }
+    const covenant = str(values, "comm_tenant_covenant");
+    if (/local|unknown/i.test(covenant)) {
+      min = Math.max(min, 2) as RiskScore;
+      reasons.push(`tenant covenant is recorded as ${covenant.toLowerCase()}`);
+    }
+    const market = swotMentions(swot, /vacancy|rent|yield|competing supply|absorption/i);
+    if (market.length) {
+      min = Math.max(min, 2) as RiskScore;
+      reasons.push("accepted SWOT notes record vacancy, rent, yield or competing supply");
+    }
+    if (reasons.length === 0) return null;
+    const max: RiskScore = min >= 4 ? 5 : ((min + 1) as RiskScore);
+    return { min, max, reason: reasons.join("; ") };
+  }
+
+  if (commercial && category.id === "market_direction") {
+    const market = swotMentions(swot, /price|rent|yield|vacancy|demand|supply/i);
+    if (market.length === 0) return null;
+    return {
+      min: 2,
+      max: 3,
+      reason: "accepted SWOT notes record market movement in rents, yields, vacancy or demand",
+    };
   }
 
   return null;
