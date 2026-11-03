@@ -474,6 +474,8 @@ Rules:
 - When two or more sources give different figures for the same item, cite ONE range from the lowest to the highest accepted figure. Do not list each source's statistic separately.
 - Do not invent rates, incentives, estate stages, mortgagee activity or buyer profiles that are not in the accepted facts.
 - Name the source and the period in each paragraph that cites a figure. Cite every published source in Harvard author-date form in the same sentence: Author (Year), or (Author Year). Do not leave a market figure without its source and year. Do not invent a source.
+- Every sentence that contains a number, percentage, rent, yield, vacancy rate, take-up figure or price must include its source in Harvard form in that same sentence. Do not cite a source for a figure that came from a different accepted fact.
+- If an accepted fact has a source, use that source. Do not substitute a different publisher.
 - Do not use source notes or working notes.
 - Do not describe the subject allotment, overlays, or comparable sales.
 - Do not write the 5.2 physical locality / amenity tour here.
