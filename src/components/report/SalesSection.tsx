@@ -66,6 +66,7 @@ import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage
 import {
   cmaExtractsToSales,
   dropSubjectFromSales,
+  isSameTransaction,
   mergeCmaExtracts,
   mergeIncomingSales,
   parseCmaTextHeuristic,
@@ -138,6 +139,11 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const cmaImportModeRef = useRef<"merge" | "replace">("merge");
   const [importing, setImporting] = useState(false);
   const [cmaPaste, setCmaPaste] = useState("");
+  const [duplicateChoice, setDuplicateChoice] = useState<{
+    incoming: ComparableSale[];
+    matched: number;
+    sourceLabel: string;
+  } | null>(null);
   // Sale narratives are generated only when the valuer asks. A grid change must not call AI.
   const [aiChoice, setAiChoice] = useState<{ saleIds: string[]; hasText: boolean } | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -1214,22 +1220,15 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         });
         setStatus(`Replaced grid with ${incoming.length} sale(s) from ${sourceLabel}.`);
       } else {
-        const merged = mergeIncomingSales(salesRef.current, incoming);
-        replaceSales(merged.sales);
-        toast.success(
-          merged.added > 0
-            ? `Added ${merged.added} comparable sale(s)`
-            : "No new comparables to add",
-          {
-            description:
-              merged.matched > 0
-                ? `${merged.matched} already on the job (notes, photos and adjustments kept). CMA card numbers are ignored.`
-                : `${sourceLabel} — new sales were appended after the existing list.`,
-          },
-        );
-        setStatus(
-          `Merged ${sourceLabel}: +${merged.added} new, ${merged.matched} already on file.`,
-        );
+        const preview = mergeIncomingSales(salesRef.current, incoming);
+        if (preview.matched > 0) {
+          setDuplicateChoice({ incoming, matched: preview.matched, sourceLabel });
+          setStatus(`${preview.matched} already on the job. Choose how to handle them.`);
+        } else {
+          replaceSales(preview.sales);
+          toast.success(`Added ${preview.added} comparable sale(s)`, { description: sourceLabel });
+          setStatus(`Added ${preview.added} sale(s) from ${sourceLabel}.`);
+        }
       }
     } catch (err) {
       console.error("[CMA text import]", err);
@@ -1239,6 +1238,35 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     } finally {
       setImporting(false);
     }
+  }
+
+  function resolveDuplicates(choice: "skip" | "fill" | "overwrite") {
+    if (!duplicateChoice) return;
+    const { incoming, sourceLabel } = duplicateChoice;
+    if (choice === "skip") {
+      const existing = salesRef.current;
+      const fresh = incoming.filter((sale) => !existing.some((row) => isSameTransaction(row, sale)));
+      replaceSales([...existing, ...fresh]);
+      toast.success(`Added ${fresh.length} new sale(s). Skipped matches.`, { description: sourceLabel });
+    } else if (choice === "fill") {
+      const merged = mergeIncomingSales(salesRef.current, incoming);
+      replaceSales(merged.sales);
+      toast.success(`Filled blanks on ${merged.matched} match(es). Added ${merged.added}.`, { description: sourceLabel });
+    } else {
+      const next = [...salesRef.current];
+      for (const sale of incoming) {
+        const idx = next.findIndex((row) => isSameTransaction(row, sale));
+        if (idx >= 0) {
+          next[idx] = { ...next[idx]!, ...sale, id: next[idx]!.id, narrative: next[idx]!.narrative, photoUrl: next[idx]!.photoUrl };
+        } else {
+          next.push(sale);
+        }
+      }
+      replaceSales(next);
+      toast.success("Overwrote matching sales with CMA values. Notes and photos kept.", { description: sourceLabel });
+    }
+    setDuplicateChoice(null);
+    setStatus(null);
   }
 
   async function onCmaFileSelected(file: File | null) {
@@ -1332,7 +1360,6 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           onMeta={setMeta}
         />
       ) : null}
-      {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? null : (
       <div
         className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-4"
         onDragOver={(e) => {
@@ -1348,6 +1375,69 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           e.stopPropagation();
           importDroppedCma(cma);
         }}
+      >
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-semibold text-foreground">Import comparable sales</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Import a CMA PDF or paste Comparable Sales text. A later extract is appended.
+            Same address plus sale date and price is treated as the same transaction.
+          </p>
+          {status ? (
+            <p className="mt-2 text-xs text-muted-foreground">{status}</p>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".pdf,.csv,text/csv,application/pdf"
+            className="hidden"
+            onChange={(e) => void onCmaFileSelected(e.target.files?.[0] ?? null)}
+          />
+          <button
+            type="button"
+            disabled={importing}
+            onClick={() => {
+              cmaImportModeRef.current = "merge";
+              fileRef.current?.click();
+            }}
+            className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+          >
+            {importing ? "Importing…" : "Import CMA PDF"}
+          </button>
+          <button
+            type="button"
+            disabled={importing}
+            onClick={() => {
+              if (salesRef.current.length > 0) {
+                const ok = window.confirm(
+                  "Replace all comparables on this job with the next file? Photos, notes and adjustments on the current list will be removed.",
+                );
+                if (!ok) return;
+              }
+              cmaImportModeRef.current = "replace";
+              fileRef.current?.click();
+            }}
+            className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+          >
+            Replace all from CMA
+          </button>
+        </div>
+      </div>
+      {duplicateChoice ? (
+        <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm dark:bg-amber-950/30">
+          <p className="font-medium">{duplicateChoice.matched} already on the job.</p>
+          <p className="mt-1 text-muted-foreground">Choose how to handle the matches. Notes and photos are kept.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button type="button" className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium" onClick={() => resolveDuplicates("skip")}>Skip matches</button>
+            <button type="button" className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium" onClick={() => resolveDuplicates("fill")}>Fill blanks</button>
+            <button type="button" className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium" onClick={() => resolveDuplicates("overwrite")}>Overwrite</button>
+          </div>
+        </div>
+      ) : null}
+      {!(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
+      <div
+        className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-4"
       >
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-foreground">Sales comparison grid (URAR)</h3>
@@ -1430,41 +1520,6 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".pdf,.csv,text/csv,application/pdf"
-            className="hidden"
-            onChange={(e) => void onCmaFileSelected(e.target.files?.[0] ?? null)}
-          />
-          <button
-            type="button"
-            disabled={importing}
-            onClick={() => {
-              cmaImportModeRef.current = "merge";
-              fileRef.current?.click();
-            }}
-            className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
-          >
-            {importing ? "Importing…" : "Import CMA PDF"}
-          </button>
-          <button
-            type="button"
-            disabled={importing}
-            onClick={() => {
-              if (salesRef.current.length > 0) {
-                const ok = window.confirm(
-                  "Replace all comparables on this job with the next file? Photos, notes and adjustments on the current list will be removed.",
-                );
-                if (!ok) return;
-              }
-              cmaImportModeRef.current = "replace";
-              fileRef.current?.click();
-            }}
-            className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
-          >
-            Replace all from CMA
-          </button>
           <button
             type="button"
             disabled={generating || sales.length === 0}
@@ -1482,7 +1537,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           </button>
         </div>
       </div>
-      )}
+      ) : null}
 
       <>
       <div className="rounded-md border border-border bg-card p-4 space-y-2">

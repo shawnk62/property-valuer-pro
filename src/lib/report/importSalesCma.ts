@@ -21,6 +21,14 @@ export interface CmaSaleExtract {
   distance?: string | null;
   comments?: string | null;
   comparisonNotes?: string | null;
+  /** Commercial / industrial fields. Unused on residential extracts. */
+  clearHeight?: string | null;
+  loading?: string | null;
+  officeRatio?: string | null;
+  hardstand?: string | null;
+  passingRent?: string | null;
+  /** True when the record is a listing (asking price, no sale date). */
+  isListing?: boolean;
 }
 
 /** Soft UI guidance only — import and grid accept an unlimited number of sales. */
@@ -265,7 +273,7 @@ function addressPart(sale: { address?: string }): string {
   return streetKey(address) || addressKey(address);
 }
 
-function isSameTransaction(
+export function isSameTransaction(
   existing: ComparableSale,
   incoming: ComparableSale,
 ): boolean {
@@ -408,6 +416,11 @@ export function cmaExtractsToSales(rows: CmaSaleExtract[]): ComparableSale[] {
       beds: beds || undefined,
       baths: baths || undefined,
       cars: cars || undefined,
+      clearHeight: r.clearHeight || undefined,
+      loading: r.loading || undefined,
+      officeRatio: r.officeRatio || undefined,
+      hardstand: r.hardstand || undefined,
+      passingRent: r.passingRent || undefined,
       proximity: proximity || undefined,
       dataSource: "Cotality / RP Data",
       comments,
@@ -783,6 +796,12 @@ function extractFactsFromBlock(address: string, block: string): CmaSaleExtract {
 
   const yearMatch = block.match(/Year\s*Built\s*[:\s]*(\d{4})/i);
   const distMatch = block.match(/Distance\s*[:\s]*([\d.]+\s*[kK][mM])/i);
+  const clearHeight = block.match(/Clear\s*Height\s*[:\s]*([\d.]+\s*m)/i)?.[1]?.trim() ?? null;
+  const loading = block.match(/(?:Loading|Dock)\s*[:\s]*([^\n]{2,40})/i)?.[1]?.trim() ?? null;
+  const officeRatio = block.match(/Office\s*(?:Ratio|Component|%)\s*[:\s]*([\d.]+%?)/i)?.[1]?.trim() ?? null;
+  const hardstand = block.match(/Hardstand\s*[:\s]*([\d,]+\s*m)/i)?.[1]?.trim() ?? null;
+  const passingRent = block.match(/(?:Passing\s*Rent|Net\s*Rent)\s*[:\s]*(\$\s*[\d,]+)/i)?.[1]?.replace(/\s+/g, "") ?? null;
+  const isListing = /asking\s*price|for\s*sale|listed|listing/i.test(block) && !dateMatch;
 
   const compLines = [
     ...block.matchAll(
@@ -816,6 +835,12 @@ function extractFactsFromBlock(address: string, block: string): CmaSaleExtract {
     distance: distMatch?.[1]?.replace(/\s+/g, "") ?? null,
     comments: comments || null,
     comparisonNotes: compLines.length ? compLines.join("\n") : null,
+    clearHeight,
+    loading,
+    officeRatio,
+    hardstand,
+    passingRent,
+    isListing,
   };
 }
 

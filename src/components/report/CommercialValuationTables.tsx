@@ -137,7 +137,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 <th className="py-1 pr-2">Subject</th>
                 {sales.filter((s) => s.omitFromReport !== true).map((s, idx, arr) => (
                   <th key={s.id} className="py-1 pr-2 min-w-[8rem]">
-                    <div className="truncate">{s.address || "Sale"}</div>
+                    <div className="truncate">{s.address || (s.saleDate ? "Sale" : "Listing")}</div>
                     <div className="mt-0.5 flex gap-1 text-[0.65rem] font-normal">
                       <button type="button" disabled={idx === 0} className="text-slate-500 disabled:opacity-30" onClick={() => moveSale(s.id, -1)}>←</button>
                       <button type="button" disabled={idx === arr.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => moveSale(s.id, 1)}>→</button>
@@ -201,6 +201,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 <td className="py-1 pr-2">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
+                    <div className="text-[0.6rem] text-slate-400">{s.saleDate ? "Sale price" : "Asking price"}</div>
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.salePrice} onChange={(e) => patchSale(s.id, { salePrice: e.target.value })} />
                   </td>
                 ))}
