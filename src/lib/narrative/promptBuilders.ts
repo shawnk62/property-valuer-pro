@@ -663,10 +663,17 @@ One or two short professional paragraphs. Do not repeat the heading.`,
         system: BASE_RULES + styleGuide(type),
         prompt: `Write a SWOT analysis for the industrial or commercial property in this ${type} valuation report.
 
-Draw only from recorded market notes, locality facts, and inspection data. Four short paragraphs or a compact table-style list: Strengths, Weaknesses, Opportunities, Threats. Do not invent market statistics, vacancy rates, or construction costs.
+Organise the accepted facts and the subject facts below into four short paragraphs or a compact list under Strengths, Weaknesses, Opportunities and Threats. Strengths and Weaknesses are internal and current. Opportunities and Threats are external and forward-looking. Cite every figure in Harvard author-date form in the same sentence. Do not invent market statistics, vacancy rates, or construction costs. Do not move a fact between quadrants unless the accepted facts support that classification.
 
-Recorded market and locality context:
-${sectionAnswers(values, ["1", "2"])}
+Subject facts:
+Tenant covenant: ${formatValueLine("Tenant covenant", values["comm_tenant_covenant"]) || "not recorded"}
+Remaining lease term: ${formatValueLine("Remaining term", values["comm_remaining_term"]) || "not recorded"}
+Condition relative to stock: ${formatValueLine("Condition relative", values["comm_condition_relative"]) || "not recorded"}
+Functional adequacy: ${formatValueLine("Functional adequacy", values["func_adequacy"]) || "not recorded"}
+Functional notes: ${formatValueLine("Functional notes", values["func_adequacy_notes"]) || "none"}
+
+Accepted external facts:
+${extras?.locationContext?.trim() || "ACCEPTED FACTS: none."}
 
 Do not repeat the heading.`,
       };

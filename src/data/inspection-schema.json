@@ -2559,6 +2559,34 @@
           "placeholder": "e.g. 50 kPa or notes"
         },
         {
+          "name": "comm_tenant_covenant",
+          "label": "Tenant covenant quality",
+          "type": "select",
+          "options": [
+            "National",
+            "Government",
+            "Local",
+            "Unknown"
+          ]
+        },
+        {
+          "name": "comm_remaining_term",
+          "label": "Remaining lease term (years)",
+          "type": "text",
+          "multiline": false,
+          "placeholder": "e.g. 3.5"
+        },
+        {
+          "name": "comm_condition_relative",
+          "label": "Condition relative to competing stock",
+          "type": "select",
+          "options": [
+            "Superior",
+            "Average",
+            "Inferior"
+          ]
+        },
+        {
           "name": "func_adequacy",
           "label": "Functional adequacy for the use",
           "type": "checkbox_group",

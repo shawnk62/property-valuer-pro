@@ -345,7 +345,7 @@ Include every sourced detail you find: estate name, developer, stages, dwelling 
 
 const SearchMarketInput = z.object({
   settings: SettingsInput,
-  scale: z.enum(["australia", "state", "region", "locality"]),
+  scale: z.enum(["australia", "state", "region", "locality", "swot"]),
   suburb: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -364,7 +364,22 @@ export const searchMarketFacts = createServerFn({ method: "POST" })
     const isCommercial = data.propertyKind === "commercial" || data.propertyKind === "industrial";
     const kindLabel = data.propertyKind === "industrial" ? "industrial" : "commercial";
     const scalePrompt =
-      isCommercial
+      data.scale === "swot"
+        ? `Search the public web for factors that can affect the value of a ${kindLabel} property at ${place}${
+            data.address ? ` (near ${data.address})` : ""
+          }.
+Collect sourced notes on, where available:
+- occupancy, vacancy and absorption in the suburb or named precinct
+- net effective rents, incentives and yields
+- land values and building rates for similar property
+- competing supply under construction or planned
+- infrastructure or zoning changes affecting the locality
+- environmental overlays or events affecting marketability
+- tenant or buyer profile in this segment
+- interest-rate or credit conditions if a source links them to commercial or industrial demand
+Prefer council, CoreLogic, JLL, CBRE, Colliers and reputable local market notes.
+Do not write a physical amenity tour.`
+        : isCommercial
         ? data.scale === "australia"
           ? `Search the public web for current Australian ${kindLabel} property market commentary suitable for a valuation report.
 Collect sourced notes on, where available:

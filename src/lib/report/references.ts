@@ -320,6 +320,7 @@ function claimLists(meta: ReportMeta | undefined): NbhdClaim[] {
     ...((meta.marketClaimsState as NbhdClaim[] | undefined) ?? []),
     ...((meta.marketClaimsRegion as NbhdClaim[] | undefined) ?? []),
     ...((meta.marketClaimsLocality as NbhdClaim[] | undefined) ?? []),
+    ...((meta.swotClaims as NbhdClaim[] | undefined) ?? []),
   ];
 }
 

@@ -647,6 +647,59 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     );
   }
 
+  async function runSwotSearch() {
+    const settings = loadAiSettings();
+    if (!isAiConfigured(settings)) {
+      toast.error("AI is not configured", {
+        description: "Open Settings, add an API key, then search again.",
+      });
+      return;
+    }
+    setBusy("swotAnalysis");
+    setLastStatus("Searching SWOT factors…");
+    try {
+      const searched = await searchMarketFacts({
+        data: {
+          settings: {
+            provider: settings.provider,
+            model: settings.model,
+            apiKey: settings.apiKey,
+            ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
+          },
+          scale: "swot",
+          suburb: String(draft.values["prop_suburb"] ?? ""),
+          city: String(draft.values["prop_lga"] ?? ""),
+          state: String(draft.values["prop_state"] ?? "Queensland"),
+          address: subjectAddressLine(draft.values),
+          propertyKind: String(draft.values["prop_type_industrial"] ?? "").trim()
+            ? "industrial"
+            : String(draft.values["prop_type_commercial"] ?? "").trim()
+              ? "commercial"
+              : "residential",
+        },
+      });
+      const incoming = parseNbhdClaims(searched.raw);
+      const existing = (draft.reportMeta.swotClaims ?? []) as NbhdClaim[];
+      const merged = mergeNbhdClaims(existing, incoming);
+      setMeta({ swotClaims: merged });
+      refreshReferences({ swotClaims: merged });
+      setLastStatus(
+        merged.length
+          ? `SWOT notes: ${merged.length} on file. Untick what you do not want.`
+          : "No SWOT notes were returned.",
+      );
+      toast.message(
+        incoming.length ? `Prepared ${incoming.length} SWOT note(s)` : "No SWOT notes found",
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setLastStatus(`SWOT search failed: ${message}`);
+      toast.error("SWOT search failed", { description: message });
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function runMarketSearch(scale: MarketScale) {
     const row = MARKET_ASSIST.find((item) => item.scale === scale);
     if (!row) return;
@@ -1364,6 +1417,18 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               ...(key === "marketLocality"
                 ? { locationContext: await marketContext("locality", true) }
                 : {}),
+              ...(key === "swotAnalysis"
+                ? {
+                    locationContext: (() => {
+                      const claims = (draft.reportMeta.swotClaims ?? []).filter((c) => c.accepted);
+                      if (!claims.length) return "ACCEPTED FACTS: none.";
+                      return [
+                        `ACCEPTED FACTS (${claims.length}). Cover each topic.`,
+                        ...claims.map((c, i) => `${i + 1}. ${c.text}${c.source ? ` (${c.source})` : ""}`),
+                      ].join("\n");
+                    })(),
+                  }
+                : {}),
               ...(key === "titleSearchNarrative"
                 ? {
                     locationContext: String(draft.values["title_search_text"] ?? "").slice(0, 14000),
@@ -1388,11 +1453,14 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
 
           if (text.trim()) {
             const marketKey = key === "marketAustralia" || key === "marketState" || key === "marketRegion" || key === "marketLocality";
+            const swotKey = key === "swotAnalysis";
             const claims = marketKey
               ? ((draft.reportMeta[`marketClaims${key === "marketAustralia" ? "Australia" : key === "marketState" ? "State" : key === "marketRegion" ? "Region" : "Locality"}` as keyof typeof draft.reportMeta] as NbhdClaim[] | undefined) ?? [])
-              : [];
-            const cited = marketKey
-              ? citeAcceptedNotes(text.trim(), claims, draft.values, "Market commentary")
+              : swotKey
+                ? ((draft.reportMeta.swotClaims ?? []) as NbhdClaim[])
+                : [];
+            const cited = marketKey || swotKey
+              ? citeAcceptedNotes(text.trim(), claims, draft.values, swotKey ? "SWOT analysis" : "Market commentary")
               : text.trim();
             next[key] =
               key === "neighbourhood"
@@ -1800,6 +1868,60 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                 className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium disabled:opacity-60"
               >
                 {nbhdAction === "rewrite" ? "Rewriting…" : "Rewrite neighbourhood with accepted facts"}
+              </button>
+            </div>
+          ) : null}
+          {block.key === "swotAnalysis" &&
+          (neighbourhoodAssistEnabled(String(draft.values["prop_assignment"] ?? "")) ||
+            shawnExam) &&
+          (Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) ||
+            Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
+            <div className="mt-2 space-y-2 rounded-md border border-amber-300/80 bg-amber-50 p-3 dark:bg-amber-950/30">
+              <p className="text-xs font-medium text-foreground">
+                SWOT notes. Search first, tick the lines you accept, then rewrite. Unticked lines stay in this working box and do not print.
+              </p>
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => void runSwotSearch()}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+              >
+                {busy === "swotAnalysis" ? "Searching…" : "Find SWOT notes"}
+              </button>
+              {((draft.reportMeta.swotClaims ?? []) as NbhdClaim[]).map((claim) => (
+                <label
+                  key={claim.id}
+                  className="flex items-start gap-2 rounded bg-amber-100/80 px-2 py-1.5 text-xs dark:bg-amber-900/40"
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 size-3.5 shrink-0 rounded border-input"
+                    checked={claim.accepted}
+                    onChange={(e) => {
+                      setMeta({
+                        swotClaims: ((draft.reportMeta.swotClaims ?? []) as NbhdClaim[]).map((c) =>
+                          c.id === claim.id ? { ...c, accepted: e.target.checked } : c,
+                        ),
+                      });
+                    }}
+                  />
+                  <span>
+                    {claim.text}
+                    {claim.source ? (
+                      <span className="mt-0.5 block text-[10px] text-muted-foreground">
+                        {claim.source}
+                      </span>
+                    ) : null}
+                  </span>
+                </label>
+              ))}
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => void generateWithAi(["swotAnalysis"])}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+              >
+                Rewrite SWOT with accepted facts
               </button>
             </div>
           ) : null}

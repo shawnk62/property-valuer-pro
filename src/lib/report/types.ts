@@ -477,6 +477,14 @@ export interface ReportMeta {
     source?: string;
     accepted: boolean;
   }>;
+  /** SWOT notes for commercial and industrial Shawn Full. */
+  swotClaims?: Array<{
+    id: string;
+    kind: string;
+    text: string;
+    source?: string;
+    accepted: boolean;
+  }>;
   reportReferences?: Array<{
     id: string;
     text: string;

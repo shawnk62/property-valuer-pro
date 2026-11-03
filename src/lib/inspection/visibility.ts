@@ -59,6 +59,9 @@ const COMMERCIAL_INDUSTRIAL_FIELD_NAMES = new Set([
   "comm_hardstand",
   "comm_loading_config",
   "comm_floor_loading",
+  "comm_tenant_covenant",
+  "comm_remaining_term",
+  "comm_condition_relative",
   "func_adequacy",
   "func_adequacy_notes",
 ]);
