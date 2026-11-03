@@ -1361,6 +1361,9 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               ...(key === "marketRegion"
                 ? { locationContext: await marketContext("region", true) }
                 : {}),
+              ...(key === "marketLocality"
+                ? { locationContext: await marketContext("locality", true) }
+                : {}),
               ...(key === "titleSearchNarrative"
                 ? {
                     locationContext: String(draft.values["title_search_text"] ?? "").slice(0, 14000),

@@ -469,6 +469,7 @@ ${extras?.locationContext?.trim() || "ACCEPTED FACTS: none."}
 
 Rules:
 - Synthesise ACCEPTED FACTS into connected professional paragraphs. Comprehensive, not lengthy. Do not copy the list sentence-by-sentence.
+- Use every accepted fact. Do not write that no data was recorded if accepted facts are listed above. Prefer commercial or industrial measures where the job is commercial or industrial, but still use any accepted residential fact that the valuer has ticked.
 - Cover every distinct accepted topic. Typical topics, only when present in the accepted facts: macro or micro economic conditions (interest rates, finance availability); supply and demand; state of this class of market versus earlier conditions; incentives; competing or planned estates; estate stages and expected completion; buyer profile; market drivers; environmental events affecting the market; local price range; volume of similar property on the market; mortgagee-sale activity; what typical buyers consider.
 - If an accepted fact is an agent's or developer's observation, attribute it as advice received, do not present it as the valuer's unaided opinion.
 - When two or more sources give different figures for the same item, cite ONE range from the lowest to the highest accepted figure. Do not list each source's statistic separately.
