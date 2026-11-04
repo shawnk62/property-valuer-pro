@@ -753,7 +753,13 @@ function formatCoverDate(raw: string | undefined | null): string {
   return s;
 }
 
-export function ReportPreview({ draft }: { draft: ReportDraft }) {
+export function ReportPreview({
+  draft,
+  onNarrativeChange,
+}: {
+  draft: ReportDraft;
+  onNarrativeChange?: (patch: Partial<ReportDraft["narrative"]>) => void;
+}) {
   const v = draft.values;
   const printedSales = salesOnReport(draft.sales);
   const m = draft.reportMeta;
@@ -762,7 +768,7 @@ export function ReportPreview({ draft }: { draft: ReportDraft }) {
     isShawnExamType(reportType.id) ||
     /shawn/i.test(String(get(v, "prop_assignment") ?? ""))
   ) {
-    return <ShawnExamPreview draft={draft} />;
+    return <ShawnExamPreview draft={draft} onNarrativeChange={onNarrativeChange} />;
   }
   const murray = isMurrayReportType(reportType.id);
 

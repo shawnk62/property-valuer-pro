@@ -412,7 +412,13 @@ function PhotoAnnexPages({ heading, children }: { heading: string; children: Rea
   );
 }
 
-export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
+export function ShawnExamPreview({
+  draft,
+  onNarrativeChange,
+}: {
+  draft: ReportDraft;
+  onNarrativeChange?: (patch: Partial<ReportDraft["narrative"]>) => void;
+}) {
   const v = draft.values;
   const m = draft.reportMeta;
   const citeStyle = referenceStyleOf(m);
@@ -815,10 +821,17 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             value: planningSchemeInForce(v, m.valueDate),
           },
           { label: "Zoning", value: get(v, "prop_zoning") },
-          { label: "Zoning purpose / description", value: draft.narrative.zoningPurpose?.trim() || zoningPurposeSentence(get(v, "prop_zoning_desc")) },
           { label: "Zoning compliance", value: get(v, "prop_zoning_comp") },
         ]}
       />
+      <label className="mt-2 block text-sm">
+        <span className="font-medium">Zoning precinct and purpose</span>
+        <textarea
+          className="mt-1 min-h-[4.5rem] w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+          value={draft.narrative.zoningPurpose?.trim() || zoningPurposeSentence(get(v, "prop_zoning_desc"))}
+          onChange={(e) => onNarrativeChange?.({ zoningPurpose: e.target.value })}
+        />
+      </label>
       <Para>
         The planning scheme cited above is the scheme in force at the date of valuation.
       </Para>

@@ -68,7 +68,7 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
   const navigate = useNavigate();
   const lock = useEditLock(inspectionId);
   const controller = useReportDraft(inspectionId, { readOnly: !lock.canEdit });
-  const { draft, dirty, savedAt, save, loaded, loadError, setValue } = controller;
+  const { draft, dirty, savedAt, save, loaded, loadError, setValue, setNarrative } = controller;
   const reportSigned = isAppliedSignature(draft.values["sign_sig"]);
   const editsLocked = !lock.canEdit || reportSigned;
   const [tab, setTab] = useState<TabId>("subject");
@@ -413,7 +413,7 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
             aria-hidden={tab !== "preview"}
           >
             <SectionGuard>
-              <ReportPreview draft={draft} />
+              <ReportPreview draft={draft} onNarrativeChange={setNarrative} />
             </SectionGuard>
           </div>
         </div>
