@@ -557,6 +557,11 @@ export interface ReportMeta {
     notes: string;
     proximity?: string;
     photoUrl?: string;
+    clearHeight?: string;
+    loading?: string;
+    officeRatio?: string;
+    condition?: string;
+    hardstand?: string;
   }>;
   /** Map of lease evidence locations. */
   ciLeaseMapUrl?: string;

@@ -143,7 +143,14 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
             term: "",
             incentives: "",
             outgoings: "",
-            notes: "",
+            notes: sale.comments ?? "",
+            proximity: sale.proximity ?? "",
+            photoUrl: sale.photoUrl,
+            clearHeight: sale.clearHeight ?? "",
+            loading: sale.loading ?? "",
+            officeRatio: sale.officeRatio ?? "",
+            condition: sale.condition ?? "",
+            hardstand: sale.hardstand ?? "",
           },
         ],
       });
@@ -460,7 +467,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
         ) : null}
       </div>
 
-      <LeaseEvidenceGrid meta={meta} onMeta={onMeta} />
+      <LeaseEvidenceGrid values={values} meta={meta} onMeta={onMeta} />
 
       <div>
         <h3 className="text-sm font-semibold text-foreground mb-1">Income capitalisation</h3>

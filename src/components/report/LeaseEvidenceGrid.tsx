@@ -1,10 +1,11 @@
 /**
  * Lease evidence grid for commercial / industrial Shawn Full.
- * Subject facts stay on the inspection form. These are market lettings.
+ * Column-per-comparable layout matching the sales comparison table.
+ * No sale price and no yield. Subject facts come from the inspection form.
  */
-import type { ReportMeta } from "@/lib/report/types";
+import type { InspectionValues, ReportMeta } from "@/lib/report/types";
 
-interface LeaseComp {
+export interface LeaseComp {
   id: string;
   address: string;
   date: string;
@@ -16,6 +17,11 @@ interface LeaseComp {
   notes: string;
   proximity?: string;
   photoUrl?: string;
+  clearHeight?: string;
+  loading?: string;
+  officeRatio?: string;
+  condition?: string;
+  hardstand?: string;
 }
 
 function blank(): LeaseComp {
@@ -31,17 +37,31 @@ function blank(): LeaseComp {
     notes: "",
     proximity: "",
     photoUrl: "",
+    clearHeight: "",
+    loading: "",
+    officeRatio: "",
+    condition: "",
+    hardstand: "",
   };
 }
 
 export function LeaseEvidenceGrid({
+  values,
   meta,
   onMeta,
 }: {
+  values: InspectionValues;
   meta: ReportMeta;
   onMeta: (patch: Partial<ReportMeta>) => void;
 }) {
   const comps = meta.ciLeaseComps ?? [];
+  const subjectBuilding = String(values["comm_nla"] ?? values["comm_gba"] ?? "");
+  const subjectClear = String(values["comm_clear_height"] ?? "");
+  const subjectHardstand = String(values["comm_hardstand"] ?? "");
+  const subjectLoading = String(values["comm_loading_config"] ?? "");
+  const subjectOfficeRaw = String(values["comm_office_split"] ?? "");
+  const subjectOffice = /\d|%|office/i.test(subjectOfficeRaw) ? subjectOfficeRaw : "";
+  const subjectCondition = String(values["overall_cond"] ?? "");
 
   function update(id: string, patch: Partial<LeaseComp>) {
     onMeta({
@@ -59,6 +79,7 @@ export function LeaseEvidenceGrid({
   }
 
   function remove(id: string) {
+    if (!window.confirm("Delete this lease comparable from the working file?")) return;
     onMeta({ ciLeaseComps: comps.filter((c) => c.id !== id) });
   }
 
@@ -66,8 +87,15 @@ export function LeaseEvidenceGrid({
     <div className="mt-2">
       <div className="text-sm font-semibold text-slate-700 mb-1">Lease evidence</div>
       <p className="text-xs text-slate-500 mb-2">
-        Record comparable lettings. Adopt a net equivalent market rent from the evidence.
+        Subject facts are from the inspection. Enter lease details. Adopt a net equivalent market rent from the evidence.
       </p>
+      <button
+        type="button"
+        onClick={() => onMeta({ ciLeaseComps: [...comps, blank()] })}
+        className="mb-2 rounded-md border border-input bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
+      >
+        Add lease comparable
+      </button>
       {comps.length === 0 ? (
         <p className="text-xs text-slate-400 mb-2">No lease comparables yet.</p>
       ) : (
@@ -75,55 +103,39 @@ export function LeaseEvidenceGrid({
           <table className="w-full text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-left text-slate-500">
-                <th className="sticky left-0 z-20 bg-white py-1 pr-2 min-w-[8rem]">Address</th>
-                <th className="py-1 pr-2">Proximity</th>
-                <th className="py-1 pr-2">Date</th>
-                <th className="py-1 pr-2">NLA m²</th>
-                <th className="py-1 pr-2">Net rent $/m²</th>
-                <th className="py-1 pr-2">Term</th>
-                <th className="py-1 pr-2">Incentives</th>
-                <th className="py-1 pr-2">Outgoings</th>
-                <th className="py-1 pr-2">Photo</th>
-                <th className="py-1 pr-2">Notes</th>
-                <th />
+                <th className="sticky left-0 z-20 bg-white py-1 pr-2 min-w-[6rem]">Item</th>
+                <th className="sticky left-[6rem] z-20 bg-white py-1 pr-2 min-w-[8rem]">Subject</th>
+                {comps.map((c, idx) => (
+                  <th key={c.id} className="py-1 pr-2 min-w-[8rem]">
+                    <input
+                      className="w-full border border-slate-300 rounded px-1 py-0.5 text-xs font-medium text-foreground"
+                      value={c.address}
+                      placeholder="Lease address"
+                      onChange={(e) => update(c.id, { address: e.target.value })}
+                    />
+                    <div className="mt-0.5 flex gap-1 text-[0.65rem] font-normal">
+                      <button type="button" disabled={idx === 0} className="text-slate-500 disabled:opacity-30" onClick={() => move(c.id, -1)}>←</button>
+                      <button type="button" disabled={idx === comps.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => move(c.id, 1)}>→</button>
+                      <button type="button" className="text-red-500" onClick={() => remove(c.id)}>×</button>
+                    </div>
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {comps.map((c) => (
-                <tr key={c.id} className="border-b border-slate-100">
-                  <td className="sticky left-0 z-10 bg-white py-1 pr-1 min-w-[8rem]">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.address} onChange={(e) => update(c.id, { address: e.target.value })} />
-                  </td>
-                  <td className="py-1 pr-1">
-                    <input className="w-24 border border-slate-300 rounded px-1 py-0.5" value={c.proximity ?? ""} placeholder="e.g. 1.2 km N" onChange={(e) => update(c.id, { proximity: e.target.value })} />
-                  </td>
-                  <td className="py-1 pr-1">
-                    <input className="w-20 border border-slate-300 rounded px-1 py-0.5" value={c.date} onChange={(e) => update(c.id, { date: e.target.value })} />
-                  </td>
-                  <td className="py-1 pr-1">
-                    <input className="w-16 border border-slate-300 rounded px-1 py-0.5" value={c.nla} onChange={(e) => update(c.id, { nla: e.target.value })} />
-                  </td>
-                  <td className="py-1 pr-1">
-                    <input className="w-16 border border-slate-300 rounded px-1 py-0.5" value={c.netRentPerM2} onChange={(e) => update(c.id, { netRentPerM2: e.target.value })} />
-                  </td>
-                  <td className="py-1 pr-1">
-                    <input className="w-20 border border-slate-300 rounded px-1 py-0.5" value={c.term} onChange={(e) => update(c.id, { term: e.target.value })} />
-                  </td>
-                  <td className="py-1 pr-1">
-                    <input className="w-20 border border-slate-300 rounded px-1 py-0.5" value={c.incentives} onChange={(e) => update(c.id, { incentives: e.target.value })} />
-                  </td>
-                  <td className="py-1 pr-1">
-                    <input className="w-20 border border-slate-300 rounded px-1 py-0.5" value={c.outgoings} onChange={(e) => update(c.id, { outgoings: e.target.value })} />
-                  </td>
-                  <td className="py-1 pr-1">
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Photo</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                {comps.map((c) => (
+                  <td key={c.id} className="py-1 pr-1">
                     {c.photoUrl ? (
                       <div className="relative">
-                        <img src={c.photoUrl} alt={c.address} className="w-full max-h-20 rounded object-contain bg-slate-50" />
+                        <img src={c.photoUrl} alt={c.address} className="w-full max-h-28 rounded object-contain bg-slate-50" />
                         <button type="button" className="absolute right-0.5 top-0.5 rounded bg-white/90 px-1 text-[0.6rem] text-red-600" onClick={() => update(c.id, { photoUrl: "" })}>Remove</button>
                       </div>
                     ) : (
-                      <label className="flex h-14 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50">
-                        Add
+                      <label className="flex h-20 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50">
+                        Add photo
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (!file) return;
@@ -134,28 +146,133 @@ export function LeaseEvidenceGrid({
                       </label>
                     )}
                   </td>
-                  <td className="py-1 pr-1">
-                    <textarea className="w-28 min-h-[3rem] border border-slate-300 rounded px-1 py-0.5" value={c.notes} onChange={(e) => update(c.id, { notes: e.target.value })} />
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Proximity to Subject</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                {comps.map((c) => (
+                  <td key={c.id} className="py-1 pr-1">
+                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.proximity ?? ""} placeholder="e.g. 1.2 km N" onChange={(e) => update(c.id, { proximity: e.target.value })} />
                   </td>
-                  <td className="py-1 whitespace-nowrap">
-                    <button type="button" className="text-slate-500 mr-1" onClick={() => move(c.id, -1)}>←</button>
-                    <button type="button" className="text-slate-500 mr-1" onClick={() => move(c.id, 1)}>→</button>
-                    <button type="button" className="text-red-500" onClick={() => remove(c.id)}>×</button>
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Lease date</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                {comps.map((c) => (
+                  <td key={c.id} className="py-1 pr-1">
+                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.date} onChange={(e) => update(c.id, { date: e.target.value })} />
                   </td>
-                </tr>
-              ))}
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Building area</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectBuilding || "—"}</td>
+                {comps.map((c) => (
+                  <td key={c.id} className="py-1 pr-1">
+                    <div className="flex items-center gap-1">
+                      <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.nla} onChange={(e) => update(c.id, { nla: e.target.value })} />
+                      <span className="text-slate-500 text-[0.65rem] whitespace-nowrap">m²</span>
+                    </div>
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Net rent $/m²</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                {comps.map((c) => (
+                  <td key={c.id} className="py-1 pr-1">
+                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.netRentPerM2} onChange={(e) => update(c.id, { netRentPerM2: e.target.value })} />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Term</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                {comps.map((c) => (
+                  <td key={c.id} className="py-1 pr-1">
+                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.term} onChange={(e) => update(c.id, { term: e.target.value })} />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Incentives</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                {comps.map((c) => (
+                  <td key={c.id} className="py-1 pr-1">
+                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.incentives} onChange={(e) => update(c.id, { incentives: e.target.value })} />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Outgoings</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                {comps.map((c) => (
+                  <td key={c.id} className="py-1 pr-1">
+                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.outgoings} onChange={(e) => update(c.id, { outgoings: e.target.value })} />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Clear height</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectClear || "—"}</td>
+                {comps.map((c) => (
+                  <td key={c.id} className="py-1 pr-1">
+                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.clearHeight ?? ""} onChange={(e) => update(c.id, { clearHeight: e.target.value })} />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Loading</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectLoading || "—"}</td>
+                {comps.map((c) => (
+                  <td key={c.id} className="py-1 pr-1">
+                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.loading ?? ""} onChange={(e) => update(c.id, { loading: e.target.value })} />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Office ratio</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectOffice || "—"}</td>
+                {comps.map((c) => (
+                  <td key={c.id} className="py-1 pr-1">
+                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.officeRatio ?? ""} onChange={(e) => update(c.id, { officeRatio: e.target.value })} />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Condition</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectCondition || "—"}</td>
+                {comps.map((c) => (
+                  <td key={c.id} className="py-1 pr-1">
+                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.condition ?? ""} onChange={(e) => update(c.id, { condition: e.target.value })} />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Hardstand</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectHardstand || "—"}</td>
+                {comps.map((c) => (
+                  <td key={c.id} className="py-1 pr-1">
+                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.hardstand ?? ""} onChange={(e) => update(c.id, { hardstand: e.target.value })} />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Notes</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                {comps.map((c) => (
+                  <td key={c.id} className="py-1 pr-1">
+                    <textarea className="w-full min-h-[4rem] border border-slate-300 rounded px-1 py-0.5" value={c.notes} onChange={(e) => update(c.id, { notes: e.target.value })} />
+                  </td>
+                ))}
+              </tr>
             </tbody>
           </table>
         </div>
       )}
       <div className="mt-2 flex items-center gap-3">
-        <button
-          type="button"
-          className="text-xs text-slate-600 underline"
-          onClick={() => onMeta({ ciLeaseComps: [...comps, blank()] })}
-        >
-          Add lease comparable
-        </button>
         <label className="flex items-center gap-1 text-xs">
           <span className="text-slate-500">Adopted net rent $/m²</span>
           <input
@@ -165,37 +282,6 @@ export function LeaseEvidenceGrid({
           />
         </label>
       </div>
-
-      {comps.length > 0 ? (
-        <div className="mt-3">
-          <div className="text-xs font-medium text-slate-600 mb-1">Lease evidence photos</div>
-          <div className="grid gap-2 sm:grid-cols-3">
-            {comps.map((c, idx) => (
-              <div key={c.id} className="rounded border border-slate-200 p-1.5">
-                <p className="text-[0.65rem] font-medium truncate">{c.address || `Lease ${idx + 1}`}</p>
-                {c.photoUrl ? (
-                  <div className="relative mt-1">
-                    <img src={c.photoUrl} alt={c.address} className="max-h-24 w-full rounded object-contain bg-slate-50" />
-                    <button type="button" className="absolute right-0.5 top-0.5 rounded bg-white/90 px-1 text-[0.6rem] text-red-600" onClick={() => update(c.id, { photoUrl: "" })}>Remove</button>
-                  </div>
-                ) : (
-                  <label className="mt-1 flex h-16 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50">
-                    Add photo
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      const reader = new FileReader();
-                      reader.onload = () => update(c.id, { photoUrl: String(reader.result ?? "") });
-                      reader.readAsDataURL(file);
-                    }} />
-                  </label>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
       <div className="mt-3">
         <div className="text-xs font-medium text-slate-600 mb-1">Lease evidence map</div>
         {meta.ciLeaseMapUrl ? (
