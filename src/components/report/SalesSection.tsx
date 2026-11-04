@@ -1899,7 +1899,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         )}
       </div>
 
-      {gridSales.length === 0 ? (
+      {!(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) && gridSales.length === 0 ? (
         <div className="rounded-md border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
           <p>
             {heldSales.length > 0
@@ -1914,7 +1914,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
             Add comparable sale
           </button>
         </div>
-      ) : (
+      ) : !(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
         (() => {
           const COMPS_PER_GRID = 3;
           const chunks: (typeof gridSales)[] = [];
