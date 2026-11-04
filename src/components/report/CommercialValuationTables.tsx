@@ -21,6 +21,18 @@ function num(raw: string | number | null | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function landAreaInM2(sale: ComparableSale): string {
+  const a = num(sale.landArea);
+  if (a == null) return "";
+  return (sale.landUnit ?? "m2") === "ha" ? String(a * 10000) : String(a);
+}
+
+function formatCurrency(raw: string): string {
+  const n = num(raw);
+  if (n == null) return raw.trim();
+  return n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+}
+
 function rate(price: string | undefined, area: string | undefined): string {
   const p = num(price);
   const a = num(area);
@@ -99,6 +111,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
         saleDate: "",
         salePrice: "",
         landArea: "",
+        landUnit: "m2",
         gla: "",
         clearHeight: "",
         loading: "",
@@ -240,16 +253,38 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <div className="text-[0.6rem] text-slate-400">{s.saleDate ? "Sale price" : "Asking price"}</div>
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.salePrice} onChange={(e) => patchSale(s.id, { salePrice: e.target.value })} />
+                    <input
+                      className="w-full border border-slate-300 rounded px-1 py-0.5"
+                      value={s.salePrice}
+                      onChange={(e) => patchSale(s.id, { salePrice: e.target.value })}
+                      onBlur={(e) => {
+                        const formatted = formatCurrency(e.target.value);
+                        if (formatted !== e.target.value) patchSale(s.id, { salePrice: formatted });
+                      }}
+                    />
                   </td>
                 ))}
               </tr>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Land area m²</td>
+                <td className="py-1 pr-2 text-slate-500">Land area</td>
                 <td className="py-1 pr-2">{subjectLand || "—"}</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.landArea} onChange={(e) => patchSale(s.id, { landArea: e.target.value })} />
+                    <div className="flex gap-1">
+                      <input
+                        className="w-full border border-slate-300 rounded px-1 py-0.5"
+                        value={s.landArea}
+                        onChange={(e) => patchSale(s.id, { landArea: e.target.value })}
+                      />
+                      <select
+                        className="border border-slate-300 rounded px-0.5 py-0.5 text-[0.65rem]"
+                        value={s.landUnit ?? "m2"}
+                        onChange={(e) => patchSale(s.id, { landUnit: e.target.value as "m2" | "ha" })}
+                      >
+                        <option value="m2">m²</option>
+                        <option value="ha">ha</option>
+                      </select>
+                    </div>
                   </td>
                 ))}
               </tr>
@@ -257,15 +292,22 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 <td className="py-1 pr-2 text-slate-500">Land rate $/m²</td>
                 <td className="py-1 pr-2">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
-                  <td key={s.id} className="py-1 pr-2">{rate(s.salePrice, s.landArea)}</td>
+                  <td key={s.id} className="py-1 pr-2">{rate(s.salePrice, landAreaInM2(s))}</td>
                 ))}
               </tr>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Building area m²</td>
+                <td className="py-1 pr-2 text-slate-500">Building area</td>
                 <td className="py-1 pr-2">{subjectBuilding || "—"}</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.gla ?? ""} onChange={(e) => patchSale(s.id, { gla: e.target.value })} />
+                    <div className="flex items-center gap-1">
+                      <input
+                        className="w-full border border-slate-300 rounded px-1 py-0.5"
+                        value={s.gla ?? ""}
+                        onChange={(e) => patchSale(s.id, { gla: e.target.value })}
+                      />
+                      <span className="text-slate-500 text-[0.65rem] whitespace-nowrap">m²</span>
+                    </div>
                   </td>
                 ))}
               </tr>

@@ -242,6 +242,8 @@ export interface ComparableSale {
   saleDate: string;
   salePrice: string;
   landArea: string;
+  /** Commercial/industrial land unit. Default m2. Does not rename landArea. */
+  landUnit?: "m2" | "ha";
   comments: string;
   /** Printed rating on the sales schedule. Blank uses the calculated rating. */
   printRating?: string;
