@@ -113,11 +113,13 @@ function MetaInput({
 }
 
 export function SubjectSection({ controller }: { controller: ReportDraftController }) {
-  const { draft, setMeta, setValue } = controller;
+  const { draft, setMeta, setValue, setNarrative } = controller;
   const { values, reportMeta } = draft;
 
   const currentReportType =
     typeof values.prop_assignment === "string" ? values.prop_assignment : "";
+  const zoningPurpose =
+    typeof values.prop_zoning_desc === "string" ? values.prop_zoning_desc : "";
 
   return (
     <div className="space-y-6">
@@ -206,6 +208,18 @@ export function SubjectSection({ controller }: { controller: ReportDraftControll
 
       <FactTable title="Property identification" rows={pick(values, IDENTITY_FIELDS)} />
       <FactTable title="Site and planning" rows={pick(values, SITE_FIELDS)} />
+      <section className="rounded-md border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold text-foreground">Zoning precinct and purpose</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Edit the wording that prints under Planning Controls. The inspection record is not changed.
+        </p>
+        <textarea
+          className="mt-3 min-h-[6rem] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+          value={draft.narrative.zoningPurpose || zoningPurpose}
+          onChange={(e) => setNarrative({ zoningPurpose: e.target.value })}
+          placeholder="Zoning precinct and purpose as it should print."
+        />
+      </section>
       <FactTable title="Transaction" rows={pick(values, TRANSACTION_FIELDS)} />
       <p className="text-sm text-muted-foreground">
         Subject facts (other than Report Type) are shown from the inspection record.

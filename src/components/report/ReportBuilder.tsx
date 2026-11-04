@@ -413,7 +413,7 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
             aria-hidden={tab !== "preview"}
           >
             <SectionGuard>
-              <ReportPreview draft={draft} onNarrativeChange={setNarrative} />
+              <ReportPreview draft={draft} />
             </SectionGuard>
           </div>
         </div>

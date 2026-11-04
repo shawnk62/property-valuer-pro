@@ -768,7 +768,7 @@ export function ReportPreview({
     isShawnExamType(reportType.id) ||
     /shawn/i.test(String(get(v, "prop_assignment") ?? ""))
   ) {
-    return <ShawnExamPreview draft={draft} onNarrativeChange={onNarrativeChange} />;
+    return <ShawnExamPreview draft={draft} />;
   }
   const murray = isMurrayReportType(reportType.id);
 
