@@ -107,7 +107,7 @@ export function CommercialAnalysisPanel({ values, meta, sales, onMeta, landValue
         <Field label="External obsolescence (%)" value={meta.ciExternalObsolescence ?? ""} onChange={(v) => onMeta({ ciExternalObsolescence: v })} />
       </div>
       {rateLines.length ? <Table title="Direct comparison rates (land and building)" lines={rateLines} /> : null}
-      <LeaseEvidenceGrid meta={meta} onMeta={onMeta} />
+      <LeaseEvidenceGrid values={values} meta={meta} onMeta={onMeta} />
       <Table title="Income capitalisation" lines={formatIncomeLines(income)} />
       <div className="mt-3">
         <div className="text-sm font-semibold text-slate-700 mb-1">Cost approach — summation</div>
