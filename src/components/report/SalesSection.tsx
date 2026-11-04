@@ -2857,7 +2857,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
             </div>
           );
         })()
-      )}
+      ) : null}
 
       {heldSales.length > 0 ? (
         <div className="rounded-md border border-dashed border-border bg-muted/20 p-4 space-y-3">
