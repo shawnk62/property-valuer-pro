@@ -14,6 +14,8 @@ interface LeaseComp {
   incentives: string;
   outgoings: string;
   notes: string;
+  proximity?: string;
+  photoUrl?: string;
 }
 
 function blank(): LeaseComp {
@@ -27,6 +29,7 @@ function blank(): LeaseComp {
     incentives: "",
     outgoings: "",
     notes: "",
+    proximity: "",
     photoUrl: "",
   };
 }
@@ -72,7 +75,8 @@ export function LeaseEvidenceGrid({
           <table className="w-full text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-left text-slate-500">
-                <th className="py-1 pr-2">Address</th>
+                <th className="sticky left-0 z-20 bg-white py-1 pr-2 min-w-[8rem]">Address</th>
+                <th className="py-1 pr-2">Proximity</th>
                 <th className="py-1 pr-2">Date</th>
                 <th className="py-1 pr-2">NLA m²</th>
                 <th className="py-1 pr-2">Net rent $/m²</th>
@@ -87,8 +91,11 @@ export function LeaseEvidenceGrid({
             <tbody>
               {comps.map((c) => (
                 <tr key={c.id} className="border-b border-slate-100">
-                  <td className="py-1 pr-1">
+                  <td className="sticky left-0 z-10 bg-white py-1 pr-1 min-w-[8rem]">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.address} onChange={(e) => update(c.id, { address: e.target.value })} />
+                  </td>
+                  <td className="py-1 pr-1">
+                    <input className="w-24 border border-slate-300 rounded px-1 py-0.5" value={c.proximity ?? ""} placeholder="e.g. 1.2 km N" onChange={(e) => update(c.id, { proximity: e.target.value })} />
                   </td>
                   <td className="py-1 pr-1">
                     <input className="w-20 border border-slate-300 rounded px-1 py-0.5" value={c.date} onChange={(e) => update(c.id, { date: e.target.value })} />

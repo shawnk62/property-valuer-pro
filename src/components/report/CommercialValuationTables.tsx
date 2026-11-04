@@ -108,6 +108,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
       {
         id: `sale-${Math.random().toString(36).slice(2, 10)}`,
         address: "",
+        proximity: "",
         saleDate: "",
         salePrice: "",
         landArea: "",
@@ -176,8 +177,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
           <table className="w-full text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-left text-slate-500">
-                <th className="py-1 pr-2">Item</th>
-                <th className="py-1 pr-2">Subject</th>
+                <th className="sticky left-0 z-20 bg-white py-1 pr-2 min-w-[6rem]">Item</th>
+                <th className="sticky left-[6rem] z-20 bg-white py-1 pr-2 min-w-[8rem]">Subject</th>
                 {sales.filter((s) => s.omitFromReport !== true).map((s, idx, arr) => (
                   <th key={s.id} className="py-1 pr-2 min-w-[8rem]">
                     <input
@@ -201,8 +202,22 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
             </thead>
             <tbody>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Photo</td>
-                <td className="py-1 pr-2">—</td>
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Proximity to Subject</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
+                  <td key={s.id} className="py-1 pr-1">
+                    <input
+                      className="w-full border border-slate-300 rounded px-1 py-0.5"
+                      value={s.proximity ?? ""}
+                      placeholder="e.g. 1.2 km N"
+                      onChange={(e) => patchSale(s.id, { proximity: e.target.value })}
+                    />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Photo</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     {s.photoUrl ? (
@@ -226,8 +241,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 ))}
               </tr>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Use as lease evidence</td>
-                <td className="py-1 pr-2">—</td>
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Use as lease evidence</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1 text-center">
                     <input
@@ -239,8 +254,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 ))}
               </tr>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Date</td>
-                <td className="py-1 pr-2">—</td>
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Date</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.saleDate} onChange={(e) => patchSale(s.id, { saleDate: e.target.value })} />
@@ -248,8 +263,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 ))}
               </tr>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Price</td>
-                <td className="py-1 pr-2">—</td>
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Price</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <div className="text-[0.6rem] text-slate-400">{s.saleDate ? "Sale price" : "Asking price"}</div>
@@ -266,8 +281,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 ))}
               </tr>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Land area</td>
-                <td className="py-1 pr-2">{subjectLand || "—"}</td>
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Land area</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectLand || "—"}</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <div className="flex gap-1">
@@ -289,15 +304,15 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 ))}
               </tr>
               <tr className="border-b border-slate-100 bg-slate-50">
-                <td className="py-1 pr-2 text-slate-500">Land rate $/m²</td>
-                <td className="py-1 pr-2">—</td>
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Land rate $/m²</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-2">{rate(s.salePrice, landAreaInM2(s))}</td>
                 ))}
               </tr>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Building area</td>
-                <td className="py-1 pr-2">{subjectBuilding || "—"}</td>
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Building area</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectBuilding || "—"}</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <div className="flex items-center gap-1">
@@ -312,15 +327,15 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 ))}
               </tr>
               <tr className="border-b border-slate-100 bg-slate-50">
-                <td className="py-1 pr-2 text-slate-500">Building rate $/m²</td>
-                <td className="py-1 pr-2">—</td>
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Building rate $/m²</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-2">{rate(s.salePrice, s.gla)}</td>
                 ))}
               </tr>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Passing rent</td>
-                <td className="py-1 pr-2">—</td>
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Passing rent</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.passingRent ?? ""} onChange={(e) => patchSale(s.id, { passingRent: e.target.value })} />
@@ -328,8 +343,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 ))}
               </tr>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Market rent</td>
-                <td className="py-1 pr-2">—</td>
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Market rent</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.marketRent ?? ""} onChange={(e) => {
@@ -343,8 +358,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 ))}
               </tr>
               <tr className="border-b border-slate-100 bg-slate-50">
-                <td className="py-1 pr-2 text-slate-500">Yield %</td>
-                <td className="py-1 pr-2">—</td>
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Yield %</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => {
                   const price = num(s.salePrice);
                   const rent = num(s.marketRent);
@@ -363,8 +378,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 })}
               </tr>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Clear height</td>
-                <td className="py-1 pr-2">{subjectClear || "—"}</td>
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Clear height</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectClear || "—"}</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.clearHeight ?? ""} onChange={(e) => patchSale(s.id, { clearHeight: e.target.value })} />
@@ -372,8 +387,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 ))}
               </tr>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Loading</td>
-                <td className="py-1 pr-2">{subjectLoading || "—"}</td>
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Loading</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectLoading || "—"}</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.loading ?? ""} onChange={(e) => patchSale(s.id, { loading: e.target.value })} />
@@ -381,8 +396,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 ))}
               </tr>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Office ratio</td>
-                <td className="py-1 pr-2">{subjectOffice || "—"}</td>
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Office ratio</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectOffice || "—"}</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.officeRatio ?? ""} onChange={(e) => patchSale(s.id, { officeRatio: e.target.value })} />
@@ -390,8 +405,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 ))}
               </tr>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Condition</td>
-                <td className="py-1 pr-2">{String(values["overall_cond"] ?? "") || "—"}</td>
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Condition</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{String(values["overall_cond"] ?? "") || "—"}</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.condition ?? ""} onChange={(e) => patchSale(s.id, { condition: e.target.value })} />
@@ -399,8 +414,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 ))}
               </tr>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Hardstand</td>
-                <td className="py-1 pr-2">{subjectHardstand || "—"}</td>
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Hardstand</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectHardstand || "—"}</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.hardstand ?? ""} onChange={(e) => patchSale(s.id, { hardstand: e.target.value })} />
@@ -408,8 +423,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 ))}
               </tr>
               <tr className="border-b border-slate-100">
-                <td className="py-1 pr-2 text-slate-500">Notes</td>
-                <td className="py-1 pr-2">—</td>
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Notes</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <textarea className="w-full min-h-[4rem] border border-slate-300 rounded px-1 py-0.5" value={s.comments} onChange={(e) => patchSale(s.id, { comments: e.target.value })} />

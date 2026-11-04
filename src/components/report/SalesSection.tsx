@@ -24,7 +24,7 @@ import {
   SUBJECT_ZOOM_MIN,
 } from "@/lib/maps/generateMaps";
 import { geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
-import { proximityFromPins } from "@/lib/maps/distance";
+import { proximityFromPins, proximityWithBearingFromPins } from "@/lib/maps/distance";
 import {
   pinsFromDraft,
   pinsNeedingGeocode,
@@ -524,7 +524,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         subjectMapZoom: locationBuilt.zoom,
         subjectMapManual: draft.reportMeta.subjectMapManual === true,
       });
-      replaceSales(proximityFromPins(sales, pins));
+      const isCommercialOrIndustrial =
+        Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) ||
+        Boolean(String(draft.values["prop_type_industrial"] ?? "").trim());
+      replaceSales(
+        isCommercialOrIndustrial
+          ? proximityWithBearingFromPins(sales, pins)
+          : proximityFromPins(sales, pins),
+      );
       toast.success("Maps generated", {
         description:
           "Location map is under Photos → Maps & overlays. Sales map is this Sales map tile.",
@@ -1671,7 +1678,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           const salesFile = await buildComparableSalesMap({ apiKey: key, pins });
           await onSalesMapFile(salesFile);
           setMeta({ salesMapPins: pins });
-          replaceSales(proximityFromPins(sales, pins));
+          const isCommercialOrIndustrial =
+        Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) ||
+        Boolean(String(draft.values["prop_type_industrial"] ?? "").trim());
+      replaceSales(
+        isCommercialOrIndustrial
+          ? proximityWithBearingFromPins(sales, pins)
+          : proximityFromPins(sales, pins),
+      );
           setMapEditorOpen(false);
           toast.success("Maps updated");
         }}

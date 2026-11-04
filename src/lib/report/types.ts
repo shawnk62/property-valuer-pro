@@ -555,6 +555,7 @@ export interface ReportMeta {
     incentives: string;
     outgoings: string;
     notes: string;
+    proximity?: string;
     photoUrl?: string;
   }>;
   /** Map of lease evidence locations. */
