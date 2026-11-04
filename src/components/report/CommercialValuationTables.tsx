@@ -90,6 +90,20 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
     onMeta({ ciLeaseComps: (meta.ciLeaseComps ?? []).filter((c) => c.id !== id) });
   }
 
+  function addBlankSale() {
+    onSales([
+      ...sales,
+      {
+        id: `sale-${Math.random().toString(36).slice(2, 10)}`,
+        address: "",
+        saleDate: "",
+        salePrice: "",
+        landArea: "",
+        comments: "",
+      },
+    ]);
+  }
+
   function toggleLeaseEvidence(sale: ComparableSale, checked: boolean) {
     const existing = meta.ciLeaseComps ?? [];
     if (checked) {
@@ -129,6 +143,13 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
         <p className="text-xs text-muted-foreground mb-2">
           Subject facts are from the inspection. Enter sale details. Rates are calculated. Adopt a rate; the table multiplies.
         </p>
+        <button
+          type="button"
+          onClick={addBlankSale}
+          className="mb-2 rounded-md border border-input bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
+        >
+          Add comparable sale
+        </button>
         <div className="overflow-x-auto">
           <table className="w-full text-xs border-collapse">
             <thead>
