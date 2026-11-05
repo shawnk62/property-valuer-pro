@@ -2086,6 +2086,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                   <input
                                     value={subjectAskingPriceDisplay(draft.values, draft.reportMeta.subjectAskingPrice)}
                                     onChange={(e) => setMeta({ subjectAskingPrice: e.target.value })}
+                                    onBlur={(e) => { const f = formatSalePrice(e.target.value); if (f && f !== e.target.value) setMeta({ subjectAskingPrice: f }); }}
                                     placeholder="Optional"
                                     title="Subject sale price or assessed value. Rates are calculated from this figure when entered."
                                     className="w-full min-w-0 rounded border border-input bg-card px-1 py-0.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"

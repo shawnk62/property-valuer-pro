@@ -191,7 +191,7 @@ export function LeaseEvidenceGrid({
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {comps.map((c) => (
                   <td key={c.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.netRentPerM2} onChange={(e) => update(c.id, { netRentPerM2: e.target.value })} />
+                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.netRentPerM2} onChange={(e) => update(c.id, { netRentPerM2: e.target.value })} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) update(c.id, { netRentPerM2: f }); }} />
                   </td>
                 ))}
               </tr>
@@ -286,7 +286,7 @@ export function LeaseEvidenceGrid({
           <input
             className="w-20 border border-slate-300 rounded px-1 py-0.5"
             value={meta.ciAdoptedRentPerM2 ?? ""}
-            onChange={(e) => onMeta({ ciAdoptedRentPerM2: e.target.value })}
+            onChange={(e) => onMeta({ ciAdoptedRentPerM2: e.target.value })} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) onMeta({ ciAdoptedRentPerM2: f }); }}
           />
         </label>
       </div>

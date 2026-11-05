@@ -282,7 +282,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                     <option value="sale">Sale price</option>
                     <option value="assessed">Assessed value</option>
                   </select>
-                  <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={meta.subjectAskingPrice ?? ""} placeholder="Optional" onChange={(e) => onMeta({ subjectAskingPrice: e.target.value })} />
+                  <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={meta.subjectAskingPrice ?? ""} placeholder="Optional" onChange={(e) => onMeta({ subjectAskingPrice: e.target.value })} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) onMeta({ subjectAskingPrice: f }); }} />
                 </td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
@@ -357,7 +357,13 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.passingRent ?? ""} onChange={(e) => patchSale(s.id, { passingRent: e.target.value })} />
+                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.passingRent ?? ""} onChange={(e) => {
+                      const passingRent = e.target.value;
+                      const price = num(s.salePrice);
+                      const rent = num(passingRent);
+                      const calculated = price && rent ? ((rent / price) * 100).toFixed(2) : "";
+                      patchSale(s.id, s.saleYieldManual ? { passingRent, marketRent: passingRent } : { passingRent, marketRent: passingRent, saleYield: calculated });
+                    }} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) patchSale(s.id, { passingRent: f, marketRent: f }); }} />
                   </td>
                 ))}
               </tr>
@@ -372,7 +378,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                       const rent = num(marketRent);
                       const calculated = price && rent ? ((rent / price) * 100).toFixed(2) : "";
                       patchSale(s.id, s.saleYieldManual ? { marketRent } : { marketRent, saleYield: calculated });
-                    }} />
+                    }} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) patchSale(s.id, { marketRent: f }); }} />
                   </td>
                 ))}
               </tr>
@@ -456,12 +462,12 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
         <div className="mt-2 flex flex-wrap gap-3 text-xs">
           <label className="flex items-center gap-1">
             <span className="text-slate-500">Adopted building rate $/m²</span>
-            <input className="w-20 border border-slate-300 rounded px-1 py-0.5" value={meta.ciAdoptedBuildingRate ?? ""} onChange={(e) => onMeta({ ciAdoptedBuildingRate: e.target.value })} />
+            <input className="w-20 border border-slate-300 rounded px-1 py-0.5" value={meta.ciAdoptedBuildingRate ?? ""} onChange={(e) => onMeta({ ciAdoptedBuildingRate: e.target.value })} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) onMeta({ ciAdoptedBuildingRate: f }); }} />
           </label>
           <span className="text-slate-600">→ {money(buildingIndication)}</span>
           <label className="flex items-center gap-1">
             <span className="text-slate-500">Adopted land rate $/m²</span>
-            <input className="w-20 border border-slate-300 rounded px-1 py-0.5" value={meta.ciAdoptedLandRate ?? ""} onChange={(e) => onMeta({ ciAdoptedLandRate: e.target.value })} />
+            <input className="w-20 border border-slate-300 rounded px-1 py-0.5" value={meta.ciAdoptedLandRate ?? ""} onChange={(e) => onMeta({ ciAdoptedLandRate: e.target.value })} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) onMeta({ ciAdoptedLandRate: f }); }} />
           </label>
           <span className="text-slate-600">→ {money(landIndication)}</span>
         </div>
