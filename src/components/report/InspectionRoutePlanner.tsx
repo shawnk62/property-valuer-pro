@@ -38,7 +38,7 @@ export function InspectionRoutePlanner({
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [startFrom, setStartFrom] = useState<"subject" | "current">("subject");
+  const [startFrom, setStartFrom] = useState<"subject" | "current">("current");
   const onReport = new Set(salesOnReport(sales).map((s) => s.id));
   const saleCandidates = sales.filter((s) => s.address.trim()).map((s) => ({ id: s.id, address: s.address, kind: "sale" as const, hasPhoto: Boolean(s.photoUrl) }));
   const leaseCandidates = (leaseComps ?? []).filter((c) => c.address.trim()).map((c) => ({ id: "lease-" + c.id, address: c.address, kind: "lease" as const, hasPhoto: Boolean(c.photoUrl) }));
@@ -200,12 +200,12 @@ export function InspectionRoutePlanner({
         <div className="mt-3 space-y-3">
           <div className="flex flex-wrap gap-4 text-sm">
             <label className="flex items-center gap-2">
-              <input type="radio" name="route-start" checked={startFrom === "subject"} onChange={() => setStartFrom("subject")} />
-              Start from subject
-            </label>
-            <label className="flex items-center gap-2">
               <input type="radio" name="route-start" checked={startFrom === "current"} onChange={() => setStartFrom("current")} />
               Start from my current position
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="radio" name="route-start" checked={startFrom === "subject"} onChange={() => setStartFrom("subject")} />
+              Start from subject
             </label>
           </div>
           {candidates.length === 0 ? (
@@ -278,7 +278,16 @@ async function optimise(originLat: number, originLng: number, stops: Stop[]): Pr
 }
 
 function buildMapsUrl(originAddress: string, stops: Stop[]): string {
-  const parts = [originAddress, ...stops.map((s) => s.address)];
-  const path = parts.map((p) => encodeURIComponent(p)).join("/");
-  return `https://www.google.com/maps/dir/${path}`;
+  const destination = stops[stops.length - 1];
+  const waypoints = stops.slice(0, -1);
+  const params = new URLSearchParams({
+    api: "1",
+    origin: originAddress,
+    destination: destination.address,
+    travelmode: "driving",
+  });
+  if (waypoints.length) {
+    params.set("waypoints", waypoints.map((s) => s.address).join("|"));
+  }
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
