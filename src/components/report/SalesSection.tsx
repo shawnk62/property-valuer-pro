@@ -1495,6 +1495,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           onSales={setSales}
           onMeta={setMeta}
           subjectPhotoUrl={subjectFrontPhoto?.url}
+          inspectionId={draft.inspectionId}
         />
       ) : null}
       {!(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
@@ -2965,7 +2966,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         <>
           <div className="space-y-4 rounded-md border border-border bg-card p-4">
             <h3 className="text-sm font-semibold text-foreground">Lease evidence</h3>
-            <LeaseEvidenceGrid values={draft.values} meta={draft.reportMeta} onMeta={setMeta} subjectPhotoUrl={subjectFrontPhoto?.url} />
+            <LeaseEvidenceGrid values={draft.values} meta={draft.reportMeta} onMeta={setMeta} subjectPhotoUrl={subjectFrontPhoto?.url} inspectionId={draft.inspectionId} />
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input type="checkbox" checked={narrativePrints(draft.reportMeta, "leaseEvidence")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), leaseEvidence: e.target.checked } })} />
               Include Lease Evidence on report
@@ -2990,7 +2991,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
           <div className="space-y-4 rounded-md border border-border bg-card p-4">
             <h3 className="text-sm font-semibold text-foreground">Cost approach</h3>
-            <LandSalesSection meta={draft.reportMeta} values={draft.values} onMeta={setMeta} subjectPhotoUrl={subjectFrontPhoto?.url} />
+            <LandSalesSection meta={draft.reportMeta} values={draft.values} onMeta={setMeta} subjectPhotoUrl={subjectFrontPhoto?.url} inspectionId={draft.inspectionId} />
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input type="checkbox" checked={narrativePrints(draft.reportMeta, "costApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), costApproach: e.target.checked } })} />
               Include Cost Approach on report

@@ -4,13 +4,15 @@
  * Residential reports do not use this component.
  */
 import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/types";
+import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
+import { toast } from "sonner";
 import {
   costIndication,
   formatCostLines,
   formatIncomeLines,
   incomeStatement,
 } from "@/lib/report/commercialCalculations";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 function num(raw: string | number | null | undefined): number | null {
   if (raw == null) return null;
@@ -51,9 +53,11 @@ interface Props {
   onSales: (next: ComparableSale[]) => void;
   onMeta: (patch: Partial<ReportMeta>) => void;
   subjectPhotoUrl?: string;
+  inspectionId?: string;
 }
 
-export function CommercialValuationTables({ values, sales, meta, onSales, onMeta, subjectPhotoUrl }: Props) {
+export function CommercialValuationTables({ values, sales, meta, onSales, onMeta, subjectPhotoUrl, inspectionId }: Props) {
+  const [expandedNotesId, setExpandedNotesId] = useState<string | null>(null);
   const subjectAddress = [values["prop_address"], values["prop_suburb"]].filter(Boolean).join(", ") || "Subject";
   const subjectLand = String(values["prop_usable_sitearea"] ?? values["prop_sitearea"] ?? "");
   const subjectBuilding = String(values["comm_nla"] ?? values["comm_gba"] ?? "");
@@ -252,10 +256,16 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                         Add photo
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                           const file = e.target.files?.[0];
-                          if (!file) return;
-                          const reader = new FileReader();
-                          reader.onload = () => patchSale(s.id, { photoUrl: String(reader.result ?? "") });
-                          reader.readAsDataURL(file);
+                          if (!file || !inspectionId) return;
+                          void (async () => {
+                            try {
+                              const result = await attachComparablePhoto({ inspectionId, photoId: `sale-${s.id}-front`, file });
+                              patchSale(s.id, { photoUrl: result.photoUrl, photoLocalKey: result.photoLocalKey, photoStoragePath: result.photoStoragePath });
+                              toast[result.synced ? "success" : "message"](result.synced ? "Photo attached and synced" : "Photo saved on this device only");
+                            } catch (err) {
+                              toast.error(err instanceof Error ? err.message : "Could not read photo");
+                            }
+                          })();
                         }} />
                       </label>
                     )}
@@ -464,7 +474,13 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
-                    <textarea className="w-full min-h-[4rem] border border-slate-300 rounded px-1 py-0.5" value={s.comments} onChange={(e) => patchSale(s.id, { comments: e.target.value })} />
+                    <textarea
+                      className={`border border-slate-300 rounded px-1 py-0.5 ${expandedNotesId === s.id ? "fixed inset-4 z-50 min-h-[50vh] bg-white shadow-lg" : "w-full min-h-[4rem]"}`}
+                      value={s.comments}
+                      onFocus={() => setExpandedNotesId(s.id)}
+                      onBlur={() => setExpandedNotesId(null)}
+                      onChange={(e) => patchSale(s.id, { comments: e.target.value })}
+                    />
                   </td>
                 ))}
               </tr>

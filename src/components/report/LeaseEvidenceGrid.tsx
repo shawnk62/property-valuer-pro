@@ -3,7 +3,10 @@
  * Column-per-comparable layout matching the sales comparison table.
  * No sale price and no yield. Subject facts come from the inspection form.
  */
+import { useState } from "react";
+import { toast } from "sonner";
 import type { InspectionValues, ReportMeta } from "@/lib/report/types";
+import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
 
 export interface LeaseComp {
   id: string;
@@ -17,6 +20,8 @@ export interface LeaseComp {
   notes: string;
   proximity?: string;
   photoUrl?: string;
+  photoLocalKey?: string;
+  photoStoragePath?: string;
   clearHeight?: string;
   loading?: string;
   officeRatio?: string;
@@ -55,8 +60,10 @@ export function LeaseEvidenceGrid({
   meta: ReportMeta;
   onMeta: (patch: Partial<ReportMeta>) => void;
   subjectPhotoUrl?: string;
+  inspectionId?: string;
 }) {
   const comps = meta.ciLeaseComps ?? [];
+  const [expandedNotesId, setExpandedNotesId] = useState<string | null>(null);
   const subjectAddress = [values["prop_address"], values["prop_suburb"]].filter(Boolean).join(", ") || "Subject";
   const subjectBuilding = String(values["comm_nla"] ?? values["comm_gba"] ?? "");
   const subjectClear = String(values["comm_clear_height"] ?? "");
@@ -146,10 +153,16 @@ export function LeaseEvidenceGrid({
                         Add photo
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                           const file = e.target.files?.[0];
-                          if (!file) return;
-                          const reader = new FileReader();
-                          reader.onload = () => update(c.id, { photoUrl: String(reader.result ?? "") });
-                          reader.readAsDataURL(file);
+                          if (!file || !inspectionId) return;
+                          void (async () => {
+                            try {
+                              const result = await attachComparablePhoto({ inspectionId, photoId: `lease-${c.id}-front`, file });
+                              update(c.id, { photoUrl: result.photoUrl, photoLocalKey: result.photoLocalKey, photoStoragePath: result.photoStoragePath });
+                              toast[result.synced ? "success" : "message"](result.synced ? "Photo attached and synced" : "Photo saved on this device only");
+                            } catch (err) {
+                              toast.error(err instanceof Error ? err.message : "Could not read photo");
+                            }
+                          })();
                         }} />
                       </label>
                     )}
@@ -272,7 +285,13 @@ export function LeaseEvidenceGrid({
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {comps.map((c) => (
                   <td key={c.id} className="py-1 pr-1">
-                    <textarea className="w-full min-h-[4rem] border border-slate-300 rounded px-1 py-0.5" value={c.notes} onChange={(e) => update(c.id, { notes: e.target.value })} />
+                    <textarea
+                      className={`border border-slate-300 rounded px-1 py-0.5 ${expandedNotesId === c.id ? "fixed inset-4 z-50 min-h-[50vh] bg-white shadow-lg" : "w-full min-h-[4rem]"}`}
+                      value={c.notes}
+                      onFocus={() => setExpandedNotesId(c.id)}
+                      onBlur={() => setExpandedNotesId(null)}
+                      onChange={(e) => update(c.id, { notes: e.target.value })}
+                    />
                   </td>
                 ))}
               </tr>

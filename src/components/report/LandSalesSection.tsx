@@ -2,7 +2,10 @@
  * Comparable land sales for the cost approach (commercial / industrial Shawn Full).
  * Separate from the improved sales comparison grid.
  */
+import { useState } from "react";
+import { toast } from "sonner";
 import type { InspectionValues, ReportMeta } from "@/lib/report/types";
+import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
 
 interface LandSale {
   id: string;
@@ -14,6 +17,8 @@ interface LandSale {
   notes: string;
   proximity?: string;
   photoUrl?: string;
+  photoLocalKey?: string;
+  photoStoragePath?: string;
 }
 
 function blank(): LandSale {
@@ -35,13 +40,16 @@ export function LandSalesSection({
   values,
   onMeta,
   subjectPhotoUrl,
+  inspectionId,
 }: {
   meta: ReportMeta;
   values: InspectionValues;
   onMeta: (patch: Partial<ReportMeta>) => void;
   subjectPhotoUrl?: string;
+  inspectionId?: string;
 }) {
   const sales = meta.ciLandSales ?? [];
+  const [expandedNotesId, setExpandedNotesId] = useState<string | null>(null);
   const subjectAddress = [values["prop_address"], values["prop_suburb"]].filter(Boolean).join(", ") || "Subject";
   const subjectLand = String(values["prop_usable_sitearea"] ?? values["prop_sitearea"] ?? "");
 
@@ -112,10 +120,16 @@ export function LandSalesSection({
                         Add photo
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                           const file = e.target.files?.[0];
-                          if (!file) return;
-                          const reader = new FileReader();
-                          reader.onload = () => update(s.id, { photoUrl: String(reader.result ?? "") });
-                          reader.readAsDataURL(file);
+                          if (!file || !inspectionId) return;
+                          void (async () => {
+                            try {
+                              const result = await attachComparablePhoto({ inspectionId, photoId: `land-${s.id}-front`, file });
+                              update(s.id, { photoUrl: result.photoUrl, photoLocalKey: result.photoLocalKey, photoStoragePath: result.photoStoragePath });
+                              toast[result.synced ? "success" : "message"](result.synced ? "Photo attached and synced" : "Photo saved on this device only");
+                            } catch (err) {
+                              toast.error(err instanceof Error ? err.message : "Could not read photo");
+                            }
+                          })();
                         }} />
                       </label>
                     )}
@@ -175,7 +189,13 @@ export function LandSalesSection({
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.map((s) => (
                   <td key={s.id} className="py-1 pr-1">
-                    <textarea className="w-full min-h-[3rem] border border-slate-300 rounded px-1 py-0.5" value={s.notes} onChange={(e) => update(s.id, { notes: e.target.value })} />
+                    <textarea
+                      className={`border border-slate-300 rounded px-1 py-0.5 ${expandedNotesId === s.id ? "fixed inset-4 z-50 min-h-[50vh] bg-white shadow-lg" : "w-full min-h-[3rem]"}`}
+                      value={s.notes}
+                      onFocus={() => setExpandedNotesId(s.id)}
+                      onBlur={() => setExpandedNotesId(null)}
+                      onChange={(e) => update(s.id, { notes: e.target.value })}
+                    />
                   </td>
                 ))}
               </tr>

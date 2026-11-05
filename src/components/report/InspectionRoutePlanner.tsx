@@ -21,6 +21,7 @@ interface Stop {
 }
 
 const MAX_STOPS = 25;
+const LEG_SIZE = 9;
 
 export function InspectionRoutePlanner({
   sales,
@@ -39,11 +40,12 @@ export function InspectionRoutePlanner({
   const [busy, setBusy] = useState(false);
   const [startFrom, setStartFrom] = useState<"subject" | "current">("subject");
   const onReport = new Set(salesOnReport(sales).map((s) => s.id));
-  const [selected, setSelected] = useState<Set<string>>(() => new Set(onReport));
-
-  const saleCandidates = sales.filter((s) => s.address.trim()).map((s) => ({ id: s.id, address: s.address, kind: "sale" as const }));
-  const leaseCandidates = (leaseComps ?? []).filter((c) => c.address.trim()).map((c) => ({ id: "lease-" + c.id, address: c.address, kind: "lease" as const }));
-  const landCandidates = (landSales ?? []).filter((s) => s.address.trim()).map((s) => ({ id: "land-" + s.id, address: s.address, kind: "land" as const }));
+  const saleCandidates = sales.filter((s) => s.address.trim()).map((s) => ({ id: s.id, address: s.address, kind: "sale" as const, hasPhoto: Boolean(s.photoUrl) }));
+  const leaseCandidates = (leaseComps ?? []).filter((c) => c.address.trim()).map((c) => ({ id: "lease-" + c.id, address: c.address, kind: "lease" as const, hasPhoto: Boolean(c.photoUrl) }));
+  const landCandidates = (landSales ?? []).filter((s) => s.address.trim()).map((s) => ({ id: "land-" + s.id, address: s.address, kind: "land" as const, hasPhoto: Boolean(s.photoUrl) }));
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(
+    saleCandidates.filter((c) => onReport.has(c.id) && !c.hasPhoto).map((c) => c.id)
+  ));
   const candidates = [...saleCandidates, ...leaseCandidates, ...landCandidates];
 
   function toggle(id: string) {
@@ -158,9 +160,18 @@ export function InspectionRoutePlanner({
       }
 
       const ordered = await optimise(originLat, originLng, stops);
-      const url = buildMapsUrl(originAddress, ordered);
-      window.open(url, "_blank", "noopener,noreferrer");
-      toast.success(`Route opened with ${ordered.length} stop${ordered.length === 1 ? "" : "s"}.`);
+      const legs: Stop[][] = [];
+      for (let i = 0; i < ordered.length; i += LEG_SIZE) legs.push(ordered.slice(i, i + LEG_SIZE));
+      legs.forEach((leg, i) => {
+        const legOrigin = i === 0 ? originAddress : legs[i - 1][legs[i - 1].length - 1].address;
+        const url = buildMapsUrl(legOrigin, leg);
+        window.open(url, "_blank", "noopener,noreferrer");
+      });
+      toast.success(
+        legs.length === 1
+          ? `Route opened with ${ordered.length} stop${ordered.length === 1 ? "" : "s"}.`
+          : `Opened ${legs.length} routes of up to ${LEG_SIZE} stops so Google Maps can start each one.`,
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not plan the route.");
     } finally {
@@ -209,6 +220,7 @@ export function InspectionRoutePlanner({
                       <span className="block truncate">{s.address}</span>
                       <span className="text-[0.65rem] text-muted-foreground">
                         {s.kind === "lease" ? "Lease" : s.kind === "land" ? "Land sale" : onReport.has(s.id) ? "Sale" : "Sale (held)"}
+                        {s.hasPhoto ? " · photo on file" : ""}
                       </span>
                     </span>
                   </label>
