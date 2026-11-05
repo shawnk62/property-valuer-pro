@@ -1484,6 +1484,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         sales={draft.sales}
         values={draft.values}
         meta={draft.reportMeta}
+        leaseComps={draft.reportMeta.ciLeaseComps}
+        landSales={draft.reportMeta.ciLandSales}
       />
       {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
         <CommercialValuationTables

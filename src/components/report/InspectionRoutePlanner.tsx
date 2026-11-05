@@ -6,6 +6,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/types";
+type LeaseComp = NonNullable<ReportMeta["ciLeaseComps"]>[number];
+type LandSale = NonNullable<ReportMeta["ciLandSales"]>[number];
 import { salesOnReport } from "@/lib/report/types";
 import { geocodeQueryForSale, subjectAddressLine, type SalesMapPin } from "@/lib/maps/salesMapPins";
 import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
@@ -24,10 +26,14 @@ export function InspectionRoutePlanner({
   sales,
   values,
   meta,
+  leaseComps,
+  landSales,
 }: {
   sales: ComparableSale[];
   values: InspectionValues;
   meta: ReportMeta;
+  leaseComps?: LeaseComp[];
+  landSales?: LandSale[];
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -35,7 +41,10 @@ export function InspectionRoutePlanner({
   const onReport = new Set(salesOnReport(sales).map((s) => s.id));
   const [selected, setSelected] = useState<Set<string>>(() => new Set(onReport));
 
-  const candidates = sales.filter((s) => s.address.trim());
+  const saleCandidates = sales.filter((s) => s.address.trim()).map((s) => ({ id: s.id, address: s.address, kind: "sale" as const }));
+  const leaseCandidates = (leaseComps ?? []).filter((c) => c.address.trim()).map((c) => ({ id: "lease-" + c.id, address: c.address, kind: "lease" as const }));
+  const landCandidates = (landSales ?? []).filter((s) => s.address.trim()).map((s) => ({ id: "land-" + s.id, address: s.address, kind: "land" as const }));
+  const candidates = [...saleCandidates, ...leaseCandidates, ...landCandidates];
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -84,7 +93,11 @@ export function InspectionRoutePlanner({
       toast.error("Google Maps key is not set. Add it under AI settings.");
       return;
     }
-    const chosen = candidates.filter((s) => selected.has(s.id));
+    const chosen = candidates.filter((s) => selected.has(s.id)).map((c) => {
+      if (c.kind === "sale") return sales.find((s) => s.id === c.id);
+      if (c.kind === "lease") return { id: c.id, address: c.address } as ComparableSale;
+      return { id: c.id, address: c.address } as ComparableSale;
+    }).filter(Boolean) as ComparableSale[];
     if (chosen.length === 0) {
       toast.error("Tick at least one comparable.");
       return;
@@ -194,7 +207,9 @@ export function InspectionRoutePlanner({
                     <input type="checkbox" checked={selected.has(s.id)} onChange={() => toggle(s.id)} className="mt-0.5" />
                     <span className="min-w-0">
                       <span className="block truncate">{s.address}</span>
-                      {!onReport.has(s.id) ? <span className="text-[0.65rem] text-muted-foreground">Held in working file</span> : null}
+                      <span className="text-[0.65rem] text-muted-foreground">
+                        {s.kind === "lease" ? "Lease" : s.kind === "land" ? "Land sale" : onReport.has(s.id) ? "Sale" : "Sale (held)"}
+                      </span>
                     </span>
                   </label>
                 </li>
