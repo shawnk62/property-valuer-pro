@@ -290,13 +290,6 @@ async function optimise(originLat: number, originLng: number, stops: Stop[]): Pr
 }
 
 function buildMapsUrl(originAddress: string, stops: Stop[]): string {
-  const encode = (value: string) => encodeURIComponent(value).replace(/%20/g, "+");
-  const chain = stops.map((s) => encode(s.address)).join("+to:");
-  const start = originAddress ? `&saddr=${encode(originAddress)}` : "";
-  return `comgooglemaps://?${start.slice(1)}&daddr=${chain}&directionsmode=driving`;
-}
-
-function buildWebMapsUrl(originAddress: string, stops: Stop[]): string {
   const destination = stops[stops.length - 1];
   const waypoints = stops.slice(0, -1);
   const params = new URLSearchParams({
@@ -306,5 +299,6 @@ function buildWebMapsUrl(originAddress: string, stops: Stop[]): string {
     travelmode: "driving",
   });
   if (waypoints.length) params.set("waypoints", waypoints.map((s) => s.address).join("|"));
-  return `https://www.google.com/maps/dir/?${params.toString()}`;
+  const web = `https://www.google.com/maps/dir/?${params.toString()}`;
+  return `comgooglemapsurl://${web.replace(/^https?:\/\//, "")}`;
 }
