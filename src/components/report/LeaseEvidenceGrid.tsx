@@ -49,6 +49,7 @@ export function LeaseEvidenceGrid({
   values,
   meta,
   onMeta,
+  subjectPhotoUrl,
 }: {
   values: InspectionValues;
   meta: ReportMeta;
