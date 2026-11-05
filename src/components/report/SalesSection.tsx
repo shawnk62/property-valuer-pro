@@ -1492,6 +1492,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           meta={draft.reportMeta}
           onSales={setSales}
           onMeta={setMeta}
+          subjectPhotoUrl={subjectFrontPhoto?.url}
         />
       ) : null}
       {!(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
@@ -2041,7 +2042,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                             {
                               key: "priceGla",
                               label: "Sale Price/Gross Liv. Area",
-                              subject: () => "—",
+                              subject: () => {
+                                const v = subjectAskingPriceDisplay(draft.values, draft.reportMeta.subjectAskingPrice);
+                                const area = String(draft.values["prop_gla"] ?? draft.values["prop_living"] ?? "").replace(/[^\d.]/g, "");
+                                const p = Number(String(v).replace(/[^\d.]/g, ""));
+                                const a = Number(area);
+                                if (!p || !a) return "—";
+                                return "$" + Math.round(p / a).toLocaleString("en-AU");
+                              },
                               read: (s: (typeof sales)[0]) => salePricePerGla(s),
                               write: null as null | ((id: string, v: string) => void),
                             },
@@ -2068,16 +2076,19 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                             </td>
                             <td className="px-2 py-1.5 text-muted-foreground">
                               {row.key === "salePrice" ? (
-                                <input
-                                  value={subjectAskingPriceDisplay(
-                                    draft.values,
-                                    draft.reportMeta.subjectAskingPrice,
-                                  )}
-                                  onChange={(e) => setMeta({ subjectAskingPrice: e.target.value })}
-                                  placeholder="Asking price"
-                                  title="Subject asking price. Filled from the inspection listing when one is recorded, and can be edited."
-                                  className="w-full min-w-0 rounded border border-input bg-card px-1 py-0.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
-                                />
+                                <div>
+                                  <select className="mb-0.5 w-full rounded border border-input bg-card px-0.5 py-0.5 text-[0.6rem]" value={draft.reportMeta.subjectValueKind ?? "assessed"} onChange={(e) => setMeta({ subjectValueKind: e.target.value as "sale" | "assessed" })}>
+                                    <option value="sale">Sale price</option>
+                                    <option value="assessed">Assessed value</option>
+                                  </select>
+                                  <input
+                                    value={subjectAskingPriceDisplay(draft.values, draft.reportMeta.subjectAskingPrice)}
+                                    onChange={(e) => setMeta({ subjectAskingPrice: e.target.value })}
+                                    placeholder="Optional"
+                                    title="Subject sale price or assessed value. Rates are calculated from this figure when entered."
+                                    className="w-full min-w-0 rounded border border-input bg-card px-1 py-0.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
+                                  />
+                                </div>
                               ) : (
                                 row.subject()
                               )}
@@ -2951,7 +2962,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         <>
           <div className="space-y-4 rounded-md border border-border bg-card p-4">
             <h3 className="text-sm font-semibold text-foreground">Lease evidence</h3>
-            <LeaseEvidenceGrid values={draft.values} meta={draft.reportMeta} onMeta={setMeta} />
+            <LeaseEvidenceGrid values={draft.values} meta={draft.reportMeta} onMeta={setMeta} subjectPhotoUrl={subjectFrontPhoto?.url} />
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input type="checkbox" checked={narrativePrints(draft.reportMeta, "leaseEvidence")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), leaseEvidence: e.target.checked } })} />
               Include Lease Evidence on report
@@ -2976,7 +2987,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
           <div className="space-y-4 rounded-md border border-border bg-card p-4">
             <h3 className="text-sm font-semibold text-foreground">Cost approach</h3>
-            <LandSalesSection meta={draft.reportMeta} values={draft.values} onMeta={setMeta} />
+            <LandSalesSection meta={draft.reportMeta} values={draft.values} onMeta={setMeta} subjectPhotoUrl={subjectFrontPhoto?.url} />
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input type="checkbox" checked={narrativePrints(draft.reportMeta, "costApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), costApproach: e.target.checked } })} />
               Include Cost Approach on report

@@ -53,6 +53,7 @@ export function LeaseEvidenceGrid({
   values: InspectionValues;
   meta: ReportMeta;
   onMeta: (patch: Partial<ReportMeta>) => void;
+  subjectPhotoUrl?: string;
 }) {
   const comps = meta.ciLeaseComps ?? [];
   const subjectAddress = [values["prop_address"], values["prop_suburb"]].filter(Boolean).join(", ") || "Subject";
@@ -129,7 +130,9 @@ export function LeaseEvidenceGrid({
             <tbody>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Photo</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">
+                  {subjectPhotoUrl ? <img src={subjectPhotoUrl} alt="Subject" className="w-full max-h-28 rounded object-contain bg-slate-50" /> : "—"}
+                </td>
                 {comps.map((c) => (
                   <td key={c.id} className="py-1 pr-1">
                     {c.photoUrl ? (

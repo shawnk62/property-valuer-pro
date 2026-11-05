@@ -34,10 +34,12 @@ export function LandSalesSection({
   meta,
   values,
   onMeta,
+  subjectPhotoUrl,
 }: {
   meta: ReportMeta;
   values: InspectionValues;
   onMeta: (patch: Partial<ReportMeta>) => void;
+  subjectPhotoUrl?: string;
 }) {
   const sales = meta.ciLandSales ?? [];
   const subjectAddress = [values["prop_address"], values["prop_suburb"]].filter(Boolean).join(", ") || "Subject";
@@ -95,7 +97,9 @@ export function LandSalesSection({
             <tbody>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500">Photo</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">
+                  {subjectPhotoUrl ? <img src={subjectPhotoUrl} alt="Subject" className="w-full max-h-28 rounded object-contain bg-slate-50" /> : "—"}
+                </td>
                 {sales.map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     {s.photoUrl ? (
@@ -138,7 +142,13 @@ export function LandSalesSection({
               </tr>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500">Price</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">
+                  <select className="mb-0.5 w-full border border-slate-300 rounded px-0.5 py-0.5 text-[0.6rem]" value={meta.subjectValueKind ?? "assessed"} onChange={(e) => onMeta({ subjectValueKind: e.target.value as "sale" | "assessed" })}>
+                    <option value="sale">Sale price</option>
+                    <option value="assessed">Assessed value</option>
+                  </select>
+                  <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={meta.subjectAskingPrice ?? ""} placeholder="Optional" onChange={(e) => onMeta({ subjectAskingPrice: e.target.value })} />
+                </td>
                 {sales.map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.price} onChange={(e) => update(s.id, { price: e.target.value })} />

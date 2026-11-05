@@ -409,6 +409,8 @@ export interface ReportMeta {
   siteRatePerM2?: string;
   /** Override of the subject asking price shown on the sale price line. */
   subjectAskingPrice?: string;
+  /** Whether the subject figure is a sale price or an assessed value. */
+  subjectValueKind?: "sale" | "assessed";
   /** Override of the subject topography printed on the adjustment grid. */
   subjectTopography?: string;
   /** Subject-column description for the first Other adjustment row. */

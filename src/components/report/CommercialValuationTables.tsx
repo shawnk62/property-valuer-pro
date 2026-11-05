@@ -50,9 +50,10 @@ interface Props {
   meta: ReportMeta;
   onSales: (next: ComparableSale[]) => void;
   onMeta: (patch: Partial<ReportMeta>) => void;
+  subjectPhotoUrl?: string;
 }
 
-export function CommercialValuationTables({ values, sales, meta, onSales, onMeta }: Props) {
+export function CommercialValuationTables({ values, sales, meta, onSales, onMeta, subjectPhotoUrl }: Props) {
   const subjectAddress = [values["prop_address"], values["prop_suburb"]].filter(Boolean).join(", ") || "Subject";
   const subjectLand = String(values["prop_usable_sitearea"] ?? values["prop_sitearea"] ?? "");
   const subjectBuilding = String(values["comm_nla"] ?? values["comm_gba"] ?? "");
@@ -227,7 +228,9 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
               </tr>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Photo</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">
+                  {subjectPhotoUrl ? <img src={subjectPhotoUrl} alt="Subject" className="w-full max-h-28 rounded object-contain bg-slate-50" /> : "—"}
+                </td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     {s.photoUrl ? (
@@ -274,7 +277,13 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
               </tr>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Price</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">
+                  <select className="mb-0.5 w-full border border-slate-300 rounded px-0.5 py-0.5 text-[0.6rem]" value={meta.subjectValueKind ?? "assessed"} onChange={(e) => onMeta({ subjectValueKind: e.target.value as "sale" | "assessed" })}>
+                    <option value="sale">Sale price</option>
+                    <option value="assessed">Assessed value</option>
+                  </select>
+                  <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={meta.subjectAskingPrice ?? ""} placeholder="Optional" onChange={(e) => onMeta({ subjectAskingPrice: e.target.value })} />
+                </td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <div className="text-[0.6rem] text-slate-400">{s.saleDate ? "Sale price" : "Asking price"}</div>
@@ -315,7 +324,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
               </tr>
               <tr className="border-b border-slate-100 bg-slate-50">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Land rate $/m²</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{meta.subjectAskingPrice ? rate(meta.subjectAskingPrice, subjectLand) : "—"}</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-2">{rate(s.salePrice, landAreaInM2(s))}</td>
                 ))}
@@ -338,7 +347,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
               </tr>
               <tr className="border-b border-slate-100 bg-slate-50">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Building rate $/m²</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{meta.subjectAskingPrice ? rate(meta.subjectAskingPrice, subjectBuilding) : "—"}</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-2">{rate(s.salePrice, s.gla)}</td>
                 ))}
