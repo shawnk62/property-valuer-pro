@@ -401,12 +401,15 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                   const shown = s.saleYieldManual ? (s.saleYield ?? "") : (calculated || s.saleYield || "");
                   return (
                     <td key={s.id} className="py-1 pr-1">
-                      <input
-                        className="w-full border border-slate-300 rounded px-1 py-0.5"
-                        value={shown}
-                        onChange={(e) => patchSale(s.id, { saleYield: e.target.value, saleYieldManual: true })}
-                        title={s.saleYieldManual ? "Manual override" : "Calculated from market rent"}
-                      />
+                      <div className="flex items-center gap-1">
+                        <input
+                          className="w-full border border-slate-300 rounded px-1 py-0.5"
+                          value={shown}
+                          onChange={(e) => patchSale(s.id, { saleYield: e.target.value, saleYieldManual: true })}
+                          title={s.saleYieldManual ? "Manual override" : "Calculated from market rent"}
+                        />
+                        <span className="text-slate-500 text-[0.65rem] whitespace-nowrap">%</span>
+                      </div>
                     </td>
                   );
                 })}
