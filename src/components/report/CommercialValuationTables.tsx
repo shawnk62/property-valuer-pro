@@ -111,6 +111,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
         address: "",
         proximity: "",
         saleDate: "",
+        isListing: false,
         salePrice: "",
         landArea: "",
         landUnit: "m2",
@@ -195,12 +196,20 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                     <input
                       className="w-full border border-slate-300 rounded px-1 py-0.5 text-xs font-medium text-foreground"
                       value={s.address}
-                      placeholder={s.saleDate ? "Sale address" : "Listing address"}
+                      placeholder={s.isListing ? "Listing address" : "Sale address"}
                       onChange={(e) => patchSale(s.id, { address: e.target.value })}
                     />
-                    <div className="mt-0.5 text-[0.6rem] text-slate-400 truncate">
-                      {s.address.trim() ? (s.saleDate ? "Sale" : "Listing") : (s.saleDate ? "Sale" : "Listing")}
-                    </div>
+                    <select
+                      className="mt-0.5 w-full border border-slate-300 rounded px-0.5 py-0.5 text-[0.6rem]"
+                      value={s.isListing ? "listing" : "sale"}
+                      onChange={(e) => {
+                        const isListing = e.target.value === "listing";
+                        patchSale(s.id, isListing ? { isListing: true, saleDate: "" } : { isListing: false });
+                      }}
+                    >
+                      <option value="sale">Sale</option>
+                      <option value="listing">Listing</option>
+                    </select>
                     <div className="mt-0.5 flex gap-1 text-[0.65rem] font-normal">
                       <button type="button" disabled={idx === 0} className="text-slate-500 disabled:opacity-30" onClick={() => moveSale(s.id, -1)}>←</button>
                       <button type="button" disabled={idx === arr.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => moveSale(s.id, 1)}>→</button>
@@ -286,7 +295,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 </td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
-                    <div className="text-[0.6rem] text-slate-400">{s.saleDate ? "Sale price" : "Asking price"}</div>
+                    <div className="text-[0.6rem] text-slate-400">{s.isListing ? "Asking price" : "Sale price"}</div>
                     <input
                       className="w-full border border-slate-300 rounded px-1 py-0.5"
                       value={s.salePrice}

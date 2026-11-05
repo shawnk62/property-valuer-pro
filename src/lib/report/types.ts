@@ -240,6 +240,8 @@ export interface ComparableSale {
   id: string;
   address: string;
   saleDate: string;
+  /** When true, the comparable is an on-market listing, not a settled sale. */
+  isListing?: boolean;
   salePrice: string;
   landArea: string;
   /** Commercial/industrial land unit. Default m2. Does not rename landArea. */
