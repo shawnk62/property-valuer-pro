@@ -153,6 +153,7 @@ export function LeaseEvidenceGrid({
                         Add photo
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                           const file = e.target.files?.[0];
+                          e.target.value = "";
                           if (!file || !inspectionId) return;
                           void (async () => {
                             try {

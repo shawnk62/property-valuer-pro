@@ -12,8 +12,13 @@ export async function attachComparablePhoto(opts: {
   photoId: string;
   file: File;
 }): Promise<{ photoUrl: string; photoLocalKey: string; photoStoragePath?: string; synced: boolean }> {
-  const stable = await cloneImageFile(opts.file);
-  const prepared = await preparePhotoForReport(stable);
+  let prepared: File;
+  try {
+    const stable = await cloneImageFile(opts.file);
+    prepared = await preparePhotoForReport(stable);
+  } catch {
+    prepared = opts.file;
+  }
   const localKey = photoBlobKey(opts.inspectionId, opts.photoId);
   await putPhotoBlob(localKey, prepared);
   const localUrl = URL.createObjectURL(prepared);
