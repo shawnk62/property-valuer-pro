@@ -38,6 +38,7 @@ export function InspectionRoutePlanner({
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [pendingLegs, setPendingLegs] = useState<string[]>([]);
   const [startFrom, setStartFrom] = useState<"subject" | "current">("current");
   const onReport = new Set(salesOnReport(sales).map((s) => s.id));
   const saleCandidates = sales.filter((s) => s.address.trim()).map((s) => ({ id: s.id, address: s.address, kind: "sale" as const, hasPhoto: Boolean(s.photoUrl) }));
@@ -162,15 +163,17 @@ export function InspectionRoutePlanner({
       const ordered = await optimise(originLat, originLng, stops);
       const legs: Stop[][] = [];
       for (let i = 0; i < ordered.length; i += LEG_SIZE) legs.push(ordered.slice(i, i + LEG_SIZE));
-      legs.forEach((leg, i) => {
+      const urls = legs.map((leg, i) => {
         const legOrigin = i === 0 ? originAddress : legs[i - 1][legs[i - 1].length - 1].address;
-        const url = buildMapsUrl(legOrigin, leg);
-        window.open(url, "_blank", "noopener,noreferrer");
+        const appOrigin = i === 0 && startFrom === "current" ? "" : legOrigin;
+        return buildMapsUrl(appOrigin, leg);
       });
+      setPendingLegs(urls.slice(1));
+      window.location.href = urls[0];
       toast.success(
-        legs.length === 1
+        urls.length === 1
           ? `Route opened with ${ordered.length} stop${ordered.length === 1 ? "" : "s"}.`
-          : `Opened ${legs.length} routes of up to ${LEG_SIZE} stops so Google Maps can start each one.`,
+          : `Opened leg 1 of ${urls.length}. Use Open next leg for the rest.`,
       );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not plan the route.");
@@ -208,6 +211,15 @@ export function InspectionRoutePlanner({
               Start from subject
             </label>
           </div>
+          {pendingLegs.length > 0 ? (
+            <button type="button" className="rounded-md border border-input bg-card px-3 py-1.5 text-sm" onClick={() => {
+              const [next, ...rest] = pendingLegs;
+              setPendingLegs(rest);
+              if (next) window.location.href = next;
+            }}>
+              Open next leg ({pendingLegs.length} remaining)
+            </button>
+          ) : null}
           {candidates.length === 0 ? (
             <p className="text-xs text-muted-foreground">Import or add comparables first.</p>
           ) : (
@@ -278,16 +290,21 @@ async function optimise(originLat: number, originLng: number, stops: Stop[]): Pr
 }
 
 function buildMapsUrl(originAddress: string, stops: Stop[]): string {
+  const encode = (value: string) => encodeURIComponent(value).replace(/%20/g, "+");
+  const chain = stops.map((s) => encode(s.address)).join("+to:");
+  const start = originAddress ? `&saddr=${encode(originAddress)}` : "";
+  return `comgooglemaps://?${start.slice(1)}&daddr=${chain}&directionsmode=driving`;
+}
+
+function buildWebMapsUrl(originAddress: string, stops: Stop[]): string {
   const destination = stops[stops.length - 1];
   const waypoints = stops.slice(0, -1);
   const params = new URLSearchParams({
     api: "1",
-    origin: originAddress,
+    origin: originAddress || "Current Location",
     destination: destination.address,
     travelmode: "driving",
   });
-  if (waypoints.length) {
-    params.set("waypoints", waypoints.map((s) => s.address).join("|"));
-  }
+  if (waypoints.length) params.set("waypoints", waypoints.map((s) => s.address).join("|"));
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }

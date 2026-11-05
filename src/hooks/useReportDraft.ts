@@ -223,6 +223,10 @@ function toCloudExtras(draft: ReportDraft): ReportExtras {
   if (reportMeta.salesMapUrl && !isHttpUrl(reportMeta.salesMapUrl)) {
     delete reportMeta.salesMapUrl;
   }
+  const stripCompPhotos = <T extends { photoUrl?: string }>(rows: T[] | undefined): T[] | undefined =>
+    rows?.map((row) => (row.photoUrl && !isHttpUrl(row.photoUrl) ? { ...row, photoUrl: undefined } : row));
+  if (reportMeta.ciLeaseComps) reportMeta.ciLeaseComps = stripCompPhotos(reportMeta.ciLeaseComps);
+  if (reportMeta.ciLandSales) reportMeta.ciLandSales = stripCompPhotos(reportMeta.ciLandSales);
   return {
     narrative: draft.narrative,
     sales,
@@ -350,6 +354,12 @@ function writeLocalCache(draft: ReportDraft) {
         salesMapUrl: isHttpUrl(draft.reportMeta.salesMapUrl)
           ? draft.reportMeta.salesMapUrl
           : undefined,
+        ciLeaseComps: draft.reportMeta.ciLeaseComps?.map((c) =>
+          c.photoUrl && !isHttpUrl(c.photoUrl) ? { ...c, photoUrl: undefined } : c,
+        ),
+        ciLandSales: draft.reportMeta.ciLandSales?.map((s) =>
+          s.photoUrl && !isHttpUrl(s.photoUrl) ? { ...s, photoUrl: undefined } : s,
+        ),
       },
     };
     window.localStorage.setItem(storageKey(draft.inspectionId), JSON.stringify(toStore));
