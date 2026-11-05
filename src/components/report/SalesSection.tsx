@@ -2976,7 +2976,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
           <div className="space-y-4 rounded-md border border-border bg-card p-4">
             <h3 className="text-sm font-semibold text-foreground">Cost approach</h3>
-            <LandSalesSection meta={draft.reportMeta} onMeta={setMeta} />
+            <LandSalesSection meta={draft.reportMeta} values={draft.values} onMeta={setMeta} />
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input type="checkbox" checked={narrativePrints(draft.reportMeta, "costApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), costApproach: e.target.checked } })} />
               Include Cost Approach on report

@@ -4,6 +4,13 @@
  * Residential reports do not use this component.
  */
 import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/types";
+import {
+  costIndication,
+  formatCostLines,
+  formatIncomeLines,
+  incomeStatement,
+} from "@/lib/report/commercialCalculations";
+import { useMemo } from "react";
 
 function num(raw: string | number | null | undefined): number | null {
   if (raw == null) return null;
@@ -46,6 +53,7 @@ interface Props {
 }
 
 export function CommercialValuationTables({ values, sales, meta, onSales, onMeta }: Props) {
+  const subjectAddress = [values["prop_address"], values["prop_suburb"]].filter(Boolean).join(", ") || "Subject";
   const subjectLand = String(values["prop_usable_sitearea"] ?? values["prop_sitearea"] ?? "");
   const subjectBuilding = String(values["comm_nla"] ?? values["comm_gba"] ?? "");
   const subjectClear = String(values["comm_clear_height"] ?? "");
@@ -54,6 +62,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
   const subjectOfficeRaw = String(values["comm_office_split"] ?? "");
   const subjectOffice = /\d|%|office/i.test(subjectOfficeRaw) ? subjectOfficeRaw : "";
 
+  const income = useMemo(() => incomeStatement(values, meta), [values, meta]);
+  const cost = useMemo(() => costIndication(values, meta, null), [values, meta]);
 
   const adoptedBuildingRate = num(meta.ciAdoptedBuildingRate);
   const adoptedLandRate = num(meta.ciAdoptedLandRate);
@@ -149,7 +159,87 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
     }
   }
 
+  const reconciliation = [
+    { label: "Direct comparison (building rate)", value: money(buildingIndication) },
+    { label: "Direct comparison (land rate)", value: money(landIndication) },
+    { label: "Income capitalisation", value: money(income.adoptedValue) },
+    { label: "Cost approach", value: money(cost.indicatedValue) },
+  ].filter((r) => r.value !== "—");
 
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Sales comparison</h3>
+        <p className="text-xs text-muted-foreground mb-2">
+          Subject facts are from the inspection. Enter sale details. Rates are calculated. Adopt a rate; the table multiplies.
+        </p>
+        <button
+          type="button"
+          onClick={addBlankSale}
+          className="mb-2 rounded-md border border-input bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
+        >
+          Add comparable sale
+        </button>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 text-left text-slate-500">
+                <th className="sticky left-0 z-20 bg-white py-1 pr-2 min-w-[6rem]">Item</th>
+                <th className="sticky left-[6rem] z-20 bg-white py-1 pr-2 min-w-[8rem]">
+                  <div className="text-xs font-medium text-foreground">{subjectAddress}</div>
+                  <div className="text-[0.6rem] text-slate-400">Subject</div>
+                </th>
+                {sales.filter((s) => s.omitFromReport !== true).map((s, idx, arr) => (
+                  <th key={s.id} className="py-1 pr-2 min-w-[8rem]">
+                    <input
+                      className="w-full border border-slate-300 rounded px-1 py-0.5 text-xs font-medium text-foreground"
+                      value={s.address}
+                      placeholder={s.saleDate ? "Sale address" : "Listing address"}
+                      onChange={(e) => patchSale(s.id, { address: e.target.value })}
+                    />
+                    <div className="mt-0.5 text-[0.6rem] text-slate-400 truncate">
+                      {s.address.trim() ? (s.saleDate ? "Sale" : "Listing") : (s.saleDate ? "Sale" : "Listing")}
+                    </div>
+                    <div className="mt-0.5 flex gap-1 text-[0.65rem] font-normal">
+                      <button type="button" disabled={idx === 0} className="text-slate-500 disabled:opacity-30" onClick={() => moveSale(s.id, -1)}>←</button>
+                      <button type="button" disabled={idx === arr.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => moveSale(s.id, 1)}>→</button>
+                      <button type="button" className="text-slate-500" onClick={() => archiveSale(s.id)} title="Hold in working file">Archive</button>
+                      <button type="button" className="text-red-500" onClick={() => deleteSale(s.id)}>×</button>
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Proximity to Subject</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
+                  <td key={s.id} className="py-1 pr-1">
+                    <input
+                      className="w-full border border-slate-300 rounded px-1 py-0.5"
+                      value={s.proximity ?? ""}
+                      placeholder="e.g. 1.2 km N"
+                      onChange={(e) => patchSale(s.id, { proximity: e.target.value })}
+                    />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Photo</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
+                  <td key={s.id} className="py-1 pr-1">
+                    {s.photoUrl ? (
+                      <div className="relative">
+                        <img src={s.photoUrl} alt={s.address} className="w-full max-h-28 rounded object-contain bg-slate-50" />
+                        <button type="button" className="absolute right-0.5 top-0.5 rounded bg-white/90 px-1 text-[0.6rem] text-red-600" onClick={() => patchSale(s.id, { photoUrl: "" })}>Remove</button>
+                      </div>
+                    ) : (
+                      <label className="flex h-20 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50">
+                        Add photo
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                          const file = e.target.files?.[0];
                           if (!file) return;
                           const reader = new FileReader();
                           reader.onload = () => patchSale(s.id, { photoUrl: String(reader.result ?? "") });

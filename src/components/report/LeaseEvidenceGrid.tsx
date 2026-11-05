@@ -55,6 +55,7 @@ export function LeaseEvidenceGrid({
   onMeta: (patch: Partial<ReportMeta>) => void;
 }) {
   const comps = meta.ciLeaseComps ?? [];
+  const subjectAddress = [values["prop_address"], values["prop_suburb"]].filter(Boolean).join(", ") || "Subject";
   const subjectBuilding = String(values["comm_nla"] ?? values["comm_gba"] ?? "");
   const subjectClear = String(values["comm_clear_height"] ?? "");
   const subjectHardstand = String(values["comm_hardstand"] ?? "");
@@ -104,7 +105,10 @@ export function LeaseEvidenceGrid({
             <thead>
               <tr className="border-b border-slate-200 text-left text-slate-500">
                 <th className="sticky left-0 z-20 bg-white py-1 pr-2 min-w-[6rem]">Item</th>
-                <th className="sticky left-[6rem] z-20 bg-white py-1 pr-2 min-w-[8rem]">Subject</th>
+                <th className="sticky left-[6rem] z-20 bg-white py-1 pr-2 min-w-[8rem]">
+                  <div className="text-xs font-medium text-foreground">{subjectAddress}</div>
+                  <div className="text-[0.6rem] text-slate-400">Subject</div>
+                </th>
                 {comps.map((c, idx) => (
                   <th key={c.id} className="py-1 pr-2 min-w-[8rem]">
                     <input

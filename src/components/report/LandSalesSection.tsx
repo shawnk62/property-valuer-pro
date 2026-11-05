@@ -2,7 +2,7 @@
  * Comparable land sales for the cost approach (commercial / industrial Shawn Full).
  * Separate from the improved sales comparison grid.
  */
-import type { ReportMeta } from "@/lib/report/types";
+import type { InspectionValues, ReportMeta } from "@/lib/report/types";
 
 interface LandSale {
   id: string;
@@ -32,12 +32,16 @@ function blank(): LandSale {
 
 export function LandSalesSection({
   meta,
+  values,
   onMeta,
 }: {
   meta: ReportMeta;
+  values: InspectionValues;
   onMeta: (patch: Partial<ReportMeta>) => void;
 }) {
   const sales = meta.ciLandSales ?? [];
+  const subjectAddress = [values["prop_address"], values["prop_suburb"]].filter(Boolean).join(", ") || "Subject";
+  const subjectLand = String(values["prop_usable_sitearea"] ?? values["prop_sitearea"] ?? "");
 
   function update(id: string, patch: Partial<LandSale>) {
     onMeta({
@@ -71,6 +75,10 @@ export function LandSalesSection({
             <thead>
               <tr className="border-b border-slate-200 text-left text-slate-500">
                 <th className="sticky left-0 z-20 bg-white py-1 pr-2 min-w-[6rem]">Item</th>
+                <th className="sticky left-[6rem] z-20 bg-white py-1 pr-2 min-w-[8rem]">
+                  <div className="text-xs font-medium text-foreground">{subjectAddress}</div>
+                  <div className="text-[0.6rem] text-slate-400">Subject</div>
+                </th>
                 {sales.map((s) => (
                   <th key={s.id} className="py-1 pr-2 min-w-[8rem]">
                     <input
@@ -87,6 +95,7 @@ export function LandSalesSection({
             <tbody>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500">Photo</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     {s.photoUrl ? (
@@ -111,6 +120,7 @@ export function LandSalesSection({
               </tr>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500">Proximity</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.proximity ?? ""} placeholder="e.g. 1.2 km N" onChange={(e) => update(s.id, { proximity: e.target.value })} />
@@ -119,6 +129,7 @@ export function LandSalesSection({
               </tr>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500">Date</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.date} onChange={(e) => update(s.id, { date: e.target.value })} />
@@ -127,6 +138,7 @@ export function LandSalesSection({
               </tr>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500">Price</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.price} onChange={(e) => update(s.id, { price: e.target.value })} />
@@ -135,6 +147,7 @@ export function LandSalesSection({
               </tr>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500">Land area</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectLand || "—"}</td>
                 {sales.map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <div className="flex items-center gap-1">
@@ -149,6 +162,7 @@ export function LandSalesSection({
               </tr>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500">Notes</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
                 {sales.map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <textarea className="w-full min-h-[3rem] border border-slate-300 rounded px-1 py-0.5" value={s.notes} onChange={(e) => update(s.id, { notes: e.target.value })} />
