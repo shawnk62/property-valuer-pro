@@ -5,7 +5,6 @@
 import { useMemo } from "react";
 import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/types";
 import { comparableBuildingRate, comparableSiteRate } from "@/lib/report/adjustmentGrid";
-import { LeaseEvidenceGrid } from "@/components/report/LeaseEvidenceGrid";
 import {
   costIndication,
   formatCostLines,
@@ -107,7 +106,6 @@ export function CommercialAnalysisPanel({ values, meta, sales, onMeta, landValue
         <Field label="External obsolescence (%)" value={meta.ciExternalObsolescence ?? ""} onChange={(v) => onMeta({ ciExternalObsolescence: v })} />
       </div>
       {rateLines.length ? <Table title="Direct comparison rates (land and building)" lines={rateLines} /> : null}
-      <LeaseEvidenceGrid values={values} meta={meta} onMeta={onMeta} />
       <Table title="Income capitalisation" lines={formatIncomeLines(income)} />
       <div className="mt-3">
         <div className="text-sm font-semibold text-slate-700 mb-1">Cost approach — summation</div>

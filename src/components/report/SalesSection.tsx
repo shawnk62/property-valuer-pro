@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { CommercialAnalysisPanel } from "@/components/report/CommercialAnalysisPanel";
 import { CommercialValuationTables } from "@/components/report/CommercialValuationTables";
+import { LeaseEvidenceGrid } from "@/components/report/LeaseEvidenceGrid";
+import { LandSalesSection } from "@/components/report/LandSalesSection";
 import { SalesCommentaryWorkspace } from "@/components/report/SalesCommentaryWorkspace";
 import { narrativePrints } from "@/lib/narrative/neighbourhoodAssist";
 import { SalesMapEditor } from "@/components/report/SalesMapEditor";
@@ -1721,198 +1723,6 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         }}
       />
 
-      {/* Manual sales map + front photos — reliable path for report placement */}
-      <div className="rounded-md border border-border bg-card p-4 space-y-4">
-        <div>
-          <h4 className="text-sm font-semibold text-foreground">Sales map &amp; front photos</h4>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Generate maps fills the location tile (subject plus nearest CBD / town / regional
-            centre) and the sales-map tile (subject address + comparable numbers). Location-map
-            scale can be adjusted below without changing the sales map.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-start gap-4">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-xs font-medium text-foreground">Sales map</p>
-              <button
-                type="button"
-                onClick={() => void generateGoogleMaps()}
-                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent"
-              >
-                Generate maps
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!isGoogleMapsConfigured()) {
-                    toast.error("Add a Google Maps API key in Settings first");
-                    return;
-                  }
-                  setMapEditorOpen(true);
-                }}
-                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent"
-              >
-                Edit pins
-              </button>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-xs font-medium text-foreground">Location map scale</p>
-              <button
-                type="button"
-                onClick={() => void rescaleLocationMap(null)}
-                className="rounded-md border border-input bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent"
-              >
-                Fit to nearest centre
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  void rescaleLocationMap(
-                    clampSubjectZoom((draft.reportMeta.subjectMapZoom ?? 12) - 1),
-                  )
-                }
-                disabled={(draft.reportMeta.subjectMapZoom ?? 12) <= SUBJECT_ZOOM_MIN}
-                className="rounded-md border border-input bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-40"
-              >
-                −
-              </button>
-              <span className="text-xs tabular-nums text-muted-foreground">
-                z{draft.reportMeta.subjectMapZoom ?? "auto"}
-                {draft.reportMeta.subjectMapManual ? " · manual" : ""}
-              </span>
-              <button
-                type="button"
-                onClick={() =>
-                  void rescaleLocationMap(
-                    clampSubjectZoom((draft.reportMeta.subjectMapZoom ?? 12) + 1),
-                  )
-                }
-                disabled={(draft.reportMeta.subjectMapZoom ?? 16) >= SUBJECT_ZOOM_MAX}
-                className="rounded-md border border-input bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-40"
-              >
-                +
-              </button>
-            </div>
-            {draft.reportMeta.salesMapUrl ? (
-              <div className="relative inline-block">
-                <img
-                  src={draft.reportMeta.salesMapUrl}
-                  alt="Sales map"
-                  className="max-h-40 max-w-xs rounded border border-border object-contain"
-                />
-                <button
-                  type="button"
-                  onClick={clearSalesMap}
-                  className="absolute right-1 top-1 rounded bg-background/90 px-1.5 py-0.5 text-xs text-destructive shadow"
-                >
-                  Remove
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                tabIndex={0}
-                onClick={() => openPhotoSource("map")}
-                onPaste={onSalesMapPaste}
-                onContextMenu={(e) => openPhotoMenu(e, "map")}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={onSalesMapDrop}
-                className="flex h-28 w-44 cursor-pointer flex-col items-center justify-center rounded border border-dashed border-border bg-muted/30 text-center text-xs text-muted-foreground hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                title="Tap to photograph map, or paste / drop"
-              >
-                <span>Tap for camera or library</span>
-                <span className="mt-0.5 text-[0.65rem] opacity-80">or paste / drop</span>
-              </button>
-            )}
-            {draft.reportMeta.salesMapUrl ? (
-              <label
-                tabIndex={0}
-                onPaste={onSalesMapPaste}
-                onContextMenu={(e) => openPhotoMenu(e, "map")}
-                className="block text-xs text-primary cursor-pointer hover:underline focus:outline-none focus:ring-2 focus:ring-primary/40"
-                title="Right-click → Paste image, or ⌘V"
-              >
-                Replace map (or paste)
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => void onSalesMapFile(e.target.files?.[0] ?? null)}
-                />
-              </label>
-            ) : null}
-          </div>
-        </div>
-
-        {gridSales.length > 0 ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {gridSales.map((sale, idx) => (
-              <div
-                key={sale.id}
-                onDragOver={salePhotoDragOver}
-                onDrop={(e) => onSalePhotoDrop(sale.id, e)}
-                className="rounded border border-border bg-background p-2 space-y-1.5"
-              >
-                <p className="text-xs font-semibold text-foreground truncate">
-                  Comp #{idx + 1}
-                  {sale.address ? (
-                    <span className="font-normal text-muted-foreground"> — {sale.address}</span>
-                  ) : null}
-                </p>
-                {sale.photoUrl ? (
-                  <div className="relative">
-                    <img
-                      src={sale.photoUrl}
-                      alt={sale.address || `Comparable ${idx + 1}`}
-                      className="pointer-events-none max-h-36 w-full rounded object-contain bg-muted/30"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => clearSalePhoto(sale.id)}
-                      className="absolute right-1 top-1 rounded bg-background/90 px-1.5 py-0.5 text-[0.65rem] text-destructive shadow"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    tabIndex={0}
-                    onClick={() => openPhotoSource({ saleId: sale.id })}
-                    onPaste={(e) => onSalePhotoPaste(sale.id, e)}
-                    onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
-                    onDragOver={salePhotoDragOver}
-                    onDrop={(e) => onSalePhotoDrop(sale.id, e)}
-                    className="flex h-20 w-full cursor-pointer flex-col items-center justify-center gap-0.5 rounded border border-dashed border-border text-xs text-muted-foreground hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    title="Tap to open the camera, or paste / drop an image"
-                  >
-                    <span>Tap for camera or library</span>
-                    <span className="text-[0.65rem] opacity-80">or paste / drop</span>
-                  </button>
-                )}
-                {sale.photoUrl ? (
-                  <button
-                    type="button"
-                    onClick={() => openPhotoSource({ saleId: sale.id })}
-                    onPaste={(e) => onSalePhotoPaste(sale.id, e)}
-                    onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
-                    className="text-left text-[0.65rem] text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    title="Take or choose a new photo, or paste"
-                  >
-                    Replace / take photo
-                  </button>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            Import sales first, then attach a front photo to each comparable.
-          </p>
-        )}
-      </div>
 
       {!(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) && gridSales.length === 0 ? (
         <div className="rounded-md border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
@@ -2935,112 +2745,274 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       ) : null}
       </>
 
+      {/* Manual sales map + front photos — reliable path for report placement */}
+      <div className="rounded-md border border-border bg-card p-4 space-y-4">
+        <div>
+          <h4 className="text-sm font-semibold text-foreground">Sales map &amp; front photos</h4>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Generate maps fills the location tile (subject plus nearest CBD / town / regional
+            centre) and the sales-map tile (subject address + comparable numbers). Location-map
+            scale can be adjusted below without changing the sales map.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-start gap-4">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-xs font-medium text-foreground">Sales map</p>
+              <button
+                type="button"
+                onClick={() => void generateGoogleMaps()}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent"
+              >
+                Generate maps
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isGoogleMapsConfigured()) {
+                    toast.error("Add a Google Maps API key in Settings first");
+                    return;
+                  }
+                  setMapEditorOpen(true);
+                }}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent"
+              >
+                Edit pins
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-xs font-medium text-foreground">Location map scale</p>
+              <button
+                type="button"
+                onClick={() => void rescaleLocationMap(null)}
+                className="rounded-md border border-input bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent"
+              >
+                Fit to nearest centre
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  void rescaleLocationMap(
+                    clampSubjectZoom((draft.reportMeta.subjectMapZoom ?? 12) - 1),
+                  )
+                }
+                disabled={(draft.reportMeta.subjectMapZoom ?? 12) <= SUBJECT_ZOOM_MIN}
+                className="rounded-md border border-input bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-40"
+              >
+                −
+              </button>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                z{draft.reportMeta.subjectMapZoom ?? "auto"}
+                {draft.reportMeta.subjectMapManual ? " · manual" : ""}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  void rescaleLocationMap(
+                    clampSubjectZoom((draft.reportMeta.subjectMapZoom ?? 12) + 1),
+                  )
+                }
+                disabled={(draft.reportMeta.subjectMapZoom ?? 16) >= SUBJECT_ZOOM_MAX}
+                className="rounded-md border border-input bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-40"
+              >
+                +
+              </button>
+            </div>
+            {draft.reportMeta.salesMapUrl ? (
+              <div className="relative inline-block">
+                <img
+                  src={draft.reportMeta.salesMapUrl}
+                  alt="Sales map"
+                  className="max-h-40 max-w-xs rounded border border-border object-contain"
+                />
+                <button
+                  type="button"
+                  onClick={clearSalesMap}
+                  className="absolute right-1 top-1 rounded bg-background/90 px-1.5 py-0.5 text-xs text-destructive shadow"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                tabIndex={0}
+                onClick={() => openPhotoSource("map")}
+                onPaste={onSalesMapPaste}
+                onContextMenu={(e) => openPhotoMenu(e, "map")}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={onSalesMapDrop}
+                className="flex h-28 w-44 cursor-pointer flex-col items-center justify-center rounded border border-dashed border-border bg-muted/30 text-center text-xs text-muted-foreground hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                title="Tap to photograph map, or paste / drop"
+              >
+                <span>Tap for camera or library</span>
+                <span className="mt-0.5 text-[0.65rem] opacity-80">or paste / drop</span>
+              </button>
+            )}
+            {draft.reportMeta.salesMapUrl ? (
+              <label
+                tabIndex={0}
+                onPaste={onSalesMapPaste}
+                onContextMenu={(e) => openPhotoMenu(e, "map")}
+                className="block text-xs text-primary cursor-pointer hover:underline focus:outline-none focus:ring-2 focus:ring-primary/40"
+                title="Right-click → Paste image, or ⌘V"
+              >
+                Replace map (or paste)
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => void onSalesMapFile(e.target.files?.[0] ?? null)}
+                />
+              </label>
+            ) : null}
+          </div>
+        </div>
+
+        {gridSales.length > 0 ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {gridSales.map((sale, idx) => (
+              <div
+                key={sale.id}
+                onDragOver={salePhotoDragOver}
+                onDrop={(e) => onSalePhotoDrop(sale.id, e)}
+                className="rounded border border-border bg-background p-2 space-y-1.5"
+              >
+                <p className="text-xs font-semibold text-foreground truncate">
+                  Comp #{idx + 1}
+                  {sale.address ? (
+                    <span className="font-normal text-muted-foreground"> — {sale.address}</span>
+                  ) : null}
+                </p>
+                {sale.photoUrl ? (
+                  <div className="relative">
+                    <img
+                      src={sale.photoUrl}
+                      alt={sale.address || `Comparable ${idx + 1}`}
+                      className="pointer-events-none max-h-36 w-full rounded object-contain bg-muted/30"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => clearSalePhoto(sale.id)}
+                      className="absolute right-1 top-1 rounded bg-background/90 px-1.5 py-0.5 text-[0.65rem] text-destructive shadow"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    tabIndex={0}
+                    onClick={() => openPhotoSource({ saleId: sale.id })}
+                    onPaste={(e) => onSalePhotoPaste(sale.id, e)}
+                    onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
+                    onDragOver={salePhotoDragOver}
+                    onDrop={(e) => onSalePhotoDrop(sale.id, e)}
+                    className="flex h-20 w-full cursor-pointer flex-col items-center justify-center gap-0.5 rounded border border-dashed border-border text-xs text-muted-foreground hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    title="Tap to open the camera, or paste / drop an image"
+                  >
+                    <span>Tap for camera or library</span>
+                    <span className="text-[0.65rem] opacity-80">or paste / drop</span>
+                  </button>
+                )}
+                {sale.photoUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => openPhotoSource({ saleId: sale.id })}
+                    onPaste={(e) => onSalePhotoPaste(sale.id, e)}
+                    onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
+                    className="text-left text-[0.65rem] text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    title="Take or choose a new photo, or paste"
+                  >
+                    Replace / take photo
+                  </button>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Import sales first, then attach a front photo to each comparable.
+          </p>
+        )}
+      </div>
+
       <SalesCommentaryWorkspace controller={controller} />
 
-      {/* Income and Cost approaches — calculations visible while writing comments, with print toggles */}
-      <div className="space-y-6 rounded-md border border-border bg-card p-4">
-        <h3 className="text-sm font-semibold text-foreground">Income and Cost Approaches</h3>
-        <p className="text-xs text-muted-foreground">
-          Supporting calculations stay visible while the narrative is written. Tick a section to include it on the report.
-        </p>
+      {/* Approach sections — evidence, photos and commentary stay together */}
+      {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
+        <>
+          <div className="space-y-4 rounded-md border border-border bg-card p-4">
+            <h3 className="text-sm font-semibold text-foreground">Lease evidence</h3>
+            <LeaseEvidenceGrid values={draft.values} meta={draft.reportMeta} onMeta={setMeta} />
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "leaseEvidence")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), leaseEvidence: e.target.checked } })} />
+              Include Lease Evidence on report
+            </label>
+            <PausedTextarea value={draft.narrative.leaseEvidence ?? ""} onChange={(v) => setNarrative({ leaseEvidence: v })} placeholder="Lease evidence commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          </div>
 
-        <CommercialAnalysisPanel
-          values={draft.values}
-          meta={draft.reportMeta}
-          onMeta={setMeta}
-          landValue={null}
-        />
+          <div className="space-y-4 rounded-md border border-border bg-card p-4">
+            <h3 className="text-sm font-semibold text-foreground">Income capitalisation</h3>
+            <CommercialAnalysisPanel values={draft.values} meta={draft.reportMeta} onMeta={setMeta} landValue={null} />
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "capitalisationApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), capitalisationApproach: e.target.checked } })} />
+              Include Capitalisation Approach on report
+            </label>
+            <PausedTextarea value={draft.narrative.capitalisationApproach ?? ""} onChange={(v) => setNarrative({ capitalisationApproach: v })} placeholder="Capitalisation approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "dcfApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), dcfApproach: e.target.checked } })} />
+              Include Discounted Cash Flow on report
+            </label>
+            <PausedTextarea value={draft.narrative.dcfApproach ?? ""} onChange={(v) => setNarrative({ dcfApproach: v })} placeholder="Discounted cash flow commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          </div>
 
-        <div className="space-y-4">
-          <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={narrativePrints(draft.reportMeta, "leaseEvidence")}
-              onChange={(e) =>
-                setMeta({
-                  printNarrative: {
-                    ...(draft.reportMeta.printNarrative ?? {}),
-                    leaseEvidence: e.target.checked,
-                  },
-                })
-              }
-            />
-            Include Lease Evidence on report
-          </label>
-          <PausedTextarea
-            value={draft.narrative.leaseEvidence ?? ""}
-            onChange={(v) => setNarrative({ leaseEvidence: v })}
-            placeholder="Lease evidence commentary…"
-            className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm"
-          />
+          <div className="space-y-4 rounded-md border border-border bg-card p-4">
+            <h3 className="text-sm font-semibold text-foreground">Cost approach</h3>
+            <LandSalesSection meta={draft.reportMeta} onMeta={setMeta} />
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "costApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), costApproach: e.target.checked } })} />
+              Include Cost Approach on report
+            </label>
+            <PausedTextarea value={draft.narrative.costApproach ?? ""} onChange={(v) => setNarrative({ costApproach: v })} placeholder="Cost approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          </div>
 
-          <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={narrativePrints(draft.reportMeta, "capitalisationApproach")}
-              onChange={(e) =>
-                setMeta({
-                  printNarrative: {
-                    ...(draft.reportMeta.printNarrative ?? {}),
-                    capitalisationApproach: e.target.checked,
-                  },
-                })
-              }
-            />
-            Include Capitalisation Approach on report
-          </label>
-          <PausedTextarea
-            value={draft.narrative.capitalisationApproach ?? ""}
-            onChange={(v) => setNarrative({ capitalisationApproach: v })}
-            placeholder="Capitalisation approach commentary…"
-            className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm"
-          />
-
-          <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={narrativePrints(draft.reportMeta, "dcfApproach")}
-              onChange={(e) =>
-                setMeta({
-                  printNarrative: {
-                    ...(draft.reportMeta.printNarrative ?? {}),
-                    dcfApproach: e.target.checked,
-                  },
-                })
-              }
-            />
-            Include Discounted Cash Flow on report
-          </label>
-          <PausedTextarea
-            value={draft.narrative.dcfApproach ?? ""}
-            onChange={(v) => setNarrative({ dcfApproach: v })}
-            placeholder="Discounted cash flow commentary…"
-            className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm"
-          />
-
-          <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={narrativePrints(draft.reportMeta, "costApproach")}
-              onChange={(e) =>
-                setMeta({
-                  printNarrative: {
-                    ...(draft.reportMeta.printNarrative ?? {}),
-                    costApproach: e.target.checked,
-                  },
-                })
-              }
-            />
-            Include Cost Approach on report
-          </label>
-          <PausedTextarea
-            value={draft.narrative.costApproach ?? ""}
-            onChange={(v) => setNarrative({ costApproach: v })}
-            placeholder="Cost approach commentary…"
-            className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm"
-          />
+          <div className="space-y-4 rounded-md border border-border bg-card p-4">
+            <h3 className="text-sm font-semibold text-foreground">Reconciliation</h3>
+            <PausedTextarea value={draft.narrative.valueReconciliation ?? ""} onChange={(v) => setNarrative({ valueReconciliation: v })} placeholder="Reconciliation of value…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          </div>
+        </>
+      ) : (
+        <div className="space-y-6 rounded-md border border-border bg-card p-4">
+          <h3 className="text-sm font-semibold text-foreground">Income and Cost Approaches</h3>
+          <p className="text-xs text-muted-foreground">Supporting calculations stay visible while the narrative is written.</p>
+          <CommercialAnalysisPanel values={draft.values} meta={draft.reportMeta} onMeta={setMeta} landValue={null} />
+          <div className="space-y-4">
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "leaseEvidence")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), leaseEvidence: e.target.checked } })} />
+              Include Lease Evidence on report
+            </label>
+            <PausedTextarea value={draft.narrative.leaseEvidence ?? ""} onChange={(v) => setNarrative({ leaseEvidence: v })} placeholder="Lease evidence commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "capitalisationApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), capitalisationApproach: e.target.checked } })} />
+              Include Capitalisation Approach on report
+            </label>
+            <PausedTextarea value={draft.narrative.capitalisationApproach ?? ""} onChange={(v) => setNarrative({ capitalisationApproach: v })} placeholder="Capitalisation approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "dcfApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), dcfApproach: e.target.checked } })} />
+              Include Discounted Cash Flow on report
+            </label>
+            <PausedTextarea value={draft.narrative.dcfApproach ?? ""} onChange={(v) => setNarrative({ dcfApproach: v })} placeholder="Discounted cash flow commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "costApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), costApproach: e.target.checked } })} />
+              Include Cost Approach on report
+            </label>
+            <PausedTextarea value={draft.narrative.costApproach ?? ""} onChange={(v) => setNarrative({ costApproach: v })} placeholder="Cost approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          </div>
         </div>
-      </div>
+      )}
+
     </div>
   );
 }

@@ -571,6 +571,18 @@ export interface ReportMeta {
   ciAdoptedBuildingRate?: string;
   /** Adopted land rate $/m² for direct comparison. */
   ciAdoptedLandRate?: string;
+  /** Comparable land sales for the cost approach. */
+  ciLandSales?: Array<{
+    id: string;
+    address: string;
+    date: string;
+    price: string;
+    landArea: string;
+    landUnit?: "m2" | "ha";
+    notes: string;
+    proximity?: string;
+    photoUrl?: string;
+  }>;
 }
 
 export interface ReportDraft {

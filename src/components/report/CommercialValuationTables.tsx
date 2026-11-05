@@ -4,14 +4,6 @@
  * Residential reports do not use this component.
  */
 import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/types";
-import { LeaseEvidenceGrid } from "@/components/report/LeaseEvidenceGrid";
-import {
-  costIndication,
-  formatCostLines,
-  formatIncomeLines,
-  incomeStatement,
-} from "@/lib/report/commercialCalculations";
-import { useMemo } from "react";
 
 function num(raw: string | number | null | undefined): number | null {
   if (raw == null) return null;
@@ -62,8 +54,6 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
   const subjectOfficeRaw = String(values["comm_office_split"] ?? "");
   const subjectOffice = /\d|%|office/i.test(subjectOfficeRaw) ? subjectOfficeRaw : "";
 
-  const income = useMemo(() => incomeStatement(values, meta), [values, meta]);
-  const cost = useMemo(() => costIndication(values, meta, null), [values, meta]);
 
   const adoptedBuildingRate = num(meta.ciAdoptedBuildingRate);
   const adoptedLandRate = num(meta.ciAdoptedLandRate);
@@ -159,84 +149,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
     }
   }
 
-  const reconciliation = [
-    { label: "Direct comparison (building rate)", value: money(buildingIndication) },
-    { label: "Direct comparison (land rate)", value: money(landIndication) },
-    { label: "Income capitalisation", value: money(income.adoptedValue) },
-    { label: "Cost approach", value: money(cost.indicatedValue) },
-  ].filter((r) => r.value !== "—");
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-sm font-semibold text-foreground mb-1">Sales comparison</h3>
-        <p className="text-xs text-muted-foreground mb-2">
-          Subject facts are from the inspection. Enter sale details. Rates are calculated. Adopt a rate; the table multiplies.
-        </p>
-        <button
-          type="button"
-          onClick={addBlankSale}
-          className="mb-2 rounded-md border border-input bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
-        >
-          Add comparable sale
-        </button>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-slate-200 text-left text-slate-500">
-                <th className="sticky left-0 z-20 bg-white py-1 pr-2 min-w-[6rem]">Item</th>
-                <th className="sticky left-[6rem] z-20 bg-white py-1 pr-2 min-w-[8rem]">Subject</th>
-                {sales.filter((s) => s.omitFromReport !== true).map((s, idx, arr) => (
-                  <th key={s.id} className="py-1 pr-2 min-w-[8rem]">
-                    <input
-                      className="w-full border border-slate-300 rounded px-1 py-0.5 text-xs font-medium text-foreground"
-                      value={s.address}
-                      placeholder={s.saleDate ? "Sale address" : "Listing address"}
-                      onChange={(e) => patchSale(s.id, { address: e.target.value })}
-                    />
-                    <div className="mt-0.5 text-[0.6rem] text-slate-400 truncate">
-                      {s.address.trim() ? (s.saleDate ? "Sale" : "Listing") : (s.saleDate ? "Sale" : "Listing")}
-                    </div>
-                    <div className="mt-0.5 flex gap-1 text-[0.65rem] font-normal">
-                      <button type="button" disabled={idx === 0} className="text-slate-500 disabled:opacity-30" onClick={() => moveSale(s.id, -1)}>←</button>
-                      <button type="button" disabled={idx === arr.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => moveSale(s.id, 1)}>→</button>
-                      <button type="button" className="text-slate-500" onClick={() => archiveSale(s.id)} title="Hold in working file">Archive</button>
-                      <button type="button" className="text-red-500" onClick={() => deleteSale(s.id)}>×</button>
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b border-slate-100">
-                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Proximity to Subject</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
-                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
-                  <td key={s.id} className="py-1 pr-1">
-                    <input
-                      className="w-full border border-slate-300 rounded px-1 py-0.5"
-                      value={s.proximity ?? ""}
-                      placeholder="e.g. 1.2 km N"
-                      onChange={(e) => patchSale(s.id, { proximity: e.target.value })}
-                    />
-                  </td>
-                ))}
-              </tr>
-              <tr className="border-b border-slate-100">
-                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Photo</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
-                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
-                  <td key={s.id} className="py-1 pr-1">
-                    {s.photoUrl ? (
-                      <div className="relative">
-                        <img src={s.photoUrl} alt={s.address} className="w-full max-h-28 rounded object-contain bg-slate-50" />
-                        <button type="button" className="absolute right-0.5 top-0.5 rounded bg-white/90 px-1 text-[0.6rem] text-red-600" onClick={() => patchSale(s.id, { photoUrl: "" })}>Remove</button>
-                      </div>
-                    ) : (
-                      <label className="flex h-20 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50">
-                        Add photo
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                          const file = e.target.files?.[0];
                           if (!file) return;
                           const reader = new FileReader();
                           reader.onload = () => patchSale(s.id, { photoUrl: String(reader.result ?? "") });
@@ -467,98 +380,6 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
         ) : null}
       </div>
 
-      <LeaseEvidenceGrid values={values} meta={meta} onMeta={onMeta} />
-
-      <div>
-        <h3 className="text-sm font-semibold text-foreground mb-1">Income capitalisation</h3>
-        <table className="w-full text-sm border-collapse">
-          <tbody>
-            {formatIncomeLines(income).map((row) => (
-              <tr key={row.label} className="border-b border-slate-100">
-                <td className="py-1 pr-4 text-slate-600">{row.label}</td>
-                <td className="py-1 text-right font-medium">{row.value}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div>
-        <h3 className="text-sm font-semibold text-foreground mb-1">Cost approach — summation</h3>
-        <p className="text-xs text-muted-foreground mb-1">Land plus depreciated replacement of components. Used as a check.</p>
-        {(meta.ciCostComponents ?? []).length === 0 ? (
-          <button type="button" className="text-xs text-slate-600 underline mb-2" onClick={() => onMeta({
-            ciCostComponents: [
-              { name: "Land (vacant value)", area: subjectLand, rate: "", depreciation: "" },
-              { name: "Warehouse / factory", area: "", rate: "", depreciation: "" },
-              { name: "Office and amenities", area: "", rate: "", depreciation: "" },
-              { name: "Mezzanine", area: "", rate: "", depreciation: "" },
-              { name: "Awning", area: "", rate: "", depreciation: "" },
-              { name: "Lift (nominal)", area: "", rate: "", depreciation: "" },
-              { name: "Outbuildings", area: "", rate: "", depreciation: "" },
-              { name: "Hardstand", area: subjectHardstand, rate: "", depreciation: "" },
-              { name: "Lights", area: "", rate: "", depreciation: "" },
-              { name: "Fencing", area: "", rate: "", depreciation: "" },
-              { name: "Bollards", area: "", rate: "", depreciation: "" },
-              { name: "Landscaping (nominal)", area: "", rate: "", depreciation: "" },
-              { name: "Gate (nominal)", area: "", rate: "", depreciation: "" },
-            ],
-          })}>
-            Start with industrial component list
-          </button>
-        ) : (
-          (meta.ciCostComponents ?? []).map((c, i) => (
-            <div key={i} className="grid grid-cols-4 gap-1 mb-1">
-              <input className="border border-slate-300 rounded px-1 py-0.5 text-xs" value={c.name} onChange={(e) => {
-                const next = [...(meta.ciCostComponents ?? [])];
-                next[i] = { ...next[i], name: e.target.value };
-                onMeta({ ciCostComponents: next });
-              }} />
-              <input className="border border-slate-300 rounded px-1 py-0.5 text-xs" placeholder="Qty" value={c.area} onChange={(e) => {
-                const next = [...(meta.ciCostComponents ?? [])];
-                next[i] = { ...next[i], area: e.target.value };
-                onMeta({ ciCostComponents: next });
-              }} />
-              <input className="border border-slate-300 rounded px-1 py-0.5 text-xs" placeholder="Rate" value={c.rate} onChange={(e) => {
-                const next = [...(meta.ciCostComponents ?? [])];
-                next[i] = { ...next[i], rate: e.target.value };
-                onMeta({ ciCostComponents: next });
-              }} />
-              <input className="border border-slate-300 rounded px-1 py-0.5 text-xs" placeholder="Dep %" value={c.depreciation} onChange={(e) => {
-                const next = [...(meta.ciCostComponents ?? [])];
-                next[i] = { ...next[i], depreciation: e.target.value };
-                onMeta({ ciCostComponents: next });
-              }} />
-            </div>
-          ))
-        )}
-        <table className="w-full text-sm border-collapse mt-2">
-          <tbody>
-            {formatCostLines(cost).map((row) => (
-              <tr key={row.label} className="border-b border-slate-100">
-                <td className="py-1 pr-4 text-slate-600">{row.label}</td>
-                <td className="py-1 text-right font-medium">{row.value}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {reconciliation.length ? (
-        <div>
-          <h3 className="text-sm font-semibold text-foreground mb-1">Reconciliation</h3>
-          <table className="w-full text-sm border-collapse">
-            <tbody>
-              {reconciliation.map((row) => (
-                <tr key={row.label} className="border-b border-slate-100">
-                  <td className="py-1 pr-4 text-slate-600">{row.label}</td>
-                  <td className="py-1 text-right font-medium">{row.value}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
     </div>
   );
 }
