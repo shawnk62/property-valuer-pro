@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { CommercialAnalysisPanel } from "@/components/report/CommercialAnalysisPanel";
 import { CommercialValuationTables } from "@/components/report/CommercialValuationTables";
+import { InspectionRoutePlanner } from "@/components/report/InspectionRoutePlanner";
 import { LeaseEvidenceGrid } from "@/components/report/LeaseEvidenceGrid";
 import { LandSalesSection } from "@/components/report/LandSalesSection";
 import { SalesCommentaryWorkspace } from "@/components/report/SalesCommentaryWorkspace";
@@ -1479,6 +1480,11 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         </div>
       </div>
 
+      <InspectionRoutePlanner
+        sales={draft.sales}
+        values={draft.values}
+        meta={draft.reportMeta}
+      />
       {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
         <CommercialValuationTables
           values={draft.values}
