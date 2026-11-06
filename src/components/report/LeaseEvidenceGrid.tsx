@@ -151,7 +151,7 @@ export function LeaseEvidenceGrid({
                     ) : (
                       <label className="flex h-20 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50">
                         Add photo
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                        <input type="file" accept="image/*" className="sr-only" onChange={(e) => {
                           const file = e.target.files?.[0];
                           e.target.value = "";
                           if (!file || !inspectionId) return;
@@ -320,7 +320,7 @@ export function LeaseEvidenceGrid({
         ) : (
           <label className="flex h-20 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-xs text-slate-400 hover:bg-slate-50">
             Add lease map
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+            <input type="file" accept="image/*" className="sr-only" onChange={(e) => {
               const file = e.target.files?.[0];
               if (!file) return;
               const reader = new FileReader();
