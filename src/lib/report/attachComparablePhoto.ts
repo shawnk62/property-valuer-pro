@@ -1,7 +1,7 @@
 /**
  * Attach a comparable photo the same way residential sales do:
- * write to IndexedDB first, show immediately, then upload.
- * If the upload fails, the photo remains on this device.
+ * clone the file immediately, show it, then process and upload.
+ * iOS Safari invalidates a library File if it is not read at once.
  */
 import { photoBlobKey, putPhotoBlob } from "@/lib/report/photo-idb";
 import { uploadReportPhoto } from "@/lib/report/photo-storage";
@@ -12,17 +12,13 @@ export async function attachComparablePhoto(opts: {
   photoId: string;
   file: File;
 }): Promise<{ photoUrl: string; photoLocalKey: string; photoStoragePath?: string; synced: boolean }> {
-  let prepared: File;
-  try {
-    const stable = await cloneImageFile(opts.file);
-    prepared = await preparePhotoForReport(stable);
-  } catch {
-    prepared = opts.file;
-  }
+  const stable = await cloneImageFile(opts.file);
   const localKey = photoBlobKey(opts.inspectionId, opts.photoId);
-  await putPhotoBlob(localKey, prepared);
-  const localUrl = URL.createObjectURL(prepared);
+  const localUrl = URL.createObjectURL(stable);
+  await putPhotoBlob(localKey, stable);
   try {
+    const prepared = await preparePhotoForReport(stable);
+    await putPhotoBlob(localKey, prepared);
     const { url, storagePath } = await uploadReportPhoto({
       inspectionId: opts.inspectionId,
       photoId: opts.photoId,
