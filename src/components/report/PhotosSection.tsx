@@ -486,6 +486,20 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     });
   }
 
+  function swapSlotPhotos(slots: { slot: PhotoSlot; label: string }[], index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (target < 0 || target >= slots.length) return;
+    const a = slots[index].slot;
+    const b = slots[target].slot;
+    setPhotos((prev) =>
+      prev.map((p) => {
+        if (p.slot === a) return { ...p, slot: b };
+        if (p.slot === b) return { ...p, slot: a };
+        return p;
+      }),
+    );
+  }
+
   function setOmitFromReport(photoId: string, omit: boolean) {
     setPhotos((prev) => prev.map((p) => (p.id === photoId ? { ...p, omitFromReport: omit } : p)));
   }
@@ -612,22 +626,30 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {photoSlotsForJob(isVacantLand(draft.values)).map(({ slot, label }) => {
+        {photoSlotsForJob(isVacantLand(draft.values)).map(({ slot, label }, index, arr) => {
           const photo = photos.find((p) => p.slot === slot);
+          const isFront = slot === "front";
           return (
-            <PhotoCard
-              key={slot}
-              slotLabel={label}
-              photo={photo}
-              uploading={photo ? uploadingIds.has(photo.id) : false}
-              onFile={(file) => void onSlotFile(slot, label, file)}
-              onCaption={(caption) => upsertSlotCaption(slot, label, caption)}
-              onRemove={photo?.url ? () => void removePhoto(photo) : undefined}
-              onOpenPasteMenu={openPasteMenu}
-              onOmitFromReport={
-                photo?.url ? (omit) => setOmitFromReport(photo.id, omit) : undefined
-              }
-            />
+            <div key={slot} className="space-y-1">
+              {!isFront ? (
+                <div className="flex gap-1 text-[0.7rem]">
+                  <button type="button" disabled={index <= 1} className="text-slate-500 disabled:opacity-30" onClick={() => swapSlotPhotos(arr, index, -1)}>←</button>
+                  <button type="button" disabled={index === arr.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => swapSlotPhotos(arr, index, 1)}>→</button>
+                </div>
+              ) : null}
+              <PhotoCard
+                slotLabel={label}
+                photo={photo}
+                uploading={photo ? uploadingIds.has(photo.id) : false}
+                onFile={(file) => void onSlotFile(slot, label, file)}
+                onCaption={(caption) => upsertSlotCaption(slot, label, caption)}
+                onRemove={photo?.url ? () => void removePhoto(photo) : undefined}
+                onOpenPasteMenu={openPasteMenu}
+                onOmitFromReport={
+                  photo?.url ? (omit) => setOmitFromReport(photo.id, omit) : undefined
+                }
+              />
+            </div>
           );
         })}
       </div>
@@ -699,22 +721,27 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {mapSlotsForImport().map(({ slot, label }) => {
+        {mapSlotsForImport().map(({ slot, label }, index, arr) => {
           const photo = photos.find((p) => p.slot === slot);
           return (
-            <PhotoCard
-              key={slot}
-              slotLabel={label}
-              photo={photo}
-              uploading={photo ? uploadingIds.has(photo.id) : false}
-              onFile={(file) => void onSlotFile(slot, label, file)}
-              onCaption={(caption) => upsertSlotCaption(slot, label, caption)}
-              onRemove={photo?.url ? () => void removePhoto(photo) : undefined}
-              onOpenPasteMenu={openPasteMenu}
-              onOmitFromReport={
-                photo?.url ? (omit) => setOmitFromReport(photo.id, omit) : undefined
-              }
-            />
+            <div key={slot} className="space-y-1">
+              <div className="flex gap-1 text-[0.7rem]">
+                <button type="button" disabled={index === 0} className="text-slate-500 disabled:opacity-30" onClick={() => swapSlotPhotos(arr, index, -1)}>←</button>
+                <button type="button" disabled={index === arr.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => swapSlotPhotos(arr, index, 1)}>→</button>
+              </div>
+              <PhotoCard
+                slotLabel={label}
+                photo={photo}
+                uploading={photo ? uploadingIds.has(photo.id) : false}
+                onFile={(file) => void onSlotFile(slot, label, file)}
+                onCaption={(caption) => upsertSlotCaption(slot, label, caption)}
+                onRemove={photo?.url ? () => void removePhoto(photo) : undefined}
+                onOpenPasteMenu={openPasteMenu}
+                onOmitFromReport={
+                  photo?.url ? (omit) => setOmitFromReport(photo.id, omit) : undefined
+                }
+              />
+            </div>
           );
         })}
 
