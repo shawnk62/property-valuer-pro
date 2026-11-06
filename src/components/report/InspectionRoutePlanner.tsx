@@ -39,6 +39,7 @@ export function InspectionRoutePlanner({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [pendingLegs, setPendingLegs] = useState<string[]>([]);
+  const [orderedList, setOrderedList] = useState<string[]>([]);
   const [startFrom, setStartFrom] = useState<"subject" | "current">("current");
   const onReport = new Set(salesOnReport(sales).map((s) => s.id));
   const saleCandidates = sales.filter((s) => s.address.trim()).map((s) => ({ id: s.id, address: s.address, kind: "sale" as const, hasPhoto: Boolean(s.photoUrl) }));
@@ -170,6 +171,7 @@ export function InspectionRoutePlanner({
         return buildMapsUrl(appOrigin, leg);
       });
       setPendingLegs(urls.slice(1));
+      setOrderedList(ordered.map((s) => s.address));
       window.location.href = urls[0];
       toast.success(
         urls.length === 1
@@ -212,6 +214,18 @@ export function InspectionRoutePlanner({
               Start from subject
             </label>
           </div>
+          {orderedList.length > 0 ? (
+            <div className="rounded border border-slate-200 bg-slate-50 p-2 text-xs">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="font-medium text-foreground">Ordered stops</span>
+                <button type="button" className="rounded border border-input bg-card px-2 py-0.5 text-[0.65rem]" onClick={() => { void navigator.clipboard.writeText(orderedList.map((a, i) => (i + 1) + ". " + a).join("
+")); toast.success("Stops copied"); }}>Copy list</button>
+              </div>
+              <ol className="list-decimal space-y-0.5 pl-4 text-muted-foreground">
+                {orderedList.map((a, i) => <li key={i}>{a}</li>)}
+              </ol>
+            </div>
+          ) : null}
           {pendingLegs.length > 0 ? (
             <button type="button" className="rounded-md border border-input bg-card px-3 py-1.5 text-sm" onClick={() => {
               const [next, ...rest] = pendingLegs;
