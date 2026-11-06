@@ -21,7 +21,7 @@ interface Stop {
 }
 
 const MAX_STOPS = 25;
-const LEG_SIZE = 4;
+const LEG_SIZE = 3;
 
 export function InspectionRoutePlanner({
   sales,
