@@ -82,6 +82,7 @@ export function LandSalesSection({
       {sales.length === 0 ? (
         <p className="text-xs text-slate-400 mb-2">No land sales yet.</p>
       ) : (
+        <>
         <input ref={photoInputRef} type="file" accept="image/*" className="sr-only" onChange={(e) => {
           const file = e.target.files?.[0];
           const targetId = photoTargetRef.current;
@@ -205,6 +206,7 @@ export function LandSalesSection({
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

@@ -111,6 +111,7 @@ export function LeaseEvidenceGrid({
       {comps.length === 0 ? (
         <p className="text-xs text-slate-400 mb-2">No lease comparables yet.</p>
       ) : (
+        <>
         <input ref={photoInputRef} type="file" accept="image/*" className="sr-only" onChange={(e) => {
           const file = e.target.files?.[0];
           const targetId = photoTargetRef.current;
@@ -301,6 +302,7 @@ export function LeaseEvidenceGrid({
             </tbody>
           </table>
         </div>
+        </>
       )}
       <div className="mt-2 flex items-center gap-3">
         <label className="flex items-center gap-1 text-xs">
