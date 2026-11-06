@@ -108,11 +108,7 @@ export function LeaseEvidenceGrid({
       >
         Add lease comparable
       </button>
-      {comps.length === 0 ? (
-        <p className="text-xs text-slate-400 mb-2">No lease comparables yet.</p>
-      ) : (
-        <>
-        <input ref={photoInputRef} type="file" accept="image/*" className="sr-only" onChange={(e) => {
+      <input ref={photoInputRef} type="file" accept="image/*" className="sr-only" onChange={(e) => {
           const file = e.target.files?.[0];
           const targetId = photoTargetRef.current;
           if (!file || !inspectionId || !targetId) return;
@@ -126,6 +122,10 @@ export function LeaseEvidenceGrid({
             }
           })();
         }} />
+      {comps.length === 0 ? (
+        <p className="text-xs text-slate-400 mb-2">No lease comparables yet.</p>
+      ) : (
+        <>
         <div className="overflow-x-auto">
           <table className="w-full text-xs border-collapse">
             <thead>
