@@ -150,6 +150,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   // Sale narratives are generated only when the valuer asks. A grid change must not call AI.
   const [aiChoice, setAiChoice] = useState<{ saleIds: string[]; hasText: boolean } | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [mapsBusy, setMapsBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   /** Expanded report-narrative editor (manual working mode). */
   const [expandedNarrativeId, setExpandedNarrativeId] = useState<string | null>(null);
@@ -469,6 +470,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       return;
     }
     const key = loadGoogleMapsKey();
+    setMapsBusy(true);
     setStatus("Generating maps…");
     try {
       let pins = pinsFromDraft({
@@ -544,6 +546,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       const message = err instanceof Error ? err.message : "Map generation failed";
       toast.error("Could not generate maps", { description: message });
       setStatus(`Maps failed: ${message}`);
+    } finally {
+      setMapsBusy(false);
     }
   }
 
@@ -560,6 +564,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
     }
     const manual = nextZoom != null;
     const zoom = manual ? clampSubjectZoom(nextZoom) : null;
+    setMapsBusy(true);
     setStatus("Updating location map…");
     try {
       const built = await buildSubjectLocationMap({
@@ -579,6 +584,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       const message = err instanceof Error ? err.message : "Location map failed";
       toast.error("Could not update location map", { description: message });
       setStatus(`Location map failed: ${message}`);
+    } finally {
+      setMapsBusy(false);
     }
   }
 
@@ -2783,10 +2790,11 @@ export function SalesSection({ controller }: { controller: ReportDraftController
               <p className="text-xs font-medium text-foreground">Sales map</p>
               <button
                 type="button"
+                disabled={mapsBusy}
                 onClick={() => void generateGoogleMaps()}
-                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent"
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
               >
-                Generate maps
+                {mapsBusy ? "Generating…" : "Generate maps"}
               </button>
               <button
                 type="button"
@@ -2806,10 +2814,11 @@ export function SalesSection({ controller }: { controller: ReportDraftController
               <p className="text-xs font-medium text-foreground">Location map scale</p>
               <button
                 type="button"
+                disabled={mapsBusy}
                 onClick={() => void rescaleLocationMap(null)}
-                className="rounded-md border border-input bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent"
+                className="rounded-md border border-input bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
               >
-                Fit to nearest centre
+                {mapsBusy ? "Updating…" : "Fit to nearest centre"}
               </button>
               <button
                 type="button"
@@ -2818,10 +2827,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                     clampSubjectZoom((draft.reportMeta.subjectMapZoom ?? 12) - 1),
                   )
                 }
-                disabled={(draft.reportMeta.subjectMapZoom ?? 12) <= SUBJECT_ZOOM_MIN}
+                disabled={mapsBusy || (draft.reportMeta.subjectMapZoom ?? 12) <= SUBJECT_ZOOM_MIN}
                 className="rounded-md border border-input bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-40"
               >
-                −
+                {mapsBusy ? "…" : "−"}
               </button>
               <span className="text-xs tabular-nums text-muted-foreground">
                 z{draft.reportMeta.subjectMapZoom ?? "auto"}
@@ -2834,10 +2843,10 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                     clampSubjectZoom((draft.reportMeta.subjectMapZoom ?? 12) + 1),
                   )
                 }
-                disabled={(draft.reportMeta.subjectMapZoom ?? 16) >= SUBJECT_ZOOM_MAX}
+                disabled={mapsBusy || (draft.reportMeta.subjectMapZoom ?? 16) >= SUBJECT_ZOOM_MAX}
                 className="rounded-md border border-input bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-40"
               >
-                +
+                {mapsBusy ? "…" : "+"}
               </button>
             </div>
             {draft.reportMeta.salesMapUrl ? (

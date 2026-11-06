@@ -75,6 +75,7 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
   const [downloading, setDownloading] = useState(false);
   const [printing, setPrinting] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (tab !== "preview") return;
@@ -254,16 +255,19 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
             </span>
             <button
               type="button"
+              disabled={saving}
               onClick={() => {
+                setSaving(true);
                 void save()
                   .then(() => toast.success("Draft saved — available on all devices"))
                   .catch((err: unknown) =>
                     toast.error(err instanceof Error ? err.message : "Save failed"),
-                  );
+                  )
+                  .finally(() => setSaving(false));
               }}
-              className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+              className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
             >
-              Save draft
+              {saving ? "Saving…" : "Save draft"}
             </button>
             <button
               type="button"
