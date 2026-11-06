@@ -470,6 +470,22 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     toast.success("Image pasted");
   }
 
+  function movePhoto(id: string, list: ReportPhoto[], direction: -1 | 1) {
+    const idx = list.findIndex((p) => p.id === id);
+    const target = idx + direction;
+    if (idx < 0 || target < 0 || target >= list.length) return;
+    const a = list[idx];
+    const b = list[target];
+    setPhotos((prev) => {
+      const next = [...prev];
+      const ia = next.findIndex((p) => p.id === a.id);
+      const ib = next.findIndex((p) => p.id === b.id);
+      if (ia < 0 || ib < 0) return prev;
+      [next[ia], next[ib]] = [next[ib], next[ia]];
+      return next;
+    });
+  }
+
   function setOmitFromReport(photoId: string, omit: boolean) {
     setPhotos((prev) => prev.map((p) => (p.id === photoId ? { ...p, omitFromReport: omit } : p)));
   }
@@ -643,26 +659,31 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
       {extras.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
           {extras.map((photo, index) => (
-            <PhotoCard
-              key={photo.id}
-              slotLabel={photo.caption || `Extra ${index + 1}`}
-              photo={photo}
-              uploading={uploadingIds.has(photo.id)}
-              onFile={(file) =>
-                void attachPhoto({
-                  file,
-                  slot: null,
-                  caption: photo.caption,
-                  replaceId: photo.id,
-                })
-              }
-              onCaption={(caption) =>
-                setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, caption } : p)))
-              }
-              onRemove={() => void removePhoto(photo)}
-              onOpenPasteMenu={openPasteMenu}
-              onOmitFromReport={(omit) => setOmitFromReport(photo.id, omit)}
-            />
+            <div key={photo.id} className="space-y-1">
+              <div className="flex gap-1 text-[0.7rem]">
+                <button type="button" disabled={index === 0} className="text-slate-500 disabled:opacity-30" onClick={() => movePhoto(photo.id, extras, -1)}>←</button>
+                <button type="button" disabled={index === extras.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => movePhoto(photo.id, extras, 1)}>→</button>
+              </div>
+              <PhotoCard
+                slotLabel={photo.caption || `Extra ${index + 1}`}
+                photo={photo}
+                uploading={uploadingIds.has(photo.id)}
+                onFile={(file) =>
+                  void attachPhoto({
+                    file,
+                    slot: null,
+                    caption: photo.caption,
+                    replaceId: photo.id,
+                  })
+                }
+                onCaption={(caption) =>
+                  setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, caption } : p)))
+                }
+                onRemove={() => void removePhoto(photo)}
+                onOpenPasteMenu={openPasteMenu}
+                onOmitFromReport={(omit) => setOmitFromReport(photo.id, omit)}
+              />
+            </div>
           ))}
         </div>
       ) : null}
@@ -697,10 +718,14 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
           );
         })}
 
-        {extraMaps.map((photo) => (
-          <PhotoCard
-            key={photo.id}
-            slotLabel={photo.caption || "Additional map"}
+        {extraMaps.map((photo, index) => (
+          <div key={photo.id} className="space-y-1">
+            <div className="flex gap-1 text-[0.7rem]">
+              <button type="button" disabled={index === 0} className="text-slate-500 disabled:opacity-30" onClick={() => movePhoto(photo.id, extraMaps, -1)}>←</button>
+              <button type="button" disabled={index === extraMaps.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => movePhoto(photo.id, extraMaps, 1)}>→</button>
+            </div>
+            <PhotoCard
+              slotLabel={photo.caption || "Additional map"}
             photo={photo}
             uploading={uploadingIds.has(photo.id)}
             labelEditable
@@ -727,6 +752,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
             onOpenPasteMenu={openPasteMenu}
             onOmitFromReport={(omit) => setOmitFromReport(photo.id, omit)}
           />
+            </div>
         ))}
       </div>
 
@@ -804,8 +830,12 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
       {titlePages.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
           {titlePages.map((photo, index) => (
-            <PhotoCard
-              key={photo.id}
+            <div key={photo.id} className="space-y-1">
+              <div className="flex gap-1 text-[0.7rem]">
+                <button type="button" disabled={index === 0} className="text-slate-500 disabled:opacity-30" onClick={() => movePhoto(photo.id, titlePages, -1)}>←</button>
+                <button type="button" disabled={index === titlePages.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => movePhoto(photo.id, titlePages, 1)}>→</button>
+              </div>
+              <PhotoCard
               slotLabel={photo.caption || `Certificate of Title — page ${index + 1}`}
               photo={photo}
               uploading={uploadingIds.has(photo.id)}
@@ -830,6 +860,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
               onOpenPasteMenu={openPasteMenu}
               onOmitFromReport={(omit) => setOmitFromReport(photo.id, omit)}
             />
+            </div>
           ))}
         </div>
       ) : null}
@@ -883,8 +914,12 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
       {cadastralPages.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
           {cadastralPages.map((photo, index) => (
-            <PhotoCard
-              key={photo.id}
+            <div key={photo.id} className="space-y-1">
+              <div className="flex gap-1 text-[0.7rem]">
+                <button type="button" disabled={index === 0} className="text-slate-500 disabled:opacity-30" onClick={() => movePhoto(photo.id, cadastralPages, -1)}>←</button>
+                <button type="button" disabled={index === cadastralPages.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => movePhoto(photo.id, cadastralPages, 1)}>→</button>
+              </div>
+              <PhotoCard
               slotLabel={photo.caption || `Cadastral plan — page ${index + 1}`}
               photo={photo}
               uploading={uploadingIds.has(photo.id)}
@@ -909,6 +944,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
               onOpenPasteMenu={openPasteMenu}
               onOmitFromReport={(omit) => setOmitFromReport(photo.id, omit)}
             />
+            </div>
           ))}
         </div>
       ) : null}
@@ -962,8 +998,12 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
       {surveyPages.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
           {surveyPages.map((photo, index) => (
-            <PhotoCard
-              key={photo.id}
+            <div key={photo.id} className="space-y-1">
+              <div className="flex gap-1 text-[0.7rem]">
+                <button type="button" disabled={index === 0} className="text-slate-500 disabled:opacity-30" onClick={() => movePhoto(photo.id, surveyPages, -1)}>←</button>
+                <button type="button" disabled={index === surveyPages.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => movePhoto(photo.id, surveyPages, 1)}>→</button>
+              </div>
+              <PhotoCard
               slotLabel={photo.caption || `Survey Plan — page ${index + 1}`}
               photo={photo}
               uploading={uploadingIds.has(photo.id)}
@@ -988,6 +1028,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
               onOpenPasteMenu={openPasteMenu}
               onOmitFromReport={(omit) => setOmitFromReport(photo.id, omit)}
             />
+            </div>
           ))}
         </div>
       ) : null}
