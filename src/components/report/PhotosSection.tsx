@@ -745,7 +745,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
             e.target.value = "";
           }}
         />
-      </div>ll}
+      </div>
 
       <div className="rounded-md border border-border bg-card p-4">
         <h3 className="text-sm font-semibold text-foreground">Maps &amp; overlays</h3>
