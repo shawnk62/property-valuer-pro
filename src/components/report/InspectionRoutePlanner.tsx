@@ -222,8 +222,7 @@ export function InspectionRoutePlanner({
             <div className="rounded border border-slate-200 bg-slate-50 p-2 text-xs">
               <div className="mb-1 flex items-center justify-between">
                 <span className="font-medium text-foreground">Ordered stops</span>
-                <button type="button" className="rounded border border-input bg-card px-2 py-0.5 text-[0.65rem]" onClick={() => { void navigator.clipboard.writeText(orderedList.map((a, i) => (i + 1) + ". " + a).join("
-")); toast.success("Stops copied"); }}>Copy list</button>
+                <button type="button" className="rounded border border-input bg-card px-2 py-0.5 text-[0.65rem]" onClick={() => { void navigator.clipboard.writeText(orderedList.map((a, i) => (i + 1) + ". " + a).join("\n")); toast.success("Stops copied"); }}>Copy list</button>
               </div>
               <ol className="list-decimal space-y-0.5 pl-4 text-muted-foreground">
                 {orderedList.map((a, i) => <li key={i}>{a}</li>)}
