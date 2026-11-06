@@ -40,6 +40,7 @@ export function InspectionRoutePlanner({
   const [busy, setBusy] = useState(false);
   const [pendingLegs, setPendingLegs] = useState<string[]>([]);
   const [orderedList, setOrderedList] = useState<string[]>([]);
+  const [appLink, setAppLink] = useState<string | null>(null);
   const [startFrom, setStartFrom] = useState<"subject" | "current">("current");
   const onReport = new Set(salesOnReport(sales).map((s) => s.id));
   const saleCandidates = sales.filter((s) => s.address.trim()).map((s) => ({ id: s.id, address: s.address, kind: "sale" as const, hasPhoto: Boolean(s.photoUrl) }));
@@ -172,7 +173,7 @@ export function InspectionRoutePlanner({
       });
       setPendingLegs(urls.slice(1));
       setOrderedList(ordered.map((s) => s.address));
-      window.location.href = urls[0];
+      setAppLink(urls[0]);
       toast.success(
         urls.length === 1
           ? `Route opened with ${ordered.length} stop${ordered.length === 1 ? "" : "s"}.`
@@ -214,6 +215,9 @@ export function InspectionRoutePlanner({
               Start from subject
             </label>
           </div>
+          {appLink ? (
+            <a href={appLink} className="inline-flex rounded-md border border-input bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent">Open first stop in Google Maps app</a>
+          ) : null}
           {orderedList.length > 0 ? (
             <div className="rounded border border-slate-200 bg-slate-50 p-2 text-xs">
               <div className="mb-1 flex items-center justify-between">
