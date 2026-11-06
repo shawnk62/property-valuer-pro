@@ -12,7 +12,7 @@ import {
   formatIncomeLines,
   incomeStatement,
 } from "@/lib/report/commercialCalculations";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 function num(raw: string | number | null | undefined): number | null {
   if (raw == null) return null;
@@ -58,6 +58,8 @@ interface Props {
 
 export function CommercialValuationTables({ values, sales, meta, onSales, onMeta, subjectPhotoUrl, inspectionId }: Props) {
   const [expandedNotesId, setExpandedNotesId] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const photoTargetRef = useRef<string | null>(null);
   const subjectAddress = [values["prop_address"], values["prop_suburb"]].filter(Boolean).join(", ") || "Subject";
   const subjectLand = String(values["prop_usable_sitearea"] ?? values["prop_sitearea"] ?? "");
   const subjectBuilding = String(values["comm_nla"] ?? values["comm_gba"] ?? "");
@@ -186,6 +188,20 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
         >
           Add comparable sale
         </button>
+        <input ref={photoInputRef} type="file" accept="image/*" className="sr-only" onChange={(e) => {
+          const file = e.target.files?.[0];
+          const targetId = photoTargetRef.current;
+          if (!file || !inspectionId || !targetId) return;
+          void (async () => {
+            try {
+              const result = await attachComparablePhoto({ inspectionId, photoId: `sale-${targetId}-front`, file });
+              patchSale(targetId, { photoUrl: result.photoUrl, photoLocalKey: result.photoLocalKey, photoStoragePath: result.photoStoragePath });
+              toast[result.synced ? "success" : "message"](result.synced ? "Photo attached and synced" : "Photo saved on this device only");
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : "Could not read photo");
+            }
+          })();
+        }} />
         <div className="overflow-x-auto">
           <table className="w-full text-xs border-collapse">
             <thead>
@@ -252,22 +268,9 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                         <button type="button" className="absolute right-0.5 top-0.5 rounded bg-white/90 px-1 text-[0.6rem] text-red-600" onClick={() => patchSale(s.id, { photoUrl: "" })}>Remove</button>
                       </div>
                     ) : (
-                      <label className="flex h-20 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50">
+                      <button type="button" className="flex h-20 w-full cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50" onClick={() => { photoTargetRef.current = s.id; photoInputRef.current?.click(); }}>
                         Add photo
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (!file || !inspectionId) return;
-                          void (async () => {
-                            try {
-                              const result = await attachComparablePhoto({ inspectionId, photoId: `sale-${s.id}-front`, file });
-                              patchSale(s.id, { photoUrl: result.photoUrl, photoLocalKey: result.photoLocalKey, photoStoragePath: result.photoStoragePath });
-                              toast[result.synced ? "success" : "message"](result.synced ? "Photo attached and synced" : "Photo saved on this device only");
-                            } catch (err) {
-                              toast.error(err instanceof Error ? err.message : "Could not read photo");
-                            }
-                          })();
-                        }} />
-                      </label>
+                      </button>
                     )}
                   </td>
                 ))}

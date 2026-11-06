@@ -3,7 +3,7 @@
  * Column-per-comparable layout matching the sales comparison table.
  * No sale price and no yield. Subject facts come from the inspection form.
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { InspectionValues, ReportMeta } from "@/lib/report/types";
 import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
@@ -64,6 +64,8 @@ export function LeaseEvidenceGrid({
 }) {
   const comps = meta.ciLeaseComps ?? [];
   const [expandedNotesId, setExpandedNotesId] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const photoTargetRef = useRef<string | null>(null);
   const subjectAddress = [values["prop_address"], values["prop_suburb"]].filter(Boolean).join(", ") || "Subject";
   const subjectBuilding = String(values["comm_nla"] ?? values["comm_gba"] ?? "");
   const subjectClear = String(values["comm_clear_height"] ?? "");
@@ -109,6 +111,20 @@ export function LeaseEvidenceGrid({
       {comps.length === 0 ? (
         <p className="text-xs text-slate-400 mb-2">No lease comparables yet.</p>
       ) : (
+        <input ref={photoInputRef} type="file" accept="image/*" className="sr-only" onChange={(e) => {
+          const file = e.target.files?.[0];
+          const targetId = photoTargetRef.current;
+          if (!file || !inspectionId || !targetId) return;
+          void (async () => {
+            try {
+              const result = await attachComparablePhoto({ inspectionId, photoId: `lease-${targetId}-front`, file });
+              update(targetId, { photoUrl: result.photoUrl, photoLocalKey: result.photoLocalKey, photoStoragePath: result.photoStoragePath });
+              toast[result.synced ? "success" : "message"](result.synced ? "Photo attached and synced" : "Photo saved on this device only");
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : "Could not read photo");
+            }
+          })();
+        }} />
         <div className="overflow-x-auto">
           <table className="w-full text-xs border-collapse">
             <thead>
@@ -149,22 +165,9 @@ export function LeaseEvidenceGrid({
                         <button type="button" className="absolute right-0.5 top-0.5 rounded bg-white/90 px-1 text-[0.6rem] text-red-600" onClick={() => update(c.id, { photoUrl: "" })}>Remove</button>
                       </div>
                     ) : (
-                      <label className="flex h-20 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50">
+                      <button type="button" className="flex h-20 w-full cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50" onClick={() => { photoTargetRef.current = c.id; photoInputRef.current?.click(); }}>
                         Add photo
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (!file || !inspectionId) return;
-                          void (async () => {
-                            try {
-                              const result = await attachComparablePhoto({ inspectionId, photoId: `lease-${c.id}-front`, file });
-                              update(c.id, { photoUrl: result.photoUrl, photoLocalKey: result.photoLocalKey, photoStoragePath: result.photoStoragePath });
-                              toast[result.synced ? "success" : "message"](result.synced ? "Photo attached and synced" : "Photo saved on this device only");
-                            } catch (err) {
-                              toast.error(err instanceof Error ? err.message : "Could not read photo");
-                            }
-                          })();
-                        }} />
-                      </label>
+                      </button>
                     )}
                   </td>
                 ))}

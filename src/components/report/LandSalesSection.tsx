@@ -2,7 +2,7 @@
  * Comparable land sales for the cost approach (commercial / industrial Shawn Full).
  * Separate from the improved sales comparison grid.
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { InspectionValues, ReportMeta } from "@/lib/report/types";
 import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
@@ -50,6 +50,8 @@ export function LandSalesSection({
 }) {
   const sales = meta.ciLandSales ?? [];
   const [expandedNotesId, setExpandedNotesId] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const photoTargetRef = useRef<string | null>(null);
   const subjectAddress = [values["prop_address"], values["prop_suburb"]].filter(Boolean).join(", ") || "Subject";
   const subjectLand = String(values["prop_usable_sitearea"] ?? values["prop_sitearea"] ?? "");
 
@@ -80,6 +82,20 @@ export function LandSalesSection({
       {sales.length === 0 ? (
         <p className="text-xs text-slate-400 mb-2">No land sales yet.</p>
       ) : (
+        <input ref={photoInputRef} type="file" accept="image/*" className="sr-only" onChange={(e) => {
+          const file = e.target.files?.[0];
+          const targetId = photoTargetRef.current;
+          if (!file || !inspectionId || !targetId) return;
+          void (async () => {
+            try {
+              const result = await attachComparablePhoto({ inspectionId, photoId: `land-${targetId}-front`, file });
+              update(targetId, { photoUrl: result.photoUrl, photoLocalKey: result.photoLocalKey, photoStoragePath: result.photoStoragePath });
+              toast[result.synced ? "success" : "message"](result.synced ? "Photo attached and synced" : "Photo saved on this device only");
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : "Could not read photo");
+            }
+          })();
+        }} />
         <div className="overflow-x-auto">
           <table className="w-full text-xs border-collapse">
             <thead>
@@ -116,22 +132,9 @@ export function LandSalesSection({
                         <button type="button" className="absolute right-0.5 top-0.5 rounded bg-white/90 px-1 text-[0.6rem] text-red-600" onClick={() => update(s.id, { photoUrl: "" })}>Remove</button>
                       </div>
                     ) : (
-                      <label className="flex h-20 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50">
+                      <button type="button" className="flex h-20 w-full cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50" onClick={() => { photoTargetRef.current = s.id; photoInputRef.current?.click(); }}>
                         Add photo
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (!file || !inspectionId) return;
-                          void (async () => {
-                            try {
-                              const result = await attachComparablePhoto({ inspectionId, photoId: `land-${s.id}-front`, file });
-                              update(s.id, { photoUrl: result.photoUrl, photoLocalKey: result.photoLocalKey, photoStoragePath: result.photoStoragePath });
-                              toast[result.synced ? "success" : "message"](result.synced ? "Photo attached and synced" : "Photo saved on this device only");
-                            } catch (err) {
-                              toast.error(err instanceof Error ? err.message : "Could not read photo");
-                            }
-                          })();
-                        }} />
-                      </label>
+                      </button>
                     )}
                   </td>
                 ))}
