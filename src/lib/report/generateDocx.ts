@@ -982,11 +982,15 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
 
   // ---- Annexures: subject photos, maps, comparable photos (omit empty) ----
   const subjectPhotos = [
-    ...PHOTO_SLOTS.map(({ slot, label }) => {
+    ...PHOTO_SLOTS.flatMap(({ slot, label }) => {
       const found = draft.photos.find((ph) => ph.slot === slot && photoIsOnReport(ph));
-      return found ? { ...found, caption: found.caption || label } : null;
+      const after = draft.photos.filter((ph) => ph.slot === null && ph.insertAfter === slot && ph.kind !== "map" && photoIsOnReport(ph));
+      return [
+        found ? { ...found, caption: found.caption || label } : null,
+        ...after,
+      ];
     }).filter(Boolean),
-    ...draft.photos.filter((ph) => ph.slot === null && ph.kind !== "map" && photoIsOnReport(ph)),
+    ...draft.photos.filter((ph) => ph.slot === null && !ph.insertAfter && ph.kind !== "map" && photoIsOnReport(ph)),
   ] as typeof draft.photos;
 
   // Overlay / landslide maps are annex-only; zoning, flood & bushfire stay in body.

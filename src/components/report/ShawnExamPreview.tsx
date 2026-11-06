@@ -432,13 +432,25 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     purposeOfValuation(get(v, "prop_assignment"), v);
   const propertyType = formatPropertyType(v) || "Vacant residential land";
   const annexurePhotos = [
-    ...PHOTO_SLOTS.map(({ slot, label }) => {
+    ...PHOTO_SLOTS.flatMap(({ slot, label }) => {
       const found = draft.photos.find((p) => p.slot === slot && photoIsOnReport(p));
-      return found ? { ...found, caption: found.caption || label } : null;
+      const after = draft.photos.filter(
+        (p) =>
+          p.slot === null &&
+          p.insertAfter === slot &&
+          !isMapAnnexPhoto(p) &&
+          !isTitleAnnexPhoto(p) &&
+          !isSurveyAnnexPhoto(p) &&
+          !isCadastralAnnexPhoto(p) &&
+          !isExtraAnnexPhoto(p) &&
+          photoIsOnReport(p),
+      );
+      return [found ? { ...found, caption: found.caption || label } : null, ...after];
     }).filter(Boolean),
     ...draft.photos.filter(
       (p) =>
         p.slot === null &&
+        !p.insertAfter &&
         !isMapAnnexPhoto(p) &&
         !isTitleAnnexPhoto(p) &&
         !isSurveyAnnexPhoto(p) &&

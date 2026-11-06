@@ -73,6 +73,12 @@ export interface ReportPhoto {
    * the printed report, Word export, cover and annexures.
    */
   omitFromReport?: boolean;
+  /**
+   * For additional subject photos (slot null): insert this photo immediately
+   * after the named fixed subject slot in the subject section and report.
+   * Missing means the photo appears after all fixed slots.
+   */
+  insertAfter?: PhotoSlot;
 }
 
 export function photoIsOnReport(photo: ReportPhoto | null | undefined): boolean {

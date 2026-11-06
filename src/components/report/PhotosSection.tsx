@@ -644,10 +644,11 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {photoSlotsForJob(isVacantLand(draft.values)).map(({ slot, label }, index, arr) => {
+        {photoSlotsForJob(isVacantLand(draft.values)).flatMap(({ slot, label }, index, arr) => {
           const photo = photos.find((p) => p.slot === slot);
           const isFront = slot === "front";
-          return (
+          const after = extras.filter((e) => e.insertAfter === slot);
+          return [
             <div key={slot} className="space-y-1">
               {!isFront ? (
                 <div className="flex gap-1 text-[0.7rem]">
@@ -668,10 +669,59 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
                   photo?.url ? (omit) => setOmitFromReport(photo.id, omit) : undefined
                 }
               />
-            </div>
-          );
+            </div>,
+            ...after.map((ex, i) => (
+              <div key={ex.id} className="space-y-1">
+                <div className="flex gap-1 text-[0.7rem]">
+                  <select className="text-[0.65rem] border border-slate-300 rounded" value={ex.insertAfter ?? ""} onChange={(e) => setPhotos((prev) => prev.map((p) => p.id === ex.id ? { ...p, insertAfter: (e.target.value || undefined) as PhotoSlot | undefined } : p))}>
+                    <option value="">After all fixed slots</option>
+                    {photoSlotsForJob(isVacantLand(draft.values)).map((s) => (
+                      <option key={s.slot} value={s.slot}>After {s.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <PhotoCard
+                  slotLabel={ex.caption || `Additional ${label} ${i + 1}`}
+                  photo={ex}
+                  uploading={uploadingIds.has(ex.id)}
+                  onFile={(file) => void attachPhoto({ file, slot: null, caption: ex.caption, replaceId: ex.id })}
+                  onCaption={(caption) => setPhotos((prev) => prev.map((p) => p.id === ex.id ? { ...p, caption } : p))}
+                  onRemove={() => void removePhoto(ex)}
+                  onOpenPasteMenu={openPasteMenu}
+                  onOmitFromReport={(omit) => setOmitFromReport(ex.id, omit)}
+                />
+              </div>
+            )),
+          ];
         })}
       </div>
+
+      {extras.filter((e) => !e.insertAfter).length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {extras.filter((e) => !e.insertAfter).map((ex, i) => (
+            <div key={ex.id} className="space-y-1">
+              <div className="flex gap-1 text-[0.7rem]">
+                <select className="text-[0.65rem] border border-slate-300 rounded" value="" onChange={(e) => setPhotos((prev) => prev.map((p) => p.id === ex.id ? { ...p, insertAfter: (e.target.value || undefined) as PhotoSlot | undefined } : p))}>
+                  <option value="">Place after…</option>
+                  {photoSlotsForJob(isVacantLand(draft.values)).map((s) => (
+                    <option key={s.slot} value={s.slot}>After {s.label}</option>
+                  ))}
+                </select>
+              </div>
+              <PhotoCard
+                slotLabel={ex.caption || `Additional subject photo ${i + 1}`}
+                photo={ex}
+                uploading={uploadingIds.has(ex.id)}
+                onFile={(file) => void attachPhoto({ file, slot: null, caption: ex.caption, replaceId: ex.id })}
+                onCaption={(caption) => setPhotos((prev) => prev.map((p) => p.id === ex.id ? { ...p, caption } : p))}
+                onRemove={() => void removePhoto(ex)}
+                onOpenPasteMenu={openPasteMenu}
+                onOmitFromReport={(omit) => setOmitFromReport(ex.id, omit)}
+              />
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-3">
         <button
@@ -695,48 +745,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
             e.target.value = "";
           }}
         />
-      </div>
-
-      {extras.length > 0 ? (
-        <div>
-          <h4 className="mb-2 text-sm font-medium text-foreground">Additional subject photos</h4>
-          <div className="grid gap-4 md:grid-cols-2">
-          {extras.map((photo, index) => (
-            <div key={photo.id} className="space-y-1">
-              <div className="flex gap-1 text-[0.7rem]">
-                <button type="button" disabled={index === 0} className="text-slate-500 disabled:opacity-30" onClick={() => movePhoto(photo.id, extras, -1)}>←</button>
-                <button type="button" disabled={index === extras.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => movePhoto(photo.id, extras, 1)}>→</button>
-                <select className="text-[0.65rem] border border-slate-300 rounded" defaultValue="" onChange={(e) => { if (e.target.value) { moveExtraToSubjectSlot(photo.id, e.target.value as PhotoSlot); e.target.value = ""; } }}>
-                  <option value="">Replace a fixed slot…</option>
-                  {photoSlotsForJob(isVacantLand(draft.values)).filter((s) => s.slot !== "front").map((s) => (
-                    <option key={s.slot} value={s.slot}>{s.label}</option>
-                  ))}
-                </select>
-              </div>
-              <PhotoCard
-                slotLabel={photo.caption || `Additional subject photo ${index + 1}`}
-                photo={photo}
-                uploading={uploadingIds.has(photo.id)}
-                onFile={(file) =>
-                  void attachPhoto({
-                    file,
-                    slot: null,
-                    caption: photo.caption,
-                    replaceId: photo.id,
-                  })
-                }
-                onCaption={(caption) =>
-                  setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, caption } : p)))
-                }
-                onRemove={() => void removePhoto(photo)}
-                onOpenPasteMenu={openPasteMenu}
-                onOmitFromReport={(omit) => setOmitFromReport(photo.id, omit)}
-              />
-            </div>
-          ))}
-          </div>
-        </div>
-      ) : null}ll}
+      </div>ll}
 
       <div className="rounded-md border border-border bg-card p-4">
         <h3 className="text-sm font-semibold text-foreground">Maps &amp; overlays</h3>
