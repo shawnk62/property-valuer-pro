@@ -209,9 +209,9 @@ export function LeaseEvidenceGrid({
                         <button type="button" className="absolute right-0.5 top-0.5 rounded bg-white/90 px-1 text-[0.6rem] text-red-600" onClick={() => update(c.id, { photoUrl: "" })}>Remove</button>
                       </div>
                     ) : (
-                      <button type="button" tabIndex={0} className="flex h-20 w-full cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50" onClick={() => { photoTargetRef.current = c.id; photoInputRef.current?.click(); }} onPaste={(e) => { const f = imageFileFromClipboard(e); if (f) { e.preventDefault(); void attachLeasePhoto(c.id, f); } }}>
+                      <div role="button" tabIndex={0} className="flex h-20 w-full cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50" onClick={() => { photoTargetRef.current = c.id; photoInputRef.current?.click(); }} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); photoTargetRef.current = c.id; photoInputRef.current?.click(); } }} onPaste={(e) => { const f = imageFileFromClipboard(e); if (f) { e.preventDefault(); e.stopPropagation(); void attachLeasePhoto(c.id, f); return; } e.preventDefault(); e.stopPropagation(); void (async () => { try { if (!navigator.clipboard?.read) { toast.error("Paste not available — tap the tile, then paste, or choose a file."); return; } const items = await navigator.clipboard.read(); for (const item of items) { for (const type of item.types) { if (type.startsWith("image/")) { const blob = await item.getType(type); const file = new File([blob], "pasted.png", { type }); void attachLeasePhoto(c.id, file); return; } } } toast.error("No image on the clipboard"); } catch { toast.error("Could not read clipboard"); } })(); }}>
                         Add photo
-                      </button>
+                      </div>
                     )}
                   </td>
                 ))}
