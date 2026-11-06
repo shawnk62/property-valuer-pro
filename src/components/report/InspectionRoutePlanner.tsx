@@ -49,6 +49,7 @@ export function InspectionRoutePlanner({
   const [selected, setSelected] = useState<Set<string>>(() => new Set([
     ...saleCandidates.filter((c) => onReport.has(c.id) && !c.hasPhoto).map((c) => c.id),
     ...leaseCandidates.filter((c) => !c.hasPhoto).map((c) => c.id),
+    ...landCandidates.filter((c) => !c.hasPhoto).map((c) => c.id),
   ]));
   const candidates = [...saleCandidates, ...leaseCandidates, ...landCandidates];
 

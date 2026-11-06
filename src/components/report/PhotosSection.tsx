@@ -500,6 +500,24 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
     );
   }
 
+  function moveExtraToSubjectSlot(extraId: string, targetSlot: PhotoSlot) {
+    if (targetSlot === "front") return;
+    setPhotos((prev) =>
+      prev.map((p) => {
+        if (p.id === extraId) return { ...p, slot: targetSlot, kind: undefined };
+        if (p.slot === targetSlot) return { ...p, slot: null, kind: "photo" };
+        return p;
+      }),
+    );
+  }
+
+  function moveSubjectToExtras(slot: PhotoSlot) {
+    if (slot === "front") return;
+    setPhotos((prev) =>
+      prev.map((p) => (p.slot === slot ? { ...p, slot: null, kind: "photo" } : p)),
+    );
+  }
+
   function setOmitFromReport(photoId: string, omit: boolean) {
     setPhotos((prev) => prev.map((p) => (p.id === photoId ? { ...p, omitFromReport: omit } : p)));
   }
@@ -635,6 +653,7 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
                 <div className="flex gap-1 text-[0.7rem]">
                   <button type="button" disabled={index <= 1} className="text-slate-500 disabled:opacity-30" onClick={() => swapSlotPhotos(arr, index, -1)}>←</button>
                   <button type="button" disabled={index === arr.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => swapSlotPhotos(arr, index, 1)}>→</button>
+                  {photo ? <button type="button" className="text-slate-500" onClick={() => moveSubjectToExtras(slot)}>Move to extras</button> : null}
                 </div>
               ) : null}
               <PhotoCard
@@ -685,6 +704,12 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
               <div className="flex gap-1 text-[0.7rem]">
                 <button type="button" disabled={index === 0} className="text-slate-500 disabled:opacity-30" onClick={() => movePhoto(photo.id, extras, -1)}>←</button>
                 <button type="button" disabled={index === extras.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => movePhoto(photo.id, extras, 1)}>→</button>
+                <select className="text-[0.65rem] border border-slate-300 rounded" defaultValue="" onChange={(e) => { if (e.target.value) { moveExtraToSubjectSlot(photo.id, e.target.value as PhotoSlot); e.target.value = ""; } }}>
+                  <option value="">Move into subject…</option>
+                  {photoSlotsForJob(isVacantLand(draft.values)).filter((s) => s.slot !== "front").map((s) => (
+                    <option key={s.slot} value={s.slot}>{s.label}</option>
+                  ))}
+                </select>
               </div>
               <PhotoCard
                 slotLabel={photo.caption || `Extra ${index + 1}`}
