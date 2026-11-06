@@ -286,8 +286,8 @@ async function optimise(originLat: number, originLng: number, stops: Stop[]): Pr
       },
       body: JSON.stringify({
         origin: { location: { latLng: { latitude: originLat, longitude: originLng } } },
-        destination: { location: { latLng: { latitude: stops[stops.length - 1].lat, longitude: stops[stops.length - 1].lng } } },
-        intermediates: stops.slice(0, -1).map((s) => ({ location: { latLng: { latitude: s.lat, longitude: s.lng } } })),
+        destination: { location: { latLng: { latitude: originLat, longitude: originLng } } },
+        intermediates: stops.map((s) => ({ location: { latLng: { latitude: s.lat, longitude: s.lng } } })),
         travelMode: "DRIVE",
         routingPreference: "TRAFFIC_UNAWARE",
         optimizeWaypointOrder: true,
@@ -298,11 +298,8 @@ async function optimise(originLat: number, originLng: number, stops: Stop[]): Pr
     if (!res.ok) return stops;
     const json = (await res.json()) as { routes?: Array<{ optimizedIntermediateWaypointIndex?: number[] }> };
     const order = json.routes?.[0]?.optimizedIntermediateWaypointIndex;
-    if (!order || order.length !== stops.length - 1) return stops;
-    const intermediates = stops.slice(0, -1);
-    const optimised = order.map((i) => intermediates[i]).filter(Boolean);
-    optimised.push(stops[stops.length - 1]);
-    return optimised;
+    if (!order || order.length !== stops.length) return stops;
+    return order.map((i) => stops[i]).filter(Boolean);
   } catch {
     return stops;
   }
