@@ -5,6 +5,33 @@
  */
 import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/types";
 import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
+
+function imageFileFromClipboard(e: React.ClipboardEvent): File | null {
+  const items = e.clipboardData?.items;
+  if (items) {
+    for (const item of Array.from(items)) {
+      if (item.kind !== "file") continue;
+      const f = item.getAsFile();
+      if (f && (f.type.startsWith("image/") || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(f.name))) return f;
+      if (item.type.startsWith("image/") && f && f.size > 0) {
+        const ext = item.type.split("/")[1] || "png";
+        return new File([f], `screenshot.${ext}`, { type: item.type });
+      }
+    }
+  }
+  const files = e.clipboardData?.files;
+  if (files) {
+    for (const f of Array.from(files)) {
+      if (f.type.startsWith("image/") || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(f.name)) return f;
+    }
+  }
+  return null;
+}
+
+function normAddr(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 import { toast } from "sonner";
 import {
   costIndication,
@@ -60,6 +87,28 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
   const [expandedNotesId, setExpandedNotesId] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const photoTargetRef = useRef<string | null>(null);
+  async function attachSalePhoto(saleId: string, file: File) {
+    if (!inspectionId) return;
+    try {
+      const result = await attachComparablePhoto({ inspectionId, photoId: `sale-${saleId}-front`, file });
+      patchSale(saleId, { photoUrl: result.photoUrl, photoLocalKey: result.photoLocalKey, photoStoragePath: result.photoStoragePath });
+      toast[result.synced ? "success" : "message"](result.synced ? "Photo attached and synced" : "Photo saved on this device only");
+      const sale = sales.find((s) => s.id === saleId);
+      if (sale) {
+        const match = (meta.ciLeaseComps ?? []).find((c) => normAddr(c.address) === normAddr(sale.address) && c.address.trim());
+        if (match) {
+          toast.message("Matching lease found", { action: { label: "Also apply to lease", onClick: () => {
+            const next = (meta.ciLeaseComps ?? []).map((c) => c.id === match.id ? { ...c, photoUrl: result.photoUrl, photoLocalKey: result.photoLocalKey, photoStoragePath: result.photoStoragePath } : c);
+            onMeta({ ciLeaseComps: next });
+            toast.success("Applied to lease");
+          }}});
+        }
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not read photo");
+    }
+  }
+
   const subjectAddress = [values["prop_address"], values["prop_suburb"]].filter(Boolean).join(", ") || "Subject";
   const subjectLand = String(values["prop_usable_sitearea"] ?? values["prop_sitearea"] ?? "");
   const subjectBuilding = String(values["comm_nla"] ?? values["comm_gba"] ?? "");
@@ -191,16 +240,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
         <input ref={photoInputRef} type="file" accept="image/*" className="sr-only" onChange={(e) => {
           const file = e.target.files?.[0];
           const targetId = photoTargetRef.current;
-          if (!file || !inspectionId || !targetId) return;
-          void (async () => {
-            try {
-              const result = await attachComparablePhoto({ inspectionId, photoId: `sale-${targetId}-front`, file });
-              patchSale(targetId, { photoUrl: result.photoUrl, photoLocalKey: result.photoLocalKey, photoStoragePath: result.photoStoragePath });
-              toast[result.synced ? "success" : "message"](result.synced ? "Photo attached and synced" : "Photo saved on this device only");
-            } catch (err) {
-              toast.error(err instanceof Error ? err.message : "Could not read photo");
-            }
-          })();
+          if (file && targetId) void attachSalePhoto(targetId, file);
         }} />
         <div className="overflow-x-auto">
           <table className="w-full text-xs border-collapse">
@@ -268,7 +308,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                         <button type="button" className="absolute right-0.5 top-0.5 rounded bg-white/90 px-1 text-[0.6rem] text-red-600" onClick={() => patchSale(s.id, { photoUrl: "" })}>Remove</button>
                       </div>
                     ) : (
-                      <button type="button" className="flex h-20 w-full cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50" onClick={() => { photoTargetRef.current = s.id; photoInputRef.current?.click(); }}>
+                      <button type="button" tabIndex={0} className="flex h-20 w-full cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50" onClick={() => { photoTargetRef.current = s.id; photoInputRef.current?.click(); }} onPaste={(e) => { const f = imageFileFromClipboard(e); if (f) { e.preventDefault(); void attachSalePhoto(s.id, f); } }}>
                         Add photo
                       </button>
                     )}

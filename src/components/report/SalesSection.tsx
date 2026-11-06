@@ -2975,7 +2975,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         <>
           <div className="space-y-4 rounded-md border border-border bg-card p-4">
             <h3 className="text-sm font-semibold text-foreground">Lease evidence</h3>
-            <LeaseEvidenceGrid values={draft.values} meta={draft.reportMeta} onMeta={setMeta} subjectPhotoUrl={subjectFrontPhoto?.url} inspectionId={draft.inspectionId} />
+            <LeaseEvidenceGrid values={draft.values} meta={draft.reportMeta} onMeta={setMeta} subjectPhotoUrl={subjectFrontPhoto?.url} inspectionId={draft.inspectionId} sales={draft.sales} onSales={setSales} />
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input type="checkbox" checked={narrativePrints(draft.reportMeta, "leaseEvidence")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), leaseEvidence: e.target.checked } })} />
               Include Lease Evidence on report

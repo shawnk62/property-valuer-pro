@@ -7,6 +7,31 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { InspectionValues, ReportMeta } from "@/lib/report/types";
 import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
+import type { ComparableSale } from "@/lib/report/types";
+
+function imageFileFromClipboard(e: React.ClipboardEvent): File | null {
+  const items = e.clipboardData?.items;
+  if (items) {
+    for (const item of Array.from(items)) {
+      if (item.kind !== "file") continue;
+      const f = item.getAsFile();
+      if (f && (f.type.startsWith("image/") || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(f.name))) return f;
+      if (item.type.startsWith("image/") && f && f.size > 0) {
+        const ext = item.type.split("/")[1] || "png";
+        return new File([f], `screenshot.${ext}`, { type: item.type });
+      }
+    }
+  }
+  const files = e.clipboardData?.files;
+  if (files) {
+    for (const f of Array.from(files)) {
+      if (f.type.startsWith("image/") || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(f.name)) return f;
+    }
+  }
+  return null;
+}
+function normAddr(s: string): string { return s.toLowerCase().replace(/[^a-z0-9]/g, ""); }
+
 
 export interface LeaseComp {
   id: string;
@@ -56,12 +81,16 @@ export function LeaseEvidenceGrid({
   onMeta,
   subjectPhotoUrl,
   inspectionId,
+  sales,
+  onSales,
 }: {
   values: InspectionValues;
   meta: ReportMeta;
   onMeta: (patch: Partial<ReportMeta>) => void;
   subjectPhotoUrl?: string;
   inspectionId?: string;
+  sales?: ComparableSale[];
+  onSales?: (next: ComparableSale[]) => void;
 }) {
   const comps = meta.ciLeaseComps ?? [];
   const [expandedNotesId, setExpandedNotesId] = useState<string | null>(null);
@@ -75,6 +104,28 @@ export function LeaseEvidenceGrid({
   const subjectOfficeRaw = String(values["comm_office_split"] ?? "");
   const subjectOffice = /\d|%|office/i.test(subjectOfficeRaw) ? subjectOfficeRaw : "";
   const subjectCondition = String(values["overall_cond"] ?? "");
+
+
+  async function attachLeasePhoto(compId: string, file: File) {
+    if (!inspectionId) return;
+    try {
+      const result = await attachComparablePhoto({ inspectionId, photoId: `lease-${compId}-front`, file });
+      update(compId, { photoUrl: result.photoUrl, photoLocalKey: result.photoLocalKey, photoStoragePath: result.photoStoragePath });
+      toast[result.synced ? "success" : "message"](result.synced ? "Photo attached and synced" : "Photo saved on this device only");
+      const comp = comps.find((c) => c.id === compId);
+      if (comp && sales) {
+        const match = sales.find((s) => normAddr(s.address) === normAddr(comp.address) && s.address.trim());
+        if (match && onSales) {
+          toast.message("Matching sale found", { action: { label: "Also apply to sale", onClick: () => {
+            onSales(sales!.map((s) => s.id === match.id ? { ...s, photoUrl: result.photoUrl, photoLocalKey: result.photoLocalKey, photoStoragePath: result.photoStoragePath } : s));
+            toast.success("Applied to sale");
+          }}});
+        }
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not read photo");
+    }
+  }
 
   function update(id: string, patch: Partial<LeaseComp>) {
     onMeta({
@@ -112,16 +163,7 @@ export function LeaseEvidenceGrid({
       <input ref={photoInputRef} type="file" accept="image/*" className="sr-only" onChange={(e) => {
           const file = e.target.files?.[0];
           const targetId = photoTargetRef.current;
-          if (!file || !inspectionId || !targetId) return;
-          void (async () => {
-            try {
-              const result = await attachComparablePhoto({ inspectionId, photoId: `lease-${targetId}-front`, file });
-              update(targetId, { photoUrl: result.photoUrl, photoLocalKey: result.photoLocalKey, photoStoragePath: result.photoStoragePath });
-              toast[result.synced ? "success" : "message"](result.synced ? "Photo attached and synced" : "Photo saved on this device only");
-            } catch (err) {
-              toast.error(err instanceof Error ? err.message : "Could not read photo");
-            }
-          })();
+          if (file && targetId) void attachLeasePhoto(targetId, file);
         }} />
       {comps.length === 0 ? (
         <p className="text-xs text-slate-400 mb-2">No lease comparables yet.</p>
@@ -167,7 +209,7 @@ export function LeaseEvidenceGrid({
                         <button type="button" className="absolute right-0.5 top-0.5 rounded bg-white/90 px-1 text-[0.6rem] text-red-600" onClick={() => update(c.id, { photoUrl: "" })}>Remove</button>
                       </div>
                     ) : (
-                      <button type="button" className="flex h-20 w-full cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50" onClick={() => { photoTargetRef.current = c.id; photoInputRef.current?.click(); }}>
+                      <button type="button" tabIndex={0} className="flex h-20 w-full cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-[0.65rem] text-slate-400 hover:bg-slate-50" onClick={() => { photoTargetRef.current = c.id; photoInputRef.current?.click(); }} onPaste={(e) => { const f = imageFileFromClipboard(e); if (f) { e.preventDefault(); void attachLeasePhoto(c.id, f); } }}>
                         Add photo
                       </button>
                     )}
