@@ -679,10 +679,10 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
           onClick={() => extraInputRef.current?.click()}
           className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
         >
-          Add photo
+          Add additional subject photo
         </button>
         <span className="text-sm text-muted-foreground">
-          Additional images with custom captions (multiple allowed).
+          Extra front, street, rear or other subject photos with a custom label (multiple allowed).
         </span>
         <input
           ref={extraInputRef}
@@ -698,21 +698,23 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
       </div>
 
       {extras.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <h4 className="mb-2 text-sm font-medium text-foreground">Additional subject photos</h4>
+          <div className="grid gap-4 md:grid-cols-2">
           {extras.map((photo, index) => (
             <div key={photo.id} className="space-y-1">
               <div className="flex gap-1 text-[0.7rem]">
                 <button type="button" disabled={index === 0} className="text-slate-500 disabled:opacity-30" onClick={() => movePhoto(photo.id, extras, -1)}>←</button>
                 <button type="button" disabled={index === extras.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => movePhoto(photo.id, extras, 1)}>→</button>
                 <select className="text-[0.65rem] border border-slate-300 rounded" defaultValue="" onChange={(e) => { if (e.target.value) { moveExtraToSubjectSlot(photo.id, e.target.value as PhotoSlot); e.target.value = ""; } }}>
-                  <option value="">Move into subject…</option>
+                  <option value="">Replace a fixed slot…</option>
                   {photoSlotsForJob(isVacantLand(draft.values)).filter((s) => s.slot !== "front").map((s) => (
                     <option key={s.slot} value={s.slot}>{s.label}</option>
                   ))}
                 </select>
               </div>
               <PhotoCard
-                slotLabel={photo.caption || `Extra ${index + 1}`}
+                slotLabel={photo.caption || `Additional subject photo ${index + 1}`}
                 photo={photo}
                 uploading={uploadingIds.has(photo.id)}
                 onFile={(file) =>
@@ -732,8 +734,9 @@ export function PhotosSection({ controller }: { controller: ReportDraftControlle
               />
             </div>
           ))}
+          </div>
         </div>
-      ) : null}
+      ) : null}ll}
 
       <div className="rounded-md border border-border bg-card p-4">
         <h3 className="text-sm font-semibold text-foreground">Maps &amp; overlays</h3>
