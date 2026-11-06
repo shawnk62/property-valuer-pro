@@ -21,7 +21,7 @@ interface Stop {
 }
 
 const MAX_STOPS = 25;
-const LEG_SIZE = 9;
+const LEG_SIZE = 4;
 
 export function InspectionRoutePlanner({
   sales,
@@ -291,15 +291,8 @@ async function optimise(originLat: number, originLng: number, stops: Stop[]): Pr
 }
 
 function buildMapsUrl(originAddress: string, stops: Stop[]): string {
-  const destination = stops[stops.length - 1];
-  const waypoints = stops.slice(0, -1);
-  const params = new URLSearchParams({
-    api: "1",
-    origin: originAddress || "Current Location",
-    destination: destination.address,
-    travelmode: "driving",
-  });
-  if (waypoints.length) params.set("waypoints", waypoints.map((s) => s.address).join("|"));
-  const web = `https://www.google.com/maps/dir/?${params.toString()}`;
-  return `comgooglemapsurl://${web.replace(/^https?:\/\//, "")}`;
+  const chain = stops.map((s) => encodeURIComponent(s.address)).join("+to:");
+  const parts = [`daddr=${chain}`, "directionsmode=driving"];
+  if (originAddress) parts.unshift(`saddr=${encodeURIComponent(originAddress)}`);
+  return `comgooglemaps://?${parts.join("&")}`;
 }
