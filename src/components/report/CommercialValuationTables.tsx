@@ -197,6 +197,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
             id: sale.id,
             address: sale.address,
             date: sale.saleDate,
+            leaseAmount: sale.passingRent ?? "",
             nla: sale.gla ?? "",
             netRentPerM2: "",
             term: "",
@@ -434,7 +435,15 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                       const rent = num(passingRent);
                       const calculated = price && rent ? ((rent / price) * 100).toFixed(2) : "";
                       patchSale(s.id, s.saleYieldManual ? { passingRent, marketRent: passingRent } : { passingRent, marketRent: passingRent, saleYield: calculated });
-                    }} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) patchSale(s.id, { passingRent: f, marketRent: f }); }} />
+                      const linked = meta.ciLeaseComps?.find(c => c.id === s.id);
+                      if (linked && !linked.leaseAmountManual) {
+                        onMeta({ ciLeaseComps: (meta.ciLeaseComps ?? []).map(c => c.id === s.id ? { ...c, leaseAmount: passingRent } : c) });
+                      }
+                    }} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) {
+                      patchSale(s.id, { passingRent: f, marketRent: f });
+                      const linked = meta.ciLeaseComps?.find(c => c.id === s.id);
+                      if (linked && !linked.leaseAmountManual) onMeta({ ciLeaseComps: (meta.ciLeaseComps ?? []).map(c => c.id === s.id ? { ...c, leaseAmount: f } : c) });
+                    }}} />
                   </td>
                 ))}
               </tr>

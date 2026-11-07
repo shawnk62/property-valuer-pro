@@ -567,6 +567,9 @@ export interface ReportMeta {
     id: string;
     address: string;
     date: string;
+    /** Total lease amount (p.a.). Optional. Manual edit stops sale sync. */
+    leaseAmount?: string;
+    leaseAmountManual?: boolean;
     nla: string;
     netRentPerM2: string;
     term: string;

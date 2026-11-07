@@ -31,6 +31,16 @@ function imageFileFromClipboard(e: React.ClipboardEvent): File | null {
   return null;
 }
 function normAddr(s: string): string { return s.toLowerCase().replace(/[^a-z0-9]/g, ""); }
+function num(raw: string | number | null | undefined): number | null {
+  if (raw == null) return null;
+  const n = Number(String(raw).replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(n) ? n : null;
+}
+function formatCurrency(raw: string): string {
+  const n = num(raw);
+  if (n == null) return raw.trim();
+  return n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+}
 
 
 export interface LeaseComp {
@@ -241,6 +251,36 @@ export function LeaseEvidenceGrid({
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.date} onChange={(e) => update(c.id, { date: e.target.value })} />
                   </td>
                 ))}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Lease amount</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                {comps.map((c) => {
+                  const linked = sales?.find(s => s.id === c.id);
+                  const shown = c.leaseAmountManual ? (c.leaseAmount ?? "") : (linked?.passingRent || c.leaseAmount || "");
+                  return (
+                    <td key={c.id} className="py-1 pr-1">
+                      <input
+                        className="w-full border border-slate-300 rounded px-1 py-0.5"
+                        value={shown}
+                        onChange={(e) => {
+                          const leaseAmount = e.target.value;
+                          update(c.id, { leaseAmount, leaseAmountManual: true });
+                          if (linked && onSales && sales) {
+                            onSales(sales.map(s => s.id === c.id ? { ...s, passingRent: leaseAmount } : s));
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const f = formatCurrency(e.target.value);
+                          if (f !== e.target.value) {
+                            update(c.id, { leaseAmount: f });
+                            if (linked && onSales && sales) onSales(sales.map(s => s.id === c.id ? { ...s, passingRent: f } : s));
+                          }
+                        }}
+                      />
+                    </td>
+                  );
+                })}
               </tr>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Building area</td>
