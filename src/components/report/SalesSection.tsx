@@ -3089,6 +3089,7 @@ function ResidentialAgentSheet({
         </div>
         <div className="space-y-3">
           {f("Sale price", sale.salePrice ?? "", "salePrice")}
+          {f("Sales or financing concession", sale.concession ?? "", "concession")}
           {f("Sale date", sale.saleDate ?? "", "saleDate")}
           {f("Land area", sale.landArea ?? "", "landArea")}
           {f("Beds", sale.beds ?? "", "beds")}

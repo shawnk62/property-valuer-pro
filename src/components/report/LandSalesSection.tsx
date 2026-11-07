@@ -35,6 +35,7 @@ interface LandSale {
   address: string;
   date: string;
   price: string;
+  concession?: string;
   landArea: string;
   landUnit?: "m2" | "ha";
   notes: string;
@@ -277,6 +278,7 @@ function LandAgentSheet({
           {f("Address", sale.address, "address")}
           {f("Sale date", sale.date, "date")}
           {f("Sale price", sale.price, "price")}
+          {f("Sales or financing concession", sale.concession ?? "", "concession")}
           {f("Land area", sale.landArea, "landArea")}
           {f("Notes", sale.notes, "notes")}
         </div>

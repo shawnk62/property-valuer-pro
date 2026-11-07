@@ -249,6 +249,8 @@ export interface ComparableSale {
   /** When true, the comparable is an on-market listing, not a settled sale. */
   isListing?: boolean;
   salePrice: string;
+  /** Sales or financing concession. Optional. */
+  concession?: string;
   landArea: string;
   /** Commercial/industrial land unit. Default m2. Does not rename landArea. */
   landUnit?: "m2" | "ha";
@@ -592,6 +594,7 @@ export interface ReportMeta {
     address: string;
     date: string;
     price: string;
+    concession?: string;
     landArea: string;
     landUnit?: "m2" | "ha";
     notes: string;

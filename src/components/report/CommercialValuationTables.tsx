@@ -618,6 +618,7 @@ function SaleAgentSheet({
         </div>
         <div className="space-y-3">
           {f("Sale price", sale.salePrice ?? "", (v) => onSale({ salePrice: v }))}
+          {f("Sales or financing concession", sale.concession ?? "", (v) => onSale({ concession: v }))}
           {f("Land area", sale.landArea ?? "", (v) => onSale({ landArea: v }))}
           {f("Sale date", sale.saleDate ?? "", (v) => onSale({ saleDate: v }))}
           {f("Passing rent", sale.passingRent ?? "", (v) => onSale({ passingRent: v }))}
