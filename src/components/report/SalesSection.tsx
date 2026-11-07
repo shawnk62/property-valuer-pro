@@ -141,6 +141,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
   const fileRef = useRef<HTMLInputElement>(null);
   const cmaImportModeRef = useRef<"merge" | "replace">("merge");
   const [importing, setImporting] = useState(false);
+  const [agentCallId, setAgentCallId] = useState<string | null>(null);
   const [cmaPaste, setCmaPaste] = useState("");
   const [duplicateChoice, setDuplicateChoice] = useState<{
     incoming: ComparableSale[];
@@ -1909,6 +1910,13 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                                     )}
                                   </span>
                                   <div className="flex shrink-0 flex-col items-end gap-0.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => setAgentCallId(sale.id)}
+                                      className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[0.6rem] text-slate-600"
+                                    >
+                                      Agent call
+                                    </button>
                                     <div className="flex items-center gap-0.5">
                                       <button
                                         type="button"
@@ -3044,6 +3052,54 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       )}
 
     </div>
+
+      {agentCallId ? (
+        <ResidentialAgentSheet
+          sale={sales.find(s => s.id === agentCallId)!}
+          onChange={(patch) => patchSale(agentCallId, patch)}
+          onClose={() => setAgentCallId(null)}
+        />
+      ) : null}
   );
 }
 
+
+
+function ResidentialAgentSheet({
+  sale,
+  onChange,
+  onClose,
+}: {
+  sale: ComparableSale;
+  onChange: (patch: Partial<ComparableSale>) => void;
+  onClose: () => void;
+}) {
+  const f = (label: string, value: string, key: keyof ComparableSale, placeholder?: string) => (
+    <label className="block">
+      <span className="text-sm font-medium text-slate-700">{label}</span>
+      <input className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-base" value={value} placeholder={placeholder} onChange={(e) => onChange({ [key]: e.target.value })} />
+    </label>
+  );
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <div className="text-lg font-semibold text-slate-800">Agent call — {sale.address || "Sale"}</div>
+          <button type="button" className="rounded border border-slate-300 px-3 py-1 text-sm" onClick={onClose}>Close</button>
+        </div>
+        <div className="space-y-3">
+          {f("Sale price", sale.salePrice ?? "", "salePrice")}
+          {f("Sale date", sale.saleDate ?? "", "saleDate")}
+          {f("Land area", sale.landArea ?? "", "landArea")}
+          {f("Beds", sale.beds ?? "", "beds")}
+          {f("Baths", sale.baths ?? "", "baths")}
+          {f("Cars", sale.cars ?? "", "cars")}
+          {f("Notes", sale.comments ?? "", "comments")}
+        </div>
+        <div className="mt-4 text-right">
+          <button type="button" className="rounded bg-slate-800 px-4 py-2 text-sm text-white" onClick={onClose}>Save and close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
