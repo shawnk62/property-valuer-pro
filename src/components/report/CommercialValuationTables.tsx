@@ -86,7 +86,6 @@ interface Props {
 export function CommercialValuationTables({ values, sales, meta, onSales, onMeta, subjectPhotoUrl, inspectionId }: Props) {
   const [expandedNotesId, setExpandedNotesId] = useState<string | null>(null);
   const [agentCallId, setAgentCallId] = useState<string | null>(null);
-  const [leasedPrompt, setLeasedPrompt] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const photoTargetRef = useRef<string | null>(null);
   async function attachSalePhoto(saleId: string, file: File) {
@@ -275,7 +274,6 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                     </select>
                     <div className="mt-0.5 flex gap-1 text-[0.65rem] font-normal">
                       <button type="button" className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-slate-600" onClick={() => setAgentCallId(s.id)}>Agent call</button>
-                      <button type="button" className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-slate-600" onClick={() => setLeasedPrompt(s.id)}>Leased?</button>
                       <button type="button" disabled={idx === 0} className="text-slate-500 disabled:opacity-30" onClick={() => moveSale(s.id, -1)}>←</button>
                       <button type="button" disabled={idx === arr.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => moveSale(s.id, 1)}>→</button>
                       <button type="button" className="text-slate-500" onClick={() => archiveSale(s.id)} title="Hold in working file">Archive</button>
@@ -589,22 +587,15 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
         ) : null}
       </div>
 
-      {leasedPrompt ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setLeasedPrompt(null)}>
-          <div className="rounded-lg bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="text-lg font-semibold mb-3">Include as lease evidence?</div>
-            <div className="flex gap-2">
-              <button type="button" className="rounded bg-slate-800 px-4 py-2 text-sm text-white" onClick={() => { const s = sales.find(x => x.id === leasedPrompt); if (s) toggleLeaseEvidence(s, true); setAgentCallId(leasedPrompt); setLeasedPrompt(null); }}>Yes</button>
-              <button type="button" className="rounded border border-slate-300 px-4 py-2 text-sm" onClick={() => setLeasedPrompt(null)}>No</button>
-            </div>
-          </div>
-        </div>
-      ) : null}
       {agentCallId ? (
         <SaleAgentSheet
           sale={sales.find(s => s.id === agentCallId)!}
           lease={meta.ciLeaseComps?.find(c => c.id === agentCallId)}
           onSale={(patch) => patchSale(agentCallId, patch)}
+          onIncludeLease={(include) => {
+            const s = sales.find(x => x.id === agentCallId);
+            if (s) toggleLeaseEvidence(s, include);
+          }}
           onLease={(patch) => {
             const existing = meta.ciLeaseComps ?? [];
             const found = existing.find(c => c.id === agentCallId);
@@ -623,12 +614,14 @@ function SaleAgentSheet({
   sale,
   lease,
   onSale,
+  onIncludeLease,
   onLease,
   onClose,
 }: {
   sale: ComparableSale;
   lease?: { netRentPerM2: string; term: string; incentives: string; outgoings: string; notes: string; date: string; nla: string };
   onSale: (patch: Partial<ComparableSale>) => void;
+  onIncludeLease: (include: boolean) => void;
   onLease: (patch: Partial<{ netRentPerM2: string; term: string; incentives: string; outgoings: string; notes: string; date: string; nla: string }>) => void;
   onClose: () => void;
 }) {
@@ -648,10 +641,15 @@ function SaleAgentSheet({
         <div className="space-y-3">
           {f("Sale price", sale.salePrice ?? "", (v) => onSale({ salePrice: v }))}
           {f("Sales or financing concession", sale.concession ?? "", (v) => onSale({ concession: v }))}
-          {f("Land area", sale.landArea ?? "", (v) => onSale({ landArea: v }))}
           {f("Sale date", sale.saleDate ?? "", (v) => onSale({ saleDate: v }))}
-          {f("Passing rent", sale.passingRent ?? "", (v) => onSale({ passingRent: v }))}
-          {f("Market rent", sale.marketRent ?? "", (v) => onSale({ marketRent: v }))}
+          {f("Land area", sale.landArea ?? "", (v) => onSale({ landArea: v }))}
+          <div className="block">
+            <span className="text-sm font-medium text-slate-700">Is the property leased?</span>
+            <div className="mt-1 flex gap-2">
+              <button type="button" className={"rounded px-4 py-2 text-sm " + (lease ? "bg-slate-800 text-white" : "border border-slate-300")} onClick={() => onIncludeLease(true)}>Yes</button>
+              <button type="button" className={"rounded px-4 py-2 text-sm " + (!lease ? "bg-slate-800 text-white" : "border border-slate-300")} onClick={() => onIncludeLease(false)}>No</button>
+            </div>
+          </div>
           {lease ? (
             <>
               <div className="border-t pt-3 text-sm font-semibold text-slate-600">Lease details</div>
@@ -665,6 +663,8 @@ function SaleAgentSheet({
               {f("Notes", lease.notes, (v) => onLease({ notes: v }))}
             </>
           ) : null}
+          {f("Passing rent", sale.passingRent ?? "", (v) => onSale({ passingRent: v }))}
+          {f("Market rent", sale.marketRent ?? "", (v) => onSale({ marketRent: v }))}
         </div>
         <div className="mt-4 text-right">
           <button type="button" className="rounded bg-slate-800 px-4 py-2 text-sm text-white" onClick={onClose}>Save and close</button>
