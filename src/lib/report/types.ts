@@ -421,6 +421,12 @@ export interface ReportMeta {
   subjectAskingPrice?: string;
   /** Whether the subject figure is a sale price or an assessed value. */
   subjectValueKind?: "sale" | "assessed";
+  /** Subject passing rent override. If set, inspection form value is not used. */
+  subjectPassingRent?: string;
+  /** Subject market rent, entered on the grid. */
+  subjectMarketRent?: string;
+  subjectYieldManual?: boolean;
+  subjectYield?: string;
   /** Override of the subject topography printed on the adjustment grid. */
   subjectTopography?: string;
   /** Subject-column description for the first Other adjustment row. */

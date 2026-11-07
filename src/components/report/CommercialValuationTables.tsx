@@ -420,7 +420,9 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
               </tr>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Passing rent</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">
+                  <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={meta.subjectPassingRent ?? String(values["comm_passing_rent"] ?? "")} onChange={(e) => onMeta({ subjectPassingRent: e.target.value })} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) onMeta({ subjectPassingRent: f }); }} />
+                </td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.passingRent ?? ""} onChange={(e) => {
@@ -435,7 +437,9 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
               </tr>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Market rent</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">
+                  <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={meta.subjectMarketRent ?? ""} onChange={(e) => onMeta({ subjectMarketRent: e.target.value })} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) onMeta({ subjectMarketRent: f }); }} />
+                </td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.marketRent ?? ""} onChange={(e) => {
@@ -450,7 +454,20 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
               </tr>
               <tr className="border-b border-slate-100 bg-slate-50">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Yield %</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">
+                  {(() => {
+                    const price = num(meta.subjectAskingPrice);
+                    const rent = num(meta.subjectMarketRent);
+                    const calculated = price && rent ? ((rent / price) * 100).toFixed(2) : "";
+                    const shown = meta.subjectYieldManual ? (meta.subjectYield ?? "") : (calculated || meta.subjectYield || "");
+                    return (
+                      <div className="flex items-center gap-1">
+                        <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={shown} onChange={(e) => onMeta({ subjectYield: e.target.value, subjectYieldManual: true })} title={meta.subjectYieldManual ? "Manual override" : "Calculated from market rent"} />
+                        <span className="text-slate-500 text-[0.65rem] whitespace-nowrap">%</span>
+                      </div>
+                    );
+                  })()}
+                </td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => {
                   const price = num(s.salePrice);
                   const rent = num(s.marketRent);
