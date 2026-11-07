@@ -660,11 +660,14 @@ function SaleAgentSheet({
               {f("Outgoings", lease.outgoings, (v) => onLease({ outgoings: v }))}
               {f("Incentives", lease.incentives, (v) => onLease({ incentives: v }))}
               {f("Agreed rent $/m²", lease.netRentPerM2, (v) => onLease({ netRentPerM2: v }))}
-              {f("Notes", lease.notes, (v) => onLease({ notes: v }))}
             </>
           ) : null}
           {f("Passing rent", sale.passingRent ?? "", (v) => onSale({ passingRent: v }))}
           {f("Market rent", sale.marketRent ?? "", (v) => onSale({ marketRent: v }))}
+          <label className="block">
+            <span className="text-sm font-medium text-slate-700">Notes</span>
+            <textarea className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-base min-h-[8rem]" value={sale.comments ?? ""} onChange={(e) => onSale({ comments: e.target.value })} />
+          </label>
         </div>
         <div className="mt-4 text-right">
           <button type="button" className="rounded bg-slate-800 px-4 py-2 text-sm text-white" onClick={onClose}>Save and close</button>
