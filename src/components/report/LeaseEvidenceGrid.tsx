@@ -297,11 +297,24 @@ export function LeaseEvidenceGrid({
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Net rent $/m²</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
-                {comps.map((c) => (
-                  <td key={c.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.netRentPerM2} onChange={(e) => update(c.id, { netRentPerM2: e.target.value })} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) update(c.id, { netRentPerM2: f }); }} />
-                  </td>
-                ))}
+                {comps.map((c) => {
+                  const linked = sales?.find(s => s.id === c.id);
+                  const amount = c.leaseAmountManual ? num(c.leaseAmount) : num(linked?.passingRent || c.leaseAmount);
+                  const area = num(c.nla);
+                  const calculated = amount != null && area && area > 0 ? formatCurrency(String(amount / area)) : "";
+                  const shown = c.netRentManual ? (c.netRentPerM2 ?? "") : (calculated || c.netRentPerM2 || "");
+                  return (
+                    <td key={c.id} className="py-1 pr-1">
+                      <input
+                        className="w-full border border-slate-300 rounded px-1 py-0.5"
+                        value={shown}
+                        onChange={(e) => update(c.id, { netRentPerM2: e.target.value, netRentManual: true })}
+                        onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) update(c.id, { netRentPerM2: f }); }}
+                        title={c.netRentManual ? "Manual override" : "Calculated from lease amount and area"}
+                      />
+                    </td>
+                  );
+                })}
               </tr>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Term</td>

@@ -572,6 +572,7 @@ export interface ReportMeta {
     leaseAmountManual?: boolean;
     nla: string;
     netRentPerM2: string;
+    netRentManual?: boolean;
     term: string;
     incentives: string;
     outgoings: string;
