@@ -3051,8 +3051,6 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         </div>
       )}
 
-    </div>
-
       {agentCallId ? (
         <ResidentialAgentSheet
           sale={sales.find(s => s.id === agentCallId)!}
@@ -3060,6 +3058,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           onClose={() => setAgentCallId(null)}
         />
       ) : null}
+    </div>
   );
 }
 
