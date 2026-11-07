@@ -47,6 +47,20 @@ function saleRating(sale: ComparableSale): string {
  * Printed sales schedule without dollar adjustments.
  * Column set follows the comparable-sales table; colours and type follow the report style.
  */
+function commercialMetrics(sale: ComparableSale, landRate: string): string[] {
+  const parts: string[] = [];
+  if (landRate && landRate !== "—") parts.push(`Land ${landRate}`);
+  const price = Number(String(sale.salePrice ?? "").replace(/[^0-9.]/g, ""));
+  const nla = Number(String(sale.gla ?? "").replace(/[^0-9.]/g, ""));
+  if (Number.isFinite(price) && price > 0 && Number.isFinite(nla) && nla > 0) {
+    parts.push(`NLA $${Math.round(price / nla).toLocaleString("en-AU")}/m²`);
+  }
+  if (sale.passingRent?.trim()) parts.push(`Passing ${sale.passingRent.trim()}`);
+  if (sale.marketRent?.trim()) parts.push(`Market ${sale.marketRent.trim()}`);
+  if (sale.saleYield?.trim()) parts.push(`Yield ${sale.saleYield.trim()}${sale.saleYield.includes("%") ? "" : "%"}`);
+  return parts;
+}
+
 export function SalesEvidenceSchedule({
   sales,
   headerClassName,
@@ -54,6 +68,7 @@ export function SalesEvidenceSchedule({
   cellBorderClassName = "border border-[var(--rule)]",
   cellStyle,
   omitSourceNotes = false,
+  showCommercialMetrics = false,
 }: {
   sales: ComparableSale[];
   headerClassName?: string;
@@ -62,6 +77,8 @@ export function SalesEvidenceSchedule({
   cellStyle?: CSSProperties;
   /** Shawn reports: source notes are internal and must not print. */
   omitSourceNotes?: boolean;
+  /** Shawn Full commercial/industrial: show land, NLA, rents and yield on a second row. */
+  showCommercialMetrics?: boolean;
 }) {
   if (sales.length === 0) return null;
   const cell = `${cellBorderClassName} px-2 py-1.5 align-top`;
@@ -128,6 +145,13 @@ export function SalesEvidenceSchedule({
                   {saleRating(s)}
                 </td>
               </tr>
+              {showCommercialMetrics && commercialMetrics(s, site.rate).length > 0 ? (
+                <tr>
+                  <td className={cell} style={cellStyle} colSpan={7}>
+                    {commercialMetrics(s, site.rate).join(" · ")}
+                  </td>
+                </tr>
+              ) : null}
               {s.photoUrl || commentParagraphs.length ? (
                 <tr>
                   <td className={cell} style={cellStyle} colSpan={2}>

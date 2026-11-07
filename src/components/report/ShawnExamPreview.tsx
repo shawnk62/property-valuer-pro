@@ -1055,6 +1055,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <SalesEvidenceSchedule
               sales={printedSales}
               omitSourceNotes
+              showCommercialMetrics={Boolean(String(v["prop_type_commercial"] ?? "").trim()) || Boolean(String(v["prop_type_industrial"] ?? "").trim())}
               headerStyle={{ background: TEAL, color: "#fff" }}
               cellBorderClassName="border"
               cellStyle={{ borderColor: RULE }}
