@@ -85,6 +85,8 @@ interface Props {
 
 export function CommercialValuationTables({ values, sales, meta, onSales, onMeta, subjectPhotoUrl, inspectionId }: Props) {
   const [expandedNotesId, setExpandedNotesId] = useState<string | null>(null);
+  const [agentCallId, setAgentCallId] = useState<string | null>(null);
+  const [leasedPrompt, setLeasedPrompt] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const photoTargetRef = useRef<string | null>(null);
   async function attachSalePhoto(saleId: string, file: File) {
@@ -271,6 +273,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                       <option value="listing">Listing</option>
                     </select>
                     <div className="mt-0.5 flex gap-1 text-[0.65rem] font-normal">
+                      <button type="button" className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-slate-600" onClick={() => setAgentCallId(s.id)}>Agent call</button>
+                      <button type="button" className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-slate-600" onClick={() => setLeasedPrompt(s.id)}>Leased?</button>
                       <button type="button" disabled={idx === 0} className="text-slate-500 disabled:opacity-30" onClick={() => moveSale(s.id, -1)}>←</button>
                       <button type="button" disabled={idx === arr.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => moveSale(s.id, 1)}>→</button>
                       <button type="button" className="text-slate-500" onClick={() => archiveSale(s.id)} title="Hold in working file">Archive</button>
@@ -556,6 +560,86 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
         ) : null}
       </div>
 
+    </div>
+
+      {leasedPrompt ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setLeasedPrompt(null)}>
+          <div className="rounded-lg bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="text-lg font-semibold mb-3">Include as lease evidence?</div>
+            <div className="flex gap-2">
+              <button type="button" className="rounded bg-slate-800 px-4 py-2 text-sm text-white" onClick={() => { const s = sales.find(x => x.id === leasedPrompt); if (s) toggleLeaseEvidence(s, true); setAgentCallId(leasedPrompt); setLeasedPrompt(null); }}>Yes</button>
+              <button type="button" className="rounded border border-slate-300 px-4 py-2 text-sm" onClick={() => setLeasedPrompt(null)}>No</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {agentCallId ? (
+        <SaleAgentSheet
+          sale={sales.find(s => s.id === agentCallId)!}
+          lease={meta.ciLeaseComps?.find(c => c.id === agentCallId)}
+          onSale={(patch) => patchSale(agentCallId, patch)}
+          onLease={(patch) => {
+            const existing = meta.ciLeaseComps ?? [];
+            const found = existing.find(c => c.id === agentCallId);
+            if (found) onMeta({ ciLeaseComps: existing.map(c => c.id === agentCallId ? { ...c, ...patch } : c) });
+          }}
+          onClose={() => setAgentCallId(null)}
+        />
+      ) : null}
+  );
+}
+
+
+function SaleAgentSheet({
+  sale,
+  lease,
+  onSale,
+  onLease,
+  onClose,
+}: {
+  sale: ComparableSale;
+  lease?: { netRentPerM2: string; term: string; incentives: string; outgoings: string; notes: string; date: string; nla: string };
+  onSale: (patch: Partial<ComparableSale>) => void;
+  onLease: (patch: Partial<{ netRentPerM2: string; term: string; incentives: string; outgoings: string; notes: string; date: string; nla: string }>) => void;
+  onClose: () => void;
+}) {
+  const f = (label: string, value: string, onChange: (v: string) => void, placeholder?: string) => (
+    <label className="block">
+      <span className="text-sm font-medium text-slate-700">{label}</span>
+      <input className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-base" value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+    </label>
+  );
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <div className="text-lg font-semibold text-slate-800">Agent call — {sale.address || "Sale"}</div>
+          <button type="button" className="rounded border border-slate-300 px-3 py-1 text-sm" onClick={onClose}>Close</button>
+        </div>
+        <div className="space-y-3">
+          {f("Sale price", sale.salePrice ?? "", (v) => onSale({ salePrice: v }))}
+          {f("Land area", sale.landArea ?? "", (v) => onSale({ landArea: v }))}
+          {f("Sale date", sale.saleDate ?? "", (v) => onSale({ saleDate: v }))}
+          {f("Passing rent", sale.passingRent ?? "", (v) => onSale({ passingRent: v }))}
+          {f("Market rent", sale.marketRent ?? "", (v) => onSale({ marketRent: v }))}
+          {lease ? (
+            <>
+              <div className="border-t pt-3 text-sm font-semibold text-slate-600">Lease details</div>
+              {f("Area (NLA)", lease.nla, (v) => onLease({ nla: v }))}
+              {f("Lease start date", lease.date, (v) => onLease({ date: v }))}
+              {f("Term and options", lease.term, (v) => onLease({ term: v }))}
+              {f("How long to lease", "", () => {})}
+              {f("Outgoings", lease.outgoings, (v) => onLease({ outgoings: v }))}
+              {f("Incentives", lease.incentives, (v) => onLease({ incentives: v }))}
+              {f("Agreed rent $/m²", lease.netRentPerM2, (v) => onLease({ netRentPerM2: v }))}
+              {f("Notes", lease.notes, (v) => onLease({ notes: v }))}
+            </>
+          ) : null}
+        </div>
+        <div className="mt-4 text-right">
+          <button type="button" className="rounded bg-slate-800 px-4 py-2 text-sm text-white" onClick={onClose}>Save and close</button>
+        </div>
+      </div>
     </div>
   );
 }

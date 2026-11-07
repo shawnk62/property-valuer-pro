@@ -73,6 +73,7 @@ export function LandSalesSection({
 }) {
   const sales = meta.ciLandSales ?? [];
   const [expandedNotesId, setExpandedNotesId] = useState<string | null>(null);
+  const [agentCallId, setAgentCallId] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const photoTargetRef = useRef<string | null>(null);
   const subjectAddress = [values["prop_address"], values["prop_suburb"]].filter(Boolean).join(", ") || "Subject";
@@ -140,7 +141,10 @@ export function LandSalesSection({
                       placeholder="Land sale address"
                       onChange={(e) => update(s.id, { address: e.target.value })}
                     />
-                    <button type="button" className="mt-0.5 text-red-500 text-[0.65rem]" onClick={() => remove(s.id)}>×</button>
+                    <div className="mt-0.5 flex gap-1 text-[0.65rem]">
+                      <button type="button" className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-slate-600" onClick={() => setAgentCallId(s.id)}>Agent call</button>
+                      <button type="button" className="text-red-500" onClick={() => remove(s.id)}>×</button>
+                    </div>
                   </th>
                 ))}
               </tr>
@@ -234,6 +238,52 @@ export function LandSalesSection({
         </div>
         </>
       )}
+    </div>
+
+      {agentCallId ? (
+        <LandAgentSheet
+          sale={sales.find(s => s.id === agentCallId)!}
+          onChange={(patch) => update(agentCallId, patch)}
+          onClose={() => setAgentCallId(null)}
+        />
+      ) : null}
+  );
+}
+
+
+function LandAgentSheet({
+  sale,
+  onChange,
+  onClose,
+}: {
+  sale: LandSale;
+  onChange: (patch: Partial<LandSale>) => void;
+  onClose: () => void;
+}) {
+  const f = (label: string, value: string, key: keyof LandSale, placeholder?: string) => (
+    <label className="block">
+      <span className="text-sm font-medium text-slate-700">{label}</span>
+      <input className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-base" value={value} placeholder={placeholder} onChange={(e) => onChange({ [key]: e.target.value })} />
+    </label>
+  );
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <div className="text-lg font-semibold text-slate-800">Agent call — {sale.address || "Land sale"}</div>
+          <button type="button" className="rounded border border-slate-300 px-3 py-1 text-sm" onClick={onClose}>Close</button>
+        </div>
+        <div className="space-y-3">
+          {f("Address", sale.address, "address")}
+          {f("Sale date", sale.date, "date")}
+          {f("Sale price", sale.price, "price")}
+          {f("Land area", sale.landArea, "landArea")}
+          {f("Notes", sale.notes, "notes")}
+        </div>
+        <div className="mt-4 text-right">
+          <button type="button" className="rounded bg-slate-800 px-4 py-2 text-sm text-white" onClick={onClose}>Save and close</button>
+        </div>
+      </div>
     </div>
   );
 }
