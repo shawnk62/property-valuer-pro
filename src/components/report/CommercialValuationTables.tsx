@@ -577,8 +577,6 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
         ) : null}
       </div>
 
-    </div>
-
       {leasedPrompt ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setLeasedPrompt(null)}>
           <div className="rounded-lg bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
@@ -603,6 +601,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
           onClose={() => setAgentCallId(null)}
         />
       ) : null}
+    </div>
+
   );
 }
 

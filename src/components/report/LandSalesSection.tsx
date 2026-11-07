@@ -239,8 +239,6 @@ export function LandSalesSection({
         </div>
         </>
       )}
-    </div>
-
       {agentCallId ? (
         <LandAgentSheet
           sale={sales.find(s => s.id === agentCallId)!}
@@ -248,6 +246,7 @@ export function LandSalesSection({
           onClose={() => setAgentCallId(null)}
         />
       ) : null}
+    </div>
   );
 }
 
