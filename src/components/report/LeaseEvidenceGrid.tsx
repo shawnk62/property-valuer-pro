@@ -52,6 +52,11 @@ export interface LeaseComp {
   officeRatio?: string;
   condition?: string;
   hardstand?: string;
+  agentName?: string;
+  agency?: string;
+  tenantUse?: string;
+  timeToLease?: string;
+  rentBasis?: "net" | "gross";
 }
 
 function blank(): LeaseComp {
@@ -94,6 +99,7 @@ export function LeaseEvidenceGrid({
 }) {
   const comps = meta.ciLeaseComps ?? [];
   const [expandedNotesId, setExpandedNotesId] = useState<string | null>(null);
+  const [agentCallId, setAgentCallId] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const photoTargetRef = useRef<string | null>(null);
   const subjectAddress = [values["prop_address"], values["prop_suburb"]].filter(Boolean).join(", ") || "Subject";
@@ -187,6 +193,7 @@ export function LeaseEvidenceGrid({
                       onChange={(e) => update(c.id, { address: e.target.value })}
                     />
                     <div className="mt-0.5 flex gap-1 text-[0.65rem] font-normal">
+                      <button type="button" className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-slate-600" onClick={() => setAgentCallId(c.id)}>Agent call</button>
                       <button type="button" disabled={idx === 0} className="text-slate-500 disabled:opacity-30" onClick={() => move(c.id, -1)}>←</button>
                       <button type="button" disabled={idx === comps.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => move(c.id, 1)}>→</button>
                       <button type="button" className="text-red-500" onClick={() => remove(c.id)}>×</button>
@@ -377,6 +384,72 @@ export function LeaseEvidenceGrid({
             }} />
           </label>
         )}
+      </div>
+      {agentCallId ? (
+        <AgentCallSheet
+          comp={comps.find((c) => c.id === agentCallId)!}
+          onChange={(patch) => update(agentCallId, patch)}
+          onClose={() => setAgentCallId(null)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function AgentCallSheet({
+  comp,
+  onChange,
+  onClose,
+}: {
+  comp: LeaseComp;
+  onChange: (patch: Partial<LeaseComp>) => void;
+  onClose: () => void;
+}) {
+  const field = (label: string, value: string, key: keyof LeaseComp, placeholder?: string) => (
+    <label className="block">
+      <span className="text-sm font-medium text-slate-700">{label}</span>
+      <input
+        className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-base"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange({ [key]: e.target.value })}
+      />
+    </label>
+  );
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <div className="text-lg font-semibold text-slate-800">Agent call — {comp.address || "Lease"}</div>
+          <button type="button" className="rounded border border-slate-300 px-3 py-1 text-sm" onClick={onClose}>Close</button>
+        </div>
+        <div className="space-y-3">
+          {field("Agent name", comp.agentName ?? "", "agentName")}
+          {field("Agency", comp.agency ?? "", "agency")}
+          {field("Property use", comp.tenantUse ?? "", "tenantUse", "e.g. warehouse, office")}
+          {field("Area (NLA)", comp.nla, "nla", "m²")}
+          {field("Lease start date", comp.date, "date")}
+          {field("Term and options", comp.term, "term", "e.g. 5 + 5")}
+          {field("How long to lease", comp.timeToLease ?? "", "timeToLease", "e.g. 3 months")}
+          {field("Outgoings", comp.outgoings, "outgoings")}
+          {field("Incentives", comp.incentives, "incentives", "rent-free, fitout")}
+          <label className="block">
+            <span className="text-sm font-medium text-slate-700">Rent basis</span>
+            <select className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-base" value={comp.rentBasis ?? ""} onChange={(e) => onChange({ rentBasis: e.target.value as "net" | "gross" })}>
+              <option value="">—</option>
+              <option value="net">Net</option>
+              <option value="gross">Gross</option>
+            </select>
+          </label>
+          {field("Agreed rent $/m²", comp.netRentPerM2, "netRentPerM2")}
+          <label className="block">
+            <span className="text-sm font-medium text-slate-700">Notes</span>
+            <textarea className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-base" rows={3} value={comp.notes} onChange={(e) => onChange({ notes: e.target.value })} />
+          </label>
+        </div>
+        <div className="mt-4 text-right">
+          <button type="button" className="rounded bg-slate-800 px-4 py-2 text-sm text-white" onClick={onClose}>Save and close</button>
+        </div>
       </div>
     </div>
   );

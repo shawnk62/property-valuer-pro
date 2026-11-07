@@ -572,6 +572,11 @@ export interface ReportMeta {
     officeRatio?: string;
     condition?: string;
     hardstand?: string;
+    agentName?: string;
+    agency?: string;
+    tenantUse?: string;
+    timeToLease?: string;
+    rentBasis?: "net" | "gross";
   }>;
   /** Map of lease evidence locations. */
   ciLeaseMapUrl?: string;
