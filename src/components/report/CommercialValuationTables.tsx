@@ -421,7 +421,10 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Passing rent</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">
-                  <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={meta.subjectPassingRent ?? String(values["comm_passing_rent"] ?? "")} onChange={(e) => onMeta({ subjectPassingRent: e.target.value })} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) onMeta({ subjectPassingRent: f }); }} />
+                  <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={meta.subjectPassingRent ?? formatCurrency(String(values["comm_passing_rent"] ?? ""))} onChange={(e) => {
+                    const passing = e.target.value;
+                    onMeta({ subjectPassingRent: passing, subjectMarketRent: passing });
+                  }} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) onMeta({ subjectPassingRent: f, subjectMarketRent: f }); }} />
                 </td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-1">
