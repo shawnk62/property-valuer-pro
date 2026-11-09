@@ -115,7 +115,7 @@ function vacantSiteBrief(values: InspectionValues): string {
 }
 
 function commercialBuildingBrief(values: InspectionValues): string {
-  const subtype = v(values, "prop_type_commercial");
+  const subtype = v(values, "prop_type_commercial") || v(values, "prop_type_industrial");
   const nla = v(values, "comm_nla");
   const gba = v(values, "comm_gba");
   const structure = v(values, "comm_structure");
@@ -142,7 +142,7 @@ function commercialBuildingBrief(values: InspectionValues): string {
 
 function buildBrief(values: InspectionValues): string {
   if (isVacantLand(values)) return vacantSiteBrief(values);
-  if (isCommercialType(values) && !isMixedUseCommercial(values)) {
+  if ((isCommercialType(values) || isIndustrialType(values)) && !isMixedUseCommercial(values)) {
     return commercialBuildingBrief(values);
   }
   const level = setLevel(values);
@@ -1373,17 +1373,17 @@ export function generateNarrative(
     physicalAccess: buildPhysicalAccess(values),
     servicesAmenities: buildServicesAmenities(values),
     improvements:
-      isVacantLand(values) || (isCommercialType(values) && !isMixedUseCommercial(values))
-        ? isCommercialType(values) && !isVacantLand(values)
+      isVacantLand(values) || ((isCommercialType(values) || isIndustrialType(values)) && !isMixedUseCommercial(values))
+        ? (isCommercialType(values) || isIndustrialType(values)) && !isVacantLand(values)
           ? commercialBuildingBrief(values)
           : ""
         : buildImprovements(values),
     accommodation:
-      isVacantLand(values) || (isCommercialType(values) && !isMixedUseCommercial(values))
+      isVacantLand(values) || ((isCommercialType(values) || isIndustrialType(values)) && !isMixedUseCommercial(values))
         ? ""
         : buildAccommodation(values),
     conditionImprovements:
-      isVacantLand(values) || (isCommercialType(values) && !isMixedUseCommercial(values))
+      isVacantLand(values) || ((isCommercialType(values) || isIndustrialType(values)) && !isMixedUseCommercial(values))
         ? ""
         : buildConditionImprovements(values),
     highestBestUse: buildHighestBestUse(values),
