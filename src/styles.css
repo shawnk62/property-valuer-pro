@@ -1728,3 +1728,26 @@
 #report-preview-sheet .report-prose-para:last-child {
   margin-bottom: 0;
 }
+
+.adjustment-grid-table {
+  border: 1px solid #2c3e50;
+}
+.adjustment-grid-table th,
+.adjustment-grid-table td {
+  border: 1px solid #c5cdd6;
+  padding: 4px 6px;
+  vertical-align: top;
+}
+.adjustment-grid-table thead th {
+  background: #2c3e50;
+  color: #fff;
+  font-weight: 600;
+}
+.adjustment-grid-table tbody tr:nth-child(even) th,
+.adjustment-grid-table tbody tr:nth-child(even) td {
+  background: #e6e9e2;
+}
+.adjustment-grid-table tbody tr:nth-child(odd) th,
+.adjustment-grid-table tbody tr:nth-child(odd) td {
+  background: #fff;
+}

@@ -629,7 +629,9 @@ export function citeAcceptedNotes(
       if (source.author.toLowerCase() === lastAuthor) return sentence;
       lastAuthor = source.author.toLowerCase();
       if (new RegExp(`${source.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\(?${source.year}\\)?`, "i").test(sentence)) return sentence;
-      return sentence.replace(/([.!?])?$/, ` (${inTextCitation(source.author, source.year, style)})$1`);
+      const cite = inTextCitation(source.author, source.year, style);
+      const linked = source.url ? `[${cite}](${source.url})` : cite;
+      return sentence.replace(/([.!?])?$/, ` (${linked})$1`);
     });
     return next.join(" ");
   });

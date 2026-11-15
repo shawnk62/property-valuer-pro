@@ -76,7 +76,7 @@ export function AdjustmentGridPrint({
     <div className="adjustment-print-grid space-y-5">
       {chunks.map((chunk, chunkIdx) => (
         <div key={`adj-print-${chunkIdx}`} className="report-table-keep">
-          <table className="w-full table-fixed border-collapse text-[0.75rem]">
+          <table className="w-full table-fixed border-collapse text-[0.75rem] adjustment-grid-table">
             <colgroup>
               <col className="w-[13%]" />
               <col className="w-[11%]" />

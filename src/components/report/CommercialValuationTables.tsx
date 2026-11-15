@@ -229,6 +229,16 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
     <div className="space-y-6">
       <div>
         <h3 className="text-sm font-semibold text-foreground mb-1">Sales comparison</h3>
+        <div className="mb-2 flex flex-wrap gap-4 text-xs">
+          <label className="flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              checked={meta.printAdjustmentGrid !== false}
+              onChange={(e) => onMeta({ printAdjustmentGrid: e.target.checked })}
+            />
+            Include adjustment grid in report
+          </label>
+        </div>
         <p className="text-xs text-muted-foreground mb-2">
           Subject facts are from the inspection. Enter sale details. Rates are calculated. Adopt a rate; the table multiplies.
         </p>

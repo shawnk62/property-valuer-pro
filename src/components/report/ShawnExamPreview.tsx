@@ -118,6 +118,21 @@ function Para({ children }: { children: React.ReactNode }) {
   return <p className="text-left leading-relaxed">{children}</p>;
 }
 
+function renderWithLinks(text: string): React.ReactNode[] {
+  const parts = text.split(/(\[[^\]]+\]\(https?:\/\/[^)]+\))/g);
+  return parts.map((part, i) => {
+    const m = part.match(/^\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/);
+    if (m) {
+      return (
+        <a key={i} href={m[2]} target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">
+          {m[1]}
+        </a>
+      );
+    }
+    return part;
+  });
+}
+
 function Prose({ text }: { text: string }) {
   const blocks = proseParagraphs(insertHarvardCitations(text));
   if (blocks.length === 0) return null;
@@ -125,7 +140,7 @@ function Prose({ text }: { text: string }) {
     <>
       {blocks.map((block, i) => (
         <p key={i} className="report-prose-para text-left leading-relaxed whitespace-pre-line">
-          {block}
+          {renderWithLinks(block)}
         </p>
       ))}
     </>
@@ -445,8 +460,11 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           !isExtraAnnexPhoto(p) &&
           photoIsOnReport(p),
       );
-      return [found ? { ...found, caption: found.caption || label } : null, ...after];
-    }).filter(Boolean),
+      return [
+        found && photoIsOnReport(found) ? { ...found, caption: found.caption || label } : null,
+        ...after.filter((p) => photoIsOnReport(p) && Boolean(String(p.url || "").trim())),
+      ];
+    }).filter((p): p is NonNullable<typeof p> => Boolean(p && photoIsOnReport(p) && String(p.url || "").trim())),
     ...draft.photos.filter(
       (p) =>
         p.slot === null &&
