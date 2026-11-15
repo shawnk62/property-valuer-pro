@@ -14,6 +14,7 @@ export interface ComparableSheetData {
   id: string;
   kind: "sale" | "lease" | "land";
   address: string;
+  number?: number;
   proximity?: string;
   price?: string;
   date?: string;
@@ -73,7 +74,7 @@ export function ComparableSheet({ data, values, onChange }: Props) {
     <div className="comparable-sheet break-before-page break-after-page border border-slate-300 bg-white p-6 text-sm text-slate-800 print:shadow-none">
       <div className="mb-3 flex items-center justify-between border-b border-slate-300 bg-slate-100 px-3 py-1.5">
         <div className="text-base font-semibold uppercase tracking-wide text-slate-700">
-          {data.kind === "sale" ? "Sale" : data.kind === "lease" ? "Lease" : "Land sale"} — {data.address || "Comparable"}
+          {data.kind === "sale" ? "Comparable sale" : data.kind === "lease" ? "Lease" : "Land sale"} {data.number ?? ""} — {data.address || "Comparable"}
         </div>
         <label className="flex items-center gap-1.5 text-xs">
           <input

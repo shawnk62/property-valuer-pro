@@ -156,8 +156,9 @@ export function LandSalesSection({
                   <div className="text-xs font-medium text-foreground">{subjectAddress}</div>
                   <div className="text-[0.6rem] text-slate-400">Subject</div>
                 </th>
-                {sales.map((s) => (
+                {sales.map((s, idx) => (
                   <th key={s.id} className="py-1 pr-2 min-w-[8rem]">
+                    <div className="text-[0.65rem] font-semibold text-slate-500 uppercase">Land sale {idx + 1}</div>
                     <input
                       className="w-full border border-slate-300 rounded px-1 py-0.5 text-xs font-medium"
                       value={s.address}

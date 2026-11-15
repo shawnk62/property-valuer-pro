@@ -1360,12 +1360,13 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         />
       ))}
       {showWorkingFile ? <WorkingNotesAnnex draft={draft} /> : null}
-      {draft.sales.filter(s => s.includeSheet !== false && (s.address || s.salePrice)).map(s => (
+      {draft.sales.filter(s => s.omitFromReport !== true && s.includeSheet !== false && (s.address || s.salePrice)).map((s, idx) => (
         <ComparableSheet
           key={s.id}
           data={{
             id: s.id,
             kind: "sale",
+            number: idx + 1,
             address: s.address,
             proximity: s.proximity,
             price: s.salePrice,

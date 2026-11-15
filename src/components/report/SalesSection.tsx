@@ -1509,12 +1509,13 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       ) : null}
       {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
         <div className="mt-4 space-y-4">
-          {draft.sales.filter(s => s.address || s.salePrice).map(s => (
+          {draft.sales.filter(s => s.omitFromReport !== true && (s.address || s.salePrice)).map((s, idx) => (
             <ComparableSheet
               key={s.id}
               data={{
                 id: s.id,
                 kind: "sale",
+                number: idx + 1,
                 address: s.address,
                 proximity: s.proximity,
                 price: s.salePrice,

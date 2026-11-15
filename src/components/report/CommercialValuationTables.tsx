@@ -276,6 +276,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 </th>
                 {sales.filter((s) => s.omitFromReport !== true).map((s, idx, arr) => (
                   <th key={s.id} className="py-1 pr-2 min-w-[8rem]">
+                    <div className="text-[0.65rem] font-semibold text-slate-500 uppercase">Comparable sale {idx + 1}</div>
                     <input
                       className="w-full border border-slate-300 rounded px-1 py-0.5 text-xs font-medium text-foreground"
                       value={s.address}
