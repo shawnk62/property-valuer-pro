@@ -17,7 +17,7 @@ import {
   get,
   joinValues,
 } from "@/lib/report/schema";
-import { surveyPlanAnnexureLabel } from "@/lib/report/annexures";
+import { ComparableSheet } from "@/components/report/ComparableSheet";
 import { narrativePrints, type NbhdClaim } from "@/lib/narrative/neighbourhoodAssist";
 import {
   MAP_SLOTS,
@@ -1360,6 +1360,29 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         />
       ))}
       {showWorkingFile ? <WorkingNotesAnnex draft={draft} /> : null}
+      {draft.sales.filter(s => s.includeSheet !== false && (s.address || s.salePrice)).map(s => (
+        <ComparableSheet
+          key={s.id}
+          data={{
+            id: s.id,
+            kind: "sale",
+            address: s.address,
+            proximity: s.proximity,
+            price: s.salePrice,
+            date: s.saleDate,
+            landArea: s.landArea,
+            buildingArea: s.gla,
+            photoUrl: s.photoUrl,
+            extraPhotos: s.extraPhotos,
+            includeSheet: s.includeSheet,
+            accepted: s.acceptedFields,
+            overrides: s.fieldOverrides,
+            commentary: s.comments,
+          }}
+          values={draft.values}
+          onChange={() => {}}
+        />
+      ))}
     </article>
   );
 }

@@ -11,7 +11,7 @@ import { PausedTextarea } from "@/components/report/PausedTextarea";
 import { toast } from "sonner";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { CommercialAnalysisPanel } from "@/components/report/CommercialAnalysisPanel";
-import { CommercialValuationTables } from "@/components/report/CommercialValuationTables";
+import { ComparableSheet } from "@/components/report/ComparableSheet";
 import { InspectionRoutePlanner } from "@/components/report/InspectionRoutePlanner";
 import { LeaseEvidenceGrid } from "@/components/report/LeaseEvidenceGrid";
 import { LandSalesSection } from "@/components/report/LandSalesSection";
@@ -1505,6 +1505,40 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           subjectPhotoUrl={subjectFrontPhoto?.url}
           inspectionId={draft.inspectionId}
         />
+      ) : null}
+      {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
+        <div className="mt-4 space-y-4">
+          {draft.sales.filter(s => s.address || s.salePrice).map(s => (
+            <ComparableSheet
+              key={s.id}
+              data={{
+                id: s.id,
+                kind: "sale",
+                address: s.address,
+                proximity: s.proximity,
+                price: s.salePrice,
+                date: s.saleDate,
+                landArea: s.landArea,
+                buildingArea: s.gla,
+                photoUrl: s.photoUrl,
+                extraPhotos: s.extraPhotos,
+                includeSheet: s.includeSheet,
+                accepted: s.acceptedFields,
+                overrides: s.fieldOverrides,
+                commentary: s.comments,
+              }}
+              values={draft.values}
+              onChange={(patch) => setSales(draft.sales.map(sale => sale.id === s.id ? {
+                ...sale,
+                includeSheet: patch.includeSheet ?? sale.includeSheet,
+                acceptedFields: patch.accepted ?? sale.acceptedFields,
+                fieldOverrides: patch.overrides ?? sale.fieldOverrides,
+                comments: patch.commentary ?? sale.comments,
+                extraPhotos: patch.extraPhotos ?? sale.extraPhotos,
+              } : sale))}
+            />
+          ))}
+        </div>
       ) : null}
       {!(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
       <div

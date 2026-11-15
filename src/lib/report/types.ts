@@ -280,8 +280,16 @@ export interface ComparableSale {
   dataSource?: string;
   /** URAR: Verification Source(s). */
   verificationSource?: string;
-  /** Commercial / industrial percentage adjustments applied to the building rate. Keys are feature ids. */
+  /** Commercial rate percentage adjustments. */
   rateAdjustments?: Record<string, string>;
+  /** Extra photos for the full-page sheet. Empty tiles are omitted from print. */
+  extraPhotos?: Array<{ url: string; include?: boolean }>;
+  /** When false, the full-page sheet is omitted from the report. */
+  includeSheet?: boolean;
+  /** Valuer acceptance of proposed field values. */
+  acceptedFields?: Record<string, boolean>;
+  /** Valuer overrides of proposed field values. */
+  fieldOverrides?: Record<string, string>;
   /** URAR VALUE ADJUSTMENTS by feature id. */
   adjustments?: Record<string, FeatureAdjustment>;
   /**
