@@ -280,6 +280,8 @@ export interface ComparableSale {
   dataSource?: string;
   /** URAR: Verification Source(s). */
   verificationSource?: string;
+  /** Commercial / industrial percentage adjustments applied to the building rate. Keys are feature ids. */
+  rateAdjustments?: Record<string, string>;
   /** URAR VALUE ADJUSTMENTS by feature id. */
   adjustments?: Record<string, FeatureAdjustment>;
   /**

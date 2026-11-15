@@ -199,8 +199,11 @@ export function formatIncomeLines(stmt: IncomeStatement): { label: string; value
     { label: "Less replacement reserves", value: money(stmt.replacementReserves) },
     { label: "Net operating income", value: money(stmt.netOperatingIncome) },
     { label: "Capitalisation rate", value: pct(stmt.capitalisationRate) },
-    { label: "Capitalised value", value: money(stmt.capitalisedValue) },
+    { label: "Capitalised value (above the line)", value: money(stmt.capitalisedValue) },
   ];
+  if (stmt.lettingUpTotal != null || stmt.capex != null || stmt.rentDifferencePv != null || stmt.nonCoreIncomePv != null) {
+    lines.push({ label: "— Below the line —", value: "" });
+  }
   if (stmt.lettingUpTotal != null) {
     lines.push(
       { label: "Less rent loss while vacant", value: money(stmt.lettingUpRentLoss) },
@@ -222,7 +225,7 @@ export function formatIncomeLines(stmt: IncomeStatement): { label: string; value
     { label: "Sensitivity (+0.25%)", value: money(stmt.sensitivityPlus) },
     { label: "Sensitivity (−0.25%)", value: money(stmt.sensitivityMinus) },
   );
-  return lines.filter((l) => l.value !== "—");
+  return lines.filter((l) => l.value !== "—" || l.label.includes("Below"));
 }
 
 export function formatCostLines(cost: CostIndication): { label: string; value: string }[] {

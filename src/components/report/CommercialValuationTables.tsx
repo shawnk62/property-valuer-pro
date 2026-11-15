@@ -68,6 +68,16 @@ function rate(price: string | undefined, area: string | undefined): string {
   return `$${(p / a).toLocaleString("en-AU", { maximumFractionDigits: 0 })}`;
 }
 
+function adjustedBuildingRate(sale: ComparableSale): string {
+  const base = num(rate(sale.salePrice, sale.gla));
+  if (base == null) return "—";
+  const pcts = Object.values(sale.rateAdjustments ?? {}).map(num).filter((n): n is number => n != null);
+  const totalPct = pcts.reduce((a, b) => a + b, 0);
+  const adjusted = base * (1 + totalPct / 100);
+  return adjusted.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+}
+
+
 function money(n: number | null): string {
   if (n == null) return "—";
   return n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
@@ -426,6 +436,32 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{meta.subjectAskingPrice ? rate(meta.subjectAskingPrice, subjectBuilding) : "—"}</td>
                 {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                   <td key={s.id} className="py-1 pr-2">{rate(s.salePrice, s.gla)}</td>
+                ))}
+              </tr>
+              {["clearHeight", "loading", "officeRatio", "condition", "hardstand"].map((feature) => (
+                <tr key={feature} className="border-b border-slate-100">
+                  <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">{feature === "clearHeight" ? "Clear height adj %" : feature === "officeRatio" ? "Office adj %" : `${feature.charAt(0).toUpperCase() + feature.slice(1)} adj %`}</td>
+                  <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                  {sales.filter((s) => s.omitFromReport !== true).map((s) => (
+                    <td key={s.id} className="py-1 pr-1">
+                      <div className="flex items-center gap-1">
+                        <input
+                          className="w-full border border-slate-300 rounded px-1 py-0.5"
+                          value={s.rateAdjustments?.[feature] ?? ""}
+                          placeholder="0"
+                          onChange={(e) => patchSale(s.id, { rateAdjustments: { ...(s.rateAdjustments ?? {}), [feature]: e.target.value } })}
+                        />
+                        <span className="text-slate-500 text-[0.65rem]">%</span>
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+              <tr className="border-b border-slate-200 bg-slate-100 font-medium">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-700 min-w-[6rem]">Adjusted rate $/m²</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
+                  <td key={s.id} className="py-1 pr-2">{adjustedBuildingRate(s)}</td>
                 ))}
               </tr>
               <tr className="border-b border-slate-100">
