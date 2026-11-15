@@ -1526,6 +1526,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                 accepted: s.acceptedFields,
                 overrides: s.fieldOverrides,
                 commentary: s.comments,
+                verificationLink: s.verificationLink,
               }}
               values={draft.values}
               onChange={(patch) => setSales(draft.sales.map(sale => sale.id === s.id ? {
@@ -1535,6 +1536,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                 fieldOverrides: patch.overrides ?? sale.fieldOverrides,
                 comments: patch.commentary ?? sale.comments,
                 extraPhotos: patch.extraPhotos ?? sale.extraPhotos,
+                verificationLink: patch.verificationLink ?? sale.verificationLink,
               } : sale))}
             />
           ))}

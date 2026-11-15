@@ -1378,6 +1378,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             accepted: s.acceptedFields,
             overrides: s.fieldOverrides,
             commentary: s.comments,
+            verificationLink: s.verificationLink,
           }}
           values={draft.values}
           onChange={() => {}}

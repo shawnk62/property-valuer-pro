@@ -25,6 +25,8 @@ export interface ComparableSheetData {
   accepted?: Record<string, boolean>;
   overrides?: Record<string, string>;
   commentary?: string;
+  /** Working-report only. Link to the public source used for a field. */
+  verificationLink?: string;
 }
 
 interface Props {
@@ -108,10 +110,13 @@ export function ComparableSheet({ data, values, onChange }: Props) {
               <span className="w-40 font-medium text-slate-600">{f.label}</span>
               <input
                 className="flex-1 border border-slate-300 rounded px-1 py-0.5"
-                value={accepted ? proposed : ""}
-                placeholder={accepted ? "" : `Proposed: ${proposed || "blank"} — tick to accept`}
+                value={proposed}
+                placeholder={proposed ? "" : "Not confirmed"}
                 onChange={(e) => setOverride(f.key, e.target.value)}
               />
+              {data.verificationLink ? (
+                <a href={data.verificationLink} target="_blank" rel="noreferrer" className="print:hidden text-[0.65rem] text-blue-600 underline whitespace-nowrap">Verify</a>
+              ) : null}
               <label className="flex items-center gap-1 whitespace-nowrap">
                 <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(f.key, e.target.checked)} />
                 Accept

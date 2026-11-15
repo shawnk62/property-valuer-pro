@@ -290,6 +290,8 @@ export interface ComparableSale {
   acceptedFields?: Record<string, boolean>;
   /** Valuer overrides of proposed field values. */
   fieldOverrides?: Record<string, string>;
+  /** Working-report only verification link for public-source values. */
+  verificationLink?: string;
   /** URAR VALUE ADJUSTMENTS by feature id. */
   adjustments?: Record<string, FeatureAdjustment>;
   /**
