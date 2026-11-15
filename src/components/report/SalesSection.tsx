@@ -11,6 +11,7 @@ import { PausedTextarea } from "@/components/report/PausedTextarea";
 import { toast } from "sonner";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { CommercialAnalysisPanel } from "@/components/report/CommercialAnalysisPanel";
+import { CommercialValuationTables } from "@/components/report/CommercialValuationTables";
 import { ComparableSheet } from "@/components/report/ComparableSheet";
 import { InspectionRoutePlanner } from "@/components/report/InspectionRoutePlanner";
 import { LeaseEvidenceGrid } from "@/components/report/LeaseEvidenceGrid";
