@@ -28,6 +28,7 @@ function ratePerM2(price: string, area: string, unit?: string): string {
   return (p / a).toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 }
 
+function fileFromClipboard(e: ClipboardEvent): File | null {
   const items = e.clipboardData?.items;
   if (items) {
     for (const item of Array.from(items)) {
@@ -48,6 +49,7 @@ function ratePerM2(price: string, area: string, unit?: string): string {
   }
   return null;
 }
+
 
 
 interface LandSale {
