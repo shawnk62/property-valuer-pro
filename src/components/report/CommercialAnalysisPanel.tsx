@@ -112,20 +112,17 @@ export function CommercialAnalysisPanel({ values, meta, sales, onMeta, landValue
         <p className="text-xs text-slate-500 mb-1">
           Land value plus depreciated replacement of building components and ancillary items. Leave empty to use the single rate above.
         </p>
-        {(meta.ciCostComponents ?? []).length === 0 ? (
+        {(meta.ciCostComponents ?? []).length === 0 && String(values["prop_type_industrial"] ?? "").trim() ? (
           <button
             type="button"
             className="text-xs text-slate-600 underline mb-2"
             onClick={() =>
               onMeta({
                 ciCostComponents: [
-                  { name: "Land (vacant value)", area: "", rate: "", depreciation: "" },
                   { name: "Warehouse / factory", area: "", rate: "", depreciation: "" },
                   { name: "Office and amenities", area: "", rate: "", depreciation: "" },
                   { name: "Mezzanine", area: "", rate: "", depreciation: "" },
                   { name: "Awning", area: "", rate: "", depreciation: "" },
-                  { name: "Lift (nominal)", area: "", rate: "", depreciation: "" },
-                  { name: "Outbuildings", area: "", rate: "", depreciation: "" },
                   { name: "Hardstand", area: "", rate: "", depreciation: "" },
                   { name: "Lights", area: "", rate: "", depreciation: "" },
                   { name: "Fencing", area: "", rate: "", depreciation: "" },
@@ -137,6 +134,23 @@ export function CommercialAnalysisPanel({ values, meta, sales, onMeta, landValue
             }
           >
             Start with industrial component list
+          </button>
+        ) : (meta.ciCostComponents ?? []).length === 0 ? (
+          <button
+            type="button"
+            className="text-xs text-slate-600 underline mb-2"
+            onClick={() =>
+              onMeta({
+                ciCostComponents: [
+                  { name: "Building", area: "", rate: "", depreciation: "" },
+                  { name: "Office", area: "", rate: "", depreciation: "" },
+                  { name: "Hardstand", area: "", rate: "", depreciation: "" },
+                  { name: "Fencing", area: "", rate: "", depreciation: "" },
+                ],
+              })
+            }
+          >
+            Start with component list
           </button>
         ) : null}
         {(meta.ciCostComponents ?? []).map((c, i) => (

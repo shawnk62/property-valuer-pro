@@ -120,7 +120,6 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
   const subjectOffice = /\d|%|office/i.test(subjectOfficeRaw) ? subjectOfficeRaw : "";
 
   const income = useMemo(() => incomeStatement(values, meta), [values, meta]);
-  const cost = useMemo(() => costIndication(values, meta, null), [values, meta]);
 
   const adoptedBuildingRate = num(meta.ciAdoptedBuildingRate);
   const adoptedLandRate = num(meta.ciAdoptedLandRate);
@@ -130,6 +129,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
   const landIndication = adoptedLandRate != null && num(subjectLand) != null
     ? adoptedLandRate * num(subjectLand)!
     : null;
+
+  const cost = useMemo(() => costIndication(values, meta, landIndication), [values, meta, landIndication]);
 
   function patchSale(id: string, patch: Partial<ComparableSale>) {
     onSales(sales.map((s) => (s.id === id ? { ...s, ...patch } : s)));

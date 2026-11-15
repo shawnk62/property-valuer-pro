@@ -7,7 +7,27 @@ import { toast } from "sonner";
 import type { InspectionValues, ReportMeta } from "@/lib/report/types";
 import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
 
-function imageFileFromClipboard(e: React.ClipboardEvent): File | null {
+function num(raw: string | number | null | undefined): number | null {
+  if (raw == null) return null;
+  const s = String(raw).replace(/[^0-9.-]/g, "");
+  if (!s) return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+function landAreaM2(area: string, unit?: string): number | null {
+  const n = num(area);
+  if (n == null) return null;
+  return unit === "ha" ? n * 10000 : n;
+}
+
+function ratePerM2(price: string, area: string, unit?: string): string {
+  const p = num(price);
+  const a = landAreaM2(area, unit);
+  if (p == null || a == null || a <= 0) return "";
+  return (p / a).toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+}
+
   const items = e.clipboardData?.items;
   if (items) {
     for (const item of Array.from(items)) {
@@ -216,6 +236,22 @@ export function LandSalesSection({
                         <option value="ha">ha</option>
                       </select>
                     </div>
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-slate-100 bg-slate-50">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500">Rate $/m²</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">
+                  <input
+                    className="w-full border border-slate-300 rounded px-1 py-0.5"
+                    value={meta.ciAdoptedLandRate ?? ""}
+                    placeholder="Adopted"
+                    onChange={(e) => onMeta({ ciAdoptedLandRate: e.target.value })}
+                  />
+                </td>
+                {sales.map((s) => (
+                  <td key={s.id} className="py-1 pr-1 text-right font-medium">
+                    {ratePerM2(s.price, s.landArea, s.landUnit) || "—"}
                   </td>
                 ))}
               </tr>
