@@ -1131,7 +1131,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         <Keep>
         <H2>{subTitle(major[7], n8[0], "Comparable sales evidence (sales schedule)")}</H2>
         {m.printFullPageSheets !== false
-          ? printedSales.map((s, idx) => (
+          ? printedSales.filter((s) => s.includeSheet !== false).map((s, idx) => (
               <ComparableSheet
                 key={`sale-${s.id}`}
                 printMode
@@ -1147,7 +1147,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                   buildingArea: s.gla,
                   photoUrl: s.photoUrl,
                   extraPhotos: s.extraPhotos,
-                  includeSheet: true,
+                  includeSheet: s.includeSheet !== false,
                   accepted: s.acceptedFields,
                   overrides: s.fieldOverrides,
                   commentary: s.comments,

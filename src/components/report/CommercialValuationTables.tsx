@@ -128,6 +128,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
   const subjectLoading = String(values["comm_loading_config"] ?? "");
   const subjectOfficeRaw = String(values["comm_office_split"] ?? "");
   const subjectOffice = /\d|%|office/i.test(subjectOfficeRaw) ? subjectOfficeRaw : "";
+  const subjectQuality = String(values["imp_quality"] ?? "");
+  const subjectCondition = String(values["overall_cond"] ?? "");
 
   const income = useMemo(() => incomeStatement(values, meta), [values, meta]);
 
@@ -248,6 +250,14 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
               onChange={(e) => onMeta({ printAdjustmentGrid: e.target.checked })}
             />
             Include adjustment grid in report
+          </label>
+          <label className="flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              checked={meta.printCommercialAdjustments !== false}
+              onChange={(e) => onMeta({ printCommercialAdjustments: e.target.checked })}
+            />
+            Include adjustments in report
           </label>
         </div>
         <p className="text-xs text-muted-foreground mb-2">
@@ -439,20 +449,35 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                   <td key={s.id} className="py-1 pr-2">{rate(s.salePrice, s.gla)}</td>
                 ))}
               </tr>
-              {["clearHeight", "loading", "officeRatio", "condition", "hardstand"].map((feature) => (
-                <tr key={feature} className="border-b border-slate-100">
-                  <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">{feature === "clearHeight" ? "Clear height adj %" : feature === "officeRatio" ? "Office adj %" : `${feature.charAt(0).toUpperCase() + feature.slice(1)} adj %`}</td>
-                  <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+              {[
+                { id: "quality", label: "Overall quality", subject: subjectQuality, saleKey: "quality" as const },
+                { id: "condition", label: "Overall condition", subject: subjectCondition, saleKey: "condition" as const },
+                { id: "clearHeight", label: "Clear height", subject: subjectClear, saleKey: "clearHeight" as const },
+                { id: "loading", label: "Loading", subject: subjectLoading, saleKey: "loading" as const },
+                { id: "officeRatio", label: "Office ratio", subject: subjectOffice, saleKey: "officeRatio" as const },
+                { id: "hardstand", label: "Hardstand", subject: subjectHardstand, saleKey: "hardstand" as const },
+              ].map((feature) => (
+                <tr key={feature.id} className="border-b border-slate-100">
+                  <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">{feature.label}</td>
+                  <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{feature.subject || "—"}</td>
                   {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                     <td key={s.id} className="py-1 pr-1">
-                      <div className="flex items-center gap-1">
+                      <div className="flex flex-col gap-0.5">
                         <input
                           className="w-full border border-slate-300 rounded px-1 py-0.5"
-                          value={s.rateAdjustments?.[feature] ?? ""}
-                          placeholder="0"
-                          onChange={(e) => patchSale(s.id, { rateAdjustments: { ...(s.rateAdjustments ?? {}), [feature]: e.target.value } })}
+                          value={(s[feature.saleKey] as string | undefined) ?? ""}
+                          placeholder={feature.label}
+                          onChange={(e) => patchSale(s.id, { [feature.saleKey]: e.target.value })}
                         />
-                        <span className="text-slate-500 text-[0.65rem]">%</span>
+                        <div className="flex items-center gap-1">
+                          <input
+                            className="w-full border border-slate-300 rounded px-1 py-0.5"
+                            value={s.rateAdjustments?.[feature.id] ?? ""}
+                            placeholder="0"
+                            onChange={(e) => patchSale(s.id, { rateAdjustments: { ...(s.rateAdjustments ?? {}), [feature.id]: e.target.value } })}
+                          />
+                          <span className="text-slate-500 text-[0.65rem]">%</span>
+                        </div>
                       </div>
                     </td>
                   ))}
@@ -545,51 +570,6 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                     </td>
                   );
                 })}
-              </tr>
-              <tr className="border-b border-slate-100">
-                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Clear height</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectClear || "—"}</td>
-                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
-                  <td key={s.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.clearHeight ?? ""} onChange={(e) => patchSale(s.id, { clearHeight: e.target.value })} />
-                  </td>
-                ))}
-              </tr>
-              <tr className="border-b border-slate-100">
-                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Loading</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectLoading || "—"}</td>
-                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
-                  <td key={s.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.loading ?? ""} onChange={(e) => patchSale(s.id, { loading: e.target.value })} />
-                  </td>
-                ))}
-              </tr>
-              <tr className="border-b border-slate-100">
-                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Office ratio</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectOffice || "—"}</td>
-                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
-                  <td key={s.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.officeRatio ?? ""} onChange={(e) => patchSale(s.id, { officeRatio: e.target.value })} />
-                  </td>
-                ))}
-              </tr>
-              <tr className="border-b border-slate-100">
-                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Condition</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{String(values["overall_cond"] ?? "") || "—"}</td>
-                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
-                  <td key={s.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.condition ?? ""} onChange={(e) => patchSale(s.id, { condition: e.target.value })} />
-                  </td>
-                ))}
-              </tr>
-              <tr className="border-b border-slate-100">
-                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Hardstand</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectHardstand || "—"}</td>
-                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
-                  <td key={s.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.hardstand ?? ""} onChange={(e) => patchSale(s.id, { hardstand: e.target.value })} />
-                  </td>
-                ))}
               </tr>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Notes</td>

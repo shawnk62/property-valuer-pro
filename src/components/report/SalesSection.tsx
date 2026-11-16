@@ -1525,6 +1525,17 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       ) : null}
       {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
         <div className="mt-4 space-y-4">
+          <div className="flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs">
+            <label className="flex cursor-pointer items-center gap-2 font-medium text-slate-700">
+              <input
+                type="checkbox"
+                checked={draft.reportMeta.printFullPageSheets !== false}
+                onChange={(e) => setMeta({ printFullPageSheets: e.target.checked })}
+              />
+              Include full-page comparable sheets in the finished report
+            </label>
+            <span className="text-slate-500">Individual sheets can still be excluded below.</span>
+          </div>
           {draft.sales.filter(s => s.omitFromReport !== true && (s.address || s.salePrice)).map((s, idx) => (
             <ComparableSheet
               key={s.id}

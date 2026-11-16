@@ -152,6 +152,8 @@ export const COMMERCIAL_ADJUSTMENT_FEATURES: AdjustmentFeature[] = [
   { id: "location", label: "Location / access" },
   { id: "site", label: "Land area", subjectKeys: ["prop_usable_sitearea", "prop_sitearea"] },
   { id: "grossLivingArea", label: "Building area (NLA)", subjectKeys: ["comm_nla", "comm_gba"] },
+  { id: "quality", label: "Overall quality", subjectKeys: ["imp_quality"] },
+  { id: "condition", label: "Overall condition", subjectKeys: ["overall_cond"] },
   { id: "clearHeight", label: "Clear height", subjectKeys: ["comm_clear_height"] },
   { id: "loading", label: "Loading / truck access", subjectKeys: ["comm_loading_config", "ind_bdouble"] },
   { id: "office", label: "Office component", subjectKeys: ["comm_office_split"] },

@@ -13,7 +13,7 @@ import {
   subjectTopographyDisplay,
 } from "@/lib/report/adjustmentGrid";
 import { formatSalePrice } from "@/lib/report/salesRelativity";
-import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/types";
+import { isCommercialType, isIndustrialType, isMixedUseCommercial } from "@/lib/inspection/visibility";
 
 const COMPS_PER_BLOCK = 3;
 
@@ -64,6 +64,8 @@ export function AdjustmentGridPrint({
   subjectAddress: string;
 }) {
   if (sales.length === 0) return null;
+  const commercial = (isCommercialType(values) || isIndustrialType(values)) && !isMixedUseCommercial(values);
+  const showAdjustments = !commercial || meta.printCommercialAdjustments !== false;
   const features = adjustmentFeaturesForProperty(values).filter(
     (f) => f.id !== "dateOfSale" && adjustmentRowPrints(meta, f.id),
   );
@@ -131,7 +133,7 @@ export function AdjustmentGridPrint({
                 {chunk.map((sale) => (
                   <Fragment key={sale.id}>
                     <td>{sale.saleDate || "—"}</td>
-                    <td className="adj-money">{moneyCell(adjOf(sale, "dateOfSale")?.amount)}</td>
+                    <td className="adj-money">{showAdjustments ? moneyCell(adjOf(sale, "dateOfSale")?.amount) : ""}</td>
                   </Fragment>
                 ))}
                 {emptySaleCells(chunkIdx, "date", chunk.length)}
@@ -166,10 +168,16 @@ export function AdjustmentGridPrint({
                       feature.id === "site"
                         ? detail
                         : [detail, rating].filter(Boolean).join(" · ") || "Sim.";
+                    const pct = sale.rateAdjustments?.[feature.id];
+                    const adjCell = !showAdjustments
+                      ? ""
+                      : commercial && pct
+                        ? `${pct}%`
+                        : moneyCell(adj?.amount);
                     return (
                       <Fragment key={sale.id}>
                         <td>{shown}</td>
-                        <td className="adj-money">{moneyCell(adj?.amount)}</td>
+                        <td className="adj-money">{adjCell}</td>
                       </Fragment>
                     );
                   })}
@@ -184,7 +192,7 @@ export function AdjustmentGridPrint({
                   return (
                     <Fragment key={sale.id}>
                       <td />
-                      <td className="adj-money">{formatAdjustmentMoney(t.netAdjustment)}</td>
+                      <td className="adj-money">{showAdjustments ? formatAdjustmentMoney(t.netAdjustment) : ""}</td>
                     </Fragment>
                   );
                 })}
@@ -198,7 +206,7 @@ export function AdjustmentGridPrint({
                   return (
                     <Fragment key={sale.id}>
                       <td />
-                      <td className="adj-money">{formatAdjustmentMoney(t.grossAdjustment)}</td>
+                      <td className="adj-money">{showAdjustments ? formatAdjustmentMoney(t.grossAdjustment) : ""}</td>
                     </Fragment>
                   );
                 })}
@@ -213,9 +221,11 @@ export function AdjustmentGridPrint({
                     <Fragment key={sale.id}>
                       <td />
                       <td className="adj-money">
-                        {t.adjustedSalePrice == null
-                          ? "—"
-                          : formatMoney(Math.abs(t.adjustedSalePrice))}
+                        {showAdjustments
+                          ? t.adjustedSalePrice == null
+                            ? "—"
+                            : formatMoney(Math.abs(t.adjustedSalePrice))
+                          : ""}
                       </td>
                     </Fragment>
                   );

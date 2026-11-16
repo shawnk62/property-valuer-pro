@@ -269,6 +269,7 @@ export interface ComparableSale {
   loading?: string;
   officeRatio?: string;
   condition?: string;
+  quality?: string;
   hardstand?: string;
   /** Passing (actual) rent for the sale. */
   passingRent?: string;
@@ -464,6 +465,8 @@ export interface ReportMeta {
   printSalesEvidence?: boolean;
   /** When false, the adjustment grid is omitted from the PDF. Default true. */
   printAdjustmentGrid?: boolean;
+  /** When false, commercial/industrial percentage adjustments are omitted from the printed grid. Missing means include. */
+  printCommercialAdjustments?: boolean;
   /** Feature ids the valuer has unticked for print. Default none (all visible rows print). */
   omitAdjustmentPrintRows?: string[];
   /**
