@@ -432,6 +432,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const v = draft.values;
   const m = draft.reportMeta;
   const citeStyle = referenceStyleOf(m);
+  const includeCitations = m.includeInTextCitations !== false;
+  const cite = (text: string, claims: NbhdClaim[] | undefined, label: string) =>
+    includeCitations ? citeAcceptedNotes(text, claims, v, label, citeStyle) : text;
+  const citeLoc = (text: string) => (includeCitations ? citeLocalitySources(text, m, v, citeStyle) : text);
   const printedSales = salesOnReport(draft.sales);
   const addressLine = [
     get(v, "prop_address"),
@@ -909,7 +913,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       {show51 ? <H2>{subTitle(major[4], n5[0], "Location")}</H2> : null}
       {narrativePrints(m, "location") ? (
         <>
-      <Prose text={citeAcceptedNotes(stripLeadingHeading(draft.narrative.location?.trim() || "", "Location"), m.nbhdClaims as NbhdClaim[] | undefined, v, "Location", citeStyle)} />
+      <Prose text={cite(stripLeadingHeading(draft.narrative.location?.trim() || "", "Location"), m.nbhdClaims as NbhdClaim[] | undefined, "Location")} />
       {!draft.narrative.location?.trim() && addressLine ? (
         <Para>The property is located at {addressLine}.</Para>
       ) : null}
@@ -921,7 +925,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <H2>{subTitle(major[4], n5[1], "Locality")}</H2>
       {narrativePrints(m, "neighbourhood") ? (
       <Prose
-        text={citeLocalitySources(
+        text={citeLoc(
           stripLeadingHeading(
             stripLeadingHeading(
               draft.narrative.neighbourhood?.trim() || get(v, "nbhd_description") || "",
@@ -929,9 +933,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             ),
             "Locality",
           ),
-          m,
-          v,
-          citeStyle,
         )}
       />
       ) : null}
@@ -939,18 +940,15 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       {show53 ? (
         <Keep>
           {show53 ? <H2>{subTitle(major[4], n5[2], "Amenities")}</H2> : null}
-          <Prose text={citeLocalitySources(draft.narrative.amenities?.trim() || get(v, "exam_amenities"), m, v, citeStyle)} />
+          <Prose text={citeLoc(draft.narrative.amenities?.trim() || get(v, "exam_amenities"))} />
         </Keep>
       ) : null}
       {show54 ? (
         <Keep>
           {show54 ? <H2>{subTitle(major[4], n5[3], "Popular destinations")}</H2> : null}
           <Prose
-            text={citeLocalitySources(
+            text={citeLoc(
               draft.narrative.popularDestinations?.trim() || get(v, "exam_destinations"),
-              m,
-              v,
-              citeStyle,
             )}
           />
         </Keep>
@@ -963,15 +961,13 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           sub={show61 ? subTitle(major[5], n6[0], "Australia") : undefined}
           text={
             show61
-              ? citeAcceptedNotes(
+              ? cite(
                   withoutSourceNotes(
                     draft.narrative.marketAustralia?.trim() || get(v, "exam_market_australia"),
                     printedSales,
                   ),
                   m.marketClaimsAustralia as NbhdClaim[] | undefined,
-                  v,
                   "Australian market commentary",
-                  citeStyle,
                 )
               : ""
           }
@@ -980,19 +976,19 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       {show6 && show62 ? (
         <Keep>
           <H2>{subTitle(major[5], n6[1], "State")}</H2>
-          <Prose text={citeAcceptedNotes(withoutSourceNotes(draft.narrative.marketState?.trim() || get(v, "exam_market_state"), printedSales), m.marketClaimsState as NbhdClaim[] | undefined, v, "State market commentary", citeStyle)} />
+          <Prose text={cite(withoutSourceNotes(draft.narrative.marketState?.trim() || get(v, "exam_market_state"), printedSales), m.marketClaimsState as NbhdClaim[] | undefined, "State market commentary")} />
         </Keep>
       ) : null}
       {show6 && show63 ? (
         <Keep>
           <H2>{subTitle(major[5], n6[2], "Region")}</H2>
-          <Prose text={citeAcceptedNotes(withoutSourceNotes(draft.narrative.marketRegion?.trim() || get(v, "exam_market_region"), printedSales), m.marketClaimsRegion as NbhdClaim[] | undefined, v, "Regional market commentary", citeStyle)} />
+          <Prose text={cite(withoutSourceNotes(draft.narrative.marketRegion?.trim() || get(v, "exam_market_region"), printedSales), m.marketClaimsRegion as NbhdClaim[] | undefined, "Regional market commentary")} />
         </Keep>
       ) : null}
       {show6 && show64 ? (
         <Keep>
           <H2>{subTitle(major[5], n6[3], "Locality")}</H2>
-          <Prose text={citeAcceptedNotes(withoutSourceNotes(draft.narrative.marketLocality?.trim() || get(v, "exam_market_local"), printedSales), m.marketClaimsLocality as NbhdClaim[] | undefined, v, "Locality market commentary", citeStyle)} />
+          <Prose text={cite(withoutSourceNotes(draft.narrative.marketLocality?.trim() || get(v, "exam_market_local"), printedSales), m.marketClaimsLocality as NbhdClaim[] | undefined, "Locality market commentary")} />
         </Keep>
       ) : null}
       {show6 && !hasMarketParts ? (

@@ -153,7 +153,7 @@ export function ComparableSheet({ data, values, onChange }: Props) {
       <div className="mt-3">
         <div className="text-xs font-medium text-slate-600">Description</div>
         <textarea
-          className="mt-1 w-full min-h-[4rem] rounded border border-slate-300 px-2 py-1 text-xs"
+          className="mt-1 w-full min-h-[8rem] rounded border border-slate-300 px-2 py-1 text-xs"
           value={data.description ?? ""}
           placeholder="Factual description of the comparable"
           onChange={(e) => onChange({ description: e.target.value })}
@@ -162,7 +162,7 @@ export function ComparableSheet({ data, values, onChange }: Props) {
       <div className="mt-2">
         <div className="text-xs font-medium text-slate-600">Commentary</div>
         <textarea
-          className="mt-1 w-full min-h-[4rem] rounded border border-slate-300 px-2 py-1 text-xs"
+          className="mt-1 w-full min-h-[8rem] rounded border border-slate-300 px-2 py-1 text-xs"
           value={data.commentary ?? ""}
           placeholder="Valuer’s comparison commentary"
           onChange={(e) => onChange({ commentary: e.target.value })}

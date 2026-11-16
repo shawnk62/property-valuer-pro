@@ -1497,6 +1497,14 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         landSales={draft.reportMeta.ciLandSales}
       />
       {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
+        <div className="mb-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+          <div className="font-medium text-slate-700 mb-1">Finished-report checklist</div>
+          <div>Reconciliation paragraph: {draft.narrative.valueReconciliation?.trim() ? "included" : "missing"}</div>
+          <div>In-text citations: {draft.reportMeta.includeInTextCitations !== false ? "on" : "off"}</div>
+          <div>Full-page sheets: {draft.sales.filter(s => s.omitFromReport !== true && s.includeSheet !== false).length} included</div>
+        </div>
+      ) : null}
+      {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
         <CommercialValuationTables
           values={draft.values}
           sales={draft.sales}

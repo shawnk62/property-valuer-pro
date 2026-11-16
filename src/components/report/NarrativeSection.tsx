@@ -1593,6 +1593,14 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               </>
             ) : null}
           </p>
+          <label className="mt-2 flex items-center gap-2 text-xs text-slate-600">
+            <input
+              type="checkbox"
+              checked={draft.reportMeta.includeInTextCitations !== false}
+              onChange={(e) => setMeta({ includeInTextCitations: e.target.checked })}
+            />
+            Include in-text citations in the finished report
+          </label>
           <p className="mt-1 text-xs text-muted-foreground">
             AI uses the provider in{" "}
             <Link to="/settings" className="font-medium text-primary underline-offset-2 hover:underline">
