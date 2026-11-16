@@ -722,6 +722,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           <figcaption className="mt-1 text-[0.7rem] text-slate-500">Zoning — {get(v, "prop_zoning") || "subject"}</figcaption>
         </figure>
       ) : null}
+      {m.valueAmount ? (
         <div className="mt-4 text-left">
           <p>The Market Valuation of {addressLine || "the subject property"} is:</p>
           <p className="mt-2 text-xl font-semibold">${formatCurrencyDisplay(m.valueAmount)}</p>
