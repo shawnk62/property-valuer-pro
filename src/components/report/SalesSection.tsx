@@ -1528,6 +1528,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                 accepted: s.acceptedFields,
                 overrides: s.fieldOverrides,
                 commentary: s.comments,
+                description: s.description,
                 verificationLink: s.verificationLink,
               }}
               values={draft.values}
@@ -1537,6 +1538,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
                 acceptedFields: patch.accepted ?? sale.acceptedFields,
                 fieldOverrides: patch.overrides ?? sale.fieldOverrides,
                 comments: patch.commentary ?? sale.comments,
+                description: patch.description ?? sale.description,
                 extraPhotos: patch.extraPhotos ?? sale.extraPhotos,
                 verificationLink: patch.verificationLink ?? sale.verificationLink,
               } : sale))}

@@ -255,6 +255,8 @@ export interface ComparableSale {
   /** Commercial/industrial land unit. Default m2. Does not rename landArea. */
   landUnit?: "m2" | "ha";
   comments: string;
+  /** Factual description for the full-page comparable sheet. */
+  description?: string;
   /** Printed rating on the sales schedule. Blank uses the calculated rating. */
   printRating?: string;
   /** Gross living area (Sale Price/GLA row + GLA adjustment line). */

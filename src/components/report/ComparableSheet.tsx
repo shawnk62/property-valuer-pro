@@ -26,6 +26,7 @@ export interface ComparableSheetData {
   accepted?: Record<string, boolean>;
   overrides?: Record<string, string>;
   commentary?: string;
+  description?: string;
   /** Working-report only. Link to the public source used for a field. */
   verificationLink?: string;
 }
@@ -38,7 +39,7 @@ interface Props {
 
 const FIELDS = [
   { key: "zoning", label: "Zoning", subjectKey: "prop_zoning" },
-  { key: "landUse", label: "Land use", subjectKey: "prop_landuse" },
+  { key: "landUse", label: "Land use", subjectKey: "" },
   { key: "feeCode", label: "Fee code", subjectKey: "prop_rights" },
   { key: "topography", label: "Land topography / shape", subjectKey: "prop_shape" },
   { key: "siteCover", label: "Site cover", subjectKey: "prop_site_cover" },
@@ -52,6 +53,13 @@ export function ComparableSheet({ data, values, onChange }: Props) {
 
   function fieldValue(key: string, subjectKey: string): string {
     if (data.overrides?.[key] != null) return data.overrides[key];
+    if (key === "landUse") {
+      if (values["prop_type_industrial"]) return "Industrial building";
+      if (values["prop_type_commercial"]) return "Commercial building";
+      if (values["prop_type_residential"]) return "Residential";
+      if (values["prop_type_rural"]) return "Rural";
+      return "";
+    }
     const raw = String(values[subjectKey] ?? "");
     if (key === "feeCode") {
       if (/fee\s*simple|freehold/i.test(raw)) return "Freehold";
@@ -143,10 +151,20 @@ export function ComparableSheet({ data, values, onChange }: Props) {
       </div>
 
       <div className="mt-3">
+        <div className="text-xs font-medium text-slate-600">Description</div>
+        <textarea
+          className="mt-1 w-full min-h-[4rem] rounded border border-slate-300 px-2 py-1 text-xs"
+          value={data.description ?? ""}
+          placeholder="Factual description of the comparable"
+          onChange={(e) => onChange({ description: e.target.value })}
+        />
+      </div>
+      <div className="mt-2">
         <div className="text-xs font-medium text-slate-600">Commentary</div>
         <textarea
           className="mt-1 w-full min-h-[4rem] rounded border border-slate-300 px-2 py-1 text-xs"
           value={data.commentary ?? ""}
+          placeholder="Valuer’s comparison commentary"
           onChange={(e) => onChange({ commentary: e.target.value })}
         />
       </div>
