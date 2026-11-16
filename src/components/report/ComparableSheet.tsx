@@ -46,7 +46,7 @@ const FIELDS = [
   { key: "siteCover", label: "Site cover", subjectKey: "prop_site_cover" },
 ] as const;
 
-export function ComparableSheet({ data, values, onChange }: Props) {
+export function ComparableSheet({ data, values, onChange, printMode = false }: Props & { printMode?: boolean }) {
   const photos = [
     data.photoUrl ? { url: data.photoUrl, include: true } : null,
     ...(data.extraPhotos ?? []),
@@ -87,14 +87,16 @@ export function ComparableSheet({ data, values, onChange }: Props) {
         <div className="text-base font-semibold uppercase tracking-wide text-slate-700">
           {data.kind === "sale" ? "Comparable sale" : data.kind === "lease" ? "Lease" : "Land sale"} {data.number ?? ""} — {data.address || "Comparable"}
         </div>
-        <label className="flex items-center gap-1.5 text-xs">
-          <input
-            type="checkbox"
-            checked={data.includeSheet !== false}
-            onChange={(e) => onChange({ includeSheet: e.target.checked })}
-          />
-          Include in report
-        </label>
+        {!printMode ? (
+          <label className="flex items-center gap-1.5 text-xs">
+            <input
+              type="checkbox"
+              checked={data.includeSheet !== false}
+              onChange={(e) => onChange({ includeSheet: e.target.checked })}
+            />
+            Include in report
+          </label>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
@@ -114,61 +116,99 @@ export function ComparableSheet({ data, values, onChange }: Props) {
       ) : null}
 
       <div className="mt-3 space-y-1">
-        {FIELDS.map((f) => {
-          const proposed = fieldValue(f.key, f.subjectKey);
-          const accepted = isAccepted(f.key);
-          return (
-            <div key={f.key} className={`flex items-center gap-2 rounded px-2 py-1 text-xs ${accepted ? "bg-white" : "bg-amber-50"}`}>
-              <span className="w-40 font-medium text-slate-600">{f.label}</span>
-              <input
-                className="flex-1 border border-slate-300 rounded px-1 py-0.5"
-                value={proposed}
-                placeholder={proposed ? "" : "Not confirmed"}
-                onChange={(e) => setOverride(f.key, e.target.value)}
-              />
-              {data.verificationLink ? (
-                <a href={data.verificationLink} target="_blank" rel="noreferrer" className="print:hidden text-[0.65rem] text-blue-600 underline whitespace-nowrap">Verify</a>
-              ) : null}
-              <label className="flex items-center gap-1 whitespace-nowrap">
-                <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(f.key, e.target.checked)} />
-                Accept
-              </label>
+        {printMode ? (
+          FIELDS.map((f) => {
+            const value = fieldValue(f.key, f.subjectKey);
+            if (!value) return null;
+            return (
+              <div key={f.key} className="flex gap-2 text-xs">
+                <span className="w-40 font-medium text-slate-600">{f.label}</span>
+                <span>{value}</span>
+              </div>
+            );
+          })
+        ) : (
+          FIELDS.map((f) => {
+            const proposed = fieldValue(f.key, f.subjectKey);
+            const accepted = isAccepted(f.key);
+            return (
+              <div key={f.key} className={`flex items-center gap-2 rounded px-2 py-1 text-xs ${accepted ? "bg-white" : "bg-amber-50"}`}>
+                <span className="w-40 font-medium text-slate-600">{f.label}</span>
+                <input
+                  className="flex-1 border border-slate-300 rounded px-1 py-0.5"
+                  value={proposed}
+                  placeholder={proposed ? "" : "Not confirmed"}
+                  onChange={(e) => setOverride(f.key, e.target.value)}
+                />
+                {data.verificationLink ? (
+                  <a href={data.verificationLink} target="_blank" rel="noreferrer" className="print:hidden text-[0.65rem] text-blue-600 underline whitespace-nowrap">Verify</a>
+                ) : null}
+                <label className="flex items-center gap-1 whitespace-nowrap">
+                  <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(f.key, e.target.checked)} />
+                  Accept
+                </label>
+              </div>
+            );
+          })
+        )}
+        {!printMode ? (
+          <div className="flex items-center gap-2 rounded px-2 py-1 text-xs">
+            <span className="w-40 font-medium text-slate-600">Lot / Plan</span>
+            <input
+              className="flex-1 border border-slate-300 rounded px-1 py-0.5"
+              value={data.overrides?.lotPlan ?? ""}
+              placeholder="Enter if known — not taken from subject"
+              onChange={(e) => setOverride("lotPlan", e.target.value)}
+            />
+          </div>
+        ) : data.overrides?.lotPlan ? (
+          <div className="flex gap-2 text-xs">
+            <span className="w-40 font-medium text-slate-600">Lot / Plan</span>
+            <span>{data.overrides.lotPlan}</span>
+          </div>
+        ) : null}
+      </div>
+
+      {printMode ? (
+        <>
+          {data.description?.trim() ? (
+            <div className="mt-3 text-xs">
+              <div className="font-medium text-slate-600">Description</div>
+              <p className="mt-1 whitespace-pre-line">{data.description}</p>
             </div>
-          );
-        })}
-        <div className="flex items-center gap-2 rounded px-2 py-1 text-xs">
-          <span className="w-40 font-medium text-slate-600">Lot / Plan</span>
-          <input
-            className="flex-1 border border-slate-300 rounded px-1 py-0.5"
-            value={data.overrides?.lotPlan ?? ""}
-            placeholder="Enter if known — not taken from subject"
-            onChange={(e) => setOverride("lotPlan", e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="mt-3">
-        <div className="text-xs font-medium text-slate-600">Description</div>
-        <textarea
-          className="mt-1 w-full min-h-[8rem] rounded border border-slate-300 px-2 py-1 text-xs"
-          value={data.description ?? ""}
-          placeholder="Factual description of the comparable"
-          onChange={(e) => onChange({ description: e.target.value })}
-        />
-      </div>
-      <div className="mt-2">
-        <div className="text-xs font-medium text-slate-600">Commentary</div>
-        <textarea
-          className="mt-1 w-full min-h-[8rem] rounded border border-slate-300 px-2 py-1 text-xs"
-          value={data.commentary ?? ""}
-          placeholder="Valuer’s comparison commentary"
-          onChange={(e) => onChange({ commentary: e.target.value })}
-        />
-      </div>
-
-      <div className="mt-2 text-[0.65rem] text-slate-400">
-        Additional photos: empty tiles are omitted from the printed report.
-      </div>
+          ) : null}
+          {data.commentary?.trim() ? (
+            <div className="mt-2 text-xs">
+              <div className="font-medium text-slate-600">Commentary</div>
+              <p className="mt-1 whitespace-pre-line">{data.commentary}</p>
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <div className="mt-3">
+            <div className="text-xs font-medium text-slate-600">Description</div>
+            <textarea
+              className="mt-1 w-full min-h-[8rem] rounded border border-slate-300 px-2 py-1 text-xs"
+              value={data.description ?? ""}
+              placeholder="Factual description of the comparable"
+              onChange={(e) => onChange({ description: e.target.value })}
+            />
+          </div>
+          <div className="mt-2">
+            <div className="text-xs font-medium text-slate-600">Commentary</div>
+            <textarea
+              className="mt-1 w-full min-h-[8rem] rounded border border-slate-300 px-2 py-1 text-xs"
+              value={data.commentary ?? ""}
+              placeholder="Valuer’s comparison commentary"
+              onChange={(e) => onChange({ commentary: e.target.value })}
+            />
+          </div>
+          <div className="mt-2 text-[0.65rem] text-slate-400">
+            Additional photos: empty tiles are omitted from the printed report.
+          </div>
+        </>
+      )}
     </div>
   );
 }

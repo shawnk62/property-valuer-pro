@@ -1128,11 +1128,13 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ) : null}
         </Keep>
         </Lead>
-        {m.printFullPageSheets !== false ? (
-          <>
-            {printedSales.map((s, idx) => (
+        <Keep>
+        <H2>{subTitle(major[7], n8[0], "Comparable sales evidence (sales schedule)")}</H2>
+        {m.printFullPageSheets !== false
+          ? printedSales.map((s, idx) => (
               <ComparableSheet
                 key={`sale-${s.id}`}
+                printMode
                 data={{
                   id: s.id,
                   kind: "sale",
@@ -1155,51 +1157,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 values={v}
                 onChange={() => {}}
               />
-            ))}
-            {(m.ciLeaseComps ?? []).map((c, idx) => (
-              <ComparableSheet
-                key={`lease-${c.id}`}
-                data={{
-                  id: c.id,
-                  kind: "lease",
-                  number: idx + 1,
-                  address: c.address,
-                  proximity: c.proximity,
-                  price: c.netRentPerM2,
-                  date: c.date,
-                  buildingArea: c.nla,
-                  photoUrl: c.photoUrl,
-                  includeSheet: true,
-                  commentary: c.notes,
-                }}
-                values={v}
-                onChange={() => {}}
-              />
-            ))}
-            {(m.ciLandSales ?? []).map((ls, idx) => (
-              <ComparableSheet
-                key={`land-${ls.id}`}
-                data={{
-                  id: ls.id,
-                  kind: "land",
-                  number: idx + 1,
-                  address: ls.address,
-                  proximity: ls.proximity,
-                  price: ls.price,
-                  date: ls.date,
-                  landArea: ls.landArea,
-                  photoUrl: ls.photoUrl,
-                  includeSheet: true,
-                  commentary: ls.notes,
-                }}
-                values={v}
-                onChange={() => {}}
-              />
-            ))}
-          </>
-        ) : null}
-        <Keep>
-        <H2>{subTitle(major[7], n8[0], "Comparable sales evidence (sales schedule)")}</H2>
+            ))
+          : null}
         {printedSales.length === 0 ? (
           <Para>No sales evidence has been recorded.</Para>
         ) : (
@@ -1251,6 +1210,29 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <h3 id="exam-8-lease" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
               {`${major[7]}.${n8[2]} Lease Evidence`}
             </h3>
+            {m.printFullPageSheets !== false
+              ? (m.ciLeaseComps ?? []).map((c, idx) => (
+                  <ComparableSheet
+                    key={`lease-${c.id}`}
+                    printMode
+                    data={{
+                      id: c.id,
+                      kind: "lease",
+                      number: idx + 1,
+                      address: c.address,
+                      proximity: c.proximity,
+                      price: c.netRentPerM2,
+                      date: c.date,
+                      buildingArea: c.nla,
+                      photoUrl: c.photoUrl,
+                      includeSheet: true,
+                      commentary: c.notes,
+                    }}
+                    values={v}
+                    onChange={() => {}}
+                  />
+                ))
+              : null}
             <Prose text={withoutSourceNotes(draft.narrative.leaseEvidence || "", printedSales)} />
           </Keep>
         ) : null}
@@ -1275,6 +1257,29 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <h3 id="exam-8-cost" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
               {`${major[7]}.${n8[5]} Cost Approach`}
             </h3>
+            {m.printFullPageSheets !== false
+              ? (m.ciLandSales ?? []).map((ls, idx) => (
+                  <ComparableSheet
+                    key={`land-${ls.id}`}
+                    printMode
+                    data={{
+                      id: ls.id,
+                      kind: "land",
+                      number: idx + 1,
+                      address: ls.address,
+                      proximity: ls.proximity,
+                      price: ls.price,
+                      date: ls.date,
+                      landArea: ls.landArea,
+                      photoUrl: ls.photoUrl,
+                      includeSheet: true,
+                      commentary: ls.notes,
+                    }}
+                    values={v}
+                    onChange={() => {}}
+                  />
+                ))
+              : null}
             <Prose text={withoutSourceNotes(draft.narrative.costApproach || "", printedSales)} />
           </Keep>
         ) : null}
