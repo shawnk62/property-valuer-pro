@@ -39,7 +39,7 @@ interface Props {
 const FIELDS = [
   { key: "zoning", label: "Zoning", subjectKey: "prop_zoning" },
   { key: "landUse", label: "Land use", subjectKey: "prop_landuse" },
-  { key: "feeCode", label: "Fee code", subjectKey: "prop_title" },
+  { key: "feeCode", label: "Fee code", subjectKey: "prop_rights" },
   { key: "topography", label: "Land topography / shape", subjectKey: "prop_shape" },
   { key: "siteCover", label: "Site cover", subjectKey: "prop_site_cover" },
 ] as const;
@@ -52,7 +52,13 @@ export function ComparableSheet({ data, values, onChange }: Props) {
 
   function fieldValue(key: string, subjectKey: string): string {
     if (data.overrides?.[key] != null) return data.overrides[key];
-    return String(values[subjectKey] ?? "");
+    const raw = String(values[subjectKey] ?? "");
+    if (key === "feeCode") {
+      if (/fee\s*simple|freehold/i.test(raw)) return "Freehold";
+      if (/leasehold/i.test(raw)) return "Leasehold";
+      return raw;
+    }
+    return raw;
   }
 
   function isAccepted(key: string): boolean {
