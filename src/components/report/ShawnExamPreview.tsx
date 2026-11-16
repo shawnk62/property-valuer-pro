@@ -18,6 +18,7 @@ import {
   joinValues,
 } from "@/lib/report/schema";
 import { ComparableSheet } from "@/components/report/ComparableSheet";
+import { surveyPlanAnnexureLabel } from "@/lib/report/annexures";
 import { narrativePrints, type NbhdClaim } from "@/lib/narrative/neighbourhoodAssist";
 import {
   MAP_SLOTS,
