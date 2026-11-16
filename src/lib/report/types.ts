@@ -465,8 +465,8 @@ export interface ReportMeta {
   printSalesEvidence?: boolean;
   /** When false, the adjustment grid is omitted from the PDF. Default true. */
   printAdjustmentGrid?: boolean;
-  /** When false, commercial/industrial percentage adjustments are omitted from the printed grid. Missing means include. */
-  printCommercialAdjustments?: boolean;
+  /** Commercial / industrial subject feature overrides for the adjustment grid. */
+  ciSubjectFeatures?: Record<string, string>;
   /** Feature ids the valuer has unticked for print. Default none (all visible rows print). */
   omitAdjustmentPrintRows?: string[];
   /**
@@ -602,7 +602,12 @@ export interface ReportMeta {
     loading?: string;
     officeRatio?: string;
     condition?: string;
+    quality?: string;
     hardstand?: string;
+    /** Percentage adjustments for lease comparison features. */
+    rateAdjustments?: Record<string, string>;
+    /** Qualitative marks for lease comparison features. */
+    adjustments?: Record<string, { relativity: string; amount?: number; detail?: string }>;
     agentName?: string;
     agency?: string;
     tenantUse?: string;
@@ -629,6 +634,12 @@ export interface ReportMeta {
     notes: string;
     proximity?: string;
     photoUrl?: string;
+    topography?: string;
+    zoning?: string;
+    services?: string;
+    shape?: string;
+    rateAdjustments?: Record<string, string>;
+    adjustments?: Record<string, { relativity: string; amount?: number; detail?: string }>;
   }>;
 }
 

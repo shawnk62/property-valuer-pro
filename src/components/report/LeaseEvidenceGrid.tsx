@@ -7,6 +7,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { InspectionValues, ReportMeta } from "@/lib/report/types";
 import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
+import { RELATIVITY_OPTIONS, relativitySelectClass, type Relativity } from "@/lib/report/adjustmentGrid";
 import type { ComparableSale } from "@/lib/report/types";
 
 function imageFileFromClipboard(e: React.ClipboardEvent): File | null {
@@ -61,7 +62,10 @@ export interface LeaseComp {
   loading?: string;
   officeRatio?: string;
   condition?: string;
+  quality?: string;
   hardstand?: string;
+  rateAdjustments?: Record<string, string>;
+  adjustments?: Record<string, { relativity: string; amount?: number; detail?: string }>;
   agentName?: string;
   agency?: string;
   tenantUse?: string;
@@ -344,51 +348,56 @@ export function LeaseEvidenceGrid({
                   </td>
                 ))}
               </tr>
-              <tr className="border-b border-slate-100">
-                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Clear height</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectClear || "—"}</td>
-                {comps.map((c) => (
-                  <td key={c.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.clearHeight ?? ""} onChange={(e) => update(c.id, { clearHeight: e.target.value })} />
+              {[
+                { id: "quality", label: "Overall quality", subject: String(values["imp_quality"] ?? ""), key: "quality" as const },
+                { id: "condition", label: "Overall condition", subject: subjectCondition, key: "condition" as const },
+                { id: "clearHeight", label: "Clear height", subject: subjectClear, key: "clearHeight" as const },
+                { id: "loading", label: "Loading", subject: subjectLoading, key: "loading" as const },
+                { id: "officeRatio", label: "Office ratio", subject: subjectOffice, key: "officeRatio" as const },
+                { id: "hardstand", label: "Hardstand", subject: subjectHardstand, key: "hardstand" as const },
+              ].map((feature) => (
+                <tr key={feature.id} className="border-b border-slate-100">
+                  <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">{feature.label}</td>
+                  <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">
+                    <input
+                      className="w-full border border-slate-300 rounded px-1 py-0.5"
+                      value={meta.ciSubjectFeatures?.[feature.id] ?? feature.subject}
+                      placeholder={feature.subject || "Subject"}
+                      onChange={(e) => onMeta({ ciSubjectFeatures: { ...(meta.ciSubjectFeatures ?? {}), [feature.id]: e.target.value } })}
+                    />
                   </td>
-                ))}
-              </tr>
-              <tr className="border-b border-slate-100">
-                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Loading</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectLoading || "—"}</td>
-                {comps.map((c) => (
-                  <td key={c.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.loading ?? ""} onChange={(e) => update(c.id, { loading: e.target.value })} />
-                  </td>
-                ))}
-              </tr>
-              <tr className="border-b border-slate-100">
-                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Office ratio</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectOffice || "—"}</td>
-                {comps.map((c) => (
-                  <td key={c.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.officeRatio ?? ""} onChange={(e) => update(c.id, { officeRatio: e.target.value })} />
-                  </td>
-                ))}
-              </tr>
-              <tr className="border-b border-slate-100">
-                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Condition</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectCondition || "—"}</td>
-                {comps.map((c) => (
-                  <td key={c.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.condition ?? ""} onChange={(e) => update(c.id, { condition: e.target.value })} />
-                  </td>
-                ))}
-              </tr>
-              <tr className="border-b border-slate-100">
-                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Hardstand</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectHardstand || "—"}</td>
-                {comps.map((c) => (
-                  <td key={c.id} className="py-1 pr-1">
-                    <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.hardstand ?? ""} onChange={(e) => update(c.id, { hardstand: e.target.value })} />
-                  </td>
-                ))}
-              </tr>
+                  {comps.map((c) => (
+                    <td key={c.id} className="py-1 pr-1">
+                      <div className="flex flex-col gap-0.5">
+                        <input
+                          className="w-full border border-slate-300 rounded px-1 py-0.5"
+                          value={(c[feature.key] as string | undefined) ?? ""}
+                          placeholder={feature.label}
+                          onChange={(e) => update(c.id, { [feature.key]: e.target.value })}
+                        />
+                        <select
+                          className={relativitySelectClass(c.adjustments?.[feature.id]?.relativity)}
+                          value={c.adjustments?.[feature.id]?.relativity ?? "similar"}
+                          onChange={(e) => update(c.id, { adjustments: { ...(c.adjustments ?? {}), [feature.id]: { ...(c.adjustments?.[feature.id] ?? {}), relativity: e.target.value as Relativity } } })}
+                        >
+                          {RELATIVITY_OPTIONS.map((opt) => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                        <div className="flex items-center gap-1">
+                          <input
+                            className="w-full border border-slate-300 rounded px-1 py-0.5"
+                            value={c.rateAdjustments?.[feature.id] ?? ""}
+                            placeholder="0"
+                            onChange={(e) => update(c.id, { rateAdjustments: { ...(c.rateAdjustments ?? {}), [feature.id]: e.target.value } })}
+                          />
+                          <span className="text-slate-500 text-[0.65rem]">%</span>
+                        </div>
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Notes</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>

@@ -5,6 +5,7 @@
  */
 import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/types";
 import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
+import { RELATIVITY_OPTIONS, relativitySelectClass, type Relativity } from "@/lib/report/adjustmentGrid";
 
 function imageFileFromClipboard(e: React.ClipboardEvent): File | null {
   const items = e.clipboardData?.items;
@@ -459,7 +460,14 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
               ].map((feature) => (
                 <tr key={feature.id} className="border-b border-slate-100">
                   <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">{feature.label}</td>
-                  <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{feature.subject || "—"}</td>
+                  <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">
+                    <input
+                      className="w-full border border-slate-300 rounded px-1 py-0.5"
+                      value={meta.ciSubjectFeatures?.[feature.id] ?? feature.subject}
+                      placeholder={feature.subject || "Subject"}
+                      onChange={(e) => onMeta({ ciSubjectFeatures: { ...(meta.ciSubjectFeatures ?? {}), [feature.id]: e.target.value } })}
+                    />
+                  </td>
                   {sales.filter((s) => s.omitFromReport !== true).map((s) => (
                     <td key={s.id} className="py-1 pr-1">
                       <div className="flex flex-col gap-0.5">
@@ -469,6 +477,15 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                           placeholder={feature.label}
                           onChange={(e) => patchSale(s.id, { [feature.saleKey]: e.target.value })}
                         />
+                        <select
+                          className={relativitySelectClass(s.adjustments?.[feature.id]?.relativity)}
+                          value={s.adjustments?.[feature.id]?.relativity ?? "similar"}
+                          onChange={(e) => patchSale(s.id, { adjustments: { ...(s.adjustments ?? {}), [feature.id]: { ...(s.adjustments?.[feature.id] ?? { amount: 0 }), relativity: e.target.value as Relativity } } })}
+                        >
+                          {RELATIVITY_OPTIONS.map((opt) => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
                         <div className="flex items-center gap-1">
                           <input
                             className="w-full border border-slate-300 rounded px-1 py-0.5"

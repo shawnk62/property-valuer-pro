@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { InspectionValues, ReportMeta } from "@/lib/report/types";
 import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
+import { RELATIVITY_OPTIONS, relativitySelectClass, type Relativity } from "@/lib/report/adjustmentGrid";
 
 function num(raw: string | number | null | undefined): number | null {
   if (raw == null) return null;
@@ -65,6 +66,12 @@ interface LandSale {
   photoUrl?: string;
   photoLocalKey?: string;
   photoStoragePath?: string;
+  topography?: string;
+  zoning?: string;
+  services?: string;
+  shape?: string;
+  rateAdjustments?: Record<string, string>;
+  adjustments?: Record<string, { relativity: string; amount?: number; detail?: string }>;
 }
 
 function blank(): LandSale {
@@ -258,6 +265,55 @@ export function LandSalesSection({
                   </td>
                 ))}
               </tr>
+              {[
+                { id: "location", label: "Location / access", subject: "", key: "proximity" as const },
+                { id: "topography", label: "Topography", subject: String(values["topo"] ?? ""), key: "topography" as const },
+                { id: "zoning", label: "Zoning", subject: String(values["prop_zoning"] ?? ""), key: "zoning" as const },
+                { id: "services", label: "Services", subject: "", key: "services" as const },
+                { id: "shape", label: "Shape / frontage", subject: String(values["prop_shape"] ?? ""), key: "shape" as const },
+              ].map((feature) => (
+                <tr key={feature.id} className="border-b border-slate-100">
+                  <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500">{feature.label}</td>
+                  <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">
+                    <input
+                      className="w-full border border-slate-300 rounded px-1 py-0.5"
+                      value={meta.ciSubjectFeatures?.[feature.id] ?? feature.subject}
+                      placeholder={feature.subject || "Subject"}
+                      onChange={(e) => onMeta({ ciSubjectFeatures: { ...(meta.ciSubjectFeatures ?? {}), [feature.id]: e.target.value } })}
+                    />
+                  </td>
+                  {sales.map((s) => (
+                    <td key={s.id} className="py-1 pr-1">
+                      <div className="flex flex-col gap-0.5">
+                        <input
+                          className="w-full border border-slate-300 rounded px-1 py-0.5"
+                          value={(s[feature.key] as string | undefined) ?? ""}
+                          placeholder={feature.label}
+                          onChange={(e) => update(s.id, { [feature.key]: e.target.value })}
+                        />
+                        <select
+                          className={relativitySelectClass(s.adjustments?.[feature.id]?.relativity)}
+                          value={s.adjustments?.[feature.id]?.relativity ?? "similar"}
+                          onChange={(e) => update(s.id, { adjustments: { ...(s.adjustments ?? {}), [feature.id]: { ...(s.adjustments?.[feature.id] ?? {}), relativity: e.target.value as Relativity } } })}
+                        >
+                          {RELATIVITY_OPTIONS.map((opt) => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                        <div className="flex items-center gap-1">
+                          <input
+                            className="w-full border border-slate-300 rounded px-1 py-0.5"
+                            value={s.rateAdjustments?.[feature.id] ?? ""}
+                            placeholder="0"
+                            onChange={(e) => update(s.id, { rateAdjustments: { ...(s.rateAdjustments ?? {}), [feature.id]: e.target.value } })}
+                          />
+                          <span className="text-slate-500 text-[0.65rem]">%</span>
+                        </div>
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500">Notes</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
