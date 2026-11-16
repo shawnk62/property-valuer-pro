@@ -465,6 +465,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     })
     .map(([, label]) => label);
   const zoningMap = draft.photos.find((p) => p.slot === "map_zoning" && photoIsOnReport(p));
+  const frontPhoto = draft.photos.find((p) => p.slot === "front" && photoIsOnReport(p));
   const subjectInlinePhotos = ["front", "street", "rear", "side"].flatMap((slot) => {
     const p = draft.photos.find((ph) => ph.slot === slot && photoIsOnReport(ph));
     return p ? [p] : [];
