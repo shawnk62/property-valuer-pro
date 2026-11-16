@@ -4,6 +4,7 @@
  * Fields require valuer acceptance. Lot/plan is never pre-filled from the subject.
  */
 import type { InspectionValues } from "@/lib/report/types";
+import { formatPropertyType } from "@/lib/report/schema";
 
 export interface SheetPhoto {
   url: string;
@@ -54,11 +55,7 @@ export function ComparableSheet({ data, values, onChange }: Props) {
   function fieldValue(key: string, subjectKey: string): string {
     if (data.overrides?.[key] != null) return data.overrides[key];
     if (key === "landUse") {
-      if (values["prop_type_industrial"]) return "Industrial building";
-      if (values["prop_type_commercial"]) return "Commercial building";
-      if (values["prop_type_residential"]) return "Residential";
-      if (values["prop_type_rural"]) return "Rural";
-      return "";
+      return formatPropertyType(values) || "";
     }
     const raw = String(values[subjectKey] ?? "");
     if (key === "feeCode") {
