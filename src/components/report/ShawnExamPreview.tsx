@@ -23,6 +23,7 @@ import { narrativePrints, type NbhdClaim } from "@/lib/narrative/neighbourhoodAs
 import {
   MAP_SLOTS,
   PHOTO_SLOTS,
+  photoSlotsForJob,
   cadastralPhotosOnReport,
   clientAnnexGroupsOnReport,
   isCadastralAnnexPhoto,
@@ -36,8 +37,10 @@ import {
   titlePhotosOnReport,
   annexPageLabel,
   type ReportDraft,
+  type ReportPhoto,
 } from "@/lib/report/types";
 import { A4DocumentAnnex } from "@/components/report/A4DocumentAnnex";
+import { isVacantLand } from "@/lib/inspection/visibility";
 import { hasWorkingFile, WorkingNotesAnnex } from "@/components/report/WorkingNotesAnnex";
 import { AdjustmentGridPrint } from "@/components/report/AdjustmentGridPrint";
 import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
@@ -466,10 +469,15 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     .map(([, label]) => label);
   const zoningMap = draft.photos.find((p) => p.slot === "map_zoning" && photoIsOnReport(p));
   const frontPhoto = draft.photos.find((p) => p.slot === "front" && photoIsOnReport(p));
-  const subjectInlinePhotos = ["front", "street", "rear", "side"].flatMap((slot) => {
-    const p = draft.photos.find((ph) => ph.slot === slot && photoIsOnReport(ph));
-    return p ? [p] : [];
-  });
+  const fixedSlots = photoSlotsForJob(isVacantLand(v));
+  const extraSubject = draft.photos.filter((p) => !p.slot && p.kind !== "map" && p.kind !== "title" && p.kind !== "survey" && p.kind !== "cadastral" && p.kind !== "annex" && photoIsOnReport(p));
+  const subjectInlinePhotos: ReportPhoto[] = [];
+  for (const slot of fixedSlots) {
+    const fixed = draft.photos.find((p) => p.slot === slot.slot && photoIsOnReport(p));
+    if (fixed) subjectInlinePhotos.push(fixed);
+    subjectInlinePhotos.push(...extraSubject.filter((p) => p.insertAfter === slot.slot));
+  }
+  subjectInlinePhotos.push(...extraSubject.filter((p) => !p.insertAfter));
   const student = get(v, "exam_student_name") || get(v, "insp_valuer") || m.valuerName;
   const studentNo = get(v, "exam_student_number");
   const instructing = get(v, "instr_from_name") || get(v, "prop_owner") || "the instructing party";
@@ -803,8 +811,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         <div className="mt-3 grid grid-cols-2 gap-2">
           {subjectInlinePhotos.map((p) => (
             <figure key={p.id ?? p.slot}>
-              <img src={p.url} alt={p.label ?? p.slot} className="max-h-40 w-full rounded border border-slate-200 object-contain bg-slate-50" />
-              <figcaption className="mt-0.5 text-[0.65rem] text-slate-500">{p.label ?? p.slot}</figcaption>
+              <img src={p.url} alt={p.caption || p.label || p.slot || "Subject photo"} className="max-h-40 w-full rounded border border-slate-200 object-contain bg-slate-50" />
+              <figcaption className="mt-0.5 text-[0.65rem] text-slate-500">{p.caption || p.label || p.slot}</figcaption>
             </figure>
           ))}
         </div>
@@ -901,6 +909,37 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Para>
       </Keep>
       </Lead>
+      {selectedOverlays.length > 0 ? (
+        <Keep>
+          <H2>Overlays</H2>
+          <table className="mt-2 w-full border-collapse text-xs">
+            <thead>
+              <tr style={{ background: TEAL, color: "#fff" }}>
+                <th className="border px-2 py-1.5 text-left" style={{ borderColor: RULE }}>Overlay</th>
+                <th className="border px-2 py-1.5 text-left" style={{ borderColor: RULE }}>Mapping</th>
+                <th className="border px-2 py-1.5 text-left" style={{ borderColor: RULE }}>Criteria</th>
+                <th className="border px-2 py-1.5 text-left" style={{ borderColor: RULE }}>Comment / Impact</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedOverlays.map((label, i) => {
+                const mapSlot = label.toLowerCase().includes("acid") ? "map_acid_sulfate" : label.toLowerCase().includes("bushfire") ? "map_bushfire" : label.toLowerCase().includes("flood") ? "map_flood" : "map_overlays";
+                const map = draft.photos.find((p) => p.slot === mapSlot && photoIsOnReport(p));
+                return (
+                  <tr key={label} style={{ background: i % 2 === 0 ? STRIPE : "#fff" }}>
+                    <td className="border px-2 py-1.5 font-medium" style={{ borderColor: RULE }}>{label}</td>
+                    <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>
+                      {map?.url ? <img src={map.url} alt={label} className="h-16 w-auto rounded" /> : "—"}
+                    </td>
+                    <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{get(v, "prop_zoning") || "—"}</td>
+                    <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{get(v, "plan_overlay_notes") || "See planning scheme for criteria and impact."}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </Keep>
+      ) : null}
       {show32 ? (
       <div className="report-keep-block">
         <H2>{subTitle(major[2], n3[1], "Highest and Best Use")}</H2>
