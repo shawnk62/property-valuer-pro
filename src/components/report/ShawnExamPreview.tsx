@@ -444,7 +444,31 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     .filter(Boolean)
     .join(", ");
   const lotPlan = get(v, "prop_lotplan") || get(v, "prop_legal");
-  const frontPhoto = draft.photos.find((p) => p.slot === "front" && photoIsOnReport(p));
+  const overlayLabels: Record<string, string> = {
+    overlay_bushfire: "Bushfire hazard",
+    overlay_landslide: "Landslide",
+    overlay_wetland: "Wetland / waterway",
+    overlay_character: "Neighbourhood character / local plan",
+    overlay_airport: "Airport / OLS",
+    overlay_coastal: "Coastal",
+    overlay_koala: "Koala habitat",
+    overlay_infrastructure: "Infrastructure",
+    overlay_acid_sulfate: "Acid sulfate soils",
+    overlay_other: "Other",
+  };
+  const selectedOverlays = Object.entries(overlayLabels)
+    .filter(([id]) => {
+      const raw = v["plan_overlay"];
+      if (Array.isArray(raw)) return raw.includes(id);
+      if (raw && typeof raw === "object") return Boolean((raw as Record<string, unknown>)[id]);
+      return false;
+    })
+    .map(([, label]) => label);
+  const zoningMap = draft.photos.find((p) => p.slot === "map_zoning" && photoIsOnReport(p));
+  const subjectInlinePhotos = ["front", "street", "rear", "side"].flatMap((slot) => {
+    const p = draft.photos.find((ph) => ph.slot === slot && photoIsOnReport(ph));
+    return p ? [p] : [];
+  });
   const student = get(v, "exam_student_name") || get(v, "insp_valuer") || m.valuerName;
   const studentNo = get(v, "exam_student_number");
   const instructing = get(v, "instr_from_name") || get(v, "prop_owner") || "the instructing party";
@@ -686,12 +710,18 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             label: "Brief description of the subject property",
             value: String(draft.narrative.brief ?? "").trim(),
           },
+          { label: "Overlays", value: selectedOverlays.length ? selectedOverlays.join("; ") : "None recorded" },
           { label: "Zoning", value: get(v, "prop_zoning") },
           { label: "Date of Inspection", value: formatNarrativeDate(m.inspectionDate) },
           { label: "Date of Valuation", value: formatNarrativeDate(m.valueDate) },
         ]}
       />
-      {m.valueAmount ? (
+      {zoningMap?.url ? (
+        <figure className="mt-3">
+          <img src={zoningMap.url} alt="Zoning map" className="max-h-48 w-auto rounded border border-slate-200" />
+          <figcaption className="mt-1 text-[0.7rem] text-slate-500">Zoning — {get(v, "prop_zoning") || "subject"}</figcaption>
+        </figure>
+      ) : null}
         <div className="mt-4 text-left">
           <p>The Market Valuation of {addressLine || "the subject property"} is:</p>
           <p className="mt-2 text-xl font-semibold">${formatCurrencyDisplay(m.valueAmount)}</p>
@@ -766,6 +796,16 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </Para>
       ) : null}
       </>
+      ) : null}
+      {subjectInlinePhotos.length > 0 ? (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {subjectInlinePhotos.map((p) => (
+            <figure key={p.id ?? p.slot}>
+              <img src={p.url} alt={p.label ?? p.slot} className="max-h-40 w-full rounded border border-slate-200 object-contain bg-slate-50" />
+              <figcaption className="mt-0.5 text-[0.65rem] text-slate-500">{p.label ?? p.slot}</figcaption>
+            </figure>
+          ))}
+        </div>
       ) : null}
       </Keep>
       </Lead>
