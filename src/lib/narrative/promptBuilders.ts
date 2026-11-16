@@ -629,14 +629,16 @@ Murray sample style: 1–2 short sentences, e.g. "The subject property appears t
         system: BASE_RULES + styleGuide(type),
         prompt: `Write the Valuation Approach section for a ${type} valuation report.
 
-State that market value has been assessed by the Direct Comparison Approach unless the inspection records a different method. Then describe how sales are analysed and which points of difference are adjusted for THIS property type (vacant land vs improved residential vs commercial).
+State that market value has been assessed by the Direct Comparison Approach unless the inspection records a different method. Then describe how sales are analysed and which points of difference are adjusted for THIS property type (vacant land vs improved residential vs commercial or industrial).
+
+For commercial or industrial property, name direct comparison on a rate per square metre of building and land, capitalisation of net income, and the cost approach as a check. Factors are building area, land area, clear height and loading, office ratio, access and proximity to major transport, zoning, condition and presentation, and the passing and market rent. Do not use residential terms such as accommodation, living area, bedrooms, bathrooms or ancillary improvements.
 
 Inspection data:
 ${sectionAnswers(values, ["1", "2"])}
 
 Rules:
 - Two short paragraphs. Formal valuation English.
-- Do not invent a method other than Direct Comparison unless the inspection records one.
+- Do not invent a method other than those named above unless the inspection records one.
 - Do not quote a dollar value.
 - State that the opinion is as at the date of valuation and is not to be read after the reliance period without a review.
 - Do not repeat the heading.`,

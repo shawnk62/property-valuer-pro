@@ -1331,16 +1331,18 @@ function buildNoiseNuisances(values: InspectionValues): string {
 
 function buildValuationApproach(values: InspectionValues): string {
   const vacant = isVacantLand(values);
-  const commercial = isCommercialType(values) && !isMixedUseCommercial(values);
+  const commercialOrIndustrial =
+    (isCommercialType(values) || isIndustrialType(values)) && !isMixedUseCommercial(values);
   const factors = vacant
     ? "date of sale, land area and usable area, shape and position, topography and zoning, location and proximity to amenities, aspect and views, and surrounding development"
-    : commercial
-      ? "date of sale, net lettable or building area, occupancy and lease terms, parking and access, construction and presentation, location and exposure, zoning and overlays"
+    : commercialOrIndustrial
+      ? "date of sale, building area, land area, clear height and loading, office ratio, access and proximity to major transport, zoning, condition and presentation, and the passing and market rent"
       : "date of sale, accommodation, living area, land area, condition and presentation, location, and ancillary improvements";
+  const method = commercialOrIndustrial
+    ? "The market value of the subject property has been determined having regard to the Direct Comparison Approach on a rate per square metre of building and land, the capitalisation of net income, and the Cost Approach as a check"
+    : "The market value of the subject property has been determined using the Direct Comparison Approach";
   return [
-    sentence([
-      "The market value of the subject property has been determined using the Direct Comparison Approach",
-    ]),
+    sentence([method]),
     sentence([
       "Recent sales of similar properties are analysed and adjusted for points of difference",
       vacant
