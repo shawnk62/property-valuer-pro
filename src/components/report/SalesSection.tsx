@@ -1501,7 +1501,15 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           <div className="font-medium text-slate-700 mb-1">Finished-report checklist</div>
           <div>Reconciliation paragraph: {draft.narrative.valueReconciliation?.trim() ? "included" : "missing"}</div>
           <div>In-text citations: {draft.reportMeta.includeInTextCitations !== false ? "on" : "off"}</div>
-          <div>Full-page sheets: {draft.sales.filter(s => s.omitFromReport !== true && s.includeSheet !== false).length} included</div>
+          <div>Full-page sheets: {draft.reportMeta.printFullPageSheets !== false ? "included" : "excluded"}</div>
+          <label className="mt-1 flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={draft.reportMeta.printFullPageSheets !== false}
+              onChange={(e) => setMeta({ printFullPageSheets: e.target.checked })}
+            />
+            Include all full-page comparable sheets in the finished report
+          </label>
         </div>
       ) : null}
       {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (

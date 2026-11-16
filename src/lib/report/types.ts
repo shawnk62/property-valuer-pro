@@ -527,8 +527,8 @@ export interface ReportMeta {
   }>;
   /** Reference list style. Missing means Harvard. */
   referenceStyle?: "harvard" | "apa";
-  /** When false, in-text citations are omitted from the finished report. Missing means include. */
-  includeInTextCitations?: boolean;
+  /** When false, full-page comparable sheets are omitted from the finished report. Missing means include. */
+  printFullPageSheets?: boolean;
   /** Bond assessment cover sheet. Missing or false means it is not printed. */
   includeAcademicCover?: boolean;
   /** Editable body of the Bond cover sheet. Empty means the default text. */

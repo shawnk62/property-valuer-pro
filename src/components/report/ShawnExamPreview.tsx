@@ -1047,6 +1047,76 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ) : null}
         </Keep>
         </Lead>
+        {m.printFullPageSheets !== false ? (
+          <>
+            {printedSales.map((s, idx) => (
+              <ComparableSheet
+                key={`sale-${s.id}`}
+                data={{
+                  id: s.id,
+                  kind: "sale",
+                  number: idx + 1,
+                  address: s.address,
+                  proximity: s.proximity,
+                  price: s.salePrice,
+                  date: s.saleDate,
+                  landArea: s.landArea,
+                  buildingArea: s.gla,
+                  photoUrl: s.photoUrl,
+                  extraPhotos: s.extraPhotos,
+                  includeSheet: true,
+                  accepted: s.acceptedFields,
+                  overrides: s.fieldOverrides,
+                  commentary: s.comments,
+                  description: s.description,
+                  verificationLink: s.verificationLink,
+                }}
+                values={v}
+                onChange={() => {}}
+              />
+            ))}
+            {(m.ciLeaseComps ?? []).map((c, idx) => (
+              <ComparableSheet
+                key={`lease-${c.id}`}
+                data={{
+                  id: c.id,
+                  kind: "lease",
+                  number: idx + 1,
+                  address: c.address,
+                  proximity: c.proximity,
+                  price: c.netRentPerM2,
+                  date: c.date,
+                  buildingArea: c.nla,
+                  photoUrl: c.photoUrl,
+                  includeSheet: true,
+                  commentary: c.notes,
+                }}
+                values={v}
+                onChange={() => {}}
+              />
+            ))}
+            {(m.ciLandSales ?? []).map((ls, idx) => (
+              <ComparableSheet
+                key={`land-${ls.id}`}
+                data={{
+                  id: ls.id,
+                  kind: "land",
+                  number: idx + 1,
+                  address: ls.address,
+                  proximity: ls.proximity,
+                  price: ls.price,
+                  date: ls.date,
+                  landArea: ls.landArea,
+                  photoUrl: ls.photoUrl,
+                  includeSheet: true,
+                  commentary: ls.notes,
+                }}
+                values={v}
+                onChange={() => {}}
+              />
+            ))}
+          </>
+        ) : null}
         <Keep>
         <H2>{subTitle(major[7], n8[0], "Comparable sales evidence (sales schedule)")}</H2>
         {printedSales.length === 0 ? (
@@ -1357,32 +1427,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         />
       ))}
       {showWorkingFile ? <WorkingNotesAnnex draft={draft} /> : null}
-      {draft.sales.filter(s => s.omitFromReport !== true && s.includeSheet !== false && (s.address || s.salePrice)).map((s, idx) => (
-        <ComparableSheet
-          key={s.id}
-          data={{
-            id: s.id,
-            kind: "sale",
-            number: idx + 1,
-            address: s.address,
-            proximity: s.proximity,
-            price: s.salePrice,
-            date: s.saleDate,
-            landArea: s.landArea,
-            buildingArea: s.gla,
-            photoUrl: s.photoUrl,
-            extraPhotos: s.extraPhotos,
-            includeSheet: s.includeSheet,
-            accepted: s.acceptedFields,
-            overrides: s.fieldOverrides,
-            commentary: s.comments,
-            description: s.description,
-            verificationLink: s.verificationLink,
-          }}
-          values={draft.values}
-          onChange={() => {}}
-        />
-      ))}
     </article>
   );
 }
