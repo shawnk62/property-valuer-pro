@@ -349,8 +349,8 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
         },
         {
           key: "highestBestUse",
-          label: "3.2 Highest and Best Use",
-          hint: "Prints under 3.0 Planning Controls.",
+          label: "Highest and Best Use",
+          hint: "Prints as its own section after Environmental Issues.",
         },
         {
           key: "envIntro",
