@@ -244,6 +244,7 @@ function toCloudExtras(draft: ReportDraft): ReportExtras {
         ...(p.annexGroup ? { annexGroup: p.annexGroup } : {}),
         ...(p.annexTitle ? { annexTitle: p.annexTitle } : {}),
         ...(p.omitFromReport ? { omitFromReport: true } : {}),
+        ...(p.insertAfter ? { insertAfter: p.insertAfter } : {}),
         ...(p.localBlobKey ? { localBlobKey: p.localBlobKey } : {}),
       })),
   };
@@ -289,6 +290,9 @@ function photosFromCloud(extras: ReportExtras | null | undefined): ReportPhoto[]
         : {}),
       ...((p as { omitFromReport?: boolean }).omitFromReport
         ? { omitFromReport: true }
+        : {}),
+      ...((p as { insertAfter?: string }).insertAfter
+        ? { insertAfter: String((p as { insertAfter?: string }).insertAfter) as ReportPhoto["insertAfter"] }
         : {}),
       ...((p as { localBlobKey?: string }).localBlobKey
         ? { localBlobKey: String((p as { localBlobKey?: string }).localBlobKey) }
