@@ -18,7 +18,9 @@ import {
   isPhilAssignment,
 } from "@/lib/report/narrative";
 import { australianiseSpelling } from "@/lib/report/australianEnglish";
-import type { ReportNarrative } from "@/lib/report/types";
+import type { ReportNarrative, ReportPhoto } from "@/lib/report/types";
+import { photoIsOnReport } from "@/lib/report/types";
+import { get } from "@/lib/report/schema";
 import {
   buildLocationFacts,
   haversineKm,
@@ -159,6 +161,124 @@ function claimUsable(text: string): boolean {
   if (/\bnearest freeway or motorway\b/.test(t) && !/\b(motorway|freeway)\b/.test(t)) return false;
   if (/\bm1\b/.test(t) && /\b(\d{3,})\s*kilomet/.test(t)) return false;
   return true;
+}
+
+function overlayNames(values: ReportDraftController["draft"]["values"]): string[] {
+  const labels: Record<string, string> = {
+    overlay_bushfire: "Bushfire hazard",
+    overlay_landslide: "Landslide",
+    overlay_wetland: "Wetland / waterway",
+    overlay_character: "Neighbourhood character / local plan",
+    overlay_airport: "Airport / OLS",
+    overlay_coastal: "Coastal",
+    overlay_koala: "Koala habitat",
+    overlay_infrastructure: "Infrastructure",
+    overlay_acid_sulfate: "Acid sulfate soils",
+  };
+  const raw = values["plan_overlay"];
+  const selected = Object.entries(labels)
+    .filter(([id]) => {
+      if (Array.isArray(raw)) return raw.includes(id);
+      if (raw && typeof raw === "object") return Boolean((raw as Record<string, unknown>)[id]);
+      return false;
+    })
+    .map(([, label]) => label);
+  const other = Array.isArray(raw)
+    ? raw.includes("overlay_other")
+    : raw && typeof raw === "object"
+      ? Boolean((raw as Record<string, unknown>)["overlay_other"])
+      : false;
+  if (other) {
+    const notes = get(values, "plan_overlay_notes");
+    for (const name of notes.split(/[;\n]+/).map((s) => s.replace(/^[-•*\d.)\s]+/, "").trim()).filter((s) => s.length > 1)) {
+      if (!selected.some((existing) => existing.toLowerCase() === name.toLowerCase())) selected.push(name);
+    }
+  }
+  return selected;
+}
+
+function overlayMap(photos: ReportPhoto[], name: string): ReportPhoto | undefined {
+  const lower = name.toLowerCase();
+  const dedicated = lower.includes("acid")
+    ? "map_acid_sulfate"
+    : lower.includes("bushfire")
+      ? "map_bushfire"
+      : lower.includes("flood")
+        ? "map_flood"
+        : lower.includes("landslide")
+          ? "map_landslide"
+          : lower.includes("heritage")
+            ? "map_heritage"
+            : null;
+  const fixed = dedicated ? photos.find((p) => p.slot === dedicated && photoIsOnReport(p) && p.url) : undefined;
+  if (fixed) return fixed;
+  return photos.find((p) => {
+    if (p.kind !== "map" || p.slot || !photoIsOnReport(p) || !p.url) return false;
+    const cap = (p.caption || "").toLowerCase().trim();
+    return cap && (cap.includes(lower) || lower.includes(cap));
+  });
+}
+
+function OverlayAnalysesWorkspace({
+  values,
+  photos,
+  analyses,
+  onChange,
+}: {
+  values: ReportDraftController["draft"]["values"];
+  photos: ReportPhoto[];
+  analyses: Array<{ name: string; criteria?: string; impact?: string }>;
+  onChange: (next: Array<{ name: string; criteria?: string; impact?: string }>) => void;
+}) {
+  const names = overlayNames(values);
+  if (names.length === 0) return null;
+  function patch(name: string, field: "criteria" | "impact", value: string) {
+    const existing = analyses.find((a) => a.name.toLowerCase() === name.toLowerCase());
+    const next = existing
+      ? analyses.map((a) => (a.name.toLowerCase() === name.toLowerCase() ? { ...a, [field]: value } : a))
+      : [...analyses, { name, [field]: value }];
+    onChange(next);
+  }
+  return (
+    <div className="mt-3 space-y-2 rounded-md border border-slate-200 bg-slate-50 p-3">
+      <p className="text-xs font-medium text-foreground">Overlays — criteria and impact</p>
+      <p className="text-[11px] text-muted-foreground">
+        One row per selected overlay. Criteria can start from the planning extract; comment and impact are the valuer’s analysis. Manual text is kept.
+      </p>
+      {names.map((name) => {
+        const row = analyses.find((a) => a.name.toLowerCase() === name.toLowerCase());
+        const map = overlayMap(photos, name);
+        return (
+          <div key={name} className="rounded border border-slate-200 bg-white p-2">
+            <div className="mb-1 flex items-center gap-2 text-xs font-medium text-slate-700">
+              {map?.url ? <img src={map.url} alt="" className="h-8 w-auto rounded" /> : null}
+              <span>{name}</span>
+            </div>
+            <label className="block text-[11px] text-slate-500">
+              Criteria
+              <textarea
+                className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                rows={2}
+                value={row?.criteria ?? ""}
+                placeholder="Scheme criteria and section references"
+                onChange={(e) => patch(name, "criteria", e.target.value)}
+              />
+            </label>
+            <label className="mt-1 block text-[11px] text-slate-500">
+              Comment / impact
+              <textarea
+                className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                rows={2}
+                value={row?.impact ?? ""}
+                placeholder="Effect on value and marketability, or that there is none"
+                onChange={(e) => patch(name, "impact", e.target.value)}
+              />
+            </label>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function narrativeBlocks(murray: boolean, shawnExam: boolean): {
@@ -1878,6 +1998,14 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                 {nbhdAction === "rewrite" ? "Rewriting…" : "Rewrite neighbourhood with accepted facts"}
               </button>
             </div>
+          ) : null}
+          {block.key === "zoningPurpose" && shawnExam ? (
+            <OverlayAnalysesWorkspace
+              values={draft.values}
+              photos={draft.photos}
+              analyses={draft.reportMeta.overlayAnalyses ?? []}
+              onChange={(next) => setMeta({ overlayAnalyses: next })}
+            />
           ) : null}
           {block.key === "swotAnalysis" &&
           (neighbourhoodAssistEnabled(String(draft.values["prop_assignment"] ?? "")) ||

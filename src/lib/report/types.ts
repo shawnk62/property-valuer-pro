@@ -465,8 +465,12 @@ export interface ReportMeta {
   printSalesEvidence?: boolean;
   /** When false, the adjustment grid is omitted from the PDF. Default true. */
   printAdjustmentGrid?: boolean;
-  /** Commercial / industrial subject feature overrides for the adjustment grid. */
-  ciSubjectFeatures?: Record<string, string>;
+  /** Per-overlay criteria and impact for the Planning Controls table. */
+  overlayAnalyses?: Array<{
+    name: string;
+    criteria?: string;
+    impact?: string;
+  }>;
   /** Feature ids the valuer has unticked for print. Default none (all visible rows print). */
   omitAdjustmentPrintRows?: string[];
   /**

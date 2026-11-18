@@ -962,14 +962,15 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                   return cap.includes(lower) || lower.includes(cap);
                 });
                 const map = fixed?.url ? fixed : extra;
+                const analysis = (m.overlayAnalyses ?? []).find((a) => a.name.toLowerCase() === label.toLowerCase());
                 return (
                   <tr key={label} style={{ background: i % 2 === 0 ? STRIPE : "#fff" }}>
                     <td className="border px-2 py-1.5 font-medium" style={{ borderColor: RULE }}>{label}</td>
                     <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>
                       {map?.url ? <img src={map.url} alt={label} className="h-16 w-auto rounded" /> : "—"}
                     </td>
-                    <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{get(v, "prop_zoning") || "—"}</td>
-                    <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{get(v, "plan_overlay_notes") || "See planning scheme for criteria and impact."}</td>
+                    <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{analysis?.criteria?.trim() || get(v, "prop_zoning") || "—"}</td>
+                    <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{analysis?.impact?.trim() || "See planning scheme for criteria and impact."}</td>
                   </tr>
                 );
               })}
