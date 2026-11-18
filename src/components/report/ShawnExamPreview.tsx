@@ -940,8 +940,28 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             </thead>
             <tbody>
               {selectedOverlays.map((label, i) => {
-                const mapSlot = label.toLowerCase().includes("acid") ? "map_acid_sulfate" : label.toLowerCase().includes("bushfire") ? "map_bushfire" : label.toLowerCase().includes("flood") ? "map_flood" : "map_overlays";
-                const map = draft.photos.find((p) => p.slot === mapSlot && photoIsOnReport(p));
+                const lower = label.toLowerCase();
+                const dedicatedSlot = lower.includes("acid")
+                  ? "map_acid_sulfate"
+                  : lower.includes("bushfire")
+                    ? "map_bushfire"
+                    : lower.includes("flood")
+                      ? "map_flood"
+                      : lower.includes("landslide")
+                        ? "map_landslide"
+                        : lower.includes("heritage")
+                          ? "map_heritage"
+                          : null;
+                const fixed = dedicatedSlot
+                  ? draft.photos.find((p) => p.slot === dedicatedSlot && photoIsOnReport(p))
+                  : undefined;
+                const extra = draft.photos.find((p) => {
+                  if (p.kind !== "map" || p.slot || !photoIsOnReport(p) || !p.url) return false;
+                  const cap = (p.caption || "").toLowerCase().trim();
+                  if (!cap) return false;
+                  return cap.includes(lower) || lower.includes(cap);
+                });
+                const map = fixed?.url ? fixed : extra;
                 return (
                   <tr key={label} style={{ background: i % 2 === 0 ? STRIPE : "#fff" }}>
                     <td className="border px-2 py-1.5 font-medium" style={{ borderColor: RULE }}>{label}</td>
