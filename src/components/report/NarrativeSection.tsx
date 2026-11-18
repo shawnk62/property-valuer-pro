@@ -632,6 +632,30 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     summarySeeded.current = true;
     setNarrative({ executiveSummary: lead });
   }, [loaded, shawnExam, draft.inspectionId, draft.narrative.executiveSummary, draft.values, setNarrative]);
+  const envSeeded = useRef(false);
+  useEffect(() => {
+    if (!loaded || envSeeded.current) return;
+    const analyses = draft.reportMeta.overlayAnalyses ?? [];
+    if (analyses.length === 0) return;
+    const impactFor = (pattern: RegExp) =>
+      analyses.find((a) => pattern.test(a.name))?.impact?.trim() || "";
+    const patch: Partial<ReportNarrative> = {};
+    if (!String(draft.narrative.acidSulphate ?? "").trim()) {
+      const impact = impactFor(/acid\s*sulph/i);
+      if (impact) patch.acidSulphate = impact;
+    }
+    if (!String(draft.narrative.floodAssessment ?? "").trim()) {
+      const impact = impactFor(/flood/i);
+      if (impact) patch.floodAssessment = impact;
+    }
+    if (!String(draft.narrative.noiseNuisances ?? "").trim()) {
+      const impact = impactFor(/noise|nuisance|transport/i);
+      if (impact) patch.noiseNuisances = impact;
+    }
+    if (Object.keys(patch).length === 0) return;
+    envSeeded.current = true;
+    setNarrative(patch);
+  }, [loaded, draft.inspectionId, draft.reportMeta.overlayAnalyses, draft.narrative.acidSulphate, draft.narrative.floodAssessment, draft.narrative.noiseNuisances, setNarrative]);
   const narrativeRef = useRef(draft.narrative);
   narrativeRef.current = draft.narrative;
 
