@@ -457,7 +457,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     overlay_koala: "Koala habitat",
     overlay_infrastructure: "Infrastructure",
     overlay_acid_sulfate: "Acid sulfate soils",
-    overlay_other: "Other",
   };
   const selectedOverlays = Object.entries(overlayLabels)
     .filter(([id]) => {
@@ -467,6 +466,24 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       return false;
     })
     .map(([, label]) => label);
+  const otherSelected = (() => {
+    const raw = v["plan_overlay"];
+    if (Array.isArray(raw)) return raw.includes("overlay_other");
+    if (raw && typeof raw === "object") return Boolean((raw as Record<string, unknown>)["overlay_other"]);
+    return false;
+  })();
+  if (otherSelected) {
+    const notes = get(v, "plan_overlay_notes");
+    const named = notes
+      .split(/[;\n]+/)
+      .map((s) => s.replace(/^[-•*\d.)\s]+/, "").trim())
+      .filter((s) => s.length > 1);
+    for (const name of named) {
+      if (!selectedOverlays.some((existing) => existing.toLowerCase() === name.toLowerCase())) {
+        selectedOverlays.push(name);
+      }
+    }
+  }
   const zoningMap = draft.photos.find((p) => p.slot === "map_zoning" && photoIsOnReport(p));
   const frontPhoto = draft.photos.find((p) => p.slot === "front" && photoIsOnReport(p));
   const fixedSlots = photoSlotsForJob(isVacantLand(v));
