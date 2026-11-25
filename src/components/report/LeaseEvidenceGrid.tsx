@@ -198,6 +198,8 @@ export function LeaseEvidenceGrid({
       update(comp.id, { linkedSaleId: undefined });
     }
   }
+
+  function remove(id: string) {
     if (!window.confirm("Delete this lease comparable from the working file?")) return;
     onMeta({ ciLeaseComps: comps.filter((c) => c.id !== id) });
   }
