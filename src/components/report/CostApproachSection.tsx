@@ -1,8 +1,12 @@
 /**
  * Cost approach working table matching the tutorial template.
- * Industrial and residential variants. Used on all Shawn reports.
+ * Industrial sheet for Shawn commercial/industrial (except vacant land).
+ * Residential sheet for Shawn residential (except vacant land).
+ * Fields that exist elsewhere in the report are pre-filled and remain editable.
  */
+import { useEffect, useRef } from "react";
 import type { InspectionValues, ReportMeta } from "@/lib/report/types";
+import { isCommercialType, isIndustrialType, isVacantLand } from "@/lib/inspection/visibility";
 
 type Line = { name: string; area?: string; rate?: string; depreciation?: string; nominal?: string };
 
@@ -47,6 +51,11 @@ function money(n: number | null): string {
   return n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 }
 
+function str(values: InspectionValues, key: string): string {
+  const v = values[key];
+  return typeof v === "string" ? v.trim() : "";
+}
+
 function lineValue(line: Line): number | null {
   const nominal = num(line.nominal);
   if (nominal != null) {
@@ -67,6 +76,61 @@ function defaults(variant: "industrial" | "residential"): { main: Line[]; ancill
     : { main: RESIDENTIAL_MAIN.map((l) => ({ ...l })), ancillary: RESIDENTIAL_ANCILLARY.map((l) => ({ ...l })) };
 }
 
+function sumAreas(values: InspectionValues, keys: string[]): string {
+  let total = 0;
+  let any = false;
+  for (const key of keys) {
+    const n = num(str(values, key));
+    if (n != null && n > 0) {
+      total += n;
+      any = true;
+    }
+  }
+  return any ? String(Math.round(total)) : "";
+}
+
+function seedFromReport(values: InspectionValues, variant: "industrial" | "residential", current: NonNullable<ReportMeta["costApproach"]>): NonNullable<ReportMeta["costApproach"]> {
+  const next = { ...current };
+  if (!next.landArea) {
+    next.landArea = str(values, "prop_usable_sitearea") || str(values, "prop_sitearea");
+  }
+  if (!next.landValue) {
+    next.landValue = str(values, "prop_site_value");
+  }
+  if (variant === "industrial") {
+    const main = next.mainBuilding?.length ? [...next.mainBuilding] : defaults("industrial").main;
+    const byName = (name: string) => main.findIndex((l) => l.name === name);
+    const setArea = (name: string, value: string) => {
+      const i = byName(name);
+      if (i >= 0 && !main[i].area && value) main[i] = { ...main[i], area: value };
+    };
+    setArea("Main warehouse/factory area", str(values, "comm_gba") || str(values, "comm_nla"));
+    setArea("Awning", /yes/i.test(str(values, "comm_awning")) ? "" : "");
+    const ancillary = next.ancillary?.length ? [...next.ancillary] : defaults("industrial").ancillary;
+    const hard = ancillary.findIndex((l) => l.name === "Hardstand");
+    if (hard >= 0 && !ancillary[hard].area) {
+      const hs = str(values, "comm_hardstand");
+      if (hs) ancillary[hard] = { ...ancillary[hard], area: hs };
+    }
+    next.mainBuilding = main;
+    next.ancillary = ancillary;
+  } else {
+    const main = next.mainBuilding?.length ? [...next.mainBuilding] : defaults("residential").main;
+    const dwelling = main.findIndex((l) => l.name.startsWith("Dwelling"));
+    if (dwelling >= 0 && !main[dwelling].area) {
+      const gla = str(values, "imp_gla") || sumAreas(values, ["area_living_upstairs", "area_living_downstairs", "area_garage"]);
+      if (gla) main[dwelling] = { ...main[dwelling], area: gla };
+    }
+    const outdoor = main.findIndex((l) => l.name.startsWith("Covered outdoor"));
+    if (outdoor >= 0 && !main[outdoor].area) {
+      const covered = sumAreas(values, ["area_verandahs", "area_covered_front_patio", "area_covered_rear_patio"]);
+      if (covered) main[outdoor] = { ...main[outdoor], area: covered };
+    }
+    next.mainBuilding = main;
+  }
+  return next;
+}
+
 export function CostApproachSection({
   values,
   meta,
@@ -76,12 +140,29 @@ export function CostApproachSection({
   meta: ReportMeta;
   onMeta: (patch: Partial<ReportMeta>) => void;
 }) {
-  const industrial = Boolean(String(values["prop_type_industrial"] ?? "").trim()) || Boolean(String(values["prop_type_commercial"] ?? "").trim());
-  const variant = meta.costApproach?.variant ?? (industrial ? "industrial" : "residential");
+  if (isVacantLand(values)) return null;
+
+  const industrial = isIndustrialType(values) || isCommercialType(values);
+  const variant: "industrial" | "residential" = industrial ? "industrial" : "residential";
   const stored = meta.costApproach ?? {};
-  const seed = defaults(variant);
-  const main = stored.mainBuilding?.length ? stored.mainBuilding : seed.main;
-  const ancillary = stored.ancillary?.length ? stored.ancillary : seed.ancillary;
+  const seeded = useRef(false);
+
+  useEffect(() => {
+    if (seeded.current) return;
+    if (stored.variant && stored.mainBuilding?.length) return;
+    seeded.current = true;
+    const seed = defaults(variant);
+    const filled = seedFromReport(values, variant, {
+      ...stored,
+      variant,
+      mainBuilding: stored.mainBuilding?.length ? stored.mainBuilding : seed.main,
+      ancillary: stored.ancillary?.length ? stored.ancillary : seed.ancillary,
+    });
+    onMeta({ costApproach: filled });
+  }, [values, variant, stored, onMeta]);
+
+  const main = stored.mainBuilding?.length ? stored.mainBuilding : defaults(variant).main;
+  const ancillary = stored.ancillary?.length ? stored.ancillary : defaults(variant).ancillary;
 
   function patch(next: Partial<NonNullable<ReportMeta["costApproach"]>>) {
     onMeta({ costApproach: { ...stored, variant, ...next } });
@@ -131,10 +212,8 @@ export function CostApproachSection({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 text-xs">
-        <span className="text-slate-500">Template</span>
-        <button type="button" className={`rounded border px-2 py-0.5 ${variant === "industrial" ? "border-primary bg-primary text-primary-foreground" : "border-input"}`} onClick={() => patch({ variant: "industrial", mainBuilding: defaults("industrial").main, ancillary: defaults("industrial").ancillary })}>Industrial</button>
-        <button type="button" className={`rounded border px-2 py-0.5 ${variant === "residential" ? "border-primary bg-primary text-primary-foreground" : "border-input"}`} onClick={() => patch({ variant: "residential", mainBuilding: defaults("residential").main, ancillary: defaults("residential").ancillary })}>Residential</button>
+      <div className="text-xs text-slate-500">
+        Using the {variant === "industrial" ? "industrial" : "residential"} template. Areas pre-filled from the inspection where available. All fields remain editable.
       </div>
       <div className="text-sm font-semibold text-slate-700">The cost approach to valuation</div>
       <table className="w-full text-xs border-collapse">

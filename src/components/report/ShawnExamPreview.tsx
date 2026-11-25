@@ -580,7 +580,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const showLease = prints("leaseEvidence") && Boolean(draft.narrative.leaseEvidence?.trim());
   const showCap = prints("capitalisationApproach") && Boolean(draft.narrative.capitalisationApproach?.trim());
   const showDcf = prints("dcfApproach") && Boolean(draft.narrative.dcfApproach?.trim());
-  const showCost = prints("costApproach") && Boolean(draft.narrative.costApproach?.trim());
+  const showCost = prints("costApproach") && !isVacantLand(v) && Boolean(draft.narrative.costApproach?.trim() || m.costApproach);
   const show83 = prints("valueReconciliation");
   const show84 = Boolean(get(v, "exam_on_market"));
   const show85 = prints("salesAnalysis") && Boolean(draft.narrative.salesAnalysis?.trim() || get(v, "exam_sales_analysis"));
