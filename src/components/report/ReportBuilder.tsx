@@ -21,6 +21,88 @@ import { fillExamTocPages } from "@/lib/report/tocPages";
 import { isShawnReportAssignment } from "@/lib/narrative/neighbourhoodAssist";
 import { SHAWN_EXAM_STYLE } from "@/lib/report/shawnExamStyle";
 import { getReportTypeConfig, isShawnExamType } from "@/lib/report/reportTypes";
+import type { ReportMeta } from "@/lib/report/types";
+
+function ValuersPanel({
+  meta,
+  onMeta,
+  primaryName,
+}: {
+  meta: ReportMeta;
+  onMeta: (patch: Partial<ReportMeta>) => void;
+  primaryName: string;
+}) {
+  const valuers = meta.valuers ?? [];
+  function update(id: string, patch: Partial<(typeof valuers)[number]>) {
+    onMeta({ valuers: valuers.map((v) => (v.id === id ? { ...v, ...patch } : v)) });
+  }
+  function add() {
+    onMeta({
+      valuers: [
+        ...valuers,
+        { id: crypto.randomUUID(), name: "", role: "Co-signatory", include: true },
+      ],
+    });
+  }
+  function remove(id: string) {
+    onMeta({ valuers: valuers.filter((v) => v.id !== id) });
+  }
+  return (
+    <div className="mt-4 border-t border-slate-200 pt-4">
+      <h3 className="text-sm font-semibold text-foreground">Additional valuers</h3>
+      <p className="mt-1 text-xs text-muted-foreground">
+        The primary valuer is {primaryName || "the signing valuer"}. Add co-signatories here. Each included valuer prints a signature block.
+      </p>
+      {valuers.map((v) => (
+        <div key={v.id} className="mt-3 rounded border border-slate-200 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <label className="flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={v.include !== false}
+                onChange={(e) => update(v.id, { include: e.target.checked })}
+              />
+              Include on this report
+            </label>
+            <button type="button" className="text-xs text-red-600" onClick={() => remove(v.id)}>
+              Remove
+            </button>
+          </div>
+          <input
+            className="mb-1 w-full rounded border border-slate-300 px-2 py-1 text-sm"
+            value={v.name}
+            placeholder="Valuer name"
+            onChange={(e) => update(v.id, { name: e.target.value })}
+          />
+          <input
+            className="mb-1 w-full rounded border border-slate-300 px-2 py-1 text-sm"
+            value={v.role ?? ""}
+            placeholder="Role, e.g. Co-signatory"
+            onChange={(e) => update(v.id, { role: e.target.value })}
+          />
+          <input
+            className="mb-2 w-full rounded border border-slate-300 px-2 py-1 text-sm"
+            value={v.registration ?? ""}
+            placeholder="Registration number (optional)"
+            onChange={(e) => update(v.id, { registration: e.target.value })}
+          />
+          <SignaturePad
+            value={v.signature ?? ""}
+            height={100}
+            onChange={(sig) => update(v.id, { signature: sig })}
+          />
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={add}
+        className="mt-3 rounded border border-input bg-card px-3 py-1.5 text-xs font-medium"
+      >
+        Add valuer
+      </button>
+    </div>
+  );
+}
 
 const TABS = [
   { id: "subject", label: "Subject & purpose" },
@@ -404,6 +486,11 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
                     toast.success("Signature removed — report unlocked");
                   }
                 }}
+              />
+              <ValuersPanel
+                meta={draft.reportMeta}
+                onMeta={setMeta}
+                primaryName={draft.reportMeta.valuerName || String(draft.values["insp_valuer"] ?? "")}
               />
             </div>
           ) : null}

@@ -405,6 +405,11 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   if (get(v, "sign_member")) children.push(p(get(v, "sign_member"), { size: 18, after: 40 }));
   children.push(p(m.firmName || get(v, "insp_firm") || firmFallback, { size: 18, after: 40 }));
   if (m.valueDate) children.push(p(formatNarrativeDate(m.valueDate), { size: 18, after: 200 }));
+  for (const extra of (m.valuers ?? []).filter((row) => row.include !== false && row.name)) {
+    children.push(p(extra.name, { bold: true, after: 40, before: 120 }));
+    if (extra.role) children.push(p(extra.role, { size: 18, after: 40 }));
+    if (extra.registration) children.push(p(extra.registration, { size: 18, after: 40 }));
+  }
 
   // ---- TOC (same visibility rules as Preview) ----
   const tocVisible = TOC_ENTRIES.filter((e) => sectionHasContent(e, draft));
@@ -972,6 +977,11 @@ export async function generateValuationDocx(draft: ReportDraft): Promise<Blob> {
   children.push(p(m.valuerName || get(v, "insp_valuer") || "", { bold: true, after: 40, before: 200 }));
   if (get(v, "sign_member")) children.push(p(get(v, "sign_member"), { size: 18, after: 40 }));
   children.push(p(m.firmName || get(v, "insp_firm") || firmFallback, { size: 18, after: 40 }));
+  for (const extra of (m.valuers ?? []).filter((row) => row.include !== false && row.name)) {
+    children.push(p(extra.name, { bold: true, after: 40, before: 120 }));
+    if (extra.role) children.push(p(extra.role, { size: 18, after: 40 }));
+    if (extra.registration) children.push(p(extra.registration, { size: 18, after: 40 }));
+  }
   const annexures = resolveAnnexures(draft);
   const photosAnnex = annexureById(annexures, "photos");
   const mapsAnnex = annexureById(annexures, "maps");

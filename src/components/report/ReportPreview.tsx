@@ -549,6 +549,7 @@ function SignatureBlock({
     typeof values["sign_sig"] === "string" && values["sign_sig"].startsWith("data:image")
       ? values["sign_sig"]
       : "";
+  const extras = (meta.valuers ?? []).filter((v) => v.include !== false && (v.name || v.signature));
   return (
     <div className={className}>
       {sig ? (
@@ -580,7 +581,23 @@ function SignatureBlock({
           })()}
         </p>
       ) : null}
-      {meta.valueDate ? <p className="mt-1 text-sm">{meta.valueDate}</p> : null}
+      {extras.map((v) => (
+        <div key={v.id} className="mt-4">
+          {v.signature ? (
+            <div className="report-sig-stage">
+              <img src={v.signature} alt={`${v.name} signature`} className="report-sig-image" />
+              <div className="report-sig-line" aria-hidden />
+            </div>
+          ) : (
+            <div className="report-sig-stage report-sig-stage--empty">
+              <div className="report-sig-line" aria-hidden />
+            </div>
+          )}
+          <p className="report-sig-name font-semibold">{v.name}</p>
+          {v.role ? <p className="text-sm">{v.role}</p> : null}
+          {v.registration ? <p className="text-sm">{v.registration}</p> : null}
+        </div>
+      ))}
     </div>
   );
 }
