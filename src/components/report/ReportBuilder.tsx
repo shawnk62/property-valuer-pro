@@ -32,7 +32,7 @@ function ValuersPanel({
   onMeta: (patch: Partial<ReportMeta>) => void;
   primaryName: string;
 }) {
-  const valuers = meta.valuers ?? [];
+  const valuers = Array.isArray(meta.valuers) ? meta.valuers : [];
   function update(id: string, patch: Partial<(typeof valuers)[number]>) {
     onMeta({ valuers: valuers.map((v) => (v.id === id ? { ...v, ...patch } : v)) });
   }
@@ -466,33 +466,35 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
             </SectionGuard>
           ) : null}
           {tab === "signature" ? (
-            <div className="mx-auto max-w-xl space-y-4 rounded-lg border border-border bg-card p-5">
-              <h2 className="text-lg font-semibold text-foreground">Final signature</h2>
-              <p className="text-sm text-muted-foreground">
-                Apply your signature to lock this report. Remove the signature to unlock and
-                edit again. Same signature is used on the inspection form sign-off.
-              </p>
-              <SignaturePad
-                value={
-                  typeof draft.values["sign_sig"] === "string"
-                    ? draft.values["sign_sig"]
-                    : ""
-                }
-                onChange={(v) => {
-                  setValue("sign_sig", v);
-                  if (v) {
-                    toast.success("Signature applied — report locked");
-                  } else {
-                    toast.success("Signature removed — report unlocked");
+            <SectionGuard>
+              <div className="mx-auto max-w-xl space-y-4 rounded-lg border border-border bg-card p-5">
+                <h2 className="text-lg font-semibold text-foreground">Final signature</h2>
+                <p className="text-sm text-muted-foreground">
+                  Apply your signature to lock this report. Remove the signature to unlock and
+                  edit again. Same signature is used on the inspection form sign-off.
+                </p>
+                <SignaturePad
+                  value={
+                    typeof draft.values["sign_sig"] === "string"
+                      ? draft.values["sign_sig"]
+                      : ""
                   }
-                }}
-              />
-              <ValuersPanel
-                meta={draft.reportMeta}
-                onMeta={setMeta}
-                primaryName={draft.reportMeta.valuerName || String(draft.values["insp_valuer"] ?? "")}
-              />
-            </div>
+                  onChange={(v) => {
+                    setValue("sign_sig", v);
+                    if (v) {
+                      toast.success("Signature applied — report locked");
+                    } else {
+                      toast.success("Signature removed — report unlocked");
+                    }
+                  }}
+                />
+                <ValuersPanel
+                  meta={draft.reportMeta}
+                  onMeta={setMeta}
+                  primaryName={draft.reportMeta.valuerName || String(draft.values["insp_valuer"] ?? "")}
+                />
+              </div>
+            </SectionGuard>
           ) : null}
           {/* Always mounted so Download PDF never prints a blank page when another tab is active */}
           <div
