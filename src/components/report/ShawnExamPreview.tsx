@@ -40,7 +40,7 @@ import {
   type ReportPhoto,
 } from "@/lib/report/types";
 import { A4DocumentAnnex } from "@/components/report/A4DocumentAnnex";
-import { isVacantLand } from "@/lib/inspection/visibility";
+import { isVacantLand, isCommercialType, isIndustrialType } from "@/lib/inspection/visibility";
 import { hasWorkingFile, WorkingNotesAnnex } from "@/components/report/WorkingNotesAnnex";
 import { AdjustmentGridPrint } from "@/components/report/AdjustmentGridPrint";
 import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
@@ -578,7 +578,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const show64 = prints("marketLocality") && Boolean(draft.narrative.marketLocality?.trim() || get(v, "exam_market_local"));
   const show82 = prints("salesComments");
   const showLease = prints("leaseEvidence") && Boolean(draft.narrative.leaseEvidence?.trim());
-  const showCap = prints("capitalisationApproach") && Boolean(draft.narrative.capitalisationApproach?.trim());
+  const showCap = prints("capitalisationApproach") && !isVacantLand(v) && (isCommercialType(v) || isIndustrialType(v)) && Boolean(draft.narrative.capitalisationApproach?.trim() || m.ciCapRate || m.ciAdoptedRentPerM2);
   const showDcf = prints("dcfApproach") && Boolean(draft.narrative.dcfApproach?.trim());
   const showCost = prints("costApproach") && !isVacantLand(v) && Boolean(draft.narrative.costApproach?.trim() || m.costApproach);
   const show83 = prints("valueReconciliation");
@@ -1280,6 +1280,17 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <h3 id="exam-8-cap" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
               {`${major[8]}.${n8[3]} Capitalisation Approach`}
             </h3>
+            <table className="mt-2 w-full border-collapse text-xs">
+              <tbody>
+                <tr style={{ background: STRIPE }}><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Assessed net rent ($/m²)</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{m.ciAdoptedRentPerM2 || "—"}</td></tr>
+                <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Outgoings ($/m²)</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{m.ciRecoverableOutgoings || "—"}</td></tr>
+                <tr style={{ background: STRIPE }}><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Vacancy allowance (% of gross)</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{m.ciVacancyAllowance || "—"}</td></tr>
+                <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Capitalisation rate (%)</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{m.ciCapRate || "—"}</td></tr>
+                <tr style={{ background: STRIPE }}><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Letting-up months</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{m.ciLettingUpMonths || "—"}</td></tr>
+                <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Incentive months</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{m.ciIncentiveMonths || "—"}</td></tr>
+                <tr style={{ background: STRIPE }}><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Agent commission (%)</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{m.ciAgentCommissionPct || "—"}</td></tr>
+              </tbody>
+            </table>
             <Prose text={withoutSourceNotes(draft.narrative.capitalisationApproach || "", printedSales)} />
           </Keep>
         ) : null}

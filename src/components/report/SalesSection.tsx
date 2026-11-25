@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { CommercialAnalysisPanel } from "@/components/report/CommercialAnalysisPanel";
 import { CostApproachSection } from "@/components/report/CostApproachSection";
+import { CapitalisationApproachSection } from "@/components/report/CapitalisationApproachSection";
 import { CommercialValuationTables } from "@/components/report/CommercialValuationTables";
 import { ComparableSheet } from "@/components/report/ComparableSheet";
 import { InspectionRoutePlanner } from "@/components/report/InspectionRoutePlanner";
@@ -3061,11 +3062,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
           <div className="space-y-4 rounded-md border border-border bg-card p-4">
             <h3 className="text-sm font-semibold text-foreground">Income capitalisation</h3>
-            <CommercialAnalysisPanel values={draft.values} meta={draft.reportMeta} onMeta={setMeta} landValue={(() => {
-              const rate = Number(String(draft.reportMeta.ciAdoptedLandRate ?? "").replace(/[^0-9.-]/g, ""));
-              const area = Number(String(draft.values["prop_usable_sitearea"] ?? draft.values["prop_sitearea"] ?? "").replace(/[^0-9.-]/g, ""));
-              return Number.isFinite(rate) && Number.isFinite(area) && rate > 0 && area > 0 ? rate * area : null;
-            })()} />
+            <CapitalisationApproachSection values={draft.values} meta={draft.reportMeta} sales={draft.sales} onMeta={setMeta} />
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input type="checkbox" checked={narrativePrints(draft.reportMeta, "capitalisationApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), capitalisationApproach: e.target.checked } })} />
               Include Capitalisation Approach on report
