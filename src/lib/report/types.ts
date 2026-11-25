@@ -624,6 +624,8 @@ export interface ReportMeta {
     tenantUse?: string;
     timeToLease?: string;
     rentBasis?: "net" | "gross";
+    /** When set, this lease evidence is also shown in the sales comparison grid. */
+    linkedSaleId?: string;
   }>;
   /** Map of lease evidence locations. */
   ciLeaseMapUrl?: string;

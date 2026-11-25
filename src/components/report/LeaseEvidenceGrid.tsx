@@ -9,6 +9,7 @@ import type { InspectionValues, ReportMeta } from "@/lib/report/types";
 import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
 import { RELATIVITY_OPTIONS, relativitySelectClass, type Relativity } from "@/lib/report/adjustmentGrid";
 import type { ComparableSale } from "@/lib/report/types";
+import { ensureSaleAdjustments } from "@/lib/report/adjustmentGrid";
 
 function imageFileFromClipboard(e: React.ClipboardEvent): File | null {
   const items = e.clipboardData?.items;
@@ -71,6 +72,8 @@ export interface LeaseComp {
   tenantUse?: string;
   timeToLease?: string;
   rentBasis?: "net" | "gross";
+  /** When set, this lease is also present in the sales comparison grid. */
+  linkedSaleId?: string;
 }
 
 function blank(): LeaseComp {
@@ -162,7 +165,39 @@ export function LeaseEvidenceGrid({
     onMeta({ ciLeaseComps: next });
   }
 
-  function remove(id: string) {
+  function toggleInSales(comp: LeaseComp, on: boolean) {
+    if (!onSales || !sales) return;
+    if (on) {
+      const saleId = comp.linkedSaleId || `sale-${Math.random().toString(36).slice(2, 10)}`;
+      const fromLease: ComparableSale = ensureSaleAdjustments({
+        id: saleId,
+        address: comp.address,
+        saleDate: comp.date,
+        salePrice: comp.leaseAmount || "",
+        landArea: "",
+        gla: comp.nla,
+        comments: comp.notes,
+        proximity: comp.proximity,
+        photoUrl: comp.photoUrl,
+        photoLocalKey: comp.photoLocalKey,
+        photoStoragePath: comp.photoStoragePath,
+        clearHeight: comp.clearHeight,
+        loading: comp.loading,
+        officeRatio: comp.officeRatio,
+        condition: comp.condition,
+        quality: comp.quality,
+        hardstand: comp.hardstand,
+        passingRent: comp.leaseAmount,
+        marketRent: comp.netRentPerM2 && comp.nla ? String(Number(comp.netRentPerM2) * Number(comp.nla.replace(/[^0-9.]/g, "")) || "") : "",
+      });
+      const exists = sales.some((s) => s.id === saleId);
+      onSales(exists ? sales.map((s) => (s.id === saleId ? { ...s, ...fromLease } : s)) : [...sales, fromLease]);
+      update(comp.id, { linkedSaleId: saleId });
+    } else if (comp.linkedSaleId) {
+      onSales(sales.filter((s) => s.id !== comp.linkedSaleId));
+      update(comp.id, { linkedSaleId: undefined });
+    }
+  }
     if (!window.confirm("Delete this lease comparable from the working file?")) return;
     onMeta({ ciLeaseComps: comps.filter((c) => c.id !== id) });
   }
@@ -213,6 +248,10 @@ export function LeaseEvidenceGrid({
                       <button type="button" disabled={idx === comps.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => move(c.id, 1)}>→</button>
                       <button type="button" className="text-red-500" onClick={() => remove(c.id)}>×</button>
                     </div>
+                    <label className="mt-1 flex items-center gap-1 text-[0.65rem] text-slate-600">
+                      <input type="checkbox" checked={Boolean(c.linkedSaleId)} onChange={(e) => toggleInSales(c, e.target.checked)} />
+                      Also in sales comparison
+                    </label>
                   </th>
                 ))}
               </tr>
