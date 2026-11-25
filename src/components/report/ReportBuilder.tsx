@@ -150,7 +150,7 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
   const navigate = useNavigate();
   const lock = useEditLock(inspectionId);
   const controller = useReportDraft(inspectionId, { readOnly: !lock.canEdit });
-  const { draft, dirty, savedAt, save, loaded, loadError, setValue, setNarrative } = controller;
+  const { draft, dirty, savedAt, save, loaded, loadError, setValue, setNarrative, setMeta } = controller;
   const reportSigned = isAppliedSignature(draft.values["sign_sig"]);
   const editsLocked = !lock.canEdit || reportSigned;
   const [tab, setTab] = useState<TabId>("subject");
