@@ -352,16 +352,19 @@ export function collectReportReferences(
   existing: ReportReference[] | undefined,
   style: ReferenceStyle = meta?.referenceStyle === "apa" ? "apa" : "harvard",
 ): ReportReference[] {
+  const narrative = [
+    values["nbhd_description"],
+    values["exam_amenities"],
+    values["exam_transport"],
+    values["exam_market_australia"],
+    values["exam_market_state"],
+    values["exam_market_region"],
+    values["exam_market_local"],
+  ].map((part) => String(part ?? "")).join("\n");
   const raws: string[] = [];
-  for (const claim of claimLists(meta)) {
+  for (const claim of claimLists(meta).filter((item) => item.accepted && String(item.source ?? "").trim())) {
+    if (narrative && claimMatchScore(claim.text, narrative, values) === 0) continue;
     raws.push(...sourcesFromClaim(claim));
-  }
-  const exam = String(values["exam_references"] ?? "").trim();
-  if (exam) {
-    for (const line of exam.split(/\n+/)) {
-      const t = line.replace(/^[\s*-]+/, "").trim();
-      if (t.length > 4) raws.push(t);
-    }
   }
   const seen = new Set<string>();
   const incoming: ReportReference[] = [];
@@ -388,16 +391,10 @@ export function collectReportReferences(
         ...prev,
         text: prev.text.trim() || next.text,
         sourceRaw: prev.sourceRaw || next.sourceRaw,
+        accepted: prev.accepted !== false,
       });
     } else {
       out.push(next);
-    }
-  }
-  for (const prev of prior) {
-    const key = sourceKey(prev.sourceRaw || prev.text);
-    if (!seen.has(key) && prev.text.trim()) {
-      out.push(prev);
-      seen.add(key);
     }
   }
   out.sort((a, b) => a.text.localeCompare(b.text, "en"));

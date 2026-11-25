@@ -783,7 +783,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     const items = refreshReferences();
     setLastStatus(
       items.length
-        ? `References on file: ${items.length}. Untick any you do not want printed.`
+        ? `References on file: ${items.length}. All are ticked for print. Untick any you do not want printed.`
         : "No sources were found on the report notes yet.",
     );
     toast.message(
@@ -2183,8 +2183,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
               {((draft.reportMeta.reportReferences as ReportReference[] | undefined) ?? [])
                 .length === 0 ? (
                 <p className="text-[11px] text-muted-foreground">
-                  No sources on file yet. Run Find notes on 5.2 or 6.1–6.4 first, then collect
-                  again. Publisher names in those notes are enough — a URL is not required.
+                  No sources on file yet. Only sources that are cited in the report notes are listed. Run Find notes on 5.2 or 6.1–6.4 first, accept the notes that are used, then collect again.
                 </p>
               ) : null}
               {(((draft.reportMeta.reportReferences as ReportReference[] | undefined) ??
@@ -2196,7 +2195,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
                   <input
                     type="checkbox"
                     className="mt-0.5 size-3.5 shrink-0 rounded border-input"
-                    checked={item.accepted}
+                    checked={item.accepted !== false}
                     onChange={(e) => {
                       const next = (
                         (draft.reportMeta.reportReferences as ReportReference[] | undefined) ??
