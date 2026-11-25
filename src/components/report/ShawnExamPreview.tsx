@@ -1296,29 +1296,46 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <h3 id="exam-8-cost" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
               {`${major[8]}.${n8[5]} Cost Approach`}
             </h3>
-            {m.printFullPageSheets !== false
-              ? (m.ciLandSales ?? []).map((ls, idx) => (
-                  <ComparableSheet
-                    key={`land-${ls.id}`}
-                    printMode
-                    data={{
-                      id: ls.id,
-                      kind: "land",
-                      number: idx + 1,
-                      address: ls.address,
-                      proximity: ls.proximity,
-                      price: ls.price,
-                      date: ls.date,
-                      landArea: ls.landArea,
-                      photoUrl: ls.photoUrl,
-                      includeSheet: true,
-                      commentary: ls.notes,
-                    }}
-                    values={v}
-                    onChange={() => {}}
-                  />
-                ))
-              : null}
+            {m.costApproach ? (
+              <table className="mt-2 w-full border-collapse text-xs">
+                <thead>
+                  <tr style={{ background: TEAL, color: "#fff" }}>
+                    <th className="border px-2 py-1.5 text-left" style={{ borderColor: RULE }}>Item</th>
+                    <th className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>Area / qty</th>
+                    <th className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>Rate</th>
+                    <th className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>Dep %</th>
+                    <th className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>$</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {m.costApproach.mainBuilding?.map((line, i) => (
+                    <tr key={`main-${i}`} style={{ background: i % 2 === 0 ? STRIPE : "#fff" }}>
+                      <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{line.name}</td>
+                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{line.area || "—"}</td>
+                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{line.rate || line.nominal || "—"}</td>
+                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{line.depreciation || "—"}</td>
+                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{line.nominal || "—"}</td>
+                    </tr>
+                  ))}
+                  {m.costApproach.ancillary?.map((line, i) => (
+                    <tr key={`anc-${i}`} style={{ background: i % 2 === 0 ? STRIPE : "#fff" }}>
+                      <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{line.name}</td>
+                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{line.area || "—"}</td>
+                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{line.rate || line.nominal || "—"}</td>
+                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{line.depreciation || "—"}</td>
+                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{line.nominal || "—"}</td>
+                    </tr>
+                  ))}
+                  {m.costApproach.adoptedValue ? (
+                    <tr style={{ background: STRIPE }}>
+                      <td className="border px-2 py-1.5 font-semibold" style={{ borderColor: RULE }} colSpan={4}>Adopted value (rounded)</td>
+                      <td className="border px-2 py-1.5 text-right font-semibold" style={{ borderColor: RULE }}>{m.costApproach.adoptedValue}</td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            ) : null}
+            {m.costApproach?.notes ? <Para>{m.costApproach.notes}</Para> : null}
             <Prose text={withoutSourceNotes(draft.narrative.costApproach || "", printedSales)} />
           </Keep>
         ) : null}

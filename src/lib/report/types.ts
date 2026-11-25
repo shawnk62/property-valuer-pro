@@ -465,11 +465,14 @@ export interface ReportMeta {
   printSalesEvidence?: boolean;
   /** When false, the adjustment grid is omitted from the PDF. Default true. */
   printAdjustmentGrid?: boolean;
-  /** Per-overlay criteria and impact for the Planning Controls table. */
-  overlayAnalyses?: Array<{
+  /** Additional valuers and signatures for this report. Primary remains sign_sig. */
+  valuers?: Array<{
+    id: string;
     name: string;
-    criteria?: string;
-    impact?: string;
+    role?: string;
+    registration?: string;
+    signature?: string;
+    include?: boolean;
   }>;
   /** Feature ids the valuer has unticked for print. Default none (all visible rows print). */
   omitAdjustmentPrintRows?: string[];
@@ -578,13 +581,17 @@ export interface ReportMeta {
   ciPhysicalDepreciation?: string;
   ciFunctionalObsolescence?: string;
   ciExternalObsolescence?: string;
-  /** Optional cost components. When present, used instead of the single-rate path. */
-  ciCostComponents?: Array<{
-    name: string;
-    area: string;
-    rate: string;
-    depreciation: string;
-  }>;
+  /** Cost approach working table (tutorial template structure). */
+  costApproach?: {
+    variant?: "industrial" | "residential";
+    landArea?: string;
+    landRate?: string;
+    landValue?: string;
+    mainBuilding?: Array<{ name: string; area?: string; rate?: string; depreciation?: string; nominal?: string }>;
+    ancillary?: Array<{ name: string; area?: string; rate?: string; depreciation?: string; nominal?: string }>;
+    adoptedValue?: string;
+    notes?: string;
+  };
   /** Lease evidence comparables for commercial / industrial. */
   ciLeaseComps?: Array<{
     id: string;

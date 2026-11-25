@@ -11,6 +11,7 @@ import { PausedTextarea } from "@/components/report/PausedTextarea";
 import { toast } from "sonner";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { CommercialAnalysisPanel } from "@/components/report/CommercialAnalysisPanel";
+import { CostApproachSection } from "@/components/report/CostApproachSection";
 import { CommercialValuationTables } from "@/components/report/CommercialValuationTables";
 import { ComparableSheet } from "@/components/report/ComparableSheet";
 import { InspectionRoutePlanner } from "@/components/report/InspectionRoutePlanner";
@@ -3125,6 +3126,16 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           </div>
         </div>
       )}
+
+      <div className="space-y-4 rounded-md border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold text-foreground">Cost approach</h3>
+        <CostApproachSection values={draft.values} meta={draft.reportMeta} onMeta={setMeta} />
+        <label className="flex cursor-pointer items-center gap-2 text-sm">
+          <input type="checkbox" checked={narrativePrints(draft.reportMeta, "costApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), costApproach: e.target.checked } })} />
+          Include Cost Approach on report
+        </label>
+        <PausedTextarea value={draft.narrative.costApproach ?? ""} onChange={(v) => setNarrative({ costApproach: v })} placeholder="Cost approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+      </div>
 
       {agentCallId ? (
         <ResidentialAgentSheet
