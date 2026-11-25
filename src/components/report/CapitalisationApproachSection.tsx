@@ -37,23 +37,6 @@ function pvAnnuity(annual: number, rate: number, years: number): number | null {
   return annual * (1 - Math.pow(1 + rate, -years)) / rate;
 }
 
-function averageYield(sales: ComparableSale[]): number | null {
-  const yields = sales
-    .filter((s) => s.omitFromReport !== true && s.saleYield)
-    .map((s) => num(s.saleYield))
-    .filter((n): n is number => n != null && n > 0);
-  if (yields.length === 0) return null;
-  return yields.reduce((a, b) => a + b, 0) / yields.length;
-}
-
-function averageLeaseRent(meta: ReportMeta): number | null {
-  const rents = (meta.ciLeaseComps ?? [])
-    .map((c) => num(c.netRentPerM2))
-    .filter((n): n is number => n != null && n > 0);
-  if (rents.length === 0) return null;
-  return rents.reduce((a, b) => a + b, 0) / rents.length;
-}
-
 export function CapitalisationApproachSection({
   values,
   meta,
@@ -71,21 +54,7 @@ export function CapitalisationApproachSection({
   useEffect(() => {
     if (seeded.current) return;
     seeded.current = true;
-    const patch: Partial<ReportMeta> = {};
-    if (!meta.ciAdoptedRentPerM2) {
-      const fromLease = averageLeaseRent(meta);
-      if (fromLease != null) patch.ciAdoptedRentPerM2 = String(Math.round(fromLease));
-    }
-    if (!meta.ciCapRate) {
-      const fromSales = averageYield(sales);
-      if (fromSales != null) patch.ciCapRate = fromSales.toFixed(2);
-    }
-    if (!meta.ciVacancyAllowance) patch.ciVacancyAllowance = "3.5";
-    if (!meta.ciLettingUpMonths) patch.ciLettingUpMonths = "6";
-    if (!meta.ciIncentiveMonths) patch.ciIncentiveMonths = "3";
-    if (!meta.ciAgentCommissionPct) patch.ciAgentCommissionPct = "13";
-    if (Object.keys(patch).length) onMeta(patch);
-  }, [meta, sales, onMeta]);
+  }, []);
 
   const nla = num(str(values, "comm_nla")) ?? num(str(values, "comm_gba"));
   const marketRent = num(meta.ciAdoptedRentPerM2) ?? num(meta.ciMarketRent);
@@ -148,10 +117,10 @@ export function CapitalisationApproachSection({
         Start with net rent from analysed transactions. Vacancy is a percentage of gross rent. Letting-up assumes the property is vacant. Below-the-line items apply only when relevant.
       </p>
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <Field label="Assessed net rent ($/m²)" value={meta.ciAdoptedRentPerM2 ?? ""} onChange={(v) => onMeta({ ciAdoptedRentPerM2: v })} hint="From lease evidence or sales" />
+        <Field label="Assessed net rent ($/m²)" value={meta.ciAdoptedRentPerM2 ?? ""} onChange={(v) => onMeta({ ciAdoptedRentPerM2: v })} hint="Enter the rate assessed from the lease evidence" />
         <Field label="Outgoings ($/m²)" value={meta.ciRecoverableOutgoings ?? ""} onChange={(v) => onMeta({ ciRecoverableOutgoings: v })} />
         <Field label="Vacancy allowance (% of gross)" value={meta.ciVacancyAllowance ?? ""} onChange={(v) => onMeta({ ciVacancyAllowance: v })} />
-        <Field label="Capitalisation rate (%)" value={meta.ciCapRate ?? ""} onChange={(v) => onMeta({ ciCapRate: v })} hint="From analysed sales yields" />
+        <Field label="Capitalisation rate (%)" value={meta.ciCapRate ?? ""} onChange={(v) => onMeta({ ciCapRate: v })} hint="Enter the rate assessed from the sales" />
         <Field label="Letting-up months (gross rent loss)" value={meta.ciLettingUpMonths ?? ""} onChange={(v) => onMeta({ ciLettingUpMonths: v })} />
         <Field label="Incentive months (net)" value={meta.ciIncentiveMonths ?? ""} onChange={(v) => onMeta({ ciIncentiveMonths: v })} />
         <Field label="Agent commission (% of first year net)" value={meta.ciAgentCommissionPct ?? ""} onChange={(v) => onMeta({ ciAgentCommissionPct: v })} />
