@@ -233,12 +233,6 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
     }
   }
 
-  const reconciliation = [
-    { label: "Direct comparison (building rate)", value: money(buildingIndication) },
-    { label: "Direct comparison (land rate)", value: money(landIndication) },
-    { label: "Income capitalisation", value: money(income.adoptedValue) },
-    { label: "Cost approach", value: money(cost.indicatedValue) },
-  ].filter((r) => r.value !== "—");
 
   return (
     <div className="space-y-6">
@@ -352,19 +346,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                   </td>
                 ))}
               </tr>
-              <tr className="border-b border-slate-100">
-                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Use as lease evidence</td>
-                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
-                {sales.filter((s) => s.omitFromReport !== true).map((s) => (
-                  <td key={s.id} className="py-1 pr-1 text-center">
-                    <input
-                      type="checkbox"
-                      checked={(meta.ciLeaseComps ?? []).some((c) => c.id === s.id)}
-                      onChange={(e) => toggleLeaseEvidence(s, e.target.checked)}
-                    />
-                  </td>
-                ))}
-              </tr>
+              
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Date</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
@@ -613,11 +595,7 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
             <input className="w-20 border border-slate-300 rounded px-1 py-0.5" value={meta.ciAdoptedBuildingRate ?? ""} onChange={(e) => onMeta({ ciAdoptedBuildingRate: e.target.value })} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) onMeta({ ciAdoptedBuildingRate: f }); }} />
           </label>
           <span className="text-slate-600">→ {money(buildingIndication)}</span>
-          <label className="flex items-center gap-1">
-            <span className="text-slate-500">Adopted land rate $/m²</span>
-            <input className="w-20 border border-slate-300 rounded px-1 py-0.5" value={meta.ciAdoptedLandRate ?? ""} onChange={(e) => onMeta({ ciAdoptedLandRate: e.target.value })} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) onMeta({ ciAdoptedLandRate: f }); }} />
-          </label>
-          <span className="text-slate-600">→ {money(landIndication)}</span>
+          
         </div>
         {sales.some((s) => s.omitFromReport === true) ? (
           <div className="mt-2 text-xs text-slate-500">

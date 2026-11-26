@@ -1542,13 +1542,6 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
         </div>
       </div>
 
-      <InspectionRoutePlanner
-        sales={draft.sales}
-        values={draft.values}
-        meta={draft.reportMeta}
-        leaseComps={draft.reportMeta.ciLeaseComps}
-        landSales={draft.reportMeta.ciLandSales}
-      />
       {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
         <div className="mb-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
           <div className="font-medium text-slate-700 mb-1">Finished-report checklist</div>
@@ -2896,11 +2889,18 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
 
       {(panel === "all" || panel === "maps") ? (
       <>
+      <InspectionRoutePlanner
+        sales={draft.sales}
+        values={draft.values}
+        meta={draft.reportMeta}
+        leaseComps={draft.reportMeta.ciLeaseComps}
+        landSales={draft.reportMeta.ciLandSales}
+      />
       <div className="rounded-md border border-border bg-card p-4 space-y-4">
         <div>
           <h4 className="text-sm font-semibold text-foreground">Sales map &amp; front photos</h4>
           <p className="mt-1 text-xs text-muted-foreground">
-            Generate location and sales maps (subject + comparables), or generate separate lease and land-sales maps for the income and cost approaches. Location-map scale can be adjusted below.
+            Generate location, sales, lease and land-sales maps. Use the inspection route planner above to create an optimised route for photographing comparables. Location-map scale can be adjusted below.
           </p>
         </div>
 
