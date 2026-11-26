@@ -86,6 +86,7 @@ interface LandSale {
   acceptedFields?: Record<string, boolean>;
   fieldOverrides?: Record<string, string>;
   verificationLink?: string;
+  omitFromReport?: boolean;
 }
 
 function blank(): LandSale {
@@ -118,6 +119,8 @@ export function LandSalesSection({
   comparableSales?: ComparableSale[];
 }) {
   const sales = meta.ciLandSales ?? [];
+  const visibleSales = sales.filter((s) => s.omitFromReport !== true);
+  const archivedSales = sales.filter((s) => s.omitFromReport === true);
   const [expandedNotesId, setExpandedNotesId] = useState<string | null>(null);
   const [agentCallId, setAgentCallId] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -143,6 +146,10 @@ export function LandSalesSection({
     });
   }
 
+  function archive(id: string) {
+    update(id, { omitFromReport: true });
+  }
+
   function remove(id: string) {
     if (!window.confirm("Delete this land sale from the working file?")) return;
     onMeta({ ciLandSales: sales.filter((s) => s.id !== id) });
@@ -163,7 +170,7 @@ export function LandSalesSection({
       </button>
       {sales.length === 0 ? (
         <p className="text-xs text-slate-400 mb-2">No land sales yet.</p>
-      ) : (
+      ) : visibleSales.length > 0 ? (
         <>
         <input ref={photoInputRef} type="file" accept="image/*" className="sr-only" onChange={(e) => {
           const file = e.target.files?.[0];
@@ -179,7 +186,7 @@ export function LandSalesSection({
                   <div className="text-xs font-medium text-foreground">{subjectAddress}</div>
                   <div className="text-[0.6rem] text-slate-400">Subject</div>
                 </th>
-                {sales.map((s, idx) => (
+                {visibleSales.map((s, idx) => (
                   <th key={s.id} className="py-1 pr-2 min-w-[8rem]">
                     <div className="text-[0.65rem] font-semibold text-slate-500 uppercase">Land sale {idx + 1}</div>
                     <input
@@ -190,6 +197,7 @@ export function LandSalesSection({
                     />
                     <div className="mt-0.5 flex gap-1 text-[0.65rem]">
                       <button type="button" className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-slate-600" onClick={() => setAgentCallId(s.id)}>Agent call</button>
+                      <button type="button" className="text-slate-500" onClick={() => archive(s.id)} title="Hold in working file">Archive</button>
                       <button type="button" className="text-red-500" onClick={() => remove(s.id)}>×</button>
                     </div>
                   </th>
@@ -202,7 +210,7 @@ export function LandSalesSection({
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">
                   {subjectPhotoUrl ? <img src={subjectPhotoUrl} alt="Subject" className="w-full max-h-28 rounded object-contain bg-slate-50" /> : "—"}
                 </td>
-                {sales.map((s) => (
+                {visibleSales.map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     {s.photoUrl ? (
                       <div className="relative">
@@ -220,7 +228,7 @@ export function LandSalesSection({
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500">Proximity</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
-                {sales.map((s) => (
+                {visibleSales.map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.proximity ?? ""} placeholder="e.g. 1.2 km N" onChange={(e) => update(s.id, { proximity: e.target.value })} />
                   </td>
@@ -229,7 +237,7 @@ export function LandSalesSection({
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500">Date</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
-                {sales.map((s) => (
+                {visibleSales.map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.date} onChange={(e) => update(s.id, { date: e.target.value })} />
                   </td>
@@ -244,7 +252,7 @@ export function LandSalesSection({
                   </select>
                   <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={meta.subjectAskingPrice ?? ""} placeholder="Optional" onChange={(e) => onMeta({ subjectAskingPrice: e.target.value })} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) onMeta({ subjectAskingPrice: f }); }} />
                 </td>
-                {sales.map((s) => (
+                {visibleSales.map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.price} onChange={(e) => update(s.id, { price: e.target.value })} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) update(s.id, { price: f }); }} />
                   </td>
@@ -253,7 +261,7 @@ export function LandSalesSection({
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500">Land area</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectLand || "—"}</td>
-                {sales.map((s) => (
+                {visibleSales.map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <div className="flex items-center gap-1">
                       <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={s.landArea} onChange={(e) => update(s.id, { landArea: e.target.value })} />
@@ -275,7 +283,7 @@ export function LandSalesSection({
                     onChange={(e) => onMeta({ ciAdoptedLandRate: e.target.value })}
                   />
                 </td>
-                {sales.map((s) => (
+                {visibleSales.map((s) => (
                   <td key={s.id} className="py-1 pr-1 text-right font-medium">
                     {ratePerM2(s.price, s.landArea, s.landUnit) || "—"}
                   </td>
@@ -298,7 +306,7 @@ export function LandSalesSection({
                       onChange={(e) => onMeta({ ciSubjectFeatures: { ...(meta.ciSubjectFeatures ?? {}), [feature.id]: e.target.value } })}
                     />
                   </td>
-                  {sales.map((s) => (
+                  {visibleSales.map((s) => (
                     <td key={s.id} className="py-1 pr-1">
                       <div className="flex flex-col gap-0.5">
                         <input
@@ -333,7 +341,7 @@ export function LandSalesSection({
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500">Notes</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
-                {sales.map((s) => (
+                {visibleSales.map((s) => (
                   <td key={s.id} className="py-1 pr-1">
                     <textarea
                       className={`border border-slate-300 rounded px-1 py-0.5 ${expandedNotesId === s.id ? "fixed inset-4 z-50 min-h-[50vh] bg-white shadow-lg" : "w-full min-h-[3rem]"}`}
@@ -349,8 +357,20 @@ export function LandSalesSection({
           </table>
         </div>
         </>
-      )}
-      {sales.filter((s) => s.address || s.price).map((s, idx) => (
+      ) : null}
+      {archivedSales.length > 0 ? (
+        <div className="mt-2 text-xs text-slate-500">
+          <div className="font-medium mb-1">Archived (not on report)</div>
+          {archivedSales.map((s) => (
+            <div key={s.id} className="flex items-center gap-2">
+              <span className="truncate">{s.address || "Land sale"}</span>
+              <button type="button" className="underline" onClick={() => update(s.id, { omitFromReport: false })}>Restore</button>
+              <button type="button" className="text-red-500" onClick={() => remove(s.id)}>×</button>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {visibleSales.filter((s) => s.address || s.price).map((s, idx) => (
         <ComparableSheet
           key={s.id}
           inspectionId={inspectionId}

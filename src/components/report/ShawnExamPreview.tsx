@@ -627,7 +627,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const show82 = prints("salesComments");
   const showLease = prints("leaseEvidence") && Boolean(
     draft.narrative.leaseEvidence?.trim()
-    || (m.ciLeaseComps ?? []).some((c) => c.address || c.leaseAmount || c.netRentPerM2 || c.nla),
+    || (m.ciLeaseComps ?? []).some((c) => c.omitFromReport !== true && (c.address || c.leaseAmount || c.netRentPerM2 || c.nla)),
   );
   const showCap = prints("capitalisationApproach") && !isVacantLand(v) && (isCommercialType(v) || isIndustrialType(v)) && Boolean(draft.narrative.capitalisationApproach?.trim() || m.ciCapRate || m.ciAdoptedRentPerM2);
   const showDcf = prints("dcfApproach") && Boolean(draft.narrative.dcfApproach?.trim());
@@ -1298,7 +1298,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
               {`${major[8]}.${n8[2]} Lease Evidence`}
             </h3>
             {m.printFullPageSheets !== false
-              ? (m.ciLeaseComps ?? []).filter((c) => c.includeSheet !== false && (c.address || c.leaseAmount || c.netRentPerM2 || c.nla)).map((c, idx) => (
+              ? (m.ciLeaseComps ?? []).filter((c) => c.omitFromReport !== true && c.includeSheet !== false && (c.address || c.leaseAmount || c.netRentPerM2 || c.nla)).map((c, idx) => (
                   <ComparableSheet
                     key={`lease-${c.id}`}
                     printMode
@@ -1394,7 +1394,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             ) : null}
             {m.costApproach?.notes ? <Para>{m.costApproach.notes}</Para> : null}
             {m.printFullPageSheets !== false
-              ? (m.ciLandSales ?? []).filter((l) => l.includeSheet !== false && (l.address || l.price)).map((l, idx) => (
+              ? (m.ciLandSales ?? []).filter((l) => l.omitFromReport !== true && l.includeSheet !== false && (l.address || l.price)).map((l, idx) => (
                   <ComparableSheet
                     key={`land-${l.id}`}
                     printMode

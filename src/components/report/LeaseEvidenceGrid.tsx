@@ -89,6 +89,7 @@ export interface LeaseComp {
   fieldOverrides?: Record<string, string>;
   verificationLink?: string;
   summaryOverrides?: EvidenceSummaryOverrides;
+  omitFromReport?: boolean;
 }
 
 function blank(): LeaseComp {
@@ -130,6 +131,8 @@ export function LeaseEvidenceGrid({
   onSales?: (next: ComparableSale[]) => void;
 }) {
   const comps = meta.ciLeaseComps ?? [];
+  const visibleComps = comps.filter((c) => c.omitFromReport !== true);
+  const archivedComps = comps.filter((c) => c.omitFromReport === true);
   const [expandedNotesId, setExpandedNotesId] = useState<string | null>(null);
   const [agentCallId, setAgentCallId] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -172,12 +175,21 @@ export function LeaseEvidenceGrid({
   }
 
   function move(id: string, direction: -1 | 1) {
-    const idx = comps.findIndex((c) => c.id === id);
+    const visible = comps.filter((c) => c.omitFromReport !== true);
+    const idx = visible.findIndex((c) => c.id === id);
     const target = idx + direction;
-    if (idx < 0 || target < 0 || target >= comps.length) return;
+    if (idx < 0 || target < 0 || target >= visible.length) return;
+    const a = visible[idx];
+    const b = visible[target];
     const next = [...comps];
-    [next[idx], next[target]] = [next[target], next[idx]];
+    const ia = next.findIndex((c) => c.id === a.id);
+    const ib = next.findIndex((c) => c.id === b.id);
+    [next[ia], next[ib]] = [next[ib], next[ia]];
     onMeta({ ciLeaseComps: next });
+  }
+
+  function archive(id: string) {
+    update(id, { omitFromReport: true });
   }
 
   function toggleInSales(comp: LeaseComp, on: boolean) {
@@ -240,7 +252,7 @@ export function LeaseEvidenceGrid({
         }} />
       {comps.length === 0 ? (
         <p className="text-xs text-slate-400 mb-2">No lease comparables yet.</p>
-      ) : (
+      ) : visibleComps.length > 0 ? (
         <>
         <div className="overflow-x-auto">
           <table className="w-full text-xs border-collapse">
@@ -251,7 +263,7 @@ export function LeaseEvidenceGrid({
                   <div className="text-xs font-medium text-foreground">{subjectAddress}</div>
                   <div className="text-[0.6rem] text-slate-400">Subject</div>
                 </th>
-                {comps.map((c, idx) => (
+                {visibleComps.map((c, idx, arr) => (
                   <th key={c.id} className="py-1 pr-2 min-w-[8rem]">
                     <div className="text-[0.65rem] font-semibold text-slate-500 uppercase">Lease {idx + 1}</div>
                     <input
@@ -263,7 +275,8 @@ export function LeaseEvidenceGrid({
                     <div className="mt-0.5 flex gap-1 text-[0.65rem] font-normal">
                       <button type="button" className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-slate-600" onClick={() => setAgentCallId(c.id)}>Agent call</button>
                       <button type="button" disabled={idx === 0} className="text-slate-500 disabled:opacity-30" onClick={() => move(c.id, -1)}>←</button>
-                      <button type="button" disabled={idx === comps.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => move(c.id, 1)}>→</button>
+                      <button type="button" disabled={idx === arr.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => move(c.id, 1)}>→</button>
+                      <button type="button" className="text-slate-500" onClick={() => archive(c.id)} title="Hold in working file">Archive</button>
                       <button type="button" className="text-red-500" onClick={() => remove(c.id)}>×</button>
                     </div>
                     <label className="mt-1 flex items-center gap-1 text-[0.65rem] text-slate-600">
@@ -280,7 +293,7 @@ export function LeaseEvidenceGrid({
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">
                   {subjectPhotoUrl ? <img src={subjectPhotoUrl} alt="Subject" className="w-full max-h-28 rounded object-contain bg-slate-50" /> : "—"}
                 </td>
-                {comps.map((c) => (
+                {visibleComps.map((c) => (
                   <td key={c.id} className="py-1 pr-1">
                     {c.photoUrl ? (
                       <div className="relative">
@@ -299,7 +312,7 @@ export function LeaseEvidenceGrid({
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Proximity to Subject</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
-                {comps.map((c) => (
+                {visibleComps.map((c) => (
                   <td key={c.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.proximity ?? ""} placeholder="e.g. 1.2 km N" onChange={(e) => update(c.id, { proximity: e.target.value })} />
                   </td>
@@ -308,7 +321,7 @@ export function LeaseEvidenceGrid({
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Lease date</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
-                {comps.map((c) => (
+                {visibleComps.map((c) => (
                   <td key={c.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.date} onChange={(e) => update(c.id, { date: e.target.value })} />
                   </td>
@@ -317,7 +330,7 @@ export function LeaseEvidenceGrid({
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Lease amount</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
-                {comps.map((c) => {
+                {visibleComps.map((c) => {
                   const linked = sales?.find(s => s.id === c.id);
                   const shown = c.leaseAmountManual ? (c.leaseAmount ?? "") : (linked?.passingRent || c.leaseAmount || "");
                   return (
@@ -347,7 +360,7 @@ export function LeaseEvidenceGrid({
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Building area</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectBuilding || "—"}</td>
-                {comps.map((c) => (
+                {visibleComps.map((c) => (
                   <td key={c.id} className="py-1 pr-1">
                     <div className="flex items-center gap-1">
                       <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.nla} onChange={(e) => update(c.id, { nla: e.target.value })} />
@@ -359,7 +372,7 @@ export function LeaseEvidenceGrid({
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Net rent $/m²</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
-                {comps.map((c) => {
+                {visibleComps.map((c) => {
                   const linked = sales?.find(s => s.id === c.id);
                   const amount = c.leaseAmountManual ? num(c.leaseAmount) : num(linked?.passingRent || c.leaseAmount);
                   const area = num(c.nla);
@@ -381,7 +394,7 @@ export function LeaseEvidenceGrid({
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Term</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
-                {comps.map((c) => (
+                {visibleComps.map((c) => (
                   <td key={c.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.term} onChange={(e) => update(c.id, { term: e.target.value })} />
                   </td>
@@ -390,7 +403,7 @@ export function LeaseEvidenceGrid({
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Incentives</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
-                {comps.map((c) => (
+                {visibleComps.map((c) => (
                   <td key={c.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.incentives} onChange={(e) => update(c.id, { incentives: e.target.value })} />
                   </td>
@@ -399,7 +412,7 @@ export function LeaseEvidenceGrid({
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Outgoings</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
-                {comps.map((c) => (
+                {visibleComps.map((c) => (
                   <td key={c.id} className="py-1 pr-1">
                     <input className="w-full border border-slate-300 rounded px-1 py-0.5" value={c.outgoings} onChange={(e) => update(c.id, { outgoings: e.target.value })} />
                   </td>
@@ -423,7 +436,7 @@ export function LeaseEvidenceGrid({
                       onChange={(e) => onMeta({ ciSubjectFeatures: { ...(meta.ciSubjectFeatures ?? {}), [feature.id]: e.target.value } })}
                     />
                   </td>
-                  {comps.map((c) => (
+                  {visibleComps.map((c) => (
                     <td key={c.id} className="py-1 pr-1">
                       <div className="flex flex-col gap-0.5">
                         <input
@@ -458,7 +471,7 @@ export function LeaseEvidenceGrid({
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Notes</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
-                {comps.map((c) => (
+                {visibleComps.map((c) => (
                   <td key={c.id} className="py-1 pr-1">
                     <textarea
                       className={`border border-slate-300 rounded px-1 py-0.5 ${expandedNotesId === c.id ? "fixed inset-4 z-50 min-h-[50vh] bg-white shadow-lg" : "w-full min-h-[4rem]"}`}
@@ -474,7 +487,19 @@ export function LeaseEvidenceGrid({
           </table>
         </div>
         </>
-      )}
+      ) : null}
+      {archivedComps.length > 0 ? (
+        <div className="mt-2 text-xs text-slate-500">
+          <div className="font-medium mb-1">Archived (not on report)</div>
+          {archivedComps.map((c) => (
+            <div key={c.id} className="flex items-center gap-2">
+              <span className="truncate">{c.address || "Lease"}</span>
+              <button type="button" className="underline" onClick={() => update(c.id, { omitFromReport: false })}>Restore</button>
+              <button type="button" className="text-red-500" onClick={() => remove(c.id)}>×</button>
+            </div>
+          ))}
+        </div>
+      ) : null}
       <div className="mt-2 flex items-center gap-3">
         <label className="flex items-center gap-1 text-xs">
           <span className="text-slate-500">Adopted net rent $/m²</span>
@@ -505,7 +530,7 @@ export function LeaseEvidenceGrid({
           </label>
         )}
       </div>
-      {comps.filter((c) => c.address || c.leaseAmount || c.netRentPerM2 || c.nla).map((c, idx) => (
+      {visibleComps.filter((c) => c.address || c.leaseAmount || c.netRentPerM2 || c.nla).map((c, idx) => (
         <ComparableSheet
           key={c.id}
           inspectionId={inspectionId}
@@ -521,7 +546,7 @@ export function LeaseEvidenceGrid({
       <div className="mt-4">
         <CommercialEvidenceSummaryEditor
           kind="leases"
-          leases={comps}
+          leases={visibleComps}
           values={values}
           meta={meta}
           pools={{
