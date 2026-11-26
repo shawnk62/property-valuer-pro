@@ -5,6 +5,7 @@
  */
 import type { InspectionValues } from "@/lib/report/types";
 import { formatPropertyType } from "@/lib/report/schema";
+import { PausedTextarea } from "./PausedTextarea";
 
 export interface SheetPhoto {
   url: string;
@@ -188,20 +189,20 @@ export function ComparableSheet({ data, values, onChange, printMode = false }: P
         <>
           <div className="mt-3">
             <div className="text-xs font-medium text-slate-600">Description</div>
-            <textarea
+            <PausedTextarea
               className="mt-1 w-full min-h-[8rem] rounded border border-slate-300 px-2 py-1 text-xs"
               value={data.description ?? ""}
               placeholder="Factual description of the comparable"
-              onChange={(e) => onChange({ description: e.target.value })}
+              onCommit={(description) => onChange({ description })}
             />
           </div>
           <div className="mt-2">
             <div className="text-xs font-medium text-slate-600">Commentary</div>
-            <textarea
+            <PausedTextarea
               className="mt-1 w-full min-h-[8rem] rounded border border-slate-300 px-2 py-1 text-xs"
               value={data.commentary ?? ""}
               placeholder="Valuer’s comparison commentary"
-              onChange={(e) => onChange({ commentary: e.target.value })}
+              onCommit={(commentary) => onChange({ commentary })}
             />
           </div>
           <div className="mt-2 text-[0.65rem] text-slate-400">
