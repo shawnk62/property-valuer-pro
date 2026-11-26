@@ -661,6 +661,11 @@ export interface ReportMeta {
     verificationLink?: string;
     /** Editable overrides for the commercial/industrial evidence summary table. */
     summaryOverrides?: EvidenceSummaryOverrides;
+    /**
+     * When true, the lease stays in the working file (notes, photos, adjustments)
+     * but is omitted from the printed report and from the lease evidence grid.
+     */
+    omitFromReport?: boolean;
   }>;
   /** Map of lease evidence locations. */
   ciLeaseMapUrl?: string;
@@ -700,6 +705,11 @@ export interface ReportMeta {
     fieldOverrides?: Record<string, string>;
     /** Working-report only verification link for public-source values. */
     verificationLink?: string;
+    /**
+     * When true, the land sale stays in the working file (notes, photos, adjustments)
+     * but is omitted from the printed report and from the land sales grid.
+     */
+    omitFromReport?: boolean;
   }>;
 }
 

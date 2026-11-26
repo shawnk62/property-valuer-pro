@@ -275,6 +275,7 @@ export function printedLeases(
   leases: LeaseSheetRecord[] | null | undefined,
 ): LeaseSheetRecord[] {
   return (leases ?? []).filter((c) => {
+    if (c.omitFromReport === true) return false;
     const address = String(c.address ?? "").replace(/[—–-]/g, "").trim();
     const amount = String(c.leaseAmount ?? "").replace(/[—–-]/g, "").trim();
     const rate = String(c.netRentPerM2 ?? "").replace(/[—–-]/g, "").trim();

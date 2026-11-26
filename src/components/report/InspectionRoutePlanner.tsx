@@ -43,13 +43,15 @@ export function InspectionRoutePlanner({
   const [appLink, setAppLink] = useState<string | null>(null);
   const [startFrom, setStartFrom] = useState<"subject" | "current">("current");
   const onReport = new Set(salesOnReport(sales).map((s) => s.id));
+  const leasesOnReport = new Set((leaseComps ?? []).filter((c) => c.omitFromReport !== true).map((c) => "lease-" + c.id));
+  const landOnReport = new Set((landSales ?? []).filter((s) => s.omitFromReport !== true).map((s) => "land-" + s.id));
   const saleCandidates = sales.filter((s) => s.address.trim()).map((s) => ({ id: s.id, address: s.address, kind: "sale" as const, hasPhoto: Boolean(s.photoUrl) }));
   const leaseCandidates = (leaseComps ?? []).filter((c) => c.address.trim()).map((c) => ({ id: "lease-" + c.id, address: c.address, kind: "lease" as const, hasPhoto: Boolean(c.photoUrl) }));
   const landCandidates = (landSales ?? []).filter((s) => s.address.trim()).map((s) => ({ id: "land-" + s.id, address: s.address, kind: "land" as const, hasPhoto: Boolean(s.photoUrl) }));
   const [selected, setSelected] = useState<Set<string>>(() => new Set([
     ...saleCandidates.filter((c) => onReport.has(c.id) && !c.hasPhoto).map((c) => c.id),
-    ...leaseCandidates.filter((c) => !c.hasPhoto).map((c) => c.id),
-    ...landCandidates.filter((c) => !c.hasPhoto).map((c) => c.id),
+    ...leaseCandidates.filter((c) => leasesOnReport.has(c.id) && !c.hasPhoto).map((c) => c.id),
+    ...landCandidates.filter((c) => landOnReport.has(c.id) && !c.hasPhoto).map((c) => c.id),
   ]));
   const candidates = [...saleCandidates, ...leaseCandidates, ...landCandidates];
 
