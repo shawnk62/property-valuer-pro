@@ -378,6 +378,27 @@
   margin-bottom: 0;
 }
 
+/* Commercial/industrial evidence summary — 10 columns on A4 (≈180 mm of 186 mm). */
+.sales-evidence-item.sales-evidence-ci .ci-col-num { width: 8mm; }
+.sales-evidence-item.sales-evidence-ci .ci-col-address { width: 28mm; }
+.sales-evidence-item.sales-evidence-ci .ci-col-price { width: 22mm; white-space: nowrap; }
+.sales-evidence-item.sales-evidence-ci .ci-col-date { width: 20mm; }
+.sales-evidence-item.sales-evidence-ci .ci-col-bldg { width: 16mm; white-space: nowrap; }
+.sales-evidence-item.sales-evidence-ci .ci-col-bldg-rate { width: 18mm; }
+.sales-evidence-item.sales-evidence-ci .ci-col-land { width: 16mm; white-space: nowrap; }
+.sales-evidence-item.sales-evidence-ci .ci-col-land-rate { width: 18mm; }
+.sales-evidence-item.sales-evidence-ci .ci-col-yield { width: 16mm; }
+.sales-evidence-item.sales-evidence-ci .ci-col-rating { width: 18mm; }
+.sales-evidence-item.sales-evidence-ci thead th {
+  white-space: normal;
+  line-height: 1.2;
+}
+.sales-evidence-item.sales-evidence-ci .ci-wrap-cell {
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
 .risk-ratings-print table {
   width: 100%;
   border-collapse: collapse;
@@ -1124,6 +1145,25 @@
   }
   #report-preview-sheet .sales-evidence-item .sales-rate-cell,
   #report-preview-sheet .sales-evidence-item .sales-date-cell {
+    overflow: hidden !important;
+    white-space: normal !important;
+  }
+
+  #report-preview-sheet .sales-evidence-item.sales-evidence-ci .ci-col-num { width: 8mm !important; }
+  #report-preview-sheet .sales-evidence-item.sales-evidence-ci .ci-col-address { width: 28mm !important; }
+  #report-preview-sheet .sales-evidence-item.sales-evidence-ci .ci-col-price { width: 22mm !important; white-space: nowrap !important; }
+  #report-preview-sheet .sales-evidence-item.sales-evidence-ci .ci-col-date { width: 20mm !important; }
+  #report-preview-sheet .sales-evidence-item.sales-evidence-ci .ci-col-bldg { width: 16mm !important; white-space: nowrap !important; }
+  #report-preview-sheet .sales-evidence-item.sales-evidence-ci .ci-col-bldg-rate { width: 18mm !important; }
+  #report-preview-sheet .sales-evidence-item.sales-evidence-ci .ci-col-land { width: 16mm !important; white-space: nowrap !important; }
+  #report-preview-sheet .sales-evidence-item.sales-evidence-ci .ci-col-land-rate { width: 18mm !important; }
+  #report-preview-sheet .sales-evidence-item.sales-evidence-ci .ci-col-yield { width: 16mm !important; }
+  #report-preview-sheet .sales-evidence-item.sales-evidence-ci .ci-col-rating { width: 18mm !important; }
+  #report-preview-sheet .sales-evidence-item.sales-evidence-ci thead th {
+    white-space: normal !important;
+    line-height: 1.2 !important;
+  }
+  #report-preview-sheet .sales-evidence-item.sales-evidence-ci .ci-wrap-cell {
     overflow: hidden !important;
     white-space: normal !important;
   }

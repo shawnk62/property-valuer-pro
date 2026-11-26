@@ -62,3 +62,61 @@ export function PausedTextarea({
     />
   );
 }
+
+/** Same pause-before-commit behaviour for single-line inputs. */
+export function PausedInput({
+  value,
+  onCommit,
+  className,
+  placeholder,
+  title,
+}: {
+  value: string;
+  onCommit: (value: string) => void;
+  className?: string;
+  placeholder?: string;
+  title?: string;
+}) {
+  const [text, setText] = useState(value);
+  const latest = useRef(value);
+  const focused = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const commitRef = useRef(onCommit);
+  commitRef.current = onCommit;
+
+  useEffect(() => {
+    if (focused.current) return;
+    latest.current = value;
+    setText(value);
+  }, [value]);
+
+  function commit(next: string) {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    commitRef.current(next);
+  }
+
+  return (
+    <input
+      value={text}
+      placeholder={placeholder}
+      title={title}
+      className={className}
+      onFocus={() => {
+        focused.current = true;
+      }}
+      onChange={(e) => {
+        const next = e.target.value;
+        latest.current = next;
+        setText(next);
+        if (timer.current) clearTimeout(timer.current);
+        timer.current = setTimeout(() => commit(next), 500);
+      }}
+      onBlur={() => {
+        focused.current = false;
+        commit(latest.current);
+      }}
+    />
+  );
+}
+

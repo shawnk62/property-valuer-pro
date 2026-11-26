@@ -242,6 +242,19 @@ export interface FeatureAdjustment {
   relativityManual?: boolean;
 }
 
+/** Optional printed-summary overrides. A defined key (including "") wins over auto-populated values. */
+export type EvidenceSummaryOverrides = Partial<{
+  price: string;
+  date: string;
+  buildingArea: string;
+  pricePerM2Building: string;
+  landArea: string;
+  pricePerM2Land: string;
+  indicatedYield: string;
+  overallRating: string;
+  comments: string;
+}>;
+
 export interface ComparableSale {
   id: string;
   address: string;
@@ -259,6 +272,8 @@ export interface ComparableSale {
   description?: string;
   /** Printed rating on the sales schedule. Blank uses the calculated rating. */
   printRating?: string;
+  /** Editable overrides for the commercial/industrial evidence summary table. */
+  summaryOverrides?: EvidenceSummaryOverrides;
   /** Gross living area (Sale Price/GLA row + GLA adjustment line). */
   gla?: string;
   beds?: string;
@@ -638,6 +653,8 @@ export interface ReportMeta {
     fieldOverrides?: Record<string, string>;
     /** Working-report only verification link for public-source values. */
     verificationLink?: string;
+    /** Editable overrides for the commercial/industrial evidence summary table. */
+    summaryOverrides?: EvidenceSummaryOverrides;
   }>;
   /** Map of lease evidence locations. */
   ciLeaseMapUrl?: string;
