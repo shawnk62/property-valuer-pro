@@ -590,8 +590,8 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
         reader.onerror = () => reject(new Error("Could not read map"));
         reader.readAsDataURL(file);
       });
-      if (kind === "lease") onMeta({ ciLeaseMapUrl: dataUrl });
-      else onMeta({ ciLandMapUrl: dataUrl });
+      if (kind === "lease") setMeta({ ciLeaseMapUrl: dataUrl });
+      else setMeta({ ciLandMapUrl: dataUrl });
       toast.success(`${kind === "lease" ? "Lease" : "Land sales"} map generated`);
       setStatus("Map generated.");
     } catch (err) {
