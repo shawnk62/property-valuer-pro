@@ -57,6 +57,8 @@ export interface LeaseComp {
   address: string;
   date: string;
   nla: string;
+  landArea?: string;
+  landUnit?: "m2" | "ha";
   netRentPerM2: string;
   term: string;
   incentives: string;
@@ -98,6 +100,8 @@ function blank(): LeaseComp {
     address: "",
     date: "",
     nla: "",
+    landArea: "",
+    landUnit: "m2",
     netRentPerM2: "",
     term: "",
     incentives: "",
@@ -138,6 +142,7 @@ export function LeaseEvidenceGrid({
   const photoInputRef = useRef<HTMLInputElement>(null);
   const photoTargetRef = useRef<string | null>(null);
   const subjectAddress = [values["prop_address"], values["prop_suburb"]].filter(Boolean).join(", ") || "Subject";
+  const subjectLand = String(values["prop_usable_sitearea"] ?? values["prop_sitearea"] ?? "");
   const subjectBuilding = String(values["comm_nla"] ?? values["comm_gba"] ?? "");
   const subjectClear = String(values["comm_clear_height"] ?? "");
   const subjectHardstand = String(values["comm_hardstand"] ?? "");
@@ -201,7 +206,8 @@ export function LeaseEvidenceGrid({
         address: comp.address,
         saleDate: comp.date,
         salePrice: comp.leaseAmount || "",
-        landArea: "",
+        landArea: comp.landArea ?? "",
+        landUnit: comp.landUnit ?? "m2",
         gla: comp.nla,
         comments: comp.notes,
         ...(comp.proximity !== undefined ? { proximity: comp.proximity } : {}),
@@ -356,6 +362,29 @@ export function LeaseEvidenceGrid({
                     </td>
                   );
                 })}
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Land area</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">{subjectLand || "—"}</td>
+                {visibleComps.map((c) => (
+                  <td key={c.id} className="py-1 pr-1">
+                    <div className="flex gap-1">
+                      <input
+                        className="w-full border border-slate-300 rounded px-1 py-0.5"
+                        value={c.landArea ?? ""}
+                        onChange={(e) => update(c.id, { landArea: e.target.value })}
+                      />
+                      <select
+                        className="border border-slate-300 rounded px-0.5 py-0.5 text-[0.65rem]"
+                        value={c.landUnit ?? "m2"}
+                        onChange={(e) => update(c.id, { landUnit: e.target.value as "m2" | "ha" })}
+                      >
+                        <option value="m2">m²</option>
+                        <option value="ha">ha</option>
+                      </select>
+                    </div>
+                  </td>
+                ))}
               </tr>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Building area</td>
@@ -599,6 +628,24 @@ function AgentCallSheet({
           {field("Agent name", comp.agentName ?? "", "agentName")}
           {field("Agency", comp.agency ?? "", "agency")}
           {field("Property use", comp.tenantUse ?? "", "tenantUse", "e.g. warehouse, office")}
+          <label className="block">
+            <span className="text-sm font-medium text-slate-700">Land area</span>
+            <div className="mt-1 flex gap-1">
+              <input
+                className="w-full rounded border border-slate-300 px-3 py-2 text-base"
+                value={comp.landArea ?? ""}
+                onChange={(e) => onChange({ landArea: e.target.value })}
+              />
+              <select
+                className="rounded border border-slate-300 px-2 py-2 text-sm"
+                value={comp.landUnit ?? "m2"}
+                onChange={(e) => onChange({ landUnit: e.target.value as "m2" | "ha" })}
+              >
+                <option value="m2">m²</option>
+                <option value="ha">ha</option>
+              </select>
+            </div>
+          </label>
           {field("Area (NLA)", comp.nla, "nla", "m²")}
           {field("Lease start date", comp.date, "date")}
           {field("Term and options", comp.term, "term", "e.g. 5 + 5")}

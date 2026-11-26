@@ -210,6 +210,8 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
         date: sale.saleDate,
         leaseAmount: sale.passingRent ?? "",
         nla: sale.gla ?? "",
+        landArea: sale.landArea,
+        landUnit: sale.landUnit,
         netRentPerM2: "",
         term: "",
         incentives: "",
