@@ -597,6 +597,32 @@ export interface ReportMeta {
   ciNonCoreIncomePv?: string;
   /** Round adopted capitalised value to nearest (e.g. 25000). */
   ciAdoptRoundTo?: string;
+  /** Rent basis for the assessed market rent rate. Missing means "net". */
+  ciRentBasis?: "net" | "gross";
+  /** Manual override of lettable / building area (m²) used in capitalisation. */
+  ciAreaOverride?: string;
+  /** Manual override of remaining years to next market review. */
+  ciRemainingYears?: string;
+  /** When true, the option term is included in the rent-difference calculation. */
+  ciIncludeOption?: boolean;
+  /** Additional years covered by a non-market option. */
+  ciOptionYears?: string;
+  /** Basis of rent during the option term. */
+  ciOptionRentBasis?: "market" | "fixed-pct" | "fixed-dollar" | "cpi";
+  /** Type of contractual rent increases before the next market review. */
+  ciIncreaseType?: "none" | "fixed-pct" | "fixed-dollar" | "cpi" | "manual";
+  /** Fixed percentage increase per year (contractual or option). */
+  ciIncreasePct?: string;
+  /** Fixed dollar increase per year. */
+  ciIncreaseDollar?: string;
+  /** Manual year-by-year contractual rent amounts for the detailed adjustment. */
+  ciManualSteps?: Array<{ year: string; rent: string }>;
+  /** Manual override of the total passing rent used in the rent-difference PV. */
+  ciPassingRentOverride?: string;
+  /** When true, ciExitCapRate is a manual discount-rate override (otherwise it defaults to the capitalisation rate). */
+  ciDiscountManual?: boolean;
+  /** Keys the valuer has manually overridden in the capitalisation input list. */
+  ciOverriddenFields?: string[];
   ciReplacementCostRate?: string;
   ciEntrepreneurialIncentive?: string;
   ciPhysicalDepreciation?: string;
