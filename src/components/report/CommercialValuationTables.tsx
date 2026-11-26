@@ -346,7 +346,25 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                   </td>
                 ))}
               </tr>
-              
+              <tr className="border-b border-slate-100">
+                <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Use as lease evidence</td>
+                <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
+                {sales.filter((s) => s.omitFromReport !== true).map((s) => {
+                  const linked = (meta.ciLeaseComps ?? []).some((c) => c.id === s.id);
+                  return (
+                    <td key={s.id} className="py-1 pr-1 text-center">
+                      <input
+                        type="checkbox"
+                        checked={linked}
+                        onChange={(e) => toggleLeaseEvidence(s, e.target.checked)}
+                      />
+                      {linked ? (
+                        <div className="mt-0.5 text-[0.6rem] text-slate-500">Also in lease evidence</div>
+                      ) : null}
+                    </td>
+                  );
+                })}
+              </tr>
               <tr className="border-b border-slate-100">
                 <td className="sticky left-0 z-10 bg-white py-1 pr-2 text-slate-500 min-w-[6rem]">Date</td>
                 <td className="sticky left-[6rem] z-10 bg-white py-1 pr-2 min-w-[8rem]">—</td>
