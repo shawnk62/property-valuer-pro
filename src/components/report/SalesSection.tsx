@@ -10,7 +10,6 @@ import {
 import { PausedTextarea } from "@/components/report/PausedTextarea";
 import { toast } from "sonner";
 import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
-import { CommercialAnalysisPanel } from "@/components/report/CommercialAnalysisPanel";
 import { CostApproachSection } from "@/components/report/CostApproachSection";
 import { CapitalisationApproachSection } from "@/components/report/CapitalisationApproachSection";
 import { CommercialEvidenceSummaryEditor } from "@/components/report/CommercialEvidenceSummaryEditor";
@@ -3114,7 +3113,7 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
       </>
       ) : null}
 
-      {/* Approach sections — evidence, photos and commentary stay together */}
+      {/* Income approach — lease evidence, capitalisation and DCF only */}
       {(panel === "all" || panel === "income") && (Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
         <>
           <div className="space-y-4 rounded-md border border-border bg-card p-4">
@@ -3143,53 +3142,11 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
           </div>
 
           <div className="space-y-4 rounded-md border border-border bg-card p-4">
-            <h3 className="text-sm font-semibold text-foreground">Cost approach</h3>
-            <LandSalesSection meta={draft.reportMeta} values={draft.values} onMeta={setMeta} subjectPhotoUrl={subjectFrontPhoto?.url} inspectionId={draft.inspectionId} comparableSales={draft.sales} />
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "costApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), costApproach: e.target.checked } })} />
-              Include Cost Approach on report
-            </label>
-            <PausedTextarea value={draft.narrative.costApproach ?? ""} onChange={(v) => setNarrative({ costApproach: v })} placeholder="Cost approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
-          </div>
-
-          <div className="space-y-4 rounded-md border border-border bg-card p-4">
             <h3 className="text-sm font-semibold text-foreground">Reconciliation</h3>
             <PausedTextarea value={draft.narrative.valueReconciliation ?? ""} onChange={(v) => setNarrative({ valueReconciliation: v })} placeholder="Reconciliation of value…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
           </div>
         </>
-      ) : (
-        <div className="space-y-6 rounded-md border border-border bg-card p-4">
-          <h3 className="text-sm font-semibold text-foreground">Income and Cost Approaches</h3>
-          <p className="text-xs text-muted-foreground">Supporting calculations stay visible while the narrative is written.</p>
-          <CommercialAnalysisPanel values={draft.values} meta={draft.reportMeta} onMeta={setMeta} landValue={(() => {
-            const rate = Number(String(draft.reportMeta.ciAdoptedLandRate ?? "").replace(/[^0-9.-]/g, ""));
-            const area = Number(String(draft.values["prop_usable_sitearea"] ?? draft.values["prop_sitearea"] ?? "").replace(/[^0-9.-]/g, ""));
-            return Number.isFinite(rate) && Number.isFinite(area) && rate > 0 && area > 0 ? rate * area : null;
-          })()} />
-          <div className="space-y-4">
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "leaseEvidence")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), leaseEvidence: e.target.checked } })} />
-              Include Lease Evidence on report
-            </label>
-            <PausedTextarea value={draft.narrative.leaseEvidence ?? ""} onChange={(v) => setNarrative({ leaseEvidence: v })} placeholder="Lease evidence commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "capitalisationApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), capitalisationApproach: e.target.checked } })} />
-              Include Capitalisation Approach on report
-            </label>
-            <PausedTextarea value={draft.narrative.capitalisationApproach ?? ""} onChange={(v) => setNarrative({ capitalisationApproach: v })} placeholder="Capitalisation approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "dcfApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), dcfApproach: e.target.checked } })} />
-              Include Discounted Cash Flow on report
-            </label>
-            <PausedTextarea value={draft.narrative.dcfApproach ?? ""} onChange={(v) => setNarrative({ dcfApproach: v })} placeholder="Discounted cash flow commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "costApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), costApproach: e.target.checked } })} />
-              Include Cost Approach on report
-            </label>
-            <PausedTextarea value={draft.narrative.costApproach ?? ""} onChange={(v) => setNarrative({ costApproach: v })} placeholder="Cost approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
-          </div>
-        </div>
-      )}
+      ) : null}
 
       {(panel === "all" || panel === "cost") ? (
       <>
