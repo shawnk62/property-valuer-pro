@@ -2890,6 +2890,7 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
         </div>
       ) : null}
       </>
+      </>
 
       ) : null}
 
