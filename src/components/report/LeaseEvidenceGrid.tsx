@@ -518,15 +518,58 @@ export function LeaseEvidenceGrid({
         </>
       ) : null}
       {archivedComps.length > 0 ? (
-        <div className="mt-2 text-xs text-slate-500">
-          <div className="font-medium mb-1">Archived (not on report)</div>
-          {archivedComps.map((c) => (
-            <div key={c.id} className="flex items-center gap-2">
-              <span className="truncate">{c.address || "Lease"}</span>
-              <button type="button" className="underline" onClick={() => update(c.id, { omitFromReport: false })}>Restore</button>
-              <button type="button" className="text-red-500" onClick={() => remove(c.id)}>×</button>
-            </div>
-          ))}
+        <div className="rounded-md border border-dashed border-border bg-muted/20 p-4 space-y-3">
+          <div>
+            <h4 className="text-sm font-semibold text-foreground">
+              Working file — omitted from report
+            </h4>
+            <p className="mt-1 text-xs text-muted-foreground">
+              These leases stay on the job with notes, photos and adjustments. They
+              are not printed and do not leave a gap in the grid. Tick Include on report
+              to put one back.
+            </p>
+          </div>
+          <ul className="space-y-2">
+            {archivedComps.map((c) => (
+              <li
+                key={c.id}
+                className="flex flex-wrap items-start gap-3 rounded border border-border bg-card p-2"
+              >
+                {c.photoUrl ? (
+                  <img
+                    src={c.photoUrl}
+                    alt=""
+                    className="h-14 w-16 shrink-0 rounded border border-border object-cover"
+                  />
+                ) : null}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground">
+                    {c.address.trim() || "Untitled lease"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {[c.date, c.leaseAmount || (c.netRentPerM2 ? `${c.netRentPerM2}/m²` : ""), c.nla ? `${c.nla} m²` : ""].filter(Boolean).join(" · ") ||
+                      "No lease facts entered"}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => update(c.id, { omitFromReport: false })}
+                    className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                  >
+                    Include on report
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => remove(c.id)}
+                    className="rounded-md border border-input px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-destructive"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
       <div className="mt-2 flex items-center gap-3">

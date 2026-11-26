@@ -359,15 +359,58 @@ export function LandSalesSection({
         </>
       ) : null}
       {archivedSales.length > 0 ? (
-        <div className="mt-2 text-xs text-slate-500">
-          <div className="font-medium mb-1">Archived (not on report)</div>
-          {archivedSales.map((s) => (
-            <div key={s.id} className="flex items-center gap-2">
-              <span className="truncate">{s.address || "Land sale"}</span>
-              <button type="button" className="underline" onClick={() => update(s.id, { omitFromReport: false })}>Restore</button>
-              <button type="button" className="text-red-500" onClick={() => remove(s.id)}>×</button>
-            </div>
-          ))}
+        <div className="rounded-md border border-dashed border-border bg-muted/20 p-4 space-y-3">
+          <div>
+            <h4 className="text-sm font-semibold text-foreground">
+              Working file — omitted from report
+            </h4>
+            <p className="mt-1 text-xs text-muted-foreground">
+              These land sales stay on the job with notes, photos and adjustments. They
+              are not printed and do not leave a gap in the grid. Tick Include on report
+              to put one back.
+            </p>
+          </div>
+          <ul className="space-y-2">
+            {archivedSales.map((s) => (
+              <li
+                key={s.id}
+                className="flex flex-wrap items-start gap-3 rounded border border-border bg-card p-2"
+              >
+                {s.photoUrl ? (
+                  <img
+                    src={s.photoUrl}
+                    alt=""
+                    className="h-14 w-16 shrink-0 rounded border border-border object-cover"
+                  />
+                ) : null}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground">
+                    {s.address.trim() || "Untitled land sale"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {[s.date, s.price, s.landArea ? `${s.landArea} ${s.landUnit === "ha" ? "ha" : "m²"}` : ""].filter(Boolean).join(" · ") ||
+                      "No land sale facts entered"}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => update(s.id, { omitFromReport: false })}
+                    className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                  >
+                    Include on report
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => remove(s.id)}
+                    className="rounded-md border border-input px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-destructive"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
       {visibleSales.filter((s) => s.address || s.price).map((s, idx) => (
