@@ -274,7 +274,7 @@ export function CapitalisationApproachSection({
   return (
     <div className="space-y-4">
       <div>
-        <div className="text-sm font-semibold text-slate-700">The capitalisation approach</div>
+        <div className="text-sm font-semibold text-slate-700">Capitalisation method</div>
         <p className="text-xs text-slate-500 mt-1">
           All inputs are listed below. Pre-filled figures come from the inspection form or earlier working-report fields.
           Changing a pre-filled figure asks for confirmation and marks it as overridden for this report only.

@@ -108,7 +108,10 @@ const TABS = [
   { id: "subject", label: "Subject & purpose" },
   { id: "narrative", label: "Narrative" },
   { id: "photos", label: "Photos" },
-  { id: "sales", label: "Comparable sales" },
+  { id: "market", label: "Market evidence" },
+  { id: "income", label: "Income approach" },
+  { id: "cost", label: "Cost approach" },
+  { id: "maps", label: "Maps" },
   { id: "signature", label: "Signature" },
   { id: "preview", label: "Preview" },
 ] as const;
@@ -460,9 +463,24 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
               <PhotosSection controller={controller} />
             </SectionGuard>
           ) : null}
-          {tab === "sales" ? (
+          {tab === "market" ? (
             <SectionGuard>
-              <SalesSection controller={controller} />
+              <SalesSection controller={controller} panel="market" />
+            </SectionGuard>
+          ) : null}
+          {tab === "income" ? (
+            <SectionGuard>
+              <SalesSection controller={controller} panel="income" />
+            </SectionGuard>
+          ) : null}
+          {tab === "cost" ? (
+            <SectionGuard>
+              <SalesSection controller={controller} panel="cost" />
+            </SectionGuard>
+          ) : null}
+          {tab === "maps" ? (
+            <SectionGuard>
+              <SalesSection controller={controller} panel="maps" />
             </SectionGuard>
           ) : null}
           {tab === "signature" ? (

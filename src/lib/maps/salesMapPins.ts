@@ -120,3 +120,75 @@ export function staticMapQuery(pins: SalesMapPin[]): {
     markers,
   };
 }
+
+/** Pins for a lease evidence map (subject + lease comps). */
+export function pinsFromLeases(opts: {
+  values: InspectionValues;
+  leases: Array<{ id: string; address?: string; omitFromReport?: boolean }> | null | undefined;
+  saved?: SalesMapPin[] | null;
+}): SalesMapPin[] {
+  const leases = (opts.leases ?? []).filter((l) => l.omitFromReport !== true && String(l.address ?? "").trim());
+  const saved = opts.saved ?? [];
+  const subjectSaved = saved.find((p) => p.kind === "subject");
+  const pins: SalesMapPin[] = [];
+  pins.push({
+    id: subjectSaved?.id || "pin-subject",
+    label: "Subject",
+    shortLabel: "S",
+    lat: subjectSaved?.lat ?? 0,
+    lng: subjectSaved?.lng ?? 0,
+    kind: "subject",
+    address: subjectAddressLine(opts.values),
+  });
+  leases.forEach((lease, i) => {
+    const addr = String(lease.address ?? "").trim();
+    const prev = saved.find((p) => p.saleId === lease.id);
+    pins.push({
+      id: prev?.id || `pin-lease-${lease.id}`,
+      label: `Lease ${i + 1}`,
+      shortLabel: shortSaleLabel(i),
+      lat: prev?.lat ?? 0,
+      lng: prev?.lng ?? 0,
+      kind: "sale",
+      saleId: lease.id,
+      address: addr ? geocodeQueryForSale(addr, opts.values) : "",
+    });
+  });
+  return pins;
+}
+
+/** Pins for a land sales map (subject + land sales). */
+export function pinsFromLandSales(opts: {
+  values: InspectionValues;
+  landSales: Array<{ id: string; address?: string; omitFromReport?: boolean }> | null | undefined;
+  saved?: SalesMapPin[] | null;
+}): SalesMapPin[] {
+  const sales = (opts.landSales ?? []).filter((s) => s.omitFromReport !== true && String(s.address ?? "").trim());
+  const saved = opts.saved ?? [];
+  const subjectSaved = saved.find((p) => p.kind === "subject");
+  const pins: SalesMapPin[] = [];
+  pins.push({
+    id: subjectSaved?.id || "pin-subject",
+    label: "Subject",
+    shortLabel: "S",
+    lat: subjectSaved?.lat ?? 0,
+    lng: subjectSaved?.lng ?? 0,
+    kind: "subject",
+    address: subjectAddressLine(opts.values),
+  });
+  sales.forEach((sale, i) => {
+    const addr = String(sale.address ?? "").trim();
+    const prev = saved.find((p) => p.saleId === sale.id);
+    pins.push({
+      id: prev?.id || `pin-land-${sale.id}`,
+      label: `Land ${i + 1}`,
+      shortLabel: shortSaleLabel(i),
+      lat: prev?.lat ?? 0,
+      lng: prev?.lng ?? 0,
+      kind: "sale",
+      saleId: sale.id,
+      address: addr ? geocodeQueryForSale(addr, opts.values) : "",
+    });
+  });
+  return pins;
+}

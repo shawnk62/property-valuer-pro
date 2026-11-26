@@ -35,6 +35,8 @@ import { geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
 import { proximityFromPins, proximityWithBearingFromPins } from "@/lib/maps/distance";
 import {
   pinsFromDraft,
+  pinsFromLeases,
+  pinsFromLandSales,
   pinsNeedingGeocode,
   subjectAddressLine,
   type SalesMapPin,
@@ -115,7 +117,7 @@ function parseAmountInput(raw: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function SalesSection({ controller }: { controller: ReportDraftController }) {
+export function SalesSection({ controller, panel = "all" }: { controller: ReportDraftController; panel?: "all" | "market" | "income" | "cost" | "maps" }) {
   const { draft, setSales, setMeta, setPhotos, setValue, setNarrative, loaded } = controller;
   const sales = draft.sales.map(ensureSaleAdjustments);
   const gridSales = salesOnReport(sales);
@@ -552,6 +554,51 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       const message = err instanceof Error ? err.message : "Map generation failed";
       toast.error("Could not generate maps", { description: message });
       setStatus(`Maps failed: ${message}`);
+    } finally {
+      setMapsBusy(false);
+    }
+  }
+
+
+  async function generateEvidenceMap(
+    kind: "lease" | "land",
+  ) {
+    if (!isGoogleMapsConfigured()) {
+      toast.error("Add a Google Maps API key in Settings first");
+      return;
+    }
+    const key = loadGoogleMapsKey();
+    setMapsBusy(true);
+    setStatus(`Generating ${kind} map…`);
+    try {
+      const pins = kind === "lease"
+        ? pinsFromLeases({ values: draft.values, leases: draft.reportMeta.ciLeaseComps, saved: (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null })
+        : pinsFromLandSales({ values: draft.values, landSales: draft.reportMeta.ciLandSales, saved: (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null });
+      const need = pinsNeedingGeocode(pins).filter((p) => p.address);
+      let resolved = pins;
+      if (need.length > 0) {
+        const geo = await geocodeGoogleAddresses({ data: { apiKey: key, addresses: need.map((p) => p.address!) } });
+        const byId = new Map(need.map((p, i) => [p.id, geo.results[i]]));
+        resolved = pins.map((p) => {
+          const hit = byId.get(p.id);
+          return hit?.lat != null && hit.lng != null ? { ...p, lat: hit.lat, lng: hit.lng } : p;
+        });
+      }
+      const file = await buildComparableSalesMap({ apiKey: key, pins: resolved });
+      const reader = new FileReader();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(String(reader.result ?? ""));
+        reader.onerror = () => reject(new Error("Could not read map"));
+        reader.readAsDataURL(file);
+      });
+      if (kind === "lease") onMeta({ ciLeaseMapUrl: dataUrl });
+      else onMeta({ ciLandMapUrl: dataUrl });
+      toast.success(`${kind === "lease" ? "Lease" : "Land sales"} map generated`);
+      setStatus("Map generated.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Map generation failed";
+      toast.error("Could not generate map", { description: message });
+      setStatus(`Map failed: ${message}`);
     } finally {
       setMapsBusy(false);
     }
@@ -1373,6 +1420,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
 
     <div className="space-y-4">
+      {(panel === "all" || panel === "market") ? (
       <div
         className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-4"
         onDragOver={(e) => {
@@ -2842,28 +2890,45 @@ export function SalesSection({ controller }: { controller: ReportDraftController
       ) : null}
       </>
 
-      {/* Manual sales map + front photos — reliable path for report placement */}
+      ) : null}
+
+      {(panel === "all" || panel === "maps") ? (
+      <>
       <div className="rounded-md border border-border bg-card p-4 space-y-4">
         <div>
           <h4 className="text-sm font-semibold text-foreground">Sales map &amp; front photos</h4>
           <p className="mt-1 text-xs text-muted-foreground">
-            Generate maps fills the location tile (subject plus nearest CBD / town / regional
-            centre) and the sales-map tile (subject address + comparable numbers). Location-map
-            scale can be adjusted below without changing the sales map.
+            Generate location and sales maps (subject + comparables), or generate separate lease and land-sales maps for the income and cost approaches. Location-map scale can be adjusted below.
           </p>
         </div>
 
         <div className="flex flex-wrap items-start gap-4">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="text-xs font-medium text-foreground">Sales map</p>
+              <p className="text-xs font-medium text-foreground">Maps</p>
               <button
                 type="button"
                 disabled={mapsBusy}
                 onClick={() => void generateGoogleMaps()}
                 className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
               >
-                {mapsBusy ? "Generating…" : "Generate maps"}
+                {mapsBusy ? "Generating…" : "Location + sales maps"}
+              </button>
+              <button
+                type="button"
+                disabled={mapsBusy}
+                onClick={() => void generateEvidenceMap("lease")}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
+              >
+                {mapsBusy ? "…" : "Lease map"}
+              </button>
+              <button
+                type="button"
+                disabled={mapsBusy}
+                onClick={() => void generateEvidenceMap("land")}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
+              >
+                {mapsBusy ? "…" : "Land sales map"}
               </button>
               <button
                 type="button"
@@ -3037,10 +3102,18 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         )}
       </div>
 
+      </>
+      ) : null}
+
+      {(panel === "all" || panel === "market") ? (
+      <>
       <SalesCommentaryWorkspace controller={controller} />
 
+      </>
+      ) : null}
+
       {/* Approach sections — evidence, photos and commentary stay together */}
-      {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
+      {(panel === "all" || panel === "income") && (Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
         <>
           <div className="space-y-4 rounded-md border border-border bg-card p-4">
             <h3 className="text-sm font-semibold text-foreground">Lease evidence</h3>
@@ -3116,6 +3189,12 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         </div>
       )}
 
+      {(panel === "all" || panel === "cost") ? (
+      <>
+      <div className="space-y-4 rounded-md border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold text-foreground">Land sales</h3>
+        <LandSalesSection meta={draft.reportMeta} values={draft.values} onMeta={setMeta} subjectPhotoUrl={subjectFrontPhoto?.url} inspectionId={draft.inspectionId} comparableSales={draft.sales} />
+      </div>
       <div className="space-y-4 rounded-md border border-border bg-card p-4">
         <h3 className="text-sm font-semibold text-foreground">Cost approach</h3>
         <CostApproachSection values={draft.values} meta={draft.reportMeta} onMeta={setMeta} />
@@ -3125,6 +3204,8 @@ export function SalesSection({ controller }: { controller: ReportDraftController
         </label>
         <PausedTextarea value={draft.narrative.costApproach ?? ""} onChange={(v) => setNarrative({ costApproach: v })} placeholder="Cost approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
       </div>
+      </>
+      ) : null}
 
       {agentCallId ? (
         <ResidentialAgentSheet

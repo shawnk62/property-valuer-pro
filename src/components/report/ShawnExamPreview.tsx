@@ -673,12 +673,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     ...(show5 ? [{ id: "exam-5", label: t(major[5], "Locality and Location") }] : []),
     ...(show6 ? [{ id: "exam-6", label: t(major[6], "Market Commentary") }] : []),
     { id: "exam-7", label: t(major[7], "Risk Assessment") },
-    { id: "exam-8", label: t(major[8], "Valuation Approach") },
+    { id: "exam-8", label: t(major[8], "Valuation approaches and methods") },
     ...(show82 ? [{ id: "exam-8-2", label: `${major[8]}.${n8[1]} Comments on comparable sales` }] : []),
     ...(showLease ? [{ id: "exam-8-lease", label: `${major[8]}.${n8[2]} Lease Evidence` }] : []),
-    ...(showCap ? [{ id: "exam-8-cap", label: `${major[8]}.${n8[3]} Capitalisation Approach` }] : []),
-    ...(showDcf ? [{ id: "exam-8-dcf", label: `${major[8]}.${n8[4]} Discounted Cash Flow` }] : []),
-    ...(showCost ? [{ id: "exam-8-cost", label: `${major[8]}.${n8[5]} Cost Approach` }] : []),
+    ...(showCap ? [{ id: "exam-8-cap", label: `${major[8]}.${n8[3]} Capitalisation method` }] : []),
+    ...(showDcf ? [{ id: "exam-8-dcf", label: `${major[8]}.${n8[4]} Discounted cash flow method` }] : []),
+    ...(showCost ? [{ id: "exam-8-cost", label: `${major[8]}.${n8[5]} Cost approach` }] : []),
     ...(show83 ? [{ id: "exam-8-3", label: `${major[8]}.${n8[6]} Final reconciliation of value` }] : []),
     ...(prints("disclaimer")
       ? [{ id: "exam-reliance", label: subTitle(major[8], n8[10], "Reliance and terms of use") }]
@@ -1208,7 +1208,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </div>
 
       <section id="sec-sales" className="report-section report-section-sales">
-        <Lead id="exam-8" title={t(major[8], "Valuation Approach")}>
+        <Lead id="exam-8" title={t(major[8], "Valuation approaches and methods")}>
         <Keep>
         {narrativePrints(m, "valuationApproach") && draft.narrative.valuationApproach?.trim() ? (
           <Prose
@@ -1244,19 +1244,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           <Para>No sales evidence has been recorded.</Para>
         ) : (
           <div className="space-y-6">
-            {draft.reportMeta.salesMapUrl ? (
-              <div className="sales-map">
-                <p className="mb-1.5 text-[0.75rem] font-semibold uppercase tracking-wide">
-                  Sales map
-                </p>
-                <img
-                  src={draft.reportMeta.salesMapUrl}
-                  alt="Comparable sales map"
-                  className="mx-auto max-h-[28rem] w-auto max-w-full object-contain"
-                  style={{ border: `1px solid ${RULE}` }}
-                />
-              </div>
-            ) : null}
             {isCommercialType(v) || isIndustrialType(v) ? (
             <CommercialEvidenceSchedule
               kind="sales"
@@ -1297,6 +1284,13 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <Prose text={salesCommentsText} />
           </Keep>
         ) : null}
+
+        {draft.reportMeta.salesMapUrl ? (
+          <div className="break-before-page flex min-h-[90vh] flex-col items-center justify-center">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Direct comparison — sales map</p>
+            <img src={draft.reportMeta.salesMapUrl} alt="Sales map" className="max-h-[85vh] w-auto max-w-full object-contain" style={{ border: `1px solid ${RULE}` }} />
+          </div>
+        ) : null}
         {showLease ? (
           <Keep>
             <h3 id="exam-8-lease" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
@@ -1324,12 +1318,19 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
               cellStyle={{ borderColor: RULE }}
             />
             <Prose text={withoutSourceNotes(draft.narrative.leaseEvidence || "", printedSales)} />
+
+            {m.ciLeaseMapUrl ? (
+              <div className="break-before-page flex min-h-[90vh] flex-col items-center justify-center">
+                <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Income approach — lease evidence map</p>
+                <img src={m.ciLeaseMapUrl} alt="Lease evidence map" className="max-h-[85vh] w-auto max-w-full object-contain" style={{ border: `1px solid ${RULE}` }} />
+              </div>
+            ) : null}
           </Keep>
         ) : null}
         {showCap ? (
           <Keep>
             <h3 id="exam-8-cap" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
-              {`${major[8]}.${n8[3]} Capitalisation Approach`}
+              {`${major[8]}.${n8[3]} Capitalisation method`}
             </h3>
             <table className="mt-2 w-full border-collapse text-xs">
               <tbody>
@@ -1348,7 +1349,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {showDcf ? (
           <Keep>
             <h3 id="exam-8-dcf" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
-              {`${major[8]}.${n8[4]} Discounted Cash Flow`}
+              {`${major[8]}.${n8[4]} Discounted cash flow method`}
             </h3>
             <Prose text={withoutSourceNotes(draft.narrative.dcfApproach || "", printedSales)} />
           </Keep>
@@ -1356,7 +1357,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {showCost ? (
           <Keep>
             <h3 id="exam-8-cost" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
-              {`${major[8]}.${n8[5]} Cost Approach`}
+              {`${major[8]}.${n8[5]} Cost approach`}
             </h3>
             {m.costApproach ? (
               <table className="mt-2 w-full border-collapse text-xs">
@@ -1398,6 +1399,13 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
               </table>
             ) : null}
             {m.costApproach?.notes ? <Para>{m.costApproach.notes}</Para> : null}
+
+            {m.ciLandMapUrl ? (
+              <div className="break-before-page flex min-h-[90vh] flex-col items-center justify-center">
+                <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Cost approach — land sales map</p>
+                <img src={m.ciLandMapUrl} alt="Land sales map" className="max-h-[85vh] w-auto max-w-full object-contain" style={{ border: `1px solid ${RULE}` }} />
+              </div>
+            ) : null}
             {m.printFullPageSheets !== false
               ? (m.ciLandSales ?? []).filter((l) => l.omitFromReport !== true && l.includeSheet !== false && (l.address || l.price)).map((l, idx) => (
                   <ComparableSheet

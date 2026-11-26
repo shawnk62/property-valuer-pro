@@ -175,7 +175,7 @@ export async function generateShawnDocx(draft: ReportDraft): Promise<Blob> {
   children.push(heading("7. Risk Assessment"));
   if (n.riskAnalysis?.trim()) children.push(...prose(n.riskAnalysis));
 
-  children.push(heading("8. Valuation Approach"));
+  children.push(heading("8. Valuation approaches and methods"));
   if (n.valuationApproach?.trim()) children.push(...prose(n.valuationApproach));
   if (n.salesComments?.trim()) {
     children.push(sub("8.2 Comments on comparable sales"));
@@ -186,15 +186,15 @@ export async function generateShawnDocx(draft: ReportDraft): Promise<Blob> {
     children.push(...prose(n.valueReconciliation));
   }
   if (commercialOrIndustrial && n.capitalisationApproach?.trim()) {
-    children.push(sub("Capitalisation Approach"));
+    children.push(sub("Capitalisation method"));
     children.push(...prose(n.capitalisationApproach));
   }
   if (commercialOrIndustrial && n.dcfApproach?.trim()) {
-    children.push(sub("Discounted Cash Flow"));
+    children.push(sub("Discounted cash flow method"));
     children.push(...prose(n.dcfApproach));
   }
   if (commercialOrIndustrial && n.costApproach?.trim()) {
-    children.push(sub("Cost Approach"));
+    children.push(sub("Cost approach"));
     children.push(...prose(n.costApproach));
   }
   if (commercialOrIndustrial && n.leaseEvidence?.trim()) {

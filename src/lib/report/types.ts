@@ -698,6 +698,8 @@ export interface ReportMeta {
   }>;
   /** Map of lease evidence locations. */
   ciLeaseMapUrl?: string;
+  /** Map of land sale locations (cost approach). */
+  ciLandMapUrl?: string;
   /** Adopted net equivalent market rent $/m² from the lease evidence. */
   ciAdoptedRentPerM2?: string;
   /** Adopted building rate $/m² for direct comparison. */
