@@ -81,8 +81,14 @@ export interface ReportPhoto {
   insertAfter?: PhotoSlot;
 }
 
+export function hasValidPhotoUrl(url: string | null | undefined): boolean {
+  const trimmed = typeof url === "string" ? url.trim() : "";
+  if (!trimmed) return false;
+  return /^(https?:\/\/|data:image\/|blob:)/i.test(trimmed);
+}
+
 export function photoIsOnReport(photo: ReportPhoto | null | undefined): boolean {
-  return Boolean(photo?.url) && photo?.omitFromReport !== true;
+  return hasValidPhotoUrl(photo?.url) && photo?.omitFromReport !== true;
 }
 
 export function photosOnReport(photos: ReportPhoto[] | null | undefined): ReportPhoto[] {

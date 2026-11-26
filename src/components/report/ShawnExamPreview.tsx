@@ -1,4 +1,4 @@
-import { Children, isValidElement, useEffect, type ReactElement, type ReactNode } from "react";
+import { Children, isValidElement, useEffect, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import { australianiseSpelling } from "@/lib/report/australianEnglish";
 import { formatNarrativeDate, formatNarrativeDateOr } from "@/lib/report/dates";
 import { stripLeadingHeading } from "@/lib/report/printText";
@@ -433,6 +433,47 @@ function PhotoAnnexPages({ heading, children }: { heading: string; children: Rea
   );
 }
 
+
+function SafePhotoFigure({
+  src,
+  alt,
+  caption,
+  figureClassName,
+  imgClassName,
+  imgStyle,
+  captionClassName,
+  eager,
+}: {
+  src: string;
+  alt: string;
+  caption?: string;
+  figureClassName?: string;
+  imgClassName: string;
+  imgStyle?: CSSProperties;
+  captionClassName: string;
+  eager?: boolean;
+}) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+  if (failed || !src.trim()) return null;
+  return (
+    <figure className={figureClassName}>
+      <img
+        src={src}
+        alt={alt}
+        className={imgClassName}
+        style={imgStyle}
+        loading={eager ? "eager" : undefined}
+        decoding={eager ? "sync" : undefined}
+        onError={() => setFailed(true)}
+      />
+      {caption ? <figcaption className={captionClassName}>{caption}</figcaption> : null}
+    </figure>
+  );
+}
+
 export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const v = draft.values;
   const m = draft.reportMeta;
@@ -838,10 +879,14 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       {subjectInlinePhotos.length > 0 ? (
         <div className="mt-3 grid grid-cols-2 gap-2">
           {subjectInlinePhotos.map((p) => (
-            <figure key={p.id ?? p.slot}>
-              <img src={p.url} alt={p.caption || p.label || p.slot || "Subject photo"} className="max-h-40 w-full rounded border border-slate-200 object-contain bg-slate-50" />
-              <figcaption className="mt-0.5 text-[0.65rem] text-slate-500">{p.caption || p.label || p.slot}</figcaption>
-            </figure>
+            <SafePhotoFigure
+              key={p.id ?? p.slot}
+              src={p.url}
+              alt={p.caption || p.label || p.slot || "Subject photo"}
+              caption={p.caption || p.label || p.slot || undefined}
+              imgClassName="max-h-40 w-full rounded border border-slate-200 object-contain bg-slate-50"
+              captionClassName="mt-0.5 text-[0.65rem] text-slate-500"
+            />
           ))}
         </div>
       ) : null}
@@ -1515,17 +1560,17 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         <section id="exam-annex-subject" className="report-annexure report-annexure-subject mt-12">
           <PhotoAnnexPages heading="Annexure — Subject photographs">
             {annexurePhotos.map((photo) => (
-              <figure key={photo.id} className="report-photo-figure">
-                <img
-                  src={photo.url}
-                  alt={photo.caption || "Photograph"}
-                  className="aspect-4/3 w-full object-cover"
-                  style={{ border: `1px solid ${RULE}` }}
-                  loading="eager"
-                  decoding="sync"
-                />
-                <figcaption className="mt-1.5 text-left text-sm">{photo.caption}</figcaption>
-              </figure>
+              <SafePhotoFigure
+                key={photo.id}
+                src={photo.url}
+                alt={photo.caption || "Photograph"}
+                caption={photo.caption}
+                figureClassName="report-photo-figure"
+                imgClassName="aspect-4/3 w-full object-cover"
+                imgStyle={{ border: `1px solid ${RULE}` }}
+                captionClassName="mt-1.5 text-left text-sm"
+                eager
+              />
             ))}
           </PhotoAnnexPages>
         </section>
