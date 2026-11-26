@@ -1,1 +1,3262 @@
-FULL_CONTENT_FROM_LOCAL_FILE
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type SyntheticEvent,
+} from "react";
+import { PausedTextarea } from "@/components/report/PausedTextarea";
+import { toast } from "sonner";
+import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
+import { CommercialAnalysisPanel } from "@/components/report/CommercialAnalysisPanel";
+import { CostApproachSection } from "@/components/report/CostApproachSection";
+import { CapitalisationApproachSection } from "@/components/report/CapitalisationApproachSection";
+import { CommercialEvidenceSummaryEditor } from "@/components/report/CommercialEvidenceSummaryEditor";
+import { CommercialValuationTables } from "@/components/report/CommercialValuationTables";
+import { ComparableSheet } from "@/components/report/ComparableSheet";
+import { effectiveSaleSheet, saleFromSheetPatch } from "@/components/report/comparableSheetHelpers";
+import { InspectionRoutePlanner } from "@/components/report/InspectionRoutePlanner";
+import { LeaseEvidenceGrid } from "@/components/report/LeaseEvidenceGrid";
+import { LandSalesSection } from "@/components/report/LandSalesSection";
+import { SalesCommentaryWorkspace } from "@/components/report/SalesCommentaryWorkspace";
+import { narrativePrints } from "@/lib/narrative/neighbourhoodAssist";
+import { SalesMapEditor } from "@/components/report/SalesMapEditor";
+import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
+import {
+  buildComparableSalesMap,
+  buildSubjectLocationMap,
+  clampSubjectZoom,
+  SUBJECT_ZOOM_MAX,
+  SUBJECT_ZOOM_MIN,
+} from "@/lib/maps/generateMaps";
+import { geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
+import { proximityFromPins, proximityWithBearingFromPins } from "@/lib/maps/distance";
+import {
+  pinsFromDraft,
+  pinsFromLeases,
+  pinsFromLandSales,
+  pinsNeedingGeocode,
+  subjectAddressLine,
+  type SalesMapPin,
+} from "@/lib/maps/salesMapPins";
+import { nowPhotoTimestamp } from "@/lib/inspection/photoRequirements";
+import type { ReportDraftController } from "@/hooks/useReportDraft";
+import { extractComparableSales, generateSaleNarrative } from "@/lib/ai/ai.functions";
+import { isAiConfigured, loadAiSettings } from "@/lib/ai/settings";
+import {
+  adjustmentFeaturesForProperty,
+  adjustmentRowPrints,
+  printAdjustmentGridEnabled,
+  printSalesEvidenceEnabled,
+  setAdjustmentRowPrint,
+  RELATIVITY_OPTIONS,
+  adjustmentAmountClass,
+  adjustmentRowClass,
+  applyAreaRateAdjustments,
+  applyQuantitativeRelativity,
+  areaRateInputClass,
+  computeSaleAdjustmentTotals,
+  ensureSaleAdjustments,
+  formatMoney,
+  formatPct,
+  relativitySelectClass,
+  salePricePerGla,
+  subjectAskingPriceDisplay,
+  subjectFeatureDisplay,
+  subjectSiteAreaRaw,
+  subjectTopographyDisplay,
+  type Relativity,
+} from "@/lib/report/adjustmentGrid";
+import { extractTextFromPdf } from "@/lib/report/extractPdfText";
+import { cloneImageFile, dataUrlToFile, fileToDataUrl, preparePhotoForReport } from "@/lib/report/photo-data";
+import { deletePhotoBlob, photoBlobKey, putPhotoBlob } from "@/lib/report/photo-idb";
+import { deleteReportPhoto, uploadReportPhoto } from "@/lib/report/photo-storage";
+import {
+  cmaExtractsToSales,
+  dropSubjectFromSales,
+  isSameTransaction,
+  mergeCmaExtracts,
+  mergeIncomingSales,
+  parseCmaTextHeuristic,
+  type CmaSaleExtract,
+} from "@/lib/report/importSalesCma";
+import { importSalesFromCsv } from "@/lib/report/importSalesCsv";
+import {
+  mergePlanningExtract,
+  parsePlanningFromReportText,
+} from "@/lib/report/parsePlanningExtract";
+import {
+  buildSaleNarrativePrompt,
+  saleNarrativeFingerprint,
+} from "@/lib/report/saleNarrative";
+import { formatCurrencyDisplay, formatSalePrice, withRelativityNarrative, applyRelativityToSales } from "@/lib/report/salesRelativity";
+import type { ComparableSale, FeatureAdjustment } from "@/lib/report/types";
+import { salesHeldBack, salesOnReport } from "@/lib/report/types";
+import { confirmDelete } from "@/lib/confirmDelete";
+
+function emptySale(): ComparableSale {
+  return ensureSaleAdjustments({
+    id: `sale-${Math.random().toString(36).slice(2, 10)}`,
+    address: "",
+    saleDate: "",
+    salePrice: "",
+    landArea: "",
+    comments: "",
+  });
+}
+
+/** Parse adjustment $ input. Returns null while the user is mid-typing (e.g. "-" or "-."). */
+function parseAmountInput(raw: string): number | null {
+  const cleaned = raw.replace(/[^0-9.-]/g, "");
+  if (!cleaned) return 0;
+  // Allow typing a leading minus / decimal without wiping the field
+  if (cleaned === "-" || cleaned === "." || cleaned === "-.") return null;
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : null;
+}
+
+export function SalesSection({ controller, panel = "all" }: { controller: ReportDraftController; panel?: "all" | "market" | "income" | "cost" | "maps" }) {
+  const { draft, setSales, setMeta, setPhotos, setValue, setNarrative, loaded } = controller;
+  const sales = draft.sales.map(ensureSaleAdjustments);
+  const gridSales = salesOnReport(sales);
+  const heldSales = salesHeldBack(sales);
+  const visibleAdjFeatures = useMemo(
+    () => adjustmentFeaturesForProperty(draft.values).filter((f) => f.id !== "dateOfSale"),
+    [draft.values],
+  );
+  const subjectFrontPhoto = draft.photos.find((p) => p.slot === "front");
+  const subjectGridAddress = addressLines(
+    [draft.values["prop_address"], draft.values["prop_suburb"]].filter(Boolean).join(", "),
+  );
+  const subjectPurgedRef = useRef(false);
+  useEffect(() => {
+    if (!loaded || subjectPurgedRef.current) return;
+    subjectPurgedRef.current = true;
+    const { sales: next, dropped } = dropSubjectFromSales(
+      draft.sales,
+      subjectAddressLine(draft.values),
+    );
+    if (dropped > 0) {
+      setSales(next);
+      toast.message(
+        `Removed the subject property from the comparable grid (${dropped} row).`,
+      );
+    }
+  }, [loaded, draft.inspectionId, draft.sales, draft.values, setSales]);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const cmaImportModeRef = useRef<"merge" | "replace">("merge");
+  const [importing, setImporting] = useState(false);
+  const [agentCallId, setAgentCallId] = useState<string | null>(null);
+  const [cmaPaste, setCmaPaste] = useState("");
+  const [duplicateChoice, setDuplicateChoice] = useState<{
+    incoming: ComparableSale[];
+    matched: number;
+    sourceLabel: string;
+  } | null>(null);
+  // Sale narratives are generated only when the valuer asks. A grid change must not call AI.
+  const [aiChoice, setAiChoice] = useState<{ saleIds: string[]; hasText: boolean } | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [mapsBusy, setMapsBusy] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+  /** Expanded report-narrative editor (manual working mode). */
+  const [expandedNarrativeId, setExpandedNarrativeId] = useState<string | null>(null);
+  const [expandedWorkingNotesId, setExpandedWorkingNotesId] = useState<string | null>(null);
+  /** Which comparable column is visually active in the adjustment grid. */
+  const [activeGridSaleId, setActiveGridSaleId] = useState<string | null>(null);
+  /** In-progress amount text so "-" can be typed before digits. */
+  const [amountDrafts, setAmountDrafts] = useState<Record<string, string>>({});
+  /** Right-click menu for paste into map / comp photo slots. */
+  const [photoMenu, setPhotoMenu] = useState<
+    | null
+    | { x: number; y: number; kind: "map" }
+    | { x: number; y: number; kind: "sale"; saleId: string }
+  >(null);
+  const photoFileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const photoMenuTargetRef = useRef<"map" | { saleId: string } | null>(null);
+  const fingerprintsRef = useRef<Record<string, string>>({});
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const salesRef = useRef(sales);
+  salesRef.current = sales;
+  const commentsHealed = useRef(false);
+  useEffect(() => {
+    commentsHealed.current = false;
+  }, [draft.inspectionId]);
+  useEffect(() => {
+    if (!loaded || commentsHealed.current) return;
+    commentsHealed.current = true;
+    const current = salesRef.current;
+    const next = applyRelativityToSales(current, draft.reportMeta.valueAmount);
+    if (next.some((sale, index) => sale.comments !== current[index]?.comments)) {
+      setSales(next);
+    }
+  }, [loaded, draft.inspectionId, draft.reportMeta.valueAmount, setSales]);
+
+  useEffect(() => {
+    const blockBrowserOpen = (e: DragEvent) => {
+      if (!e.dataTransfer?.types?.includes("Files")) return;
+      e.preventDefault();
+    };
+    window.addEventListener("dragover", blockBrowserOpen);
+    window.addEventListener("drop", blockBrowserOpen);
+    return () => {
+      window.removeEventListener("dragover", blockBrowserOpen);
+      window.removeEventListener("drop", blockBrowserOpen);
+    };
+  }, []);
+
+  /**
+   * Stable key so auto-narrative debounce is not reset on every parent re-render.
+   * (draft.sales.map(...) creates a new array each render — that previously
+   * cancelled the timer indefinitely so AI never ran.)
+   */
+  const salesNarrativeKey = useMemo(
+    () =>
+      draft.sales
+        .map((s) => {
+          const ensured = ensureSaleAdjustments(s);
+          return [
+            ensured.id,
+            saleNarrativeFingerprint(ensured),
+            ensured.narrativeManual ? "1" : "0",
+            (ensured.narrative ?? "").trim() ? "1" : "0",
+          ].join(":");
+        })
+        .join("|"),
+    [draft.sales],
+  );
+
+  useEffect(() => {
+    if (!photoMenu) return;
+    const close = () => setPhotoMenu(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    window.addEventListener("click", close);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("click", close);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [photoMenu]);
+
+  function addBlankSale() {
+    replaceSales([...sales, emptySale()]);
+  }
+
+  function saleGridCellProps(saleId: string, className = "") {
+    const on = activeGridSaleId === saleId;
+    return {
+      "data-sale-id": saleId,
+      className: [className, on ? "bg-primary/10" : ""].filter(Boolean).join(" "),
+    };
+  }
+
+  function onGridSalePointer(e: SyntheticEvent) {
+    const node = (e.target as HTMLElement | null)?.closest?.("[data-sale-id]");
+    const id = node instanceof HTMLElement ? node.getAttribute("data-sale-id") : null;
+    setActiveGridSaleId(id);
+  }
+
+  function moveSale(id: string, direction: -1 | 1) {
+    const visible = salesOnReport(sales);
+    const visibleIndex = visible.findIndex((s) => s.id === id);
+    if (visibleIndex < 0) return;
+    const neighbour = visible[visibleIndex + direction];
+    if (!neighbour) return;
+    swapSales(id, neighbour.id);
+  }
+
+  /** Exchange two working-file rows. Report numbers follow the new order. */
+  function swapSales(idA: string, idB: string) {
+    if (!idA || !idB || idA === idB) return;
+    const list = salesRef.current;
+    const indexA = list.findIndex((s) => s.id === idA);
+    const indexB = list.findIndex((s) => s.id === idB);
+    if (indexA < 0 || indexB < 0) return;
+    const next = [...list];
+    const keep = next[indexA]!;
+    next[indexA] = next[indexB]!;
+    next[indexB] = keep;
+    replaceSales(next);
+  }
+
+  function setOmitFromReport(id: string, omit: boolean) {
+    const list = salesRef.current.map((s) =>
+      s.id === id ? { ...s, omitFromReport: omit } : s,
+    );
+    if (omit) {
+      replaceSales(list);
+      return;
+    }
+    const sale = list.find((s) => s.id === id);
+    const rest = list.filter((s) => s.id !== id);
+    const onReport = rest.filter((s) => s.omitFromReport !== true);
+    const held = rest.filter((s) => s.omitFromReport === true);
+    replaceSales(sale ? [...onReport, sale, ...held] : list);
+    if (sale) {
+      toast.success(`Included on report as sale ${onReport.length + 1}`);
+    }
+  }
+
+  function replaceSales(next: ComparableSale[]) {
+    // Keep every distinct working-file row. Address dedupe is only for a
+    // row that has no id yet. A restored comparable must not be dropped
+    // because another sale shares a street key.
+    const deduped: ComparableSale[] = [];
+    const seenId = new Set<string>();
+    for (const s of next) {
+      if (s.id) {
+        if (seenId.has(s.id)) continue;
+        seenId.add(s.id);
+      }
+      deduped.push(s);
+    }
+    const ensured = deduped.map(ensureSaleAdjustments);
+    const withQuant = applyQuantitativeRelativity(
+      ensured,
+      draft.values,
+      draft.reportMeta.subjectSiteArea,
+    );
+    const withRates = applyAreaRateAdjustments(
+      withQuant,
+      draft.values,
+      draft.reportMeta.glaRatePerM2,
+      draft.reportMeta.siteRatePerM2,
+      draft.reportMeta.subjectSiteArea,
+    );
+    setSales(withRates);
+  }
+
+  function setSubjectSiteArea(raw: string) {
+    setMeta({ subjectSiteArea: raw });
+    const meta = { ...draft.reportMeta, subjectSiteArea: raw };
+    const ensured = sales.map(ensureSaleAdjustments);
+    const withQuant = applyQuantitativeRelativity(ensured, draft.values, raw);
+    setSales(
+      applyAreaRateAdjustments(
+        withQuant,
+        draft.values,
+        meta.glaRatePerM2,
+        meta.siteRatePerM2,
+        raw,
+      ),
+    );
+  }
+
+  function setAreaRate(kind: "gla" | "site", raw: string) {
+    const patch =
+      kind === "gla" ? { glaRatePerM2: raw } : { siteRatePerM2: raw };
+    setMeta(patch);
+    const meta = { ...draft.reportMeta, ...patch };
+    const ensured = sales.map(ensureSaleAdjustments);
+    const withQuant = applyQuantitativeRelativity(
+      ensured,
+      draft.values,
+      meta.subjectSiteArea,
+    );
+    setSales(
+      applyAreaRateAdjustments(
+        withQuant,
+        draft.values,
+        meta.glaRatePerM2,
+        meta.siteRatePerM2,
+        meta.subjectSiteArea,
+      ),
+    );
+  }
+
+  /**
+   * Line 1: house number + street name + street type
+   * Line 2: suburb / city + state + postcode (zip)
+   */
+  function addressLines(addr: string): { line1: string; line2?: string } {
+    const a = addr.replace(/\s+/g, " ").trim();
+    if (!a) return { line1: "" };
+    const streetTypes =
+      "STREET|ST|ROAD|RD|CRESCENT|CRES|CR|COURT|CT|AVENUE|AVE|DRIVE|DR|PLACE|PL|WAY|CLOSE|CL|TERRACE|TCE|PARADE|PDE|BOULEVARD|BLVD|LANE|LN|CIRCUIT|CCT|HIGHWAY|HWY|ESPLANADE|ESP|GROVE|GR|RISE|MEWS|WALK|ROW|QUAY|POINT|PT|CIRCLE|CIR|TRAIL|LINK|VISTA|PARK|GARDENS|SQUARE|SQ";
+    const typeRe = new RegExp(`^(?:${streetTypes})$`, "i");
+    const parts = a.split(" ");
+    let typeIdx = -1;
+    for (let i = 0; i < parts.length; i++) {
+      if (typeRe.test(parts[i]!.replace(/,$/, ""))) typeIdx = i;
+    }
+    if (typeIdx >= 0 && typeIdx < parts.length - 1) {
+      return {
+        line1: parts.slice(0, typeIdx + 1).join(" "),
+        line2: parts.slice(typeIdx + 1).join(" "),
+      };
+    }
+    // "12 Example St, Suburb QLD 4000"
+    const comma = a.indexOf(",");
+    if (comma > 0 && comma < a.length - 1) {
+      return { line1: a.slice(0, comma).trim(), line2: a.slice(comma + 1).trim() };
+    }
+    // Trailing QLD + postcode without a recognised street type
+    const qld = a.match(/^(.+?)\s+((?:[A-Za-z'-]+\s+)*(?:QLD|QUEENSLAND)\s*\d{4})$/i);
+    if (qld) return { line1: qld[1]!.trim(), line2: qld[2]!.trim() };
+    return { line1: a };
+  }
+
+  function patchSale(id: string, patch: Partial<ComparableSale>) {
+    replaceSales(salesRef.current.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  }
+
+  async function onSalesMapFile(file: File | null) {
+    if (!file) return;
+    if (file.type && !file.type.startsWith("image/")) {
+      toast.error("Choose an image file for the sales map");
+      return;
+    }
+    try {
+      const prepared = await preparePhotoForReport(file);
+      const dataUrl = await fileToDataUrl(prepared);
+      setMeta({ salesMapUrl: dataUrl });
+      try {
+        const prevPath = draft.reportMeta.salesMapStoragePath;
+        if (prevPath) await deleteReportPhoto(prevPath);
+        const { url, storagePath } = await uploadReportPhoto({
+          inspectionId: draft.inspectionId,
+          photoId: "sales-map",
+          file: prepared,
+        });
+        setMeta({ salesMapUrl: url, salesMapStoragePath: storagePath });
+        toast.success("Sales map attached and synced");
+      } catch (cloudErr) {
+        toast.message("Sales map saved on this device only", {
+          description:
+            cloudErr instanceof Error
+              ? cloudErr.message
+              : "Cloud upload failed — check sign-in and network, then re-attach.",
+        });
+      }
+    } catch (err) {
+      toast.error("Could not read map image", {
+        description: err instanceof Error ? err.message : "Try another file",
+      });
+    }
+  }
+
+  async function attachLocationMap(file: File) {
+    const photoId =
+      draft.photos.find((p) => p.slot === "map_location")?.id || "photo-map-location";
+    const dataUrl = await fileToDataUrl(file);
+    setPhotos((prev) => {
+      const entry = {
+        id: photoId,
+        slot: "map_location" as const,
+        caption: "Property location",
+        url: dataUrl,
+        kind: "map" as const,
+        capturedAt: nowPhotoTimestamp(),
+      };
+      return [...prev.filter((p) => p.slot !== "map_location" && p.id !== photoId), entry];
+    });
+    try {
+      const existing = draft.photos.find((p) => p.slot === "map_location");
+      if (existing?.storagePath) await deleteReportPhoto(existing.storagePath);
+      const { url, storagePath } = await uploadReportPhoto({
+        inspectionId: draft.inspectionId,
+        photoId,
+        file,
+      });
+      setPhotos((prev) =>
+        prev.map((p) => (p.id === photoId ? { ...p, url, storagePath } : p)),
+      );
+    } catch (err) {
+      toast.message("Location map saved on this device only", {
+        description: err instanceof Error ? err.message : "Cloud upload failed",
+      });
+    }
+  }
+
+  async function generateGoogleMaps() {
+    if (!isGoogleMapsConfigured()) {
+      toast.error("Add a Google Maps API key in Settings first");
+      return;
+    }
+    const key = loadGoogleMapsKey();
+    setMapsBusy(true);
+    setStatus("Generating maps…");
+    try {
+      let pins = pinsFromDraft({
+        values: draft.values,
+        sales,
+        saved: (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null,
+      });
+      const need = pinsNeedingGeocode(pins).filter((p) => p.address);
+      if (need.length > 0) {
+        const geo = await geocodeGoogleAddresses({
+          data: { apiKey: key, addresses: need.map((p) => p.address!) },
+        });
+        const denied = geo.results.find(
+          (r) => r.status === "REQUEST_DENIED" || r.status === "OVER_QUERY_LIMIT",
+        );
+        if (denied) {
+          throw new Error(
+            denied.error ||
+              `Google geocoding ${denied.status}. Enable Geocoding API on this key.`,
+          );
+        }
+        const byNeedId = new Map(need.map((p, i) => [p.id, geo.results[i]]));
+        pins = pins.map((p) => {
+          const hit = byNeedId.get(p.id);
+          if (hit?.lat != null && hit.lng != null) {
+            return { ...p, lat: hit.lat, lng: hit.lng };
+          }
+          return p;
+        });
+      }
+      const subject = pins.find((p) => p.kind === "subject");
+      if (!subject || (subject.lat === 0 && subject.lng === 0)) {
+        throw new Error(
+          subject?.address
+            ? `Could not locate “${subject.address}”. Check the inspection address.`
+            : "Subject address is empty on the inspection form.",
+        );
+      }
+      const locationBuilt = await buildSubjectLocationMap({
+        apiKey: key,
+        subject,
+        zoom: draft.reportMeta.subjectMapManual ? draft.reportMeta.subjectMapZoom : null,
+      });
+      const locationFile = locationBuilt.file;
+      const printedIds = new Set(gridSales.map((s) => s.id));
+      const salesPins = pins.filter(
+        (p) =>
+          !(p.lat === 0 && p.lng === 0) &&
+          (p.kind !== "sale" || (p.saleId && printedIds.has(p.saleId))),
+      );
+      const salesFile = await buildComparableSalesMap({ apiKey: key, pins: salesPins });
+      await attachLocationMap(locationFile);
+      await onSalesMapFile(salesFile);
+      setMeta({
+        salesMapPins: pins,
+        subjectMapZoom: locationBuilt.zoom,
+        subjectMapManual: draft.reportMeta.subjectMapManual === true,
+      });
+      const isCommercialOrIndustrial =
+        Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) ||
+        Boolean(String(draft.values["prop_type_industrial"] ?? "").trim());
+      replaceSales(
+        isCommercialOrIndustrial
+          ? proximityWithBearingFromPins(sales, pins)
+          : proximityFromPins(sales, pins),
+      );
+      toast.success("Maps generated", {
+        description:
+          "Location map is under Photos → Maps & overlays. Sales map is this Sales map tile.",
+      });
+      setStatus("Maps generated.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Map generation failed";
+      toast.error("Could not generate maps", { description: message });
+      setStatus(`Maps failed: ${message}`);
+    } finally {
+      setMapsBusy(false);
+    }
+  }
+
+
+  async function generateEvidenceMap(
+    kind: "lease" | "land",
+  ) {
+    if (!isGoogleMapsConfigured()) {
+      toast.error("Add a Google Maps API key in Settings first");
+      return;
+    }
+    const key = loadGoogleMapsKey();
+    setMapsBusy(true);
+    setStatus(`Generating ${kind} map…`);
+    try {
+      const pins = kind === "lease"
+        ? pinsFromLeases({ values: draft.values, leases: draft.reportMeta.ciLeaseComps, saved: (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null })
+        : pinsFromLandSales({ values: draft.values, landSales: draft.reportMeta.ciLandSales, saved: (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null });
+      const need = pinsNeedingGeocode(pins).filter((p) => p.address);
+      let resolved = pins;
+      if (need.length > 0) {
+        const geo = await geocodeGoogleAddresses({ data: { apiKey: key, addresses: need.map((p) => p.address!) } });
+        const byId = new Map(need.map((p, i) => [p.id, geo.results[i]]));
+        resolved = pins.map((p) => {
+          const hit = byId.get(p.id);
+          return hit?.lat != null && hit.lng != null ? { ...p, lat: hit.lat, lng: hit.lng } : p;
+        });
+      }
+      const file = await buildComparableSalesMap({ apiKey: key, pins: resolved });
+      const reader = new FileReader();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(String(reader.result ?? ""));
+        reader.onerror = () => reject(new Error("Could not read map"));
+        reader.readAsDataURL(file);
+      });
+      if (kind === "lease") onMeta({ ciLeaseMapUrl: dataUrl });
+      else onMeta({ ciLandMapUrl: dataUrl });
+      toast.success(`${kind === "lease" ? "Lease" : "Land sales"} map generated`);
+      setStatus("Map generated.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Map generation failed";
+      toast.error("Could not generate map", { description: message });
+      setStatus(`Map failed: ${message}`);
+    } finally {
+      setMapsBusy(false);
+    }
+  }
+
+  async function rescaleLocationMap(nextZoom: number | null) {
+    if (!isGoogleMapsConfigured()) {
+      toast.error("Add a Google Maps API key in Settings first");
+      return;
+    }
+    const pins = (draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? [];
+    let subject = pins.find((p) => p.kind === "subject");
+    if (!subject || (subject.lat === 0 && subject.lng === 0)) {
+      toast.error("Generate maps first so the subject can be located");
+      return;
+    }
+    const manual = nextZoom != null;
+    const zoom = manual ? clampSubjectZoom(nextZoom) : null;
+    setMapsBusy(true);
+    setStatus("Updating location map…");
+    try {
+      const built = await buildSubjectLocationMap({
+        apiKey: loadGoogleMapsKey(),
+        subject,
+        zoom,
+      });
+      await attachLocationMap(built.file);
+      setMeta({ subjectMapZoom: built.zoom, subjectMapManual: manual });
+      toast.success(
+        manual
+          ? `Location map zoom ${built.zoom}`
+          : `Location map fitted to ${built.centreName}`,
+      );
+      setStatus("Location map updated.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Location map failed";
+      toast.error("Could not update location map", { description: message });
+      setStatus(`Location map failed: ${message}`);
+    } finally {
+      setMapsBusy(false);
+    }
+  }
+
+  async function clearSalesMap() {
+    if (!confirmDelete("the sales map")) return;
+    const path = draft.reportMeta.salesMapStoragePath;
+    if (path) {
+      try {
+        await deleteReportPhoto(path);
+      } catch {
+        /* ignore */
+      }
+    }
+    setMeta({ salesMapUrl: "", salesMapStoragePath: "" });
+  }
+
+  /** Image from clipboard (Cmd/Ctrl+V) — screenshots (PNG/JPEG) from CMA or OS. */
+  function imageFileFromClipboard(e: React.ClipboardEvent | ClipboardEvent): File | null {
+    const items = e.clipboardData?.items;
+    if (items) {
+      for (const item of Array.from(items)) {
+        if (item.kind !== "file") continue;
+        const f = item.getAsFile();
+        if (f && f.size > 0 && (f.type.startsWith("image/") || !f.type)) {
+          if (f.type.startsWith("image/")) return f;
+          if (!f.type) {
+            const ext = /png/i.test(f.name) ? "png" : /jpe?g/i.test(f.name) ? "jpeg" : "png";
+            return new File([f], f.name || `screenshot.${ext}`, {
+              type: f.type || `image/${ext}`,
+            });
+          }
+        }
+        if (item.type.startsWith("image/")) {
+          const blob = f;
+          if (blob && blob.size > 0) {
+            const ext = item.type.split("/")[1] || "png";
+            return new File([blob], `screenshot.${ext}`, { type: item.type });
+          }
+        }
+      }
+    }
+    const files = e.clipboardData?.files;
+    if (files) {
+      for (const f of Array.from(files)) {
+        if (f.size > 0 && (f.type.startsWith("image/") || !f.type)) {
+          return f.type
+            ? f
+            : new File([f], f.name || "screenshot.png", { type: "image/png" });
+        }
+      }
+    }
+    return null;
+  }
+
+  function imageFileFromDataTransfer(dt: DataTransfer | null): File | null {
+    if (!dt) return null;
+    const looksLikeImage = (f: File) =>
+      f.size > 0 &&
+      (f.type.startsWith("image/") ||
+        /\.(jpe?g|png|gif|webp|heic|heif|tif{1,2})$/i.test(f.name));
+    const found: File[] = [];
+    for (const f of Array.from(dt.files ?? [])) {
+      if (looksLikeImage(f)) found.push(f);
+    }
+    for (const item of Array.from(dt.items ?? [])) {
+      if (item.kind !== "file") continue;
+      const f = item.getAsFile();
+      if (f && looksLikeImage(f) && !found.some((x) => x.name === f.name && x.size === f.size)) {
+        found.push(f);
+      }
+    }
+    if (found.length === 0) return null;
+    found.sort((a, b) => b.size - a.size);
+    return found[0] ?? null;
+  }
+
+  function salePhotoDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "copy";
+  }
+
+  /** Right-click / long-press paste: read image from system clipboard. */
+  async function imageFileFromNavigatorClipboard(): Promise<File | null> {
+    try {
+      if (typeof navigator === "undefined" || !navigator.clipboard?.read) return null;
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        // Prefer png/jpeg/webp explicitly; some browsers list types in odd order
+        const preferred =
+          item.types.find((t) => t === "image/png") ||
+          item.types.find((t) => t === "image/jpeg") ||
+          item.types.find((t) => t === "image/webp") ||
+          item.types.find((t) => t.startsWith("image/"));
+        if (!preferred) continue;
+        const blob = await item.getType(preferred);
+        if (!blob || blob.size <= 0) continue;
+        const ext = preferred.split("/")[1] || "png";
+        return new File([blob], `screenshot.${ext}`, { type: preferred });
+      }
+    } catch (err) {
+      console.warn("[clipboard.read]", err);
+    }
+    return null;
+  }
+
+  function openPhotoMenu(
+    e: React.MouseEvent,
+    target: "map" | { saleId: string },
+  ) {
+    e.preventDefault();
+    e.stopPropagation();
+    // Focus the slot so keyboard paste still works afterwards
+    (e.currentTarget as HTMLElement).focus?.();
+    photoMenuTargetRef.current = target;
+    setPhotoMenu({
+      x: e.clientX,
+      y: e.clientY,
+      ...(target === "map" ? { kind: "map" as const } : { kind: "sale" as const, saleId: target.saleId }),
+    });
+  }
+
+  async function pasteFromMenu() {
+    // Capture target first. Read the clipboard WHILE this click is still a user
+    // gesture — closing the menu first can break clipboard.read() in Safari/Chrome.
+    const target = photoMenuTargetRef.current;
+    let file: File | null = null;
+    try {
+      file = await imageFileFromNavigatorClipboard();
+    } catch (err) {
+      console.warn("[pasteFromMenu]", err);
+    }
+    setPhotoMenu(null);
+    if (!file) {
+      toast.error("Could not paste from the right-click menu", {
+        description:
+          "The browser blocked clipboard access. Click the photo slot once, then press ⌘V (that path always works for screenshots).",
+      });
+      return;
+    }
+    if (target === "map") {
+      void onSalesMapFile(file);
+      toast.success("Image pasted");
+    } else if (target && "saleId" in target) {
+      void onSalePhotoFile(target.saleId, file);
+      toast.success("Image pasted");
+    }
+  }
+
+  function chooseFileFromMenu() {
+    setPhotoMenu(null);
+    // Defer so the menu unmounts before the file dialog opens
+    requestAnimationFrame(() => photoFileInputRef.current?.click());
+  }
+
+  const [photoSourceOpen, setPhotoSourceOpen] = useState(false);
+  const [mapEditorOpen, setMapEditorOpen] = useState(false);
+
+  function openPhotoSource(target: "map" | { saleId: string }) {
+    photoMenuTargetRef.current = target;
+    setPhotoSourceOpen(true);
+  }
+
+  /** Must run in the same tap as the sheet button (iOS ignores a deferred click). */
+  function clickSalePhotoInput(which: "camera" | "library") {
+    const input = which === "camera" ? cameraInputRef.current : photoFileInputRef.current;
+    if (!input) return;
+    input.value = "";
+    input.click();
+  }
+
+  function onSalePhotoPaste(saleId: string, e: React.ClipboardEvent) {
+    // Prefer synchronous clipboardData (⌘V); fall back to Clipboard API for
+    // right-click / some screenshot paths that leave clipboardData empty.
+    const sync = imageFileFromClipboard(e);
+    if (sync) {
+      e.preventDefault();
+      e.stopPropagation();
+      void onSalePhotoFile(saleId, sync);
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    void (async () => {
+      const file = await imageFileFromNavigatorClipboard();
+      if (file) {
+        void onSalePhotoFile(saleId, file);
+        return;
+      }
+      toast.error("No image on the clipboard", {
+        description: "Copy a screenshot first, click the photo slot, then ⌘V — or right-click → Paste image.",
+      });
+    })();
+  }
+
+  function cmaFileFromDataTransfer(dt: DataTransfer | null): File | null {
+    if (!dt) return null;
+    return (
+      Array.from(dt.files ?? []).find((f) => {
+        const n = f.name.toLowerCase();
+        return (
+          f.type === "application/pdf" ||
+          n.endsWith(".pdf") ||
+          f.type === "text/csv" ||
+          n.endsWith(".csv")
+        );
+      }) ?? null
+    );
+  }
+
+  function importDroppedCma(file: File) {
+    cmaImportModeRef.current = "merge";
+    void onCmaFileSelected(file);
+  }
+
+  function onSalePhotoDrop(saleId: string, e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const cma = cmaFileFromDataTransfer(e.dataTransfer);
+    if (cma) {
+      importDroppedCma(cma);
+      return;
+    }
+    const file = imageFileFromDataTransfer(e.dataTransfer);
+    if (file) {
+      void onSalePhotoFile(saleId, file);
+      return;
+    }
+    toast.error("Drop an image onto this comparable");
+  }
+
+  function onSalesMapPaste(e: React.ClipboardEvent) {
+    const sync = imageFileFromClipboard(e);
+    if (sync) {
+      e.preventDefault();
+      e.stopPropagation();
+      void onSalesMapFile(sync);
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    void (async () => {
+      const file = await imageFileFromNavigatorClipboard();
+      if (file) {
+        void onSalesMapFile(file);
+        return;
+      }
+      toast.error("No image on the clipboard", {
+        description: "Copy a screenshot first, click the map slot, then ⌘V — or right-click → Paste image.",
+      });
+    })();
+  }
+
+  function onSalesMapDrop(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = imageFileFromDataTransfer(e.dataTransfer);
+    if (file) void onSalesMapFile(file);
+  }
+
+  async function onSalePhotoFile(saleId: string, file: File | null) {
+    if (!file) return;
+    if (file.type && !file.type.startsWith("image/")) {
+      toast.error("Choose an image file for the front photo");
+      return;
+    }
+    let stable: File;
+    try {
+      stable = await cloneImageFile(file);
+    } catch (err) {
+      toast.error("Could not read photo", {
+        description: err instanceof Error ? err.message : "Try another file",
+      });
+      return;
+    }
+    try {
+      const prepared = await preparePhotoForReport(stable);
+      const localKey = photoBlobKey(draft.inspectionId, `sale-${saleId}-front`);
+      await putPhotoBlob(localKey, prepared);
+      const preparedUrl = URL.createObjectURL(prepared);
+      patchSale(saleId, { photoUrl: preparedUrl, photoLocalKey: localKey });
+      try {
+        const existing = sales.find((s) => s.id === saleId);
+        if (existing?.photoStoragePath) {
+          await deleteReportPhoto(existing.photoStoragePath);
+        }
+        const { url, storagePath } = await uploadReportPhoto({
+          inspectionId: draft.inspectionId,
+          photoId: `sale-${saleId}-front`,
+          file: prepared,
+        });
+        const remoteOk = await new Promise<boolean>((resolve) => {
+          const probe = new Image();
+          probe.onload = () => resolve(probe.naturalWidth >= 40 && probe.naturalHeight >= 40);
+          probe.onerror = () => resolve(false);
+          probe.src = url;
+        });
+        if (remoteOk) {
+          patchSale(saleId, { photoUrl: url, photoStoragePath: storagePath });
+        } else {
+          patchSale(saleId, { photoStoragePath: storagePath });
+        }
+        toast.success("Front photo attached and synced");
+      } catch (cloudErr) {
+        toast.message("Front photo saved on this device only", {
+          description:
+            cloudErr instanceof Error
+              ? cloudErr.message
+              : "Cloud upload failed — check sign-in and network, then re-attach.",
+        });
+      }
+    } catch (err) {
+      toast.error("Could not read photo", {
+        description: err instanceof Error ? err.message : "Try another file",
+      });
+    }
+  }
+
+  async function clearSalePhoto(saleId: string) {
+    const existing = sales.find((s) => s.id === saleId);
+    if (!confirmDelete(existing?.address?.trim() ? `the photo for ${existing.address.trim()}` : "this comparable photo")) return;
+    if (existing?.photoStoragePath) {
+      try {
+        await deleteReportPhoto(existing.photoStoragePath);
+      } catch {
+        /* ignore */
+      }
+    }
+    if (existing?.photoLocalKey) {
+      void deletePhotoBlob(existing.photoLocalKey);
+    }
+    patchSale(saleId, { photoUrl: "", photoStoragePath: "", photoLocalKey: "" });
+  }
+
+  /**
+   * Promote any local data: images to Storage so they appear on other devices.
+   * Runs once per draft load when signed-in cloud is available.
+   */
+  const mediaPromoteRef = useRef(false);
+  useEffect(() => {
+    if (mediaPromoteRef.current) return;
+    if (!draft.inspectionId) return;
+
+    const mapIsData = !!draft.reportMeta.salesMapUrl?.startsWith("data:image/");
+    const salesNeed = sales.filter((s) => s.photoUrl?.startsWith("data:image/"));
+    if (!mapIsData && salesNeed.length === 0) return;
+    mediaPromoteRef.current = true;
+
+    void (async () => {
+      try {
+        if (mapIsData && draft.reportMeta.salesMapUrl) {
+          const file = await dataUrlToFile(draft.reportMeta.salesMapUrl, "sales-map.jpg");
+          const { url, storagePath } = await uploadReportPhoto({
+            inspectionId: draft.inspectionId,
+            photoId: "sales-map",
+            file,
+          });
+          setMeta({ salesMapUrl: url, salesMapStoragePath: storagePath });
+        }
+        for (const s of salesNeed) {
+          if (!s.photoUrl) continue;
+          try {
+            const file = await dataUrlToFile(s.photoUrl, `sale-${s.id}.jpg`);
+            const { url, storagePath } = await uploadReportPhoto({
+              inspectionId: draft.inspectionId,
+              photoId: `sale-${s.id}-front`,
+              file,
+            });
+            patchSale(s.id, { photoUrl: url, photoStoragePath: storagePath });
+          } catch {
+            /* leave data URL on this device */
+          }
+        }
+      } catch {
+        /* optional promotion */
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once when sales media needs promotion
+  }, [draft.inspectionId, draft.reportMeta.salesMapUrl, sales]);
+
+
+  function patchAdjustment(
+    saleId: string,
+    featureId: string,
+    patch: Partial<FeatureAdjustment>,
+  ) {
+    const next = sales.map((s) => {
+      if (s.id !== saleId) return s;
+      const current = s.adjustments?.[featureId] ?? {
+        relativity: "similar" as Relativity,
+        amount: 0,
+        detail: "",
+      };
+      return {
+        ...s,
+        adjustments: {
+          ...s.adjustments,
+          [featureId]: { ...current, ...patch },
+        },
+      };
+    });
+    // When Site/GLA description changes, recompute $ from rate × (subject − comp)
+    if (featureId === "site" || featureId === "grossLivingArea") {
+      replaceSales(next);
+    } else {
+      replaceSales(next);
+    }
+  }
+
+  const runNarratives = useCallback(
+    async (saleIds?: string[], mode: "append" | "incorporate" | "replace" = "replace") => {
+      const settings = loadAiSettings();
+      if (!isAiConfigured(settings)) {
+        setStatus("AI not configured — open Settings to enable sale narratives.");
+        return;
+      }
+
+      const current = salesRef.current;
+      const wanted = saleIds ? new Set(saleIds) : null;
+      const todo = current.filter((s) => {
+        if (wanted && !wanted.has(s.id)) return false;
+        if (!s.address.trim() && !s.salePrice.trim()) return false;
+        return true;
+      });
+
+      if (todo.length === 0) {
+        const locked = current.filter((s) => s.narrativeManual).length;
+        setStatus(
+          locked
+            ? `Sale narratives up to date (${locked} locked as manual).`
+            : "Sale narratives up to date.",
+        );
+        return;
+      }
+
+      setGenerating(true);
+      setStatus(`Generating narratives for ${todo.length} sale(s)…`);
+      const updates: Record<string, string> = {};
+      const errors: string[] = [];
+
+      for (const sale of todo) {
+        try {
+          const { system, prompt } = buildSaleNarrativePrompt(
+            sale,
+            draft.values,
+            draft.reportMeta,
+          );
+          const modeLine =
+            mode === "append"
+              ? "Write a new note only. Do not repeat the existing note."
+              : mode === "incorporate"
+                ? "Write one note that keeps the valuer's existing wording and adds only the comparison points that are missing. This output replaces the existing note."
+                : "Write a new note. The existing note may be replaced.";
+          const result = await generateSaleNarrative({
+            data: {
+              settings: {
+                provider: settings.provider,
+                model: settings.model,
+                apiKey: settings.apiKey,
+                ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
+              },
+              system,
+              prompt: `${prompt}\n\nWRITE MODE: ${modeLine}`,
+            },
+          });
+          const text =
+            typeof result === "string"
+              ? result
+              : result && typeof result === "object" && "text" in result
+                ? String((result as { text: unknown }).text ?? "")
+                : "";
+          if (text.trim()) {
+            // Deterministic overall superior/inferior from sale price vs valuation
+            updates[sale.id] = withRelativityNarrative(
+              text.trim(),
+              sale.salePrice,
+              draft.reportMeta.valueAmount || "",
+            );
+            fingerprintsRef.current[sale.id] = saleNarrativeFingerprint(sale);
+          } else {
+            errors.push(sale.address || sale.id);
+          }
+        } catch (err) {
+          console.error("[sale narrative]", err);
+          errors.push(sale.address || sale.id);
+        }
+      }
+
+      if (Object.keys(updates).length) {
+        replaceSales(
+          salesRef.current.map((s) => {
+            const generated = updates[s.id];
+            if (!generated) return s;
+            const existing = String(s.narrative ?? "").trim();
+            const narrative =
+              mode === "append" && existing ? `${existing}\n\n${generated}` : generated;
+            return { ...s, narrative, narrativeManual: mode === "append" ? s.narrativeManual : false };
+          }),
+        );
+      }
+
+      if (errors.length && Object.keys(updates).length) {
+        setStatus(`Updated ${Object.keys(updates).length}; failed: ${errors.join(", ")}`);
+        toast.message("Some sale narratives failed", { description: errors.join(", ") });
+      } else if (errors.length) {
+        setStatus(`Failed: ${errors.join(", ")}`);
+        toast.error("Sale narrative generation failed");
+      } else {
+        setStatus(`Generated ${Object.keys(updates).length} sale narrative(s).`);
+        toast.success("Sale narratives updated");
+      }
+      setGenerating(false);
+    },
+    // Intentionally narrow deps so parent re-renders do not recreate this callback
+    // and cancel the auto-narrative debounce.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [draft.values, draft.reportMeta.valueAmount, draft.reportMeta.valueDate],
+  );
+
+  function askSaleNarratives(saleIds: string[]) {
+    const rows = salesRef.current.filter((s) => saleIds.includes(s.id));
+    const hasText = rows.some((s) => String(s.narrative ?? "").trim());
+    if (!hasText) {
+      void runNarratives(saleIds, "replace");
+      return;
+    }
+    setAiChoice({ saleIds, hasText: true });
+  }
+
+  /**
+   * Import sales from CMA text (paste or PDF-extracted).
+   * Heuristic first (supports 9+ sales). When AI is configured and the heuristic
+   * finds zero or fewer than three sales, run AI and merge by address so a
+   * missing third (or more) is recovered instead of stopping at a partial parse.
+   */
+  async function importFromCmaText(
+    text: string,
+    sourceLabel = "CMA text",
+    media?: { salesMapUrl: string | null; frontPhotoUrls: string[] },
+    mode: "merge" | "replace" = "merge",
+  ) {
+    const trimmed = text.trim();
+    if (!trimmed) {
+      toast.error("No CMA text to import");
+      return;
+    }
+
+    setImporting(true);
+    setStatus(`Parsing ${sourceLabel}…`);
+    try {
+      const heuristicExtracts = parseCmaTextHeuristic(trimmed);
+      let extracts: CmaSaleExtract[] = heuristicExtracts;
+      const planningPatch = mergePlanningExtract(
+        draft.values,
+        parsePlanningFromReportText(trimmed),
+      );
+      for (const [key, value] of Object.entries(planningPatch)) {
+        setValue(key, value);
+        if (key === "prop_planning_scheme") setValue("exam_planning_scheme", value);
+      }
+
+      // Cotality cards are numbered "N Sold Price $…". If the heuristic recovered
+      // fewer sales than Sold Price markers, ask AI to fill the gaps (no hard cap).
+      const soldPriceMarkers = [
+        ...trimmed.matchAll(/\bSold\s*Price\b/gi),
+      ].length;
+      const needsAiEnrichment =
+        isAiConfigured() &&
+        (heuristicExtracts.length === 0 ||
+          (soldPriceMarkers > 0 && heuristicExtracts.length < soldPriceMarkers));
+
+      if (needsAiEnrichment) {
+        setStatus(
+          heuristicExtracts.length === 0
+            ? "Heuristic found no sales — trying AI on text…"
+            : `Heuristic found ${heuristicExtracts.length} of ~${soldPriceMarkers || "?"} — enriching with AI for missing comps…`,
+        );
+        const settings = loadAiSettings();
+        const result = await extractComparableSales({
+          data: {
+            settings: {
+              provider: settings.provider,
+              model: settings.model,
+              apiKey: settings.apiKey,
+              ...(settings.baseUrl ? { baseUrl: settings.baseUrl } : {}),
+            },
+            source: "text",
+            text: trimmed.slice(0, 120_000),
+          },
+        });
+        const error =
+          result && typeof result === "object" && "error" in result
+            ? (result as { error?: string | null }).error
+            : null;
+        const rawSales =
+          result && typeof result === "object" && "sales" in result
+            ? (result as { sales: unknown[] }).sales
+            : [];
+        const aiExtracts = Array.isArray(rawSales)
+          ? (rawSales as CmaSaleExtract[])
+          : [];
+
+        if (aiExtracts.length > 0) {
+          extracts = mergeCmaExtracts(heuristicExtracts, aiExtracts);
+        } else if (heuristicExtracts.length === 0 && error) {
+          toast.error("CMA extract failed", { description: error });
+          setStatus(`Failed: ${error}`);
+          return;
+        }
+      }
+
+      const stripped = dropSubjectFromSales(
+        cmaExtractsToSales(extracts),
+        subjectAddressLine(draft.values),
+      );
+      let mapped = stripped.sales;
+      if (stripped.dropped > 0) {
+        toast.message(
+          `Left the subject property out of the comparable grid (${stripped.dropped} row).`,
+        );
+      }
+
+      if (mapped.length === 0) {
+        toast.error("No comparable sales found", {
+          description:
+            "Check the CMA includes Comparable Sales pages with addresses and sold prices.",
+        });
+        setStatus("No sales found.");
+        return;
+      }
+
+      // Attach front photos in CMA page order (same order as extracts)
+      if (media?.frontPhotoUrls?.length) {
+        mapped = mapped.map((sale, i) => ({
+          ...sale,
+          photoUrl: media.frontPhotoUrls[i] || sale.photoUrl,
+        }));
+      }
+      if (media?.salesMapUrl && (mode === "replace" || !draft.reportMeta.salesMapUrl)) {
+        setMeta({ salesMapUrl: media.salesMapUrl });
+      }
+
+      const incoming = mapped.map(ensureSaleAdjustments);
+      if (mode === "replace") {
+        fingerprintsRef.current = {};
+        replaceSales(incoming);
+        toast.success(`Replaced comparables with ${incoming.length} sale(s)`, {
+          description: `${sourceLabel}. Previous sales on this job were removed.`,
+        });
+        setStatus(`Replaced grid with ${incoming.length} sale(s) from ${sourceLabel}.`);
+      } else {
+        const preview = mergeIncomingSales(salesRef.current, incoming);
+        if (preview.matched > 0) {
+          setDuplicateChoice({ incoming, matched: preview.matched, sourceLabel });
+          setStatus(`${preview.matched} already on the job. Choose how to handle them.`);
+        } else {
+          replaceSales(preview.sales);
+          toast.success(`Added ${preview.added} comparable sale(s)`, { description: sourceLabel });
+          setStatus(`Added ${preview.added} sale(s) from ${sourceLabel}.`);
+        }
+      }
+    } catch (err) {
+      console.error("[CMA text import]", err);
+      const message = err instanceof Error ? err.message : "Import failed";
+      toast.error("CMA import failed", { description: message });
+      setStatus(`Failed: ${message}`);
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  function resolveDuplicates(choice: "skip" | "fill" | "overwrite") {
+    if (!duplicateChoice) return;
+    const { incoming, sourceLabel } = duplicateChoice;
+    if (choice === "skip") {
+      const existing = salesRef.current;
+      const fresh = incoming.filter((sale) => !existing.some((row) => isSameTransaction(row, sale)));
+      replaceSales([...existing, ...fresh]);
+      toast.success(`Added ${fresh.length} new sale(s). Skipped matches.`, { description: sourceLabel });
+    } else if (choice === "fill") {
+      const merged = mergeIncomingSales(salesRef.current, incoming);
+      replaceSales(merged.sales);
+      toast.success(`Filled blanks on ${merged.matched} match(es). Added ${merged.added}.`, { description: sourceLabel });
+    } else {
+      const next = [...salesRef.current];
+      for (const sale of incoming) {
+        const idx = next.findIndex((row) => isSameTransaction(row, sale));
+        if (idx >= 0) {
+          next[idx] = { ...next[idx]!, ...sale, id: next[idx]!.id, narrative: next[idx]!.narrative, photoUrl: next[idx]!.photoUrl };
+        } else {
+          next.push(sale);
+        }
+      }
+      replaceSales(next);
+      toast.success("Overwrote matching sales with CMA values. Notes and photos kept.", { description: sourceLabel });
+    }
+    setDuplicateChoice(null);
+    setStatus(null);
+  }
+
+  async function onCmaFileSelected(file: File | null) {
+    if (!file) return;
+
+    const name = file.name.toLowerCase();
+    const isPdf = file.type === "application/pdf" || name.endsWith(".pdf");
+    const isCsv =
+      file.type === "text/csv" ||
+      name.endsWith(".csv") ||
+      file.type === "application/vnd.ms-excel";
+
+    const mode = cmaImportModeRef.current;
+    setImporting(true);
+    try {
+      if (isCsv) {
+        const text = await file.text();
+        const result = importSalesFromCsv(text);
+        if (result.sales.length === 0) {
+          toast.error("No sales in CSV", {
+            description: result.warnings.join(" ") || "Check headers.",
+          });
+          setStatus("No sales in CSV.");
+          return;
+        }
+        const incoming = result.sales.map(ensureSaleAdjustments);
+        if (mode === "replace") {
+          fingerprintsRef.current = {};
+          replaceSales(incoming);
+          toast.success(`Replaced comparables with ${incoming.length} sale(s) from CSV`);
+          setStatus(`Replaced grid with ${incoming.length} from CSV.`);
+        } else {
+          const merged = mergeIncomingSales(salesRef.current, incoming);
+          replaceSales(merged.sales);
+          toast.success(
+            merged.added > 0
+              ? `Added ${merged.added} sale(s) from CSV`
+              : "No new CSV sales to add",
+            {
+              description:
+                merged.matched > 0
+                  ? `${merged.matched} already on the job were left as they are.`
+                  : undefined,
+            },
+          );
+          setStatus(`Merged CSV: +${merged.added} new, ${merged.matched} already on file.`);
+        }
+        return;
+      }
+
+      if (isPdf) {
+        setStatus("Reading PDF text…");
+        const text = await extractTextFromPdf(file);
+        if (!text.trim()) {
+          toast.error("Could not read text from PDF", {
+            description: "Try pasting Comparable Sales text into the box below.",
+          });
+          setStatus("PDF text extraction returned empty.");
+          return;
+        }
+        setStatus("Parsing sales data…");
+        await importFromCmaText(text, "CMA PDF", undefined, mode);
+        return;
+      }
+
+      // .txt or other
+      const text = await file.text();
+      await importFromCmaText(text, file.name || "file", undefined, mode);
+    } catch (err) {
+      console.error("[CMA file import]", err);
+      const message = err instanceof Error ? err.message : "CMA import failed";
+      toast.error("CMA import failed", { description: message });
+      setStatus(`Failed: ${message}`);
+    } finally {
+      setImporting(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  return (
+
+
+    <div className="space-y-4">
+      {(panel === "all" || panel === "market") ? (
+      <>
+      <div
+        className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-4"
+        onDragOver={(e) => {
+          if (!cmaFileFromDataTransfer(e.dataTransfer)) return;
+          e.preventDefault();
+          e.stopPropagation();
+          e.dataTransfer.dropEffect = "copy";
+        }}
+        onDrop={(e) => {
+          const cma = cmaFileFromDataTransfer(e.dataTransfer);
+          if (!cma) return;
+          e.preventDefault();
+          e.stopPropagation();
+          importDroppedCma(cma);
+        }}
+      >
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-semibold text-foreground">Import comparable sales</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Import a CMA PDF or paste Comparable Sales text. A later extract is appended.
+            Same address plus sale date and price is treated as the same transaction.
+          </p>
+          {status ? (
+            <p className="mt-2 text-xs text-muted-foreground">{status}</p>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".pdf,.csv,text/csv,application/pdf"
+            className="hidden"
+            onChange={(e) => void onCmaFileSelected(e.target.files?.[0] ?? null)}
+          />
+          <button
+            type="button"
+            disabled={importing}
+            onClick={() => {
+              cmaImportModeRef.current = "merge";
+              fileRef.current?.click();
+            }}
+            className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+          >
+            {importing ? "Importing…" : "Import CMA PDF"}
+          </button>
+          <button
+            type="button"
+            disabled={importing}
+            onClick={() => {
+              if (salesRef.current.length > 0) {
+                const ok = window.confirm(
+                  "Replace all comparables on this job with the next file? Photos, notes and adjustments on the current list will be removed.",
+                );
+                if (!ok) return;
+              }
+              cmaImportModeRef.current = "replace";
+              fileRef.current?.click();
+            }}
+            className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+          >
+            Replace all from CMA
+          </button>
+        </div>
+      </div>
+      {duplicateChoice ? (
+        <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm dark:bg-amber-950/30">
+          <p className="font-medium">{duplicateChoice.matched} already on the job.</p>
+          <p className="mt-1 text-muted-foreground">Choose how to handle the matches. Notes and photos are kept.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button type="button" className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium" onClick={() => resolveDuplicates("skip")}>Skip matches</button>
+            <button type="button" className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium" onClick={() => resolveDuplicates("fill")}>Fill blanks</button>
+            <button type="button" className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium" onClick={() => resolveDuplicates("overwrite")}>Overwrite</button>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="rounded-md border border-border bg-card p-4 space-y-2">
+        <label className="text-sm font-medium text-foreground" htmlFor="cma-paste">
+          Or paste Comparable Sales text from the CMA
+        </label>
+        <p className="text-xs text-muted-foreground">
+          Optional: paste Comparable Sales text if PDF import misses a sale. Standard Cotality
+          layout parses without AI. No limit of three — nine or more sales are supported.
+        </p>
+        <textarea
+          id="cma-paste"
+          rows={5}
+          value={cmaPaste}
+          onChange={(e) => setCmaPaste(e.target.value)}
+          placeholder="9 ROBINSON CRESCENT RUNCORN QLD 4113&#10;Sold Price $1,050,000&#10;Sold Date 16-Jun-26&#10;…"
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-1 focus:ring-ring"
+        />
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={importing || !cmaPaste.trim()}
+            onClick={() => void importFromCmaText(cmaPaste, "pasted CMA text", undefined, "merge")}
+            className="rounded-md border border-input bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+          >
+            Add from pasted text
+          </button>
+          <button
+            type="button"
+            disabled={importing || !cmaPaste.trim()}
+            onClick={() => {
+              if (salesRef.current.length > 0) {
+                const ok = window.confirm(
+                  "Replace all comparables on this job with the pasted sales?",
+                );
+                if (!ok) return;
+              }
+              void importFromCmaText(cmaPaste, "pasted CMA text", undefined, "replace");
+            }}
+            className="rounded-md border border-input bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+          >
+            Replace all from paste
+          </button>
+        </div>
+      </div>
+
+      <InspectionRoutePlanner
+        sales={draft.sales}
+        values={draft.values}
+        meta={draft.reportMeta}
+        leaseComps={draft.reportMeta.ciLeaseComps}
+        landSales={draft.reportMeta.ciLandSales}
+      />
+      {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
+        <div className="mb-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+          <div className="font-medium text-slate-700 mb-1">Finished-report checklist</div>
+          <div>Reconciliation paragraph: {draft.narrative.valueReconciliation?.trim() ? "included" : "missing"}</div>
+          <div>In-text citations: {draft.reportMeta.includeInTextCitations !== false ? "on" : "off"}</div>
+          <div>Full-page sheets: {draft.reportMeta.printFullPageSheets !== false ? "included" : "excluded"}</div>
+          <label className="mt-1 flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={draft.reportMeta.printFullPageSheets !== false}
+              onChange={(e) => setMeta({ printFullPageSheets: e.target.checked })}
+            />
+            Include all full-page comparable sheets in the finished report
+          </label>
+        </div>
+      ) : null}
+      {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
+        <CommercialValuationTables
+          values={draft.values}
+          sales={draft.sales}
+          meta={draft.reportMeta}
+          onSales={setSales}
+          onMeta={setMeta}
+          subjectPhotoUrl={subjectFrontPhoto?.url}
+          inspectionId={draft.inspectionId}
+        />
+      ) : null}
+      {(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
+        <div className="mt-4 space-y-4">
+          <div className="flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs">
+            <label className="flex cursor-pointer items-center gap-2 font-medium text-slate-700">
+              <input
+                type="checkbox"
+                checked={draft.reportMeta.printFullPageSheets !== false}
+                onChange={(e) => setMeta({ printFullPageSheets: e.target.checked })}
+              />
+              Include full-page comparable sheets in the finished report
+            </label>
+            <span className="text-slate-500">Individual sheets can still be excluded below.</span>
+          </div>
+          {draft.sales.filter(s => s.omitFromReport !== true && (s.address || s.salePrice)).map((s, idx) => (
+            <ComparableSheet
+              key={s.id}
+              inspectionId={draft.inspectionId}
+              data={effectiveSaleSheet(s, idx + 1, {
+                sales: draft.sales,
+                leases: draft.reportMeta.ciLeaseComps,
+                landSales: draft.reportMeta.ciLandSales,
+              })}
+              values={draft.values}
+              onChange={(patch) => setSales(draft.sales.map(sale => sale.id === s.id ? saleFromSheetPatch(sale, patch) : sale))}
+            />
+          ))}
+          <CommercialEvidenceSummaryEditor
+            kind="sales"
+            sales={draft.sales}
+            values={draft.values}
+            meta={draft.reportMeta}
+            pools={{
+              sales: draft.sales,
+              leases: draft.reportMeta.ciLeaseComps,
+              landSales: draft.reportMeta.ciLandSales,
+            }}
+            onSalePatch={(id, summaryOverrides) => setSales(draft.sales.map((sale) => sale.id === id ? { ...sale, summaryOverrides } : sale))}
+          />
+        </div>
+      ) : null}
+      {!(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
+      <div
+        className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-4"
+      >
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-semibold text-foreground">Sales comparison grid (URAR)</h3>
+          <div className="mt-2 flex flex-wrap gap-4 text-sm text-foreground">
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                checked={printSalesEvidenceEnabled(draft.reportMeta)}
+                onChange={(e) => setMeta({ printSalesEvidence: e.target.checked })}
+              />
+              Print sales evidence table
+            </label>
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                checked={printAdjustmentGridEnabled(draft.reportMeta)}
+                onChange={(e) => setMeta({ printAdjustmentGrid: e.target.checked })}
+              />
+              Print adjustment grid
+            </label>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Shared across all report types. Import a CMA to add sales. A later extract is
+            appended — CMA card numbers 1–4 are not used as identity. Same address + sale
+            date/price keeps the working row (photos, notes, adjustments). Sale comments are
+            not generated when the grid changes. Use Generate this block with AI on a sale.
+          </p>
+          {aiChoice ? (
+            <div className="mt-3 rounded-md border border-border bg-background p-3 text-sm">
+              <p className="font-medium text-foreground">This sale already has text.</p>
+              <p className="mt-1 text-muted-foreground">
+                Choose how the new text should be used. Nothing is replaced until you choose.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+                  onClick={() => {
+                    const ids = aiChoice.saleIds;
+                    setAiChoice(null);
+                    void runNarratives(ids, "append");
+                  }}
+                >
+                  Add below existing text
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+                  onClick={() => {
+                    const ids = aiChoice.saleIds;
+                    setAiChoice(null);
+                    void runNarratives(ids, "incorporate");
+                  }}
+                >
+                  Combine with existing text
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium"
+                  onClick={() => {
+                    const ids = aiChoice.saleIds;
+                    setAiChoice(null);
+                    void runNarratives(ids, "replace");
+                  }}
+                >
+                  Replace with new text
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md px-2.5 py-1 text-xs text-muted-foreground"
+                  onClick={() => setAiChoice(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : null}
+          {status ? (
+            <p className="mt-2 text-xs text-muted-foreground">{status}</p>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={generating || sales.length === 0}
+            onClick={() => askSaleNarratives(sales.map((sale) => sale.id))}
+            className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+          >
+            {generating ? "Generating…" : "Generate sale comments with AI"}
+          </button>
+          <button
+            type="button"
+            onClick={addBlankSale}
+            className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+          >
+            Add comparable sale
+          </button>
+        </div>
+      </div>
+      ) : null}
+
+      <>
+
+
+      {/* Right-click menu for photo / map paste */}
+      {photoMenu ? (
+        <div
+          role="menu"
+          className="fixed z-50 min-w-[10rem] rounded-md border border-border bg-card py-1 text-sm shadow-lg"
+          style={{ left: photoMenu.x, top: photoMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className="block w-full px-3 py-2 text-left text-foreground hover:bg-muted"
+            onClick={() => void pasteFromMenu()}
+          >
+            Paste image
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="block w-full px-3 py-2 text-left text-foreground hover:bg-muted"
+            onClick={chooseFileFromMenu}
+          >
+            Choose file…
+          </button>
+        </div>
+      ) : null}
+      <input
+        ref={photoFileInputRef}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        onChange={(e) => {
+          const file = e.target.files?.[0] ?? null;
+          const input = e.target;
+          const target = photoMenuTargetRef.current;
+          if (!file || !target) {
+            input.value = "";
+            return;
+          }
+          void (async () => {
+            try {
+              const stable = await cloneImageFile(file);
+              input.value = "";
+              if (target === "map") void onSalesMapFile(stable);
+              else void onSalePhotoFile(target.saleId, stable);
+            } catch (err) {
+              input.value = "";
+              toast.error("Could not read photo", {
+                description: err instanceof Error ? err.message : "Try another file",
+              });
+            }
+          })();
+        }}
+      />
+      <PhotoSourceSheet
+        open={photoSourceOpen}
+        title="Comparable photo"
+        onClose={() => setPhotoSourceOpen(false)}
+        onCamera={() => clickSalePhotoInput("camera")}
+        onLibrary={() => clickSalePhotoInput("library")}
+      />
+      <SalesMapEditor
+        open={mapEditorOpen}
+        values={draft.values}
+        sales={sales}
+        savedPins={(draft.reportMeta.salesMapPins as SalesMapPin[] | undefined) ?? null}
+        onClose={() => setMapEditorOpen(false)}
+        onApply={async ({ pins }) => {
+          const key = loadGoogleMapsKey();
+          const subject = pins.find((p) => p.kind === "subject");
+          if (subject && !(subject.lat === 0 && subject.lng === 0)) {
+            const locationBuilt = await buildSubjectLocationMap({
+              apiKey: key,
+              subject,
+              zoom: draft.reportMeta.subjectMapManual ? draft.reportMeta.subjectMapZoom : null,
+            });
+            await attachLocationMap(locationBuilt.file);
+            setMeta({
+              subjectMapZoom: locationBuilt.zoom,
+              subjectMapManual: draft.reportMeta.subjectMapManual === true,
+            });
+          }
+          const salesFile = await buildComparableSalesMap({ apiKey: key, pins });
+          await onSalesMapFile(salesFile);
+          setMeta({ salesMapPins: pins });
+          const isCommercialOrIndustrial =
+        Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) ||
+        Boolean(String(draft.values["prop_type_industrial"] ?? "").trim());
+      replaceSales(
+        isCommercialOrIndustrial
+          ? proximityWithBearingFromPins(sales, pins)
+          : proximityFromPins(sales, pins),
+      );
+          setMapEditorOpen(false);
+          toast.success("Maps updated");
+        }}
+      />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="sr-only"
+        onChange={(e) => {
+          const file = e.target.files?.[0] ?? null;
+          const input = e.target;
+          const target = photoMenuTargetRef.current;
+          if (!file || !target) {
+            input.value = "";
+            return;
+          }
+          void (async () => {
+            try {
+              const stable = await cloneImageFile(file);
+              input.value = "";
+              if (target === "map") void onSalesMapFile(stable);
+              else void onSalePhotoFile(target.saleId, stable);
+            } catch (err) {
+              input.value = "";
+              toast.error("Could not read photo", {
+                description: err instanceof Error ? err.message : "Try another file",
+              });
+            }
+          })();
+        }}
+      />
+
+
+      {!(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) && gridSales.length === 0 ? (
+        <div className="rounded-md border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
+          <p>
+            {heldSales.length > 0
+              ? "No comparables are on the report. Restore one from the working file below, or add a sale."
+              : "No comparable sales yet. Import a Cotality CMA PDF or add one by hand."}
+          </p>
+          <button
+            type="button"
+            onClick={addBlankSale}
+            className="mt-4 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Add comparable sale
+          </button>
+        </div>
+      ) : !(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
+        (() => {
+          const COMPS_PER_GRID = 3;
+          const chunks: (typeof gridSales)[] = [];
+          for (let i = 0; i < gridSales.length; i += COMPS_PER_GRID) {
+            chunks.push(gridSales.slice(i, i + COMPS_PER_GRID));
+          }
+          return (
+            <div className="space-y-6">
+              <p className="text-sm text-muted-foreground">
+                {gridSales.length} comparable{gridSales.length === 1 ? "" : "s"} on the report.
+                Further sales continue in the next block below.
+              </p>
+              {chunks.map((chunk, chunkIdx) => {
+                const startNum = chunkIdx * COMPS_PER_GRID;
+                const missing = COMPS_PER_GRID - chunk.length;
+                const emptyHeader = Array.from({ length: missing }, (_, i) => (
+                  <th key={`empty-head-${chunkIdx}-${i}`} colSpan={2} className="border-l border-border" />
+                ));
+                const emptyCells = (row: string) =>
+                  Array.from({ length: missing }, (_, i) => (
+                    <Fragment key={`empty-${row}-${chunkIdx}-${i}`}>
+                      <td className="border-l border-border" />
+                      <td />
+                    </Fragment>
+                  ));
+                return (
+                  <div
+                    key={`grid-${chunkIdx}`}
+                    className="max-h-[min(70vh,52rem)] overflow-auto rounded-md border border-border"
+                    onPointerDownCapture={onGridSalePointer}
+                    onFocusCapture={onGridSalePointer}
+                  >
+                    <table className="w-full min-w-[36rem] border-collapse text-left text-sm table-fixed">
+                      <colgroup>
+                        <col className="w-[8.5rem]" />
+                        <col className="w-[5.5rem]" />
+                        {Array.from({ length: COMPS_PER_GRID }, (_, i) => (
+                          <Fragment key={`cols-${chunkIdx}-${i}`}>
+                            <col className="w-[5.5rem]" />
+                            <col className="w-[6.5rem]" />
+                          </Fragment>
+                        ))}
+                      </colgroup>
+                      <thead className="sticky top-0 z-20">
+                        <tr className="border-b border-border bg-muted/95">
+                          <th className="sticky left-0 z-30 bg-muted/95 px-1.5 py-1.5 text-xs font-semibold text-foreground">
+                            Feature
+                          </th>
+                          <th className="bg-muted/95 px-1.5 py-1.5 align-top text-xs font-semibold text-foreground">
+                            <span className="leading-tight">Subject</span>
+                            {subjectGridAddress.line1 ? (
+                              <span className="mt-0.5 block text-[0.65rem] font-normal text-muted-foreground">
+                                {subjectGridAddress.line1}
+                                {subjectGridAddress.line2 ? (
+                                  <>
+                                    <br />
+                                    {subjectGridAddress.line2}
+                                  </>
+                                ) : null}
+                              </span>
+                            ) : null}
+                            {subjectFrontPhoto?.url ? (
+                              <img
+                                src={subjectFrontPhoto.url}
+                                alt="Subject front"
+                                className="pointer-events-none mt-1 max-h-14 w-auto max-w-full rounded border border-border object-cover"
+                              />
+                            ) : (
+                              <span className="mt-1 block rounded border border-dashed border-border px-1 py-2 text-center text-[0.6rem] font-normal text-muted-foreground">
+                                No front photo
+                              </span>
+                            )}
+                          </th>
+                          {chunk.map((sale, idx) => {
+                            const lines = addressLines(sale.address || "");
+                            return (
+                              <th
+                                key={sale.id}
+                                colSpan={2}
+                                onDragOver={salePhotoDragOver}
+                                onDrop={(e) => onSalePhotoDrop(sale.id, e)}
+                                {...saleGridCellProps(
+                                  sale.id,
+                                  "border-l border-border bg-muted/95 px-1 py-1.5 align-top text-xs font-semibold text-foreground",
+                                )}
+                              >
+                                <div className="flex items-start justify-between gap-0.5">
+                                  <span className="min-w-0 leading-tight">
+                                    Comparable #{startNum + idx + 1}
+                                    {lines.line1 ? (
+                                      <span className="mt-0.5 block text-[0.65rem] font-normal text-muted-foreground">
+                                        {lines.line1}
+                                        {lines.line2 ? (
+                                          <>
+                                            <br />
+                                            {lines.line2}
+                                          </>
+                                        ) : null}
+                                      </span>
+                                    ) : null}
+                                    {sale.photoUrl ? (
+                                      <label
+                                        tabIndex={0}
+                                        onPaste={(e) => onSalePhotoPaste(sale.id, e)}
+                                        onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
+                                        className="mt-1 block cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                        title="Right-click → Paste image to replace"
+                                      >
+                                        <img
+                                          src={sale.photoUrl}
+                                          alt=""
+                                          className="pointer-events-none max-h-14 w-auto max-w-full rounded border border-border object-cover"
+                                        />
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          className="hidden"
+                                          onChange={(e) =>
+                                            void onSalePhotoFile(
+                                              sale.id,
+                                              e.target.files?.[0] ?? null,
+                                            )
+                                          }
+                                        />
+                                      </label>
+                                    ) : (
+                                      <label
+                                        tabIndex={0}
+                                        onPaste={(e) => onSalePhotoPaste(sale.id, e)}
+                                        onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
+                                        onMouseEnter={(e) => (e.currentTarget as HTMLElement).focus?.()}
+                                        onDragOver={salePhotoDragOver}
+                                        onDrop={(e) => onSalePhotoDrop(sale.id, e)}
+                                        className="mt-1 flex cursor-pointer flex-col items-center justify-center rounded border border-dashed border-border px-1 py-2 text-[0.6rem] font-normal text-muted-foreground hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                        title="Right-click → Paste image, or ⌘V"
+                                      >
+                                        + Photo / paste
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          className="hidden"
+                                          onChange={(e) =>
+                                            void onSalePhotoFile(
+                                              sale.id,
+                                              e.target.files?.[0] ?? null,
+                                            )
+                                          }
+                                        />
+                                      </label>
+                                    )}
+                                  </span>
+                                  <div className="flex shrink-0 flex-col items-end gap-0.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => setAgentCallId(sale.id)}
+                                      className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[0.6rem] text-slate-600"
+                                    >
+                                      Agent call
+                                    </button>
+                                    <div className="flex items-center gap-0.5">
+                                      <button
+                                        type="button"
+                                        disabled={startNum + idx === 0}
+                                        onClick={() => moveSale(sale.id, -1)}
+                                        className="rounded px-1 text-[0.65rem] text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-30"
+                                        aria-label="Move sale left"
+                                        title="Move left"
+                                      >
+                                        ←
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={startNum + idx === gridSales.length - 1}
+                                        onClick={() => moveSale(sale.id, 1)}
+                                        className="rounded px-1 text-[0.65rem] text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-30"
+                                        aria-label="Move sale right"
+                                        title="Move right"
+                                      >
+                                        →
+                                      </button>
+                                    </div>
+                                    {gridSales.length > 1 ? (
+                                      <select
+                                        value=""
+                                        onChange={(e) => {
+                                          const otherId = e.target.value;
+                                          if (otherId) swapSales(sale.id, otherId);
+                                        }}
+                                        className="max-w-[4.5rem] rounded border border-input bg-card px-0.5 py-0.5 text-[0.6rem] text-foreground"
+                                        title="Swap this comparable with another number"
+                                        aria-label={`Swap comparable ${startNum + idx + 1} with`}
+                                      >
+                                        <option value="">Swap…</option>
+                                        {gridSales.map((other, otherIdx) =>
+                                          other.id === sale.id ? null : (
+                                            <option key={other.id} value={other.id}>
+                                              #{otherIdx + 1}
+                                            </option>
+                                          ),
+                                        )}
+                                      </select>
+                                    ) : null}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const label = sale.address.trim() || "this comparable";
+                                        if (!confirmDelete(label)) return;
+                                        replaceSales(sales.filter((s) => s.id !== sale.id));
+                                      }}
+                                      className="text-muted-foreground hover:text-destructive"
+                                      aria-label="Remove sale from working file"
+                                      title="Delete from working file"
+                                    >
+                                      &times;
+                                    </button>
+                                  </div>
+                                </div>
+                                <label className="mt-1.5 flex items-start gap-1.5 text-[0.65rem] font-normal text-foreground">
+                                  <input
+                                    type="checkbox"
+                                    checked={sale.omitFromReport === true}
+                                    onChange={(e) => setOmitFromReport(sale.id, e.target.checked)}
+                                    className="mt-0.5 size-3.5 shrink-0 rounded border-input"
+                                  />
+                                  <span>Hold in working file (omit from report)</span>
+                                </label>
+                              </th>
+                            );
+                          })}
+                          {emptyHeader}
+                        </tr>
+                        <tr className="border-b border-border bg-muted/95 text-xs text-muted-foreground">
+                          <th className="sticky left-0 z-30 bg-muted/95 px-2 py-1" />
+                          <th className="bg-muted/95 px-2 py-1" />
+                          {chunk.map((sale) => (
+                            <Fragment key={sale.id}>
+                              <th
+                                {...saleGridCellProps(
+                                  sale.id,
+                                  "border-l border-border px-1.5 py-1 font-medium",
+                                )}
+                              >
+                                Description
+                              </th>
+                              <th {...saleGridCellProps(sale.id, "px-1 py-1 font-medium")}>
+                                +/− $
+                              </th>
+                            </Fragment>
+                          ))}
+                          {emptyHeader}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {/* ---- URAR identity rows ---- */}
+                        {(
+                          [
+                            {
+                              key: "address",
+                              label: "Address",
+                              subject: () =>
+                                [draft.values["prop_address"], draft.values["prop_suburb"]]
+                                  .filter(Boolean)
+                                  .join(", ") || "—",
+                              read: (s: (typeof sales)[0]) => s.address,
+                              write: (id: string, v: string) => patchSale(id, { address: v }),
+                            },
+                            {
+                              key: "proximity",
+                              label: "Proximity to Subject",
+                              subject: () => "—",
+                              read: (s: (typeof sales)[0]) => s.proximity ?? "",
+                              write: (id: string, v: string) => patchSale(id, { proximity: v }),
+                            },
+                            {
+                              key: "salePrice",
+                              label: "Sale Price",
+                              subject: () =>
+                                subjectAskingPriceDisplay(
+                                  draft.values,
+                                  draft.reportMeta.subjectAskingPrice,
+                                ),
+                              read: (s: (typeof sales)[0]) => formatSalePrice(s.salePrice),
+                              write: (id: string, v: string) =>
+                                patchSale(id, { salePrice: formatSalePrice(v) || v }),
+                            },
+                            {
+                              key: "saleDate",
+                              label: "Date of Sale",
+                              subject: () => "—",
+                              read: (s: (typeof sales)[0]) => s.saleDate,
+                              write: (id: string, v: string) => patchSale(id, { saleDate: v }),
+                            },
+                            {
+                              key: "printRating",
+                              label: "Rating",
+                              subject: () => "—",
+                              read: (s: (typeof sales)[0]) => s.printRating ?? "",
+                              write: (id: string, v: string) => patchSale(id, { printRating: v }),
+                            },
+                            {
+                              key: "priceGla",
+                              label: "Sale Price/Gross Liv. Area",
+                              subject: () => {
+                                const v = subjectAskingPriceDisplay(draft.values, draft.reportMeta.subjectAskingPrice);
+                                const area = String(draft.values["prop_gla"] ?? draft.values["prop_living"] ?? "").replace(/[^\d.]/g, "");
+                                const p = Number(String(v).replace(/[^\d.]/g, ""));
+                                const a = Number(area);
+                                if (!p || !a) return "—";
+                                return "$" + Math.round(p / a).toLocaleString("en-AU");
+                              },
+                              read: (s: (typeof sales)[0]) => salePricePerGla(s),
+                              write: null as null | ((id: string, v: string) => void),
+                            },
+                            {
+                              key: "dataSource",
+                              label: "Data Source(s)",
+                              subject: () => "—",
+                              read: (s: (typeof sales)[0]) => s.dataSource ?? "",
+                              write: (id: string, v: string) => patchSale(id, { dataSource: v }),
+                            },
+                            {
+                              key: "verificationSource",
+                              label: "Verification Source(s)",
+                              subject: () => "—",
+                              read: (s: (typeof sales)[0]) => s.verificationSource ?? "",
+                              write: (id: string, v: string) =>
+                                patchSale(id, { verificationSource: v }),
+                            },
+                          ] as const
+                        ).map((row, metaRowIdx) => (
+                          <tr key={row.key} className={`border-b border-border ${adjustmentRowClass(metaRowIdx)}`}>
+                            <td className={`sticky left-0 z-10 px-2 py-1.5 font-medium text-foreground ${adjustmentRowClass(metaRowIdx)}`}>
+                              {row.label}
+                            </td>
+                            <td className="px-2 py-1.5 text-muted-foreground">
+                              {row.key === "salePrice" ? (
+                                <div>
+                                  <select className="mb-0.5 w-full rounded border border-input bg-card px-0.5 py-0.5 text-[0.6rem]" value={draft.reportMeta.subjectValueKind ?? "assessed"} onChange={(e) => setMeta({ subjectValueKind: e.target.value as "sale" | "assessed" })}>
+                                    <option value="sale">Sale price</option>
+                                    <option value="assessed">Assessed value</option>
+                                  </select>
+                                  <input
+                                    value={subjectAskingPriceDisplay(draft.values, draft.reportMeta.subjectAskingPrice)}
+                                    onChange={(e) => setMeta({ subjectAskingPrice: e.target.value })}
+                                    onBlur={(e) => { const f = formatSalePrice(e.target.value); if (f && f !== e.target.value) setMeta({ subjectAskingPrice: f }); }}
+                                    placeholder="Optional"
+                                    title="Subject sale price or assessed value. Rates are calculated from this figure when entered."
+                                    className="w-full min-w-0 rounded border border-input bg-card px-1 py-0.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
+                                  />
+                                </div>
+                              ) : (
+                                row.subject()
+                              )}
+                            </td>
+                            {chunk.map((sale) => (
+                              <Fragment key={sale.id}>
+                                <td
+                                  {...saleGridCellProps(
+                                    sale.id,
+                                    "border-l border-border px-1 py-1 align-middle",
+                                  )}
+                                >
+                                  {row.key === "printRating" ? (
+                                    <select
+                                      value={row.read(sale)}
+                                      onChange={(e) => row.write!(sale.id, e.target.value)}
+                                      title="Rating on the printed sales schedule. Blank uses the calculated rating."
+                                      className="w-full rounded border border-input bg-card px-1 py-0.5 text-xs outline-none"
+                                    >
+                                      <option value="">Calculated</option>
+                                      <option value="Superior">Superior</option>
+                                      <option value="Similar">Similar</option>
+                                      <option value="Inferior">Inferior</option>
+                                    </select>
+                                  ) : row.write ? (
+                                    <input
+                                      value={row.read(sale)}
+                                      onChange={(e) => row.write!(sale.id, e.target.value)}
+                                      className="w-full rounded border border-transparent bg-transparent px-1 py-0.5 text-xs outline-none focus:border-input focus:bg-accent/40"
+                                    />
+                                  ) : (
+                                    <span className="px-1 text-xs text-muted-foreground">
+                                      {row.read(sale)}
+                                    </span>
+                                  )}
+                                </td>
+                                <td
+                                  {...saleGridCellProps(
+                                    sale.id,
+                                    "px-1 py-1 align-middle",
+                                  )}
+                                >
+                                  {row.key === "saleDate" ? (
+                                    <input
+                                      type="text"
+                                      inputMode="decimal"
+                                      placeholder="0"
+                                      aria-label="Date of sale dollar adjustment"
+                                      title="Dollar adjustment for this sale date. Leading minus for a negative amount."
+                                      value={
+                                        amountDrafts[`${sale.id}:dateOfSale`] !== undefined
+                                          ? amountDrafts[`${sale.id}:dateOfSale`]
+                                          : (sale.adjustments?.dateOfSale?.amount ?? 0) === 0
+                                            ? ""
+                                            : String(sale.adjustments?.dateOfSale?.amount ?? 0)
+                                      }
+                                      onChange={(e) => {
+                                        const raw = e.target.value;
+                                        const key = `${sale.id}:dateOfSale`;
+                                        setAmountDrafts((prev) => ({ ...prev, [key]: raw }));
+                                        const parsed = parseAmountInput(raw);
+                                        if (parsed !== null) {
+                                          patchAdjustment(sale.id, "dateOfSale", { amount: parsed });
+                                        }
+                                      }}
+                                      onBlur={(e) => {
+                                        const key = `${sale.id}:dateOfSale`;
+                                        const raw = e.currentTarget.value;
+                                        setAmountDrafts((prev) => {
+                                          if (prev[key] === undefined) return prev;
+                                          const next = { ...prev };
+                                          delete next[key];
+                                          return next;
+                                        });
+                                        const parsed = parseAmountInput(raw);
+                                        patchAdjustment(sale.id, "dateOfSale", {
+                                          amount: parsed ?? 0,
+                                        });
+                                      }}
+                                      className={`${adjustmentAmountClass(
+                                        sale.adjustments?.dateOfSale?.amount ?? 0,
+                                      )} min-w-[4.5rem] border-input bg-card`}
+                                    />
+                                  ) : row.key === "address" || row.key === "salePrice" || row.key === "printRating" ? (
+                                    ""
+                                  ) : (
+                                    "—"
+                                  )}
+                                </td>
+                              </Fragment>
+                            ))}
+                            {emptyCells(row.key)}
+                          </tr>
+                        ))}
+
+                        <tr className="border-b border-border bg-muted/30">
+                          <td
+                            colSpan={2 + COMPS_PER_GRID * 2}
+                            className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          >
+                            Value adjustments
+                          </td>
+                        </tr>
+
+                        {/* ---- URAR VALUE ADJUSTMENTS: Description | $ side by side ---- */}
+                        {visibleAdjFeatures.map((feature, featureIdx) => {
+                          const isSite = feature.id === "site";
+                          const isGla = feature.id === "grossLivingArea";
+                          const isAreaRateRow = isSite || isGla;
+                          const subjectDisplay = subjectFeatureDisplay(
+                            feature,
+                            draft.values,
+                          );
+                          const rateValue = isGla
+                            ? (draft.reportMeta.glaRatePerM2 ?? "")
+                            : isSite
+                              ? (draft.reportMeta.siteRatePerM2 ?? "")
+                              : "";
+                          const rowBg = adjustmentRowClass(featureIdx);
+
+                          return (
+                          <tr key={feature.id} className={`border-b border-border ${rowBg}`}>
+                            <td className={`sticky left-0 z-10 px-1.5 py-1 text-xs font-medium text-foreground ${rowBg}`}>
+                              <label className="flex items-center gap-1.5">
+                                <input
+                                  type="checkbox"
+                                  title="Include this row on the printed adjustment grid"
+                                  checked={adjustmentRowPrints(draft.reportMeta, feature.id)}
+                                  onChange={(e) =>
+                                    setMeta({
+                                      omitAdjustmentPrintRows: setAdjustmentRowPrint(
+                                        draft.reportMeta,
+                                        feature.id,
+                                        e.target.checked,
+                                      ),
+                                    })
+                                  }
+                                />
+                                <span>{feature.label}</span>
+                              </label>
+                            </td>
+                            <td className="px-1 py-1 text-[0.7rem] text-muted-foreground align-top">
+                              {feature.id === "other1" || feature.id === "other2" ? (
+                                <input
+                                  value={
+                                    feature.id === "other2"
+                                      ? (draft.reportMeta.subjectOther2 ?? "")
+                                      : (draft.reportMeta.subjectOther1 ?? "")
+                                  }
+                                  onChange={(e) =>
+                                    setMeta(
+                                      feature.id === "other2"
+                                        ? { subjectOther2: e.target.value }
+                                        : { subjectOther1: e.target.value },
+                                    )
+                                  }
+                                  placeholder="Describe other item…"
+                                  className="w-full min-w-0 rounded border border-input bg-card px-1 py-0.5 text-[0.65rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
+                                />
+                              ) : feature.id === "topography" ? (
+                                <input
+                                  value={
+                                    draft.reportMeta.subjectTopography ??
+                                    subjectTopographyDisplay(draft.values)
+                                  }
+                                  onChange={(e) => setMeta({ subjectTopography: e.target.value })}
+                                  placeholder="Topography"
+                                  title="Subject topography printed on the adjustment grid. Defaults to the inspection selection, and can be edited for this report."
+                                  className="w-full min-w-0 rounded border border-input bg-card px-1 py-0.5 text-[0.65rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
+                                />
+                              ) : isSite ? (
+                                <div className="space-y-1">
+                                  <input
+                                    value={subjectSiteAreaRaw(
+                                      draft.values,
+                                      draft.reportMeta.subjectSiteArea,
+                                    )}
+                                    onChange={(e) => setSubjectSiteArea(e.target.value)}
+                                    placeholder="Usable site area"
+                                    title="Subject site area used for $/m² adjustments. Defaults to estimated usable site area."
+                                    className="w-full min-w-0 rounded border border-input bg-card px-1 py-0.5 text-[0.65rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
+                                  />
+                                  <div>{subjectDisplay}</div>
+                                </div>
+                              ) : (
+                                <div>{subjectDisplay}</div>
+                              )}
+                              {isAreaRateRow ? (
+                                <label className="mt-1 flex flex-col gap-0.5">
+                                  <span className="text-[0.6rem] font-medium uppercase tracking-wide text-muted-foreground">
+                                    $/m² rate
+                                  </span>
+                                  <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    placeholder="e.g. 2500"
+                                    value={rateValue}
+                                    onChange={(e) =>
+                                      setAreaRate(isGla ? "gla" : "site", e.target.value)
+                                    }
+                                    title={
+                                      isGla
+                                        ? "GLA adjustment = rate × (subject GLA − comp GLA), nearest $1,000"
+                                        : "Site adjustment = rate × (subject site − comp site), nearest $1,000"
+                                    }
+                                    className={areaRateInputClass(rateValue)}
+                                  />
+                                </label>
+                              ) : null}
+                            </td>
+                            {chunk.map((sale) => {
+                              const adj = sale.adjustments?.[feature.id] ?? {
+                                relativity: "similar" as Relativity,
+                                amount: 0,
+                                detail: "",
+                              };
+                              // Prefer stored detail; fall back to known sale facts for key lines
+                              let detail = adj.detail ?? "";
+                              if (!detail.trim()) {
+                                if (feature.id === "site") detail = sale.landArea || "";
+                                if (feature.id === "grossLivingArea") detail = sale.gla || "";
+                                if (feature.id === "dateOfSale") detail = sale.saleDate || "";
+                                if (feature.id === "aboveGradeRoomCount") {
+                                  detail = [
+                                    sale.beds ? `${sale.beds} bd` : null,
+                                    sale.baths ? `${sale.baths} ba` : null,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(" / ");
+                                }
+                                if (feature.id === "garageCarport" && sale.cars) {
+                                  detail = `${sale.cars} car`;
+                                }
+                              }
+                              const rateActive =
+                                isAreaRateRow &&
+                                rateValue.trim() !== "" &&
+                                detail.trim() !== "";
+                              return (
+                                <Fragment key={sale.id}>
+                                  <td
+                                    {...saleGridCellProps(
+                                      sale.id,
+                                      "border-l border-border px-0.5 py-1 align-bottom",
+                                    )}
+                                  >
+                                    <div className="flex min-w-0 flex-col gap-0.5">
+                                      {feature.id === "dateOfSale" ? (
+                                        <span className="px-1 text-[0.65rem] text-muted-foreground">
+                                          {sale.saleDate || "—"}
+                                        </span>
+                                      ) : (
+                                      <input
+                                        value={detail}
+                                        onChange={(e) =>
+                                          patchAdjustment(sale.id, feature.id, {
+                                            detail: e.target.value,
+                                          })
+                                        }
+                                        placeholder="—"
+                                        className="min-w-0 w-full rounded border border-input bg-card px-1 py-0.5 text-[0.65rem] text-foreground outline-none focus:ring-1 focus:ring-ring"
+                                      />
+                                      )}
+                                      {feature.id === "dateOfSale" ? null : (
+                                      <select
+                                        value={adj.relativity}
+                                        onChange={(e) =>
+                                          patchAdjustment(sale.id, feature.id, {
+                                            relativity: e.target.value as Relativity,
+                                            ...(isAreaRateRow ? { relativityManual: true } : {}),
+                                          })
+                                        }
+                                        className={relativitySelectClass(adj.relativity)}
+                                        title={
+                                          isAreaRateRow
+                                            ? adj.relativityManual
+                                              ? "Manual superior/inferior — auto mark will not change this"
+                                              : "Auto mark from area comparison. Change it to override."
+                                            : "Relativity vs subject"
+                                        }
+                                      >
+                                        {RELATIVITY_OPTIONS.map((opt) => (
+                                          <option key={opt} value={opt}>
+                                            {opt}
+                                          </option>
+                                        ))}
+                                      </select>
+                                      )}
+                                      {isAreaRateRow && adj.relativityManual ? (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            patchAdjustment(sale.id, feature.id, {
+                                              relativityManual: false,
+                                            })
+                                          }
+                                          className="text-left text-[0.6rem] font-medium text-primary hover:underline"
+                                          title="Recalculate superior/inferior from site or living area"
+                                        >
+                                          Use auto mark
+                                        </button>
+                                      ) : null}
+                                    </div>
+                                  </td>
+                                  <td
+                                    {...saleGridCellProps(sale.id, "px-0.5 py-1 align-bottom")}
+                                  >
+                                    <input
+                                      type="text"
+                                      inputMode="text"
+                                      placeholder="0"
+                                      value={
+                                        amountDrafts[`${sale.id}:${feature.id}`] !== undefined
+                                          ? amountDrafts[`${sale.id}:${feature.id}`]
+                                          : adj.amount === 0
+                                            ? ""
+                                            : String(adj.amount)
+                                      }
+                                      onChange={(e) => {
+                                        const raw = e.target.value;
+                                        const key = `${sale.id}:${feature.id}`;
+                                        setAmountDrafts((prev) => ({ ...prev, [key]: raw }));
+                                        const parsed = parseAmountInput(raw);
+                                        if (parsed !== null) {
+                                          patchAdjustment(sale.id, feature.id, {
+                                            amount: parsed,
+                                            ...(feature.id === "site" ||
+                                            feature.id === "grossLivingArea"
+                                              ? { amountManual: true }
+                                              : {}),
+                                          });
+                                        }
+                                      }}
+                                      onBlur={(e) => {
+                                        const key = `${sale.id}:${feature.id}`;
+                                        const raw = e.currentTarget.value;
+                                        setAmountDrafts((prev) => {
+                                          if (prev[key] === undefined) return prev;
+                                          const next = { ...prev };
+                                          delete next[key];
+                                          return next;
+                                        });
+                                        const parsed = parseAmountInput(raw);
+                                        patchAdjustment(sale.id, feature.id, {
+                                          amount: parsed ?? 0,
+                                          ...(feature.id === "site" ||
+                                          feature.id === "grossLivingArea"
+                                            ? { amountManual: true }
+                                            : {}),
+                                        });
+                                      }}
+                                      title={
+                                        adj.amountManual
+                                          ? "Manual override — automatic $/m² will not change this figure"
+                                          : rateActive
+                                            ? "Auto-filled from $/m² rate. Type a figure to override."
+                                            : "Dollar adjustment (use leading − for negative)"
+                                      }
+                                      className={adjustmentAmountClass(
+                                        adj.amount,
+                                        amountDrafts[`${sale.id}:${feature.id}`],
+                                      )}
+                                    />
+                                    {adj.amountManual &&
+                                    (feature.id === "site" ||
+                                      feature.id === "grossLivingArea") ? (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          patchAdjustment(sale.id, feature.id, {
+                                            amountManual: false,
+                                          })
+                                        }
+                                        className="mt-0.5 text-[0.6rem] font-medium text-primary hover:underline"
+                                        title="Recalculate from the $/m² rate"
+                                      >
+                                        Use auto $
+                                      </button>
+                                    ) : null}
+                                  </td>
+                                </Fragment>
+                              );
+                            })}
+                            {emptyCells(feature.id)}
+                          </tr>
+                          );
+                        })}
+
+                        {/* ---- Totals ---- */}
+                        {(
+                          [
+                            {
+                              label: "Net Adjustment (Total)",
+                              cell: (sale: (typeof sales)[0]) =>
+                                formatMoney(computeSaleAdjustmentTotals(sale).netAdjustment),
+                            },
+                            {
+                              label: "Net Adj. %",
+                              cell: (sale: (typeof sales)[0]) =>
+                                formatPct(computeSaleAdjustmentTotals(sale).netPct),
+                            },
+                            {
+                              label: "Gross Adj. %",
+                              cell: (sale: (typeof sales)[0]) =>
+                                formatPct(computeSaleAdjustmentTotals(sale).grossPct),
+                            },
+                            {
+                              label: "Adjusted Sale Price",
+                              cell: (sale: (typeof sales)[0]) => {
+                                const adjusted = computeSaleAdjustmentTotals(sale).adjustedSalePrice;
+                                return adjusted == null ? "—" : formatMoney(Math.abs(adjusted));
+                              },
+                              strong: true,
+                            },
+                          ] as const
+                        ).map((row) => (
+                          <tr key={row.label} className="border-b border-border bg-muted/40">
+                            <td className="sticky left-0 z-10 bg-muted/95 px-2 py-1.5 font-semibold">
+                              {row.label}
+                            </td>
+                            <td className="px-2 py-1.5 text-muted-foreground">—</td>
+                            {chunk.map((sale) => (
+                              <Fragment key={sale.id}>
+                                <td
+                                  colSpan={2}
+                                  {...saleGridCellProps(
+                                    sale.id,
+                                    `border-l border-border px-1.5 py-1.5 text-xs ${
+                                      "strong" in row && row.strong
+                                        ? "font-semibold"
+                                        : "font-medium"
+                                    }`,
+                                  )}
+                                >
+                                  {row.cell(sale)}
+                                </td>
+                              </Fragment>
+                            ))}
+                            {emptyHeader}
+                          </tr>
+                        ))}
+
+                        <tr className="border-b border-border">
+                          <td className="sticky left-0 z-10 bg-card px-2 py-1.5 font-medium">
+                            Report narrative
+                          </td>
+                          <td className="px-2 py-1.5 text-xs text-muted-foreground">
+                            AI or manual (lock to keep)
+                          </td>
+                          {chunk.map((sale) => (
+                            <td
+                              key={sale.id}
+                              colSpan={2}
+                              {...saleGridCellProps(
+                                sale.id,
+                                "border-l border-border px-1 py-1",
+                              )}
+                            >
+                              <div className="space-y-1">
+                                <PausedTextarea
+                                  rows={expandedNarrativeId === sale.id ? 14 : 3}
+                                  value={sale.narrative ?? ""}
+                                  onFocus={() => {
+                                    setExpandedNarrativeId(sale.id);
+                                    if (!sale.narrativeManual) {
+                                      patchSale(sale.id, { narrativeManual: true });
+                                    }
+                                  }}
+                                  onCommit={(value) =>
+                                    patchSale(sale.id, {
+                                      narrative: value,
+                                      narrativeManual: true,
+                                    })
+                                  }
+                                  placeholder="Auto-generated from relativity marks…"
+                                  className={`w-full rounded border bg-transparent px-1.5 py-1 text-[0.7rem] leading-relaxed outline-none focus:bg-accent/40 ${
+                                    expandedNarrativeId === sale.id
+                                      ? "min-h-[12rem] resize-y"
+                                      : "resize-y"
+                                  } ${
+                                    sale.narrativeManual
+                                      ? "border-amber-500/60 focus:border-amber-500"
+                                      : "border-transparent focus:border-input"
+                                  }`}
+                                />
+                                <div className="flex flex-wrap items-center gap-1">
+                                  {expandedNarrativeId === sale.id ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setExpandedNarrativeId(null)}
+                                      className="rounded bg-primary px-2 py-0.5 text-[0.7rem] font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
+                                    >
+                                      Done
+                                    </button>
+                                  ) : null}
+                                <button
+                                  type="button"
+                                  disabled={generating}
+                                  onClick={() => askSaleNarratives([sale.id])}
+                                  className="rounded border border-input bg-card px-1.5 py-0.5 text-[0.65rem] font-medium text-foreground hover:bg-accent disabled:opacity-60"
+                                >
+                                  {generating ? "Generating…" : "Generate this block with AI"}
+                                </button>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      patchSale(sale.id, {
+                                        narrativeManual: !sale.narrativeManual,
+                                      })
+                                    }
+                                    className={`rounded px-1.5 py-0.5 text-[0.65rem] font-medium transition-colors ${
+                                      sale.narrativeManual
+                                        ? "bg-amber-500/15 text-amber-800 ring-1 ring-amber-500/40 dark:text-amber-200"
+                                        : "bg-muted text-muted-foreground hover:bg-accent"
+                                    }`}
+                                    title={
+                                      sale.narrativeManual
+                                        ? "Manual lock on — AI will not overwrite this narrative"
+                                        : "Click to lock as manual so AI will not overwrite"
+                                    }
+                                  >
+                                    {sale.narrativeManual ? "Manual ✓" : "Allow AI"}
+                                  </button>
+                                </div>
+                              </div>
+                            </td>
+                          ))}
+                        </tr>
+                        <tr className="border-b border-border print:hidden">
+                          <td className="sticky left-0 z-10 bg-card px-2 py-1.5 font-medium">
+                            Working notes
+                          </td>
+                          <td className="px-2 py-1.5 text-xs text-muted-foreground">
+                            In-house only — not in report or AI
+                          </td>
+                          {chunk.map((sale) => (
+                            <td
+                              key={sale.id}
+                              colSpan={2}
+                              {...saleGridCellProps(
+                                sale.id,
+                                "border-l border-border px-1 py-1",
+                              )}
+                            >
+                              <PausedTextarea
+                                rows={expandedWorkingNotesId === sale.id ? 12 : 3}
+                                value={sale.workingNotes ?? ""}
+                                onFocus={() => setExpandedWorkingNotesId(sale.id)}
+                                onCommit={(value) => patchSale(sale.id, { workingNotes: value })}
+                                placeholder="Private notes for this sale…"
+                                className={`w-full rounded border border-dashed border-input/80 bg-amber-50/40 px-1.5 py-1 text-[0.7rem] outline-none focus:border-input focus:bg-accent/40 ${
+                                  expandedWorkingNotesId === sale.id
+                                    ? "min-h-[12rem] resize-y"
+                                    : "resize-y"
+                                }`}
+                              />
+                              {expandedWorkingNotesId === sale.id ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedWorkingNotesId(null)}
+                                  className="mt-1 rounded bg-primary px-2 py-0.5 text-[0.7rem] font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
+                                >
+                                  Done
+                                </button>
+                              ) : null}
+                            </td>
+                          ))}
+                        </tr>
+                        <tr className="border-b border-border print:hidden">
+                          <td className="sticky left-0 z-10 bg-card px-2 py-1.5 font-medium">
+                            Source notes
+                          </td>
+                          <td className="px-2 py-1.5 text-xs text-muted-foreground">
+                            Internal only — not printed
+                          </td>
+                          {chunk.map((sale) => (
+                            <td
+                              key={sale.id}
+                              colSpan={2}
+                              {...saleGridCellProps(
+                                sale.id,
+                                "border-l border-border px-1 py-1",
+                              )}
+                            >
+                              <PausedTextarea
+                                rows={2}
+                                value={sale.comments}
+                                onCommit={(value) => patchSale(sale.id, { comments: value })}
+                                className="w-full resize-y rounded border border-transparent bg-transparent px-1.5 py-1 text-[0.7rem] outline-none focus:border-input focus:bg-accent/40"
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })}
+              <div className="flex justify-start">
+                <button
+                  type="button"
+                  onClick={addBlankSale}
+                  className="rounded-md border border-input bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+                >
+                  Add comparable sale
+                </button>
+              </div>
+            </div>
+          );
+        })()
+      ) : null}
+
+      {heldSales.length > 0 ? (
+        <div className="rounded-md border border-dashed border-border bg-muted/20 p-4 space-y-3">
+          <div>
+            <h4 className="text-sm font-semibold text-foreground">
+              Working file — omitted from report
+            </h4>
+            <p className="mt-1 text-xs text-muted-foreground">
+              These comparables stay on the job with notes, photos and adjustments. They
+              are not printed and do not leave a gap in the grid. Tick Include on report
+              to put one back.
+            </p>
+          </div>
+          <ul className="space-y-2">
+            {heldSales.map((sale) => (
+              <li
+                key={sale.id}
+                className="flex flex-wrap items-start gap-3 rounded border border-border bg-card p-2"
+              >
+                {sale.photoUrl ? (
+                  <img
+                    src={sale.photoUrl}
+                    alt=""
+                    className="h-14 w-16 shrink-0 rounded border border-border object-cover"
+                  />
+                ) : null}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground">
+                    {sale.address.trim() || "Untitled comparable"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {[sale.saleDate, sale.salePrice, sale.landArea].filter(Boolean).join(" · ") ||
+                      "No sale facts entered"}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setOmitFromReport(sale.id, false)}
+                    className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                  >
+                    Include on report
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const label = sale.address.trim() || "this comparable";
+                      if (!confirmDelete(label)) return;
+                      replaceSales(sales.filter((s) => s.id !== sale.id));
+                    }}
+                    className="rounded-md border border-input px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-destructive"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      </>
+
+      ) : null}
+
+      {(panel === "all" || panel === "maps") ? (
+      <>
+      <div className="rounded-md border border-border bg-card p-4 space-y-4">
+        <div>
+          <h4 className="text-sm font-semibold text-foreground">Sales map &amp; front photos</h4>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Generate location and sales maps (subject + comparables), or generate separate lease and land-sales maps for the income and cost approaches. Location-map scale can be adjusted below.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-start gap-4">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-xs font-medium text-foreground">Maps</p>
+              <button
+                type="button"
+                disabled={mapsBusy}
+                onClick={() => void generateGoogleMaps()}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
+              >
+                {mapsBusy ? "Generating…" : "Location + sales maps"}
+              </button>
+              <button
+                type="button"
+                disabled={mapsBusy}
+                onClick={() => void generateEvidenceMap("lease")}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
+              >
+                {mapsBusy ? "…" : "Lease map"}
+              </button>
+              <button
+                type="button"
+                disabled={mapsBusy}
+                onClick={() => void generateEvidenceMap("land")}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
+              >
+                {mapsBusy ? "…" : "Land sales map"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isGoogleMapsConfigured()) {
+                    toast.error("Add a Google Maps API key in Settings first");
+                    return;
+                  }
+                  setMapEditorOpen(true);
+                }}
+                className="rounded-md border border-input bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent"
+              >
+                Edit pins
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-xs font-medium text-foreground">Location map scale</p>
+              <button
+                type="button"
+                disabled={mapsBusy}
+                onClick={() => void rescaleLocationMap(null)}
+                className="rounded-md border border-input bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
+              >
+                {mapsBusy ? "Updating…" : "Fit to nearest centre"}
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  void rescaleLocationMap(
+                    clampSubjectZoom((draft.reportMeta.subjectMapZoom ?? 12) - 1),
+                  )
+                }
+                disabled={mapsBusy || (draft.reportMeta.subjectMapZoom ?? 12) <= SUBJECT_ZOOM_MIN}
+                className="rounded-md border border-input bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-40"
+              >
+                {mapsBusy ? "…" : "−"}
+              </button>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                z{draft.reportMeta.subjectMapZoom ?? "auto"}
+                {draft.reportMeta.subjectMapManual ? " · manual" : ""}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  void rescaleLocationMap(
+                    clampSubjectZoom((draft.reportMeta.subjectMapZoom ?? 12) + 1),
+                  )
+                }
+                disabled={mapsBusy || (draft.reportMeta.subjectMapZoom ?? 16) >= SUBJECT_ZOOM_MAX}
+                className="rounded-md border border-input bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-40"
+              >
+                {mapsBusy ? "…" : "+"}
+              </button>
+            </div>
+            {draft.reportMeta.salesMapUrl ? (
+              <div className="relative inline-block">
+                <img
+                  src={draft.reportMeta.salesMapUrl}
+                  alt="Sales map"
+                  className="max-h-40 max-w-xs rounded border border-border object-contain"
+                />
+                <button
+                  type="button"
+                  onClick={clearSalesMap}
+                  className="absolute right-1 top-1 rounded bg-background/90 px-1.5 py-0.5 text-xs text-destructive shadow"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                tabIndex={0}
+                onClick={() => openPhotoSource("map")}
+                onPaste={onSalesMapPaste}
+                onContextMenu={(e) => openPhotoMenu(e, "map")}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={onSalesMapDrop}
+                className="flex h-28 w-44 cursor-pointer flex-col items-center justify-center rounded border border-dashed border-border bg-muted/30 text-center text-xs text-muted-foreground hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                title="Tap to photograph map, or paste / drop"
+              >
+                <span>Tap for camera or library</span>
+                <span className="mt-0.5 text-[0.65rem] opacity-80">or paste / drop</span>
+              </button>
+            )}
+            {draft.reportMeta.salesMapUrl ? (
+              <label
+                tabIndex={0}
+                onPaste={onSalesMapPaste}
+                onContextMenu={(e) => openPhotoMenu(e, "map")}
+                className="block text-xs text-primary cursor-pointer hover:underline focus:outline-none focus:ring-2 focus:ring-primary/40"
+                title="Right-click → Paste image, or ⌘V"
+              >
+                Replace map (or paste)
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => void onSalesMapFile(e.target.files?.[0] ?? null)}
+                />
+              </label>
+            ) : null}
+          </div>
+        </div>
+
+        {gridSales.length > 0 ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {gridSales.map((sale, idx) => (
+              <div
+                key={sale.id}
+                onDragOver={salePhotoDragOver}
+                onDrop={(e) => onSalePhotoDrop(sale.id, e)}
+                className="rounded border border-border bg-background p-2 space-y-1.5"
+              >
+                <p className="text-xs font-semibold text-foreground truncate">
+                  Comp #{idx + 1}
+                  {sale.address ? (
+                    <span className="font-normal text-muted-foreground"> — {sale.address}</span>
+                  ) : null}
+                </p>
+                {sale.photoUrl ? (
+                  <div className="relative">
+                    <img
+                      src={sale.photoUrl}
+                      alt={sale.address || `Comparable ${idx + 1}`}
+                      className="pointer-events-none max-h-36 w-full rounded object-contain bg-muted/30"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => clearSalePhoto(sale.id)}
+                      className="absolute right-1 top-1 rounded bg-background/90 px-1.5 py-0.5 text-[0.65rem] text-destructive shadow"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    tabIndex={0}
+                    onClick={() => openPhotoSource({ saleId: sale.id })}
+                    onPaste={(e) => onSalePhotoPaste(sale.id, e)}
+                    onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
+                    onDragOver={salePhotoDragOver}
+                    onDrop={(e) => onSalePhotoDrop(sale.id, e)}
+                    className="flex h-20 w-full cursor-pointer flex-col items-center justify-center gap-0.5 rounded border border-dashed border-border text-xs text-muted-foreground hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    title="Tap to open the camera, or paste / drop an image"
+                  >
+                    <span>Tap for camera or library</span>
+                    <span className="text-[0.65rem] opacity-80">or paste / drop</span>
+                  </button>
+                )}
+                {sale.photoUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => openPhotoSource({ saleId: sale.id })}
+                    onPaste={(e) => onSalePhotoPaste(sale.id, e)}
+                    onContextMenu={(e) => openPhotoMenu(e, { saleId: sale.id })}
+                    className="text-left text-[0.65rem] text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    title="Take or choose a new photo, or paste"
+                  >
+                    Replace / take photo
+                  </button>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Import sales first, then attach a front photo to each comparable.
+          </p>
+        )}
+      </div>
+
+      </>
+      ) : null}
+
+      {(panel === "all" || panel === "market") ? (
+      <>
+      <SalesCommentaryWorkspace controller={controller} />
+
+      </>
+      ) : null}
+
+      {/* Approach sections — evidence, photos and commentary stay together */}
+      {(panel === "all" || panel === "income") && (Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
+        <>
+          <div className="space-y-4 rounded-md border border-border bg-card p-4">
+            <h3 className="text-sm font-semibold text-foreground">Lease evidence</h3>
+            <LeaseEvidenceGrid values={draft.values} meta={draft.reportMeta} onMeta={setMeta} subjectPhotoUrl={subjectFrontPhoto?.url} inspectionId={draft.inspectionId} sales={draft.sales} onSales={setSales} />
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "leaseEvidence")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), leaseEvidence: e.target.checked } })} />
+              Include Lease Evidence on report
+            </label>
+            <PausedTextarea value={draft.narrative.leaseEvidence ?? ""} onChange={(v) => setNarrative({ leaseEvidence: v })} placeholder="Lease evidence commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          </div>
+
+          <div className="space-y-4 rounded-md border border-border bg-card p-4">
+            <h3 className="text-sm font-semibold text-foreground">Income capitalisation</h3>
+            <CapitalisationApproachSection values={draft.values} meta={draft.reportMeta} sales={draft.sales} onMeta={setMeta} />
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "capitalisationApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), capitalisationApproach: e.target.checked } })} />
+              Include Capitalisation Approach on report
+            </label>
+            <PausedTextarea value={draft.narrative.capitalisationApproach ?? ""} onChange={(v) => setNarrative({ capitalisationApproach: v })} placeholder="Capitalisation approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "dcfApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), dcfApproach: e.target.checked } })} />
+              Include Discounted Cash Flow on report
+            </label>
+            <PausedTextarea value={draft.narrative.dcfApproach ?? ""} onChange={(v) => setNarrative({ dcfApproach: v })} placeholder="Discounted cash flow commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          </div>
+
+          <div className="space-y-4 rounded-md border border-border bg-card p-4">
+            <h3 className="text-sm font-semibold text-foreground">Cost approach</h3>
+            <LandSalesSection meta={draft.reportMeta} values={draft.values} onMeta={setMeta} subjectPhotoUrl={subjectFrontPhoto?.url} inspectionId={draft.inspectionId} comparableSales={draft.sales} />
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "costApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), costApproach: e.target.checked } })} />
+              Include Cost Approach on report
+            </label>
+            <PausedTextarea value={draft.narrative.costApproach ?? ""} onChange={(v) => setNarrative({ costApproach: v })} placeholder="Cost approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          </div>
+
+          <div className="space-y-4 rounded-md border border-border bg-card p-4">
+            <h3 className="text-sm font-semibold text-foreground">Reconciliation</h3>
+            <PausedTextarea value={draft.narrative.valueReconciliation ?? ""} onChange={(v) => setNarrative({ valueReconciliation: v })} placeholder="Reconciliation of value…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          </div>
+        </>
+      ) : (
+        <div className="space-y-6 rounded-md border border-border bg-card p-4">
+          <h3 className="text-sm font-semibold text-foreground">Income and Cost Approaches</h3>
+          <p className="text-xs text-muted-foreground">Supporting calculations stay visible while the narrative is written.</p>
+          <CommercialAnalysisPanel values={draft.values} meta={draft.reportMeta} onMeta={setMeta} landValue={(() => {
+            const rate = Number(String(draft.reportMeta.ciAdoptedLandRate ?? "").replace(/[^0-9.-]/g, ""));
+            const area = Number(String(draft.values["prop_usable_sitearea"] ?? draft.values["prop_sitearea"] ?? "").replace(/[^0-9.-]/g, ""));
+            return Number.isFinite(rate) && Number.isFinite(area) && rate > 0 && area > 0 ? rate * area : null;
+          })()} />
+          <div className="space-y-4">
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "leaseEvidence")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), leaseEvidence: e.target.checked } })} />
+              Include Lease Evidence on report
+            </label>
+            <PausedTextarea value={draft.narrative.leaseEvidence ?? ""} onChange={(v) => setNarrative({ leaseEvidence: v })} placeholder="Lease evidence commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "capitalisationApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), capitalisationApproach: e.target.checked } })} />
+              Include Capitalisation Approach on report
+            </label>
+            <PausedTextarea value={draft.narrative.capitalisationApproach ?? ""} onChange={(v) => setNarrative({ capitalisationApproach: v })} placeholder="Capitalisation approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "dcfApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), dcfApproach: e.target.checked } })} />
+              Include Discounted Cash Flow on report
+            </label>
+            <PausedTextarea value={draft.narrative.dcfApproach ?? ""} onChange={(v) => setNarrative({ dcfApproach: v })} placeholder="Discounted cash flow commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input type="checkbox" checked={narrativePrints(draft.reportMeta, "costApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), costApproach: e.target.checked } })} />
+              Include Cost Approach on report
+            </label>
+            <PausedTextarea value={draft.narrative.costApproach ?? ""} onChange={(v) => setNarrative({ costApproach: v })} placeholder="Cost approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          </div>
+        </div>
+      )}
+
+      {(panel === "all" || panel === "cost") ? (
+      <>
+      <div className="space-y-4 rounded-md border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold text-foreground">Land sales</h3>
+        <LandSalesSection meta={draft.reportMeta} values={draft.values} onMeta={setMeta} subjectPhotoUrl={subjectFrontPhoto?.url} inspectionId={draft.inspectionId} comparableSales={draft.sales} />
+      </div>
+      <div className="space-y-4 rounded-md border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold text-foreground">Cost approach</h3>
+        <CostApproachSection values={draft.values} meta={draft.reportMeta} onMeta={setMeta} />
+        <label className="flex cursor-pointer items-center gap-2 text-sm">
+          <input type="checkbox" checked={narrativePrints(draft.reportMeta, "costApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), costApproach: e.target.checked } })} />
+          Include Cost Approach on report
+        </label>
+        <PausedTextarea value={draft.narrative.costApproach ?? ""} onChange={(v) => setNarrative({ costApproach: v })} placeholder="Cost approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+      </div>
+      </>
+      ) : null}
+
+      {agentCallId ? (
+        <ResidentialAgentSheet
+          sale={sales.find(s => s.id === agentCallId)!}
+          onChange={(patch) => patchSale(agentCallId, patch)}
+          onClose={() => setAgentCallId(null)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+
+
+function ResidentialAgentSheet({
+  sale,
+  onChange,
+  onClose,
+}: {
+  sale: ComparableSale;
+  onChange: (patch: Partial<ComparableSale>) => void;
+  onClose: () => void;
+}) {
+  const f = (label: string, value: string, key: keyof ComparableSale, placeholder?: string) => (
+    <label className="block">
+      <span className="text-sm font-medium text-slate-700">{label}</span>
+      <input className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-base" value={value} placeholder={placeholder} onChange={(e) => onChange({ [key]: e.target.value })} />
+    </label>
+  );
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <div className="text-lg font-semibold text-slate-800">Agent call — {sale.address || "Sale"}</div>
+          <button type="button" className="rounded border border-slate-300 px-3 py-1 text-sm" onClick={onClose}>Close</button>
+        </div>
+        <div className="space-y-3">
+          {f("Sale price", sale.salePrice ?? "", "salePrice")}
+          {f("Sales or financing concession", sale.concession ?? "", "concession")}
+          {f("Sale date", sale.saleDate ?? "", "saleDate")}
+          {f("Land area", sale.landArea ?? "", "landArea")}
+          {f("Beds", sale.beds ?? "", "beds")}
+          {f("Baths", sale.baths ?? "", "baths")}
+          {f("Cars", sale.cars ?? "", "cars")}
+          {f("Notes", sale.comments ?? "", "comments")}
+        </div>
+        <div className="mt-4 text-right">
+          <button type="button" className="rounded bg-slate-800 px-4 py-2 text-sm text-white" onClick={onClose}>Save and close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
