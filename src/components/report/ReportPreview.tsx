@@ -1947,7 +1947,7 @@ export function ReportPreview({
             ) : null}
           </div>
         )}
-        {narrativePrints(draft.reportMeta, "salesComments") ? (
+        {narrativePrints(draft.reportMeta, "salesComments") && Boolean(draft.narrative.salesComments?.trim()) ? (
           <>
             <h3 id="sec-sales-comments" className="report-h2 report-heading-lead mt-4 text-sm font-semibold">
               Comments on comparable sales
@@ -1955,7 +1955,7 @@ export function ReportPreview({
             <Prose text={draft.narrative.salesComments?.trim() || ""} />
           </>
         ) : null}
-        {narrativePrints(draft.reportMeta, "valueReconciliation") ? (
+        {narrativePrints(draft.reportMeta, "valueReconciliation") && Boolean(draft.narrative.valueReconciliation?.trim()) ? (
           <>
             <h3 id="sec-sales-reconciliation" className="report-h2 report-heading-lead mt-4 text-sm font-semibold">
               Final reconciliation of value

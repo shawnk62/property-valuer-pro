@@ -616,15 +616,19 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const show42 = prints("floodAssessment");
   const show43 = prints("noiseNuisances");
   const show44 = prints("titleNotices") && Boolean(draft.narrative.titleNotices?.trim());
-  const show51 = prints("location");
-  const show52 = prints("neighbourhood");
+  const show51 = prints("location") && Boolean(draft.narrative.location?.trim() || addressLine);
+  const show52 = prints("neighbourhood") && Boolean(draft.narrative.neighbourhood?.trim() || get(v, "nbhd_description"));
   const show53 = prints("amenities") && Boolean(draft.narrative.amenities?.trim() || get(v, "exam_amenities"));
   const show54 = prints("popularDestinations") && Boolean(draft.narrative.popularDestinations?.trim() || get(v, "exam_destinations"));
   const show61 = prints("marketAustralia") && Boolean(draft.narrative.marketAustralia?.trim() || get(v, "exam_market_australia"));
   const show62 = prints("marketState") && Boolean(draft.narrative.marketState?.trim() || get(v, "exam_market_state"));
   const show63 = prints("marketRegion") && Boolean(draft.narrative.marketRegion?.trim() || get(v, "exam_market_region"));
   const show64 = prints("marketLocality") && Boolean(draft.narrative.marketLocality?.trim() || get(v, "exam_market_local"));
-  const show82 = prints("salesComments");
+  const salesCommentsText = withoutSourceNotes(draft.narrative.salesComments || "", printedSales)
+    .replace(/real\s*estate\.com(?:\.au)?/gi, "REA Group (2026)")
+    .trim();
+  const reconciliationText = withoutSourceNotes(draft.narrative.valueReconciliation?.trim() || "", printedSales).trim();
+  const show82 = prints("salesComments") && Boolean(salesCommentsText);
   const showLease = prints("leaseEvidence") && Boolean(
     draft.narrative.leaseEvidence?.trim()
     || (m.ciLeaseComps ?? []).some((c) => c.omitFromReport !== true && (c.address || c.leaseAmount || c.netRentPerM2 || c.nla)),
@@ -632,10 +636,11 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const showCap = prints("capitalisationApproach") && !isVacantLand(v) && (isCommercialType(v) || isIndustrialType(v)) && Boolean(draft.narrative.capitalisationApproach?.trim() || m.ciCapRate || m.ciAdoptedRentPerM2);
   const showDcf = prints("dcfApproach") && Boolean(draft.narrative.dcfApproach?.trim());
   const showCost = prints("costApproach") && !isVacantLand(v) && Boolean(draft.narrative.costApproach?.trim() || m.costApproach);
-  const show83 = prints("valueReconciliation");
+  const show83 = prints("valueReconciliation") && Boolean(reconciliationText);
   const show84 = Boolean(get(v, "exam_on_market"));
   const show85 = prints("salesAnalysis") && Boolean(draft.narrative.salesAnalysis?.trim() || get(v, "exam_sales_analysis"));
   const show9 = prints("references");
+  const showReflection = narrativePrints(m, "assignmentReflection") && Boolean(draft.narrative.assignmentReflection?.trim());
   const hasAnnexures = Boolean(
     annexurePhotos.length ||
       printedSales.some((s) => s.photoUrl) ||
@@ -679,7 +684,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       ? [{ id: "exam-reliance", label: subTitle(major[8], n8[10], "Reliance and terms of use") }]
       : []),
     ...(show9 ? [{ id: "exam-9", label: t(major[9], "List of References") }] : []),
-    ...(narrativePrints(m, "assignmentReflection")
+    ...(showReflection
       ? [{ id: "exam-reflection", label: "Review of learning outcomes" }]
       : []),
     ...(hasAnnexures ? [{ id: "exam-10", label: t(major[10], "Annexures") }] : []),
@@ -1284,12 +1289,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           </div>
         )}
         </Keep>
-        {narrativePrints(m, "salesComments") ? (
+        {show82 ? (
           <Keep>
             <h3 id="exam-8-2" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
               {`${major[8]}.${n8[1]} Comments on comparable sales`}
             </h3>
-            <Prose text={withoutSourceNotes(draft.narrative.salesComments || "", printedSales).replace(/real\s*estate\.com(?:\.au)?/gi, "REA Group (2026)")} />
+            <Prose text={salesCommentsText} />
           </Keep>
         ) : null}
         {showLease ? (
@@ -1407,12 +1412,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <Prose text={withoutSourceNotes(draft.narrative.costApproach || "", printedSales)} />
           </Keep>
         ) : null}
-        {narrativePrints(m, "valueReconciliation") ? (
+        {show83 ? (
           <Keep>
             <h3 id="exam-8-3" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
               {`${major[8]}.${n8[6]} Final reconciliation of value`}
             </h3>
-            <Prose text={withoutSourceNotes(draft.narrative.valueReconciliation?.trim() || "", printedSales)} />
+            <Prose text={reconciliationText} />
           </Keep>
         ) : null}
         {get(v, "exam_on_market") ? (
@@ -1534,7 +1539,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep>
       </Lead> : null}
       </section>
-      {narrativePrints(m, "assignmentReflection") ? (
+      {showReflection ? (
         <section id="exam-reflection" className="report-section mt-8">
           <H1>Review of learning outcomes</H1>
           <Prose text={draft.narrative.assignmentReflection || ""} />
