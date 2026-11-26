@@ -131,6 +131,39 @@ function seedFromReport(values: InspectionValues, variant: "industrial" | "resid
   return next;
 }
 
+
+function LineRow({
+  line,
+  index,
+  list,
+  onUpdate,
+}: {
+  line: Line;
+  index: number;
+  list: "mainBuilding" | "ancillary";
+  onUpdate: (list: "mainBuilding" | "ancillary", index: number, field: keyof Line, value: string) => void;
+}) {
+  const value = lineValue(line);
+  return (
+    <tr className="border-b border-slate-100">
+      <td className="py-1 pr-2 text-slate-600">{line.name}</td>
+      <td className="py-1 pr-1">
+        <input className="w-full border border-slate-300 rounded px-1 py-0.5 text-xs" value={line.area ?? ""} placeholder="Area" onChange={(e) => onUpdate(list, index, "area", e.target.value)} />
+      </td>
+      <td className="py-1 pr-1">
+        <input className="w-full border border-slate-300 rounded px-1 py-0.5 text-xs" value={line.rate ?? ""} placeholder="$/m² or rate" onChange={(e) => onUpdate(list, index, "rate", e.target.value)} />
+      </td>
+      <td className="py-1 pr-1">
+        <input className="w-full border border-slate-300 rounded px-1 py-0.5 text-xs" value={line.depreciation ?? ""} placeholder="Dep %" onChange={(e) => onUpdate(list, index, "depreciation", e.target.value)} />
+      </td>
+      <td className="py-1 pr-1">
+        <input className="w-full border border-slate-300 rounded px-1 py-0.5 text-xs" value={line.nominal ?? ""} placeholder="Nominal $" onChange={(e) => onUpdate(list, index, "nominal", e.target.value)} />
+      </td>
+      <td className="py-1 text-right text-xs font-medium">{money(value)}</td>
+    </tr>
+  );
+}
+
 export function CostApproachSection({
   values,
   meta,
@@ -188,27 +221,6 @@ export function CostApproachSection({
   }, null);
   const total = [landValue, mainTotal, ancillaryTotal].reduce<number | null>((sum, v) => (v == null ? sum : (sum ?? 0) + v), null);
 
-  function LineRow({ line, index, list }: { line: Line; index: number; list: "mainBuilding" | "ancillary" }) {
-    const value = lineValue(line);
-    return (
-      <tr className="border-b border-slate-100">
-        <td className="py-1 pr-2 text-slate-600">{line.name}</td>
-        <td className="py-1 pr-1">
-          <input className="w-full border border-slate-300 rounded px-1 py-0.5 text-xs" value={line.area ?? ""} placeholder="Area" onChange={(e) => updateLine(list, index, "area", e.target.value)} />
-        </td>
-        <td className="py-1 pr-1">
-          <input className="w-full border border-slate-300 rounded px-1 py-0.5 text-xs" value={line.rate ?? ""} placeholder="$/m² or rate" onChange={(e) => updateLine(list, index, "rate", e.target.value)} />
-        </td>
-        <td className="py-1 pr-1">
-          <input className="w-full border border-slate-300 rounded px-1 py-0.5 text-xs" value={line.depreciation ?? ""} placeholder="Dep %" onChange={(e) => updateLine(list, index, "depreciation", e.target.value)} />
-        </td>
-        <td className="py-1 pr-1">
-          <input className="w-full border border-slate-300 rounded px-1 py-0.5 text-xs" value={line.nominal ?? ""} placeholder="Nominal $" onChange={(e) => updateLine(list, index, "nominal", e.target.value)} />
-        </td>
-        <td className="py-1 text-right text-xs font-medium">{money(value)}</td>
-      </tr>
-    );
-  }
 
   return (
     <div className="space-y-3">
@@ -236,13 +248,13 @@ export function CostApproachSection({
             <td className="py-1 text-right font-medium">{money(landValue)}</td>
           </tr>
           <tr><td colSpan={6} className="pt-2 pb-1 text-xs font-semibold text-slate-600">Add — replacement costs of main building</td></tr>
-          {main.map((line, i) => <LineRow key={`main-${i}`} line={line} index={i} list="mainBuilding" />)}
+          {main.map((line, i) => <LineRow key={`main-${i}`} line={line} index={i} list="mainBuilding" onUpdate={updateLine} />)}
           <tr className="border-b border-slate-200 bg-slate-50 font-medium">
             <td colSpan={5} className="py-1 pr-2">Total main building improvements</td>
             <td className="py-1 text-right">{money(mainTotal)}</td>
           </tr>
           <tr><td colSpan={6} className="pt-2 pb-1 text-xs font-semibold text-slate-600">Add — ancillary improvements</td></tr>
-          {ancillary.map((line, i) => <LineRow key={`anc-${i}`} line={line} index={i} list="ancillary" />)}
+          {ancillary.map((line, i) => <LineRow key={`anc-${i}`} line={line} index={i} list="ancillary" onUpdate={updateLine} />)}
           <tr className="border-b border-slate-200 bg-slate-50 font-medium">
             <td colSpan={5} className="py-1 pr-2">Total ancillary</td>
             <td className="py-1 text-right">{money(ancillaryTotal)}</td>
