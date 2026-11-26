@@ -25,6 +25,8 @@ export interface ComparableSheetData {
   date?: string;
   landArea?: string;
   buildingArea?: string;
+  /** Formatted net rent rate for lease sheets, e.g. $232/m². */
+  rentPerM2?: string;
   photoUrl?: string;
   extraPhotos?: SheetPhoto[];
   includeSheet?: boolean;
@@ -328,11 +330,24 @@ export function ComparableSheet({ data, values, onChange, printMode = false, ins
       </div>
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-        <div><span className="font-medium">Address:</span> {data.address || "—"}</div>
-        <div><span className="font-medium">Distance from subject:</span> {data.proximity || "—"}</div>
-        <div><span className="font-medium">{data.kind === "lease" ? "Lease amount" : "Price"}:</span> {data.price || "—"}</div>
-        <div><span className="font-medium">Date:</span> {data.date || "—"}</div>
-        <div className="col-span-2"><span className="font-medium">Area:</span> {data.landArea || "—"} land{data.buildingArea ? ` and ${data.buildingArea} building` : ""}</div>
+        {data.kind === "lease" ? (
+          <>
+            <div><span className="font-medium">Address:</span> {data.address || "—"}</div>
+            <div><span className="font-medium">Area:</span> {data.landArea || "—"} land{data.buildingArea ? ` and ${data.buildingArea} building` : ""}</div>
+            <div><span className="font-medium">Lease amount:</span> {data.price || "—"}</div>
+            <div><span className="font-medium">Distance from subject:</span> {data.proximity || "—"}</div>
+            <div><span className="font-medium">Rent/m²:</span> {data.rentPerM2 || "—"}</div>
+            <div><span className="font-medium">Date:</span> {data.date || "—"}</div>
+          </>
+        ) : (
+          <>
+            <div><span className="font-medium">Address:</span> {data.address || "—"}</div>
+            <div><span className="font-medium">Distance from subject:</span> {data.proximity || "—"}</div>
+            <div><span className="font-medium">Price:</span> {data.price || "—"}</div>
+            <div><span className="font-medium">Date:</span> {data.date || "—"}</div>
+            <div className="col-span-2"><span className="font-medium">Area:</span> {data.landArea || "—"} land{data.buildingArea ? ` and ${data.buildingArea} building` : ""}</div>
+          </>
+        )}
       </div>
 
       {printMode ? (

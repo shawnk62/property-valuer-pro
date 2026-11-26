@@ -622,6 +622,9 @@ export interface ReportMeta {
     leaseAmount?: string;
     leaseAmountManual?: boolean;
     nla: string;
+    /** Site area. Optional; unit defaults to m2. Does not rename nla. */
+    landArea?: string;
+    landUnit?: "m2" | "ha";
     netRentPerM2: string;
     netRentManual?: boolean;
     term: string;

@@ -59,6 +59,48 @@ function opt<K extends string, V>(key: K, value: V | undefined): Partial<Record<
   return value === undefined ? {} : ({ [key]: value } as Record<K, V>);
 }
 
+function parseAmount(raw: string | number | null | undefined): number | null {
+  const text = String(raw ?? "").replace(/[^0-9.-]/g, "");
+  if (!text) return null;
+  const n = Number(text);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Format a site or building area with its unit, without double-suffixing. */
+export function formatSheetArea(raw: string | null | undefined, unit?: "m2" | "ha"): string | undefined {
+  const text = String(raw ?? "").trim();
+  if (!text) return undefined;
+  if (/ha|hectare|acre|m²|m2/i.test(text)) return text.replace(/\bm2\b/gi, "m²");
+  const n = parseAmount(text);
+  if (n == null) return text;
+  const suffix = unit === "ha" ? " ha" : " m²";
+  const digits = Number.isInteger(n) ? 0 : 2;
+  return `${n.toLocaleString("en-AU", { maximumFractionDigits: digits })}${suffix}`;
+}
+
+/** Format rent as $232/m² without double-prefixing $ or double-suffixing /m². */
+export function formatLeaseRentPerM2(
+  netRentPerM2?: string,
+  leaseAmount?: string,
+  nla?: string,
+): string | undefined {
+  const existing = String(netRentPerM2 ?? "").trim();
+  let rate: number | null = null;
+  if (existing) {
+    rate = parseAmount(existing);
+    if (rate == null || rate <= 0) {
+      const body = existing.replace(/\s*\/\s*m[²2]\s*$/i, "").trim();
+      return body ? `${body}/m²` : undefined;
+    }
+  } else {
+    const annual = parseAmount(leaseAmount);
+    const area = parseAmount(nla);
+    if (annual != null && annual > 0 && area != null && area > 0) rate = annual / area;
+  }
+  if (rate == null || rate <= 0) return undefined;
+  return `$${Math.round(rate).toLocaleString("en-AU")}/m²`;
+}
+
 function publicAccepted(accepted?: Record<string, boolean>): Record<string, boolean> {
   if (!accepted) return {};
   return Object.fromEntries(Object.entries(accepted).filter(([key]) => key !== COMMENTARY_SET_KEY));
@@ -123,7 +165,9 @@ export function leaseToSheet(lease: LeaseSheetRecord, number?: number): Comparab
     date: lease.date,
     ...opt("number", number),
     ...opt("proximity", lease.proximity),
-    ...opt("buildingArea", lease.nla),
+    ...opt("landArea", formatSheetArea(lease.landArea, lease.landUnit)),
+    ...opt("buildingArea", formatSheetArea(lease.nla)),
+    ...opt("rentPerM2", formatLeaseRentPerM2(lease.netRentPerM2, lease.leaseAmount, lease.nla)),
     ...opt("photoUrl", lease.photoUrl),
     ...opt("extraPhotos", lease.extraPhotos as SheetPhoto[] | undefined),
     ...opt("includeSheet", lease.includeSheet),
@@ -223,6 +267,45 @@ export function findExistingSheet(
 }
 
 /**
+ * Lease site area, preferring the lease's own landArea, then a linked sale
+ * or vacant land sale for the same property.
+ */
+export function resolveLeaseLand(
+  lease: Pick<LeaseSheetRecord, "id" | "address" | "landArea" | "landUnit" | "linkedSaleId">,
+  pools: SheetPools,
+): { area: string; unit?: "m2" | "ha" } | undefined {
+  if (String(lease.landArea ?? "").trim()) {
+    return { area: lease.landArea!, unit: lease.landUnit };
+  }
+  const source = findExistingSheet(
+    { id: lease.id, address: lease.address, ...opt("linkedSaleId", lease.linkedSaleId) },
+    "lease",
+    pools,
+  );
+  const sales = pools.sales ?? [];
+  const sale =
+    (lease.linkedSaleId ? sales.find((s) => s.id === lease.linkedSaleId) : undefined)
+    ?? sales.find((s) => s.id === lease.id)
+    ?? sales.find((s) => {
+      const a = normAddr(s.address);
+      return Boolean(a) && a === normAddr(lease.address);
+    });
+  if (source?.landArea) {
+    const land = (pools.landSales ?? []).find(
+      (l) => l.id === source.id || normAddr(l.address) === normAddr(lease.address),
+    );
+    return { area: source.landArea, unit: sale?.landUnit ?? land?.landUnit };
+  }
+  if (sale?.landArea) return { area: sale.landArea, unit: sale.landUnit };
+  const addr = normAddr(lease.address);
+  const land = addr
+    ? (pools.landSales ?? []).find((l) => normAddr(l.address) === addr)
+    : undefined;
+  if (land?.landArea) return { area: land.landArea, unit: land.landUnit };
+  return undefined;
+}
+
+/**
  * Overlay applicable fields from a matched listing onto the current sheet
  * without overwriting values already set on the current record, and without
  * copying section-specific price or area fields.
@@ -269,15 +352,15 @@ export function effectiveLeaseSheet(
   number: number | undefined,
   pools: SheetPools,
 ): ComparableSheetData {
-  const own = leaseToSheet(lease, number);
-  return withSheetPrefill(
-    own,
-    findExistingSheet(
-      { id: lease.id, address: lease.address, ...opt("linkedSaleId", lease.linkedSaleId) },
-      "lease",
-      pools,
-    ),
+  const source = findExistingSheet(
+    { id: lease.id, address: lease.address, ...opt("linkedSaleId", lease.linkedSaleId) },
+    "lease",
+    pools,
   );
+  const prefilled = withSheetPrefill(leaseToSheet(lease, number), source);
+  const land = resolveLeaseLand(lease, pools);
+  const landArea = land ? formatSheetArea(land.area, land.unit) : undefined;
+  return landArea ? { ...prefilled, landArea } : prefilled;
 }
 
 export function effectiveLandSheet(

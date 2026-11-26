@@ -6,7 +6,7 @@
 import {
   effectiveLeaseSheet,
   effectiveSaleSheet,
-  findExistingSheet,
+  resolveLeaseLand,
   type LeaseSheetRecord,
   type SheetPools,
 } from "./comparableSheetHelpers";
@@ -240,27 +240,6 @@ function computedLeaseYield(lease: LeaseSheetRecord, sale: ComparableSale | unde
   return yieldFromRentAndPrice(annualLeaseAmount(lease), parseNumericAmount(sale.salePrice));
 }
 
-function leaseLandFromPools(lease: LeaseSheetRecord, pools: SheetPools): { area: string; unit?: "m2" | "ha" } | undefined {
-  const source = findExistingSheet(
-    { id: lease.id, address: lease.address, ...(lease.linkedSaleId ? { linkedSaleId: lease.linkedSaleId } : {}) },
-    "lease",
-    pools,
-  );
-  if (source?.landArea) {
-    const sale = linkedSale(lease, pools.sales);
-    const land = (pools.landSales ?? []).find((l) => l.id === source.id || normAddr(l.address) === normAddr(lease.address));
-    return { area: source.landArea, unit: sale?.landUnit ?? land?.landUnit };
-  }
-  const sale = linkedSale(lease, pools.sales);
-  if (sale?.landArea) return { area: sale.landArea, unit: sale.landUnit };
-  const addr = normAddr(lease.address);
-  const land = addr
-    ? (pools.landSales ?? []).find((l) => normAddr(l.address) === addr)
-    : undefined;
-  if (land?.landArea) return { area: land.landArea, unit: land.landUnit };
-  return undefined;
-}
-
 function leaseOverallRating(lease: LeaseSheetRecord, values: InspectionValues, meta: ReportMeta): string {
   const compAnnual = annualLeaseAmount(lease);
   const subjectAnnual = subjectIndicatedAnnualRent(values, meta);
@@ -335,7 +314,7 @@ export function buildLeaseSummaryRow(
   const sale = linkedSale(lease, pools.sales);
   const annual = annualLeaseAmount(lease);
   const building = parseNumericAmount(lease.nla);
-  const land = leaseLandFromPools(lease, pools);
+  const land = resolveLeaseLand(lease, pools);
   const landM2 = areaToM2(land?.area, land?.unit);
   const rate = leaseRentRate(lease);
   const auto: Omit<EvidenceSummaryRow, "id" | "number" | "address" | "photoUrl"> = {
