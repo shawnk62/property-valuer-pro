@@ -5,11 +5,12 @@
  */
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import type { InspectionValues, ReportMeta } from "@/lib/report/types";
+import type { EvidenceSummaryOverrides, InspectionValues, ReportMeta } from "@/lib/report/types";
 import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
 import { RELATIVITY_OPTIONS, relativitySelectClass, type Relativity } from "@/lib/report/adjustmentGrid";
 import type { ComparableSale } from "@/lib/report/types";
 import { ensureSaleAdjustments } from "@/lib/report/adjustmentGrid";
+import { CommercialEvidenceSummaryEditor } from "@/components/report/CommercialEvidenceSummaryEditor";
 import { ComparableSheet } from "@/components/report/ComparableSheet";
 import {
   effectiveLeaseSheet,
@@ -87,6 +88,7 @@ export interface LeaseComp {
   acceptedFields?: Record<string, boolean>;
   fieldOverrides?: Record<string, string>;
   verificationLink?: string;
+  summaryOverrides?: EvidenceSummaryOverrides;
 }
 
 function blank(): LeaseComp {
@@ -516,6 +518,20 @@ export function LeaseEvidenceGrid({
           onChange={(patch) => update(c.id, leaseFromSheetPatch(c, patch))}
         />
       ))}
+      <div className="mt-4">
+        <CommercialEvidenceSummaryEditor
+          kind="leases"
+          leases={comps}
+          values={values}
+          meta={meta}
+          pools={{
+            sales,
+            leases: comps,
+            landSales: meta.ciLandSales,
+          }}
+          onLeasePatch={(id, summaryOverrides) => update(id, { summaryOverrides })}
+        />
+      </div>
       {agentCallId ? (
         <AgentCallSheet
           comp={comps.find((c) => c.id === agentCallId)!}

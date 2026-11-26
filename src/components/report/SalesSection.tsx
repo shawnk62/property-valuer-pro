@@ -13,6 +13,7 @@ import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { CommercialAnalysisPanel } from "@/components/report/CommercialAnalysisPanel";
 import { CostApproachSection } from "@/components/report/CostApproachSection";
 import { CapitalisationApproachSection } from "@/components/report/CapitalisationApproachSection";
+import { CommercialEvidenceSummaryEditor } from "@/components/report/CommercialEvidenceSummaryEditor";
 import { CommercialValuationTables } from "@/components/report/CommercialValuationTables";
 import { ComparableSheet } from "@/components/report/ComparableSheet";
 import { effectiveSaleSheet, saleFromSheetPatch } from "@/components/report/comparableSheetHelpers";
@@ -1552,6 +1553,18 @@ export function SalesSection({ controller }: { controller: ReportDraftController
               onChange={(patch) => setSales(draft.sales.map(sale => sale.id === s.id ? saleFromSheetPatch(sale, patch) : sale))}
             />
           ))}
+          <CommercialEvidenceSummaryEditor
+            kind="sales"
+            sales={draft.sales}
+            values={draft.values}
+            meta={draft.reportMeta}
+            pools={{
+              sales: draft.sales,
+              leases: draft.reportMeta.ciLeaseComps,
+              landSales: draft.reportMeta.ciLandSales,
+            }}
+            onSalePatch={(id, summaryOverrides) => setSales(draft.sales.map((sale) => sale.id === id ? { ...sale, summaryOverrides } : sale))}
+          />
         </div>
       ) : null}
       {!(Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (

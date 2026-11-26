@@ -44,6 +44,7 @@ import { A4DocumentAnnex } from "@/components/report/A4DocumentAnnex";
 import { isVacantLand, isCommercialType, isIndustrialType } from "@/lib/inspection/visibility";
 import { hasWorkingFile, WorkingNotesAnnex } from "@/components/report/WorkingNotesAnnex";
 import { AdjustmentGridPrint } from "@/components/report/AdjustmentGridPrint";
+import { CommercialEvidenceSchedule } from "@/components/report/CommercialEvidenceSchedule";
 import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
 import {
   printAdjustmentGridEnabled,
@@ -583,7 +584,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const show63 = prints("marketRegion") && Boolean(draft.narrative.marketRegion?.trim() || get(v, "exam_market_region"));
   const show64 = prints("marketLocality") && Boolean(draft.narrative.marketLocality?.trim() || get(v, "exam_market_local"));
   const show82 = prints("salesComments");
-  const showLease = prints("leaseEvidence") && Boolean(draft.narrative.leaseEvidence?.trim());
+  const showLease = prints("leaseEvidence") && Boolean(
+    draft.narrative.leaseEvidence?.trim()
+    || (m.ciLeaseComps ?? []).some((c) => c.address || c.leaseAmount || c.netRentPerM2 || c.nla),
+  );
   const showCap = prints("capitalisationApproach") && !isVacantLand(v) && (isCommercialType(v) || isIndustrialType(v)) && Boolean(draft.narrative.capitalisationApproach?.trim() || m.ciCapRate || m.ciAdoptedRentPerM2);
   const showDcf = prints("dcfApproach") && Boolean(draft.narrative.dcfApproach?.trim());
   const showCost = prints("costApproach") && !isVacantLand(v) && Boolean(draft.narrative.costApproach?.trim() || m.costApproach);
@@ -1203,11 +1207,22 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 />
               </div>
             ) : null}
-            {printSalesEvidenceEnabled(draft.reportMeta) ? (
+            {isCommercialType(v) || isIndustrialType(v) ? (
+            <CommercialEvidenceSchedule
+              kind="sales"
+              sales={printedSales}
+              values={v}
+              meta={m}
+              pools={sheetPools}
+              headerStyle={{ background: TEAL, color: "#fff" }}
+              cellBorderClassName="border"
+              cellStyle={{ borderColor: RULE }}
+            />
+            ) : printSalesEvidenceEnabled(draft.reportMeta) ? (
             <SalesEvidenceSchedule
               sales={printedSales}
               omitSourceNotes
-              showCommercialMetrics={Boolean(String(v["prop_type_commercial"] ?? "").trim()) || Boolean(String(v["prop_type_industrial"] ?? "").trim())}
+              showCommercialMetrics={false}
               headerStyle={{ background: TEAL, color: "#fff" }}
               cellBorderClassName="border"
               cellStyle={{ borderColor: RULE }}
@@ -1248,6 +1263,16 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                   />
                 ))
               : null}
+            <CommercialEvidenceSchedule
+              kind="leases"
+              leases={m.ciLeaseComps}
+              values={v}
+              meta={m}
+              pools={sheetPools}
+              headerStyle={{ background: TEAL, color: "#fff" }}
+              cellBorderClassName="border"
+              cellStyle={{ borderColor: RULE }}
+            />
             <Prose text={withoutSourceNotes(draft.narrative.leaseEvidence || "", printedSales)} />
           </Keep>
         ) : null}
