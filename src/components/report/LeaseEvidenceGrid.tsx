@@ -506,6 +506,7 @@ export function LeaseEvidenceGrid({
       {comps.filter((c) => c.address || c.leaseAmount || c.netRentPerM2 || c.nla).map((c, idx) => (
         <ComparableSheet
           key={c.id}
+          inspectionId={inspectionId}
           data={effectiveLeaseSheet(c, idx + 1, {
             sales,
             leases: comps,

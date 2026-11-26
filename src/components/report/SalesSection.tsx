@@ -1542,6 +1542,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           {draft.sales.filter(s => s.omitFromReport !== true && (s.address || s.salePrice)).map((s, idx) => (
             <ComparableSheet
               key={s.id}
+              inspectionId={draft.inspectionId}
               data={effectiveSaleSheet(s, idx + 1, {
                 sales: draft.sales,
                 leases: draft.reportMeta.ciLeaseComps,

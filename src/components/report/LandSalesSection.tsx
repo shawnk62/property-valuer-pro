@@ -353,6 +353,7 @@ export function LandSalesSection({
       {sales.filter((s) => s.address || s.price).map((s, idx) => (
         <ComparableSheet
           key={s.id}
+          inspectionId={inspectionId}
           data={effectiveLandSheet(s, idx + 1, {
             sales: comparableSales,
             leases: meta.ciLeaseComps,
