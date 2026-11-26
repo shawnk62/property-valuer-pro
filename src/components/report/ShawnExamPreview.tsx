@@ -18,6 +18,7 @@ import {
   joinValues,
 } from "@/lib/report/schema";
 import { ComparableSheet } from "@/components/report/ComparableSheet";
+import { effectiveLandSheet, effectiveLeaseSheet, effectiveSaleSheet } from "@/components/report/comparableSheetHelpers";
 import { surveyPlanAnnexureLabel } from "@/lib/report/annexures";
 import { narrativePrints, type NbhdClaim } from "@/lib/narrative/neighbourhoodAssist";
 import {
@@ -440,6 +441,11 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     includeCitations ? citeAcceptedNotes(text, claims, v, label, citeStyle) : text;
   const citeLoc = (text: string) => (includeCitations ? citeLocalitySources(text, m, v, citeStyle) : text);
   const printedSales = salesOnReport(draft.sales);
+  const sheetPools = {
+    sales: draft.sales,
+    leases: m.ciLeaseComps,
+    landSales: m.ciLandSales,
+  };
   const addressLine = [
     get(v, "prop_address"),
     [get(v, "prop_suburb"), get(v, "prop_state"), get(v, "prop_postcode")].filter(Boolean).join(" "),
@@ -1174,25 +1180,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
               <ComparableSheet
                 key={`sale-${s.id}`}
                 printMode
-                data={{
-                  id: s.id,
-                  kind: "sale",
-                  number: idx + 1,
-                  address: s.address,
-                  proximity: s.proximity,
-                  price: s.salePrice,
-                  date: s.saleDate,
-                  landArea: s.landArea,
-                  buildingArea: s.gla,
-                  photoUrl: s.photoUrl,
-                  extraPhotos: s.extraPhotos,
-                  includeSheet: s.includeSheet !== false,
-                  accepted: s.acceptedFields,
-                  overrides: s.fieldOverrides,
-                  commentary: s.comments,
-                  description: s.description,
-                  verificationLink: s.verificationLink,
-                }}
+                data={effectiveSaleSheet(s, idx + 1, sheetPools)}
                 values={v}
                 onChange={() => {}}
               />
@@ -1250,23 +1238,11 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
               {`${major[8]}.${n8[2]} Lease Evidence`}
             </h3>
             {m.printFullPageSheets !== false
-              ? (m.ciLeaseComps ?? []).map((c, idx) => (
+              ? (m.ciLeaseComps ?? []).filter((c) => c.includeSheet !== false && (c.address || c.leaseAmount || c.netRentPerM2 || c.nla)).map((c, idx) => (
                   <ComparableSheet
                     key={`lease-${c.id}`}
                     printMode
-                    data={{
-                      id: c.id,
-                      kind: "lease",
-                      number: idx + 1,
-                      address: c.address,
-                      proximity: c.proximity,
-                      price: c.netRentPerM2,
-                      date: c.date,
-                      buildingArea: c.nla,
-                      photoUrl: c.photoUrl,
-                      includeSheet: true,
-                      commentary: c.notes,
-                    }}
+                    data={effectiveLeaseSheet(c, idx + 1, sheetPools)}
                     values={v}
                     onChange={() => {}}
                   />
@@ -1347,6 +1323,17 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
               </table>
             ) : null}
             {m.costApproach?.notes ? <Para>{m.costApproach.notes}</Para> : null}
+            {m.printFullPageSheets !== false
+              ? (m.ciLandSales ?? []).filter((l) => l.includeSheet !== false && (l.address || l.price)).map((l, idx) => (
+                  <ComparableSheet
+                    key={`land-${l.id}`}
+                    printMode
+                    data={effectiveLandSheet(l, idx + 1, sheetPools)}
+                    values={v}
+                    onChange={() => {}}
+                  />
+                ))
+              : null}
             <Prose text={withoutSourceNotes(draft.narrative.costApproach || "", printedSales)} />
           </Keep>
         ) : null}

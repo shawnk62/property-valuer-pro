@@ -15,6 +15,7 @@ import { CostApproachSection } from "@/components/report/CostApproachSection";
 import { CapitalisationApproachSection } from "@/components/report/CapitalisationApproachSection";
 import { CommercialValuationTables } from "@/components/report/CommercialValuationTables";
 import { ComparableSheet } from "@/components/report/ComparableSheet";
+import { effectiveSaleSheet, saleFromSheetPatch } from "@/components/report/comparableSheetHelpers";
 import { InspectionRoutePlanner } from "@/components/report/InspectionRoutePlanner";
 import { LeaseEvidenceGrid } from "@/components/report/LeaseEvidenceGrid";
 import { LandSalesSection } from "@/components/report/LandSalesSection";
@@ -1541,36 +1542,13 @@ export function SalesSection({ controller }: { controller: ReportDraftController
           {draft.sales.filter(s => s.omitFromReport !== true && (s.address || s.salePrice)).map((s, idx) => (
             <ComparableSheet
               key={s.id}
-              data={{
-                id: s.id,
-                kind: "sale",
-                number: idx + 1,
-                address: s.address,
-                proximity: s.proximity,
-                price: s.salePrice,
-                date: s.saleDate,
-                landArea: s.landArea,
-                buildingArea: s.gla,
-                photoUrl: s.photoUrl,
-                extraPhotos: s.extraPhotos,
-                includeSheet: s.includeSheet,
-                accepted: s.acceptedFields,
-                overrides: s.fieldOverrides,
-                commentary: s.comments,
-                description: s.description,
-                verificationLink: s.verificationLink,
-              }}
+              data={effectiveSaleSheet(s, idx + 1, {
+                sales: draft.sales,
+                leases: draft.reportMeta.ciLeaseComps,
+                landSales: draft.reportMeta.ciLandSales,
+              })}
               values={draft.values}
-              onChange={(patch) => setSales(draft.sales.map(sale => sale.id === s.id ? {
-                ...sale,
-                includeSheet: patch.includeSheet ?? sale.includeSheet,
-                acceptedFields: patch.accepted ?? sale.acceptedFields,
-                fieldOverrides: patch.overrides ?? sale.fieldOverrides,
-                comments: patch.commentary ?? sale.comments,
-                description: patch.description ?? sale.description,
-                extraPhotos: patch.extraPhotos ?? sale.extraPhotos,
-                verificationLink: patch.verificationLink ?? sale.verificationLink,
-              } : sale))}
+              onChange={(patch) => setSales(draft.sales.map(sale => sale.id === s.id ? saleFromSheetPatch(sale, patch) : sale))}
             />
           ))}
         </div>
@@ -3077,7 +3055,7 @@ export function SalesSection({ controller }: { controller: ReportDraftController
 
           <div className="space-y-4 rounded-md border border-border bg-card p-4">
             <h3 className="text-sm font-semibold text-foreground">Cost approach</h3>
-            <LandSalesSection meta={draft.reportMeta} values={draft.values} onMeta={setMeta} subjectPhotoUrl={subjectFrontPhoto?.url} inspectionId={draft.inspectionId} />
+            <LandSalesSection meta={draft.reportMeta} values={draft.values} onMeta={setMeta} subjectPhotoUrl={subjectFrontPhoto?.url} inspectionId={draft.inspectionId} comparableSales={draft.sales} />
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input type="checkbox" checked={narrativePrints(draft.reportMeta, "costApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), costApproach: e.target.checked } })} />
               Include Cost Approach on report

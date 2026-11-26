@@ -4,9 +4,11 @@
  */
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import type { InspectionValues, ReportMeta } from "@/lib/report/types";
+import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/types";
 import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
 import { RELATIVITY_OPTIONS, relativitySelectClass, type Relativity } from "@/lib/report/adjustmentGrid";
+import { ComparableSheet } from "@/components/report/ComparableSheet";
+import { effectiveLandSheet, landFromSheetPatch } from "@/components/report/comparableSheetHelpers";
 
 function num(raw: string | number | null | undefined): number | null {
   if (raw == null) return null;
@@ -29,7 +31,13 @@ function ratePerM2(price: string, area: string, unit?: string): string {
   return (p / a).toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 }
 
-function fileFromClipboard(e: ClipboardEvent): File | null {
+function formatCurrency(raw: string): string {
+  const n = num(raw);
+  if (n == null) return raw.trim();
+  return n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+}
+
+function imageFileFromClipboard(e: React.ClipboardEvent): File | null {
   const items = e.clipboardData?.items;
   if (items) {
     for (const item of Array.from(items)) {
@@ -72,6 +80,12 @@ interface LandSale {
   shape?: string;
   rateAdjustments?: Record<string, string>;
   adjustments?: Record<string, { relativity: string; amount?: number; detail?: string }>;
+  description?: string;
+  extraPhotos?: Array<{ url: string; include?: boolean }>;
+  includeSheet?: boolean;
+  acceptedFields?: Record<string, boolean>;
+  fieldOverrides?: Record<string, string>;
+  verificationLink?: string;
 }
 
 function blank(): LandSale {
@@ -94,12 +108,14 @@ export function LandSalesSection({
   onMeta,
   subjectPhotoUrl,
   inspectionId,
+  comparableSales,
 }: {
   meta: ReportMeta;
   values: InspectionValues;
   onMeta: (patch: Partial<ReportMeta>) => void;
   subjectPhotoUrl?: string;
   inspectionId?: string;
+  comparableSales?: ComparableSale[];
 }) {
   const sales = meta.ciLandSales ?? [];
   const [expandedNotesId, setExpandedNotesId] = useState<string | null>(null);
@@ -334,6 +350,18 @@ export function LandSalesSection({
         </div>
         </>
       )}
+      {sales.filter((s) => s.address || s.price).map((s, idx) => (
+        <ComparableSheet
+          key={s.id}
+          data={effectiveLandSheet(s, idx + 1, {
+            sales: comparableSales,
+            leases: meta.ciLeaseComps,
+            landSales: sales,
+          })}
+          values={values}
+          onChange={(patch) => update(s.id, landFromSheetPatch(s, patch))}
+        />
+      ))}
       {agentCallId ? (
         <LandAgentSheet
           sale={sales.find(s => s.id === agentCallId)!}
