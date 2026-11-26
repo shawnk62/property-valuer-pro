@@ -85,6 +85,37 @@ function formatDate(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+/** Contractual rent at `asAt`, after applying annual increases that have already occurred since `start`. */
+function contractualRentAt(
+  start: Date | null,
+  asAt: Date,
+  startingRent: number | null,
+  increaseType: IncreaseType,
+  increasePct: number | null,
+  increaseDollar: number | null,
+  manualSteps: Array<{ year: string; rent: string }>,
+): number | null {
+  if (startingRent == null) return null;
+  if (!start || asAt < start) return startingRent;
+  // Number of full anniversary increases that have occurred
+  const yearsElapsed = yearsBetween(start, asAt) ?? 0;
+  const anniversaries = Math.floor(yearsElapsed);
+  let rent = startingRent;
+  for (let y = 1; y <= anniversaries; y++) {
+    if (increaseType === "fixed-pct" && increasePct != null) {
+      rent *= 1 + increasePct / 100;
+    } else if (increaseType === "fixed-dollar" && increaseDollar != null) {
+      rent += increaseDollar;
+    } else if (increaseType === "cpi" && increasePct != null) {
+      rent *= 1 + increasePct / 100;
+    } else if (increaseType === "manual") {
+      const step = manualSteps.find((s) => num(s.year) === y);
+      if (step && num(step.rent) != null) rent = num(step.rent)!;
+    }
+  }
+  return rent;
+}
+
 /** Present value of a series of year-end differences discounted at decimal rate. */
 function pvSeries(diffs: number[], rate: number): number | null {
   if (!diffs.length || !Number.isFinite(rate) || rate <= 0) return null;
@@ -144,7 +175,18 @@ export function CapitalisationApproachSection({
   const leaseEnd = parseDate(meta.ciLeaseEndDate);
   const calculatedRemaining = leaseEnd ? yearsBetween(valuationDate, leaseEnd) : null;
   const remainingYears = num(meta.ciRemainingYears) ?? calculatedRemaining ?? remainingFromInspection;
-  const passing = num(meta.ciPassingRentOverride) ?? passingFromInspection;
+  const leaseStart = parseDate(meta.ciLeaseStartDate);
+  const startingRent = num(meta.ciStartingRent);
+  const calculatedPassing = contractualRentAt(
+    leaseStart,
+    valuationDate,
+    startingRent,
+    meta.ciIncreaseType ?? "none",
+    num(meta.ciIncreasePct),
+    num(meta.ciIncreaseDollar),
+    meta.ciManualSteps ?? [],
+  );
+  const passing = num(meta.ciPassingRentOverride) ?? calculatedPassing ?? passingFromInspection;
   const includeOption = meta.ciIncludeOption === true;
   const optionYears = num(meta.ciOptionYears) ?? 0;
   const optionBasis: OptionBasis = meta.ciOptionRentBasis ?? "market";
@@ -441,11 +483,12 @@ export function CapitalisationApproachSection({
 
         <InputRow
           label="Current / passing rent ($ p.a.)"
-          value={meta.ciPassingRentOverride ?? (passingFromInspection != null ? String(passingFromInspection) : "")}
-          source="inspection – comm_passing_rent"
+          value={meta.ciPassingRentOverride ?? (calculatedPassing != null ? String(Math.round(calculatedPassing)) : passingFromInspection != null ? String(passingFromInspection) : "")}
+          source={calculatedPassing != null ? "calculated from starting rent and increases" : "inspection – comm_passing_rent"}
           overridden={overridden.has("passing")}
-          onChange={(v) => requestChange("passing", "Passing rent", "inspection – comm_passing_rent", String(passingFromInspection ?? ""), meta.ciPassingRentOverride, v, () => onMeta({ ciPassingRentOverride: v }))}
+          onChange={(v) => requestChange("passing", "Passing rent", calculatedPassing != null ? "calculated from starting rent and increases" : "inspection – comm_passing_rent", String(calculatedPassing != null ? Math.round(calculatedPassing) : passingFromInspection ?? ""), meta.ciPassingRentOverride, v, () => onMeta({ ciPassingRentOverride: v }))}
           onReset={() => onMeta({ ciPassingRentOverride: undefined, ciOverriddenFields: (meta.ciOverriddenFields ?? []).filter((k) => k !== "passing") })}
+          hint={calculatedPassing != null ? `Auto-calculated current rent: ${Math.round(calculatedPassing).toLocaleString("en-AU")}` : "Enter starting rent and increases to calculate"}
         />
         <InputRow
           label="Remaining term (years)"
