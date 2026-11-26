@@ -626,6 +626,18 @@ export interface ReportMeta {
     rentBasis?: "net" | "gross";
     /** When set, this lease evidence is also shown in the sales comparison grid. */
     linkedSaleId?: string;
+    /** Factual description for the full-page comparable sheet. */
+    description?: string;
+    /** Extra photos for the full-page sheet. Empty tiles are omitted from print. */
+    extraPhotos?: Array<{ url: string; include?: boolean }>;
+    /** When false, the full-page sheet is omitted from the report. */
+    includeSheet?: boolean;
+    /** Valuer acceptance of proposed field values. */
+    acceptedFields?: Record<string, boolean>;
+    /** Valuer overrides of proposed field values. */
+    fieldOverrides?: Record<string, string>;
+    /** Working-report only verification link for public-source values. */
+    verificationLink?: string;
   }>;
   /** Map of lease evidence locations. */
   ciLeaseMapUrl?: string;
@@ -653,6 +665,18 @@ export interface ReportMeta {
     shape?: string;
     rateAdjustments?: Record<string, string>;
     adjustments?: Record<string, { relativity: string; amount?: number; detail?: string }>;
+    /** Factual description for the full-page comparable sheet. */
+    description?: string;
+    /** Extra photos for the full-page sheet. Empty tiles are omitted from print. */
+    extraPhotos?: Array<{ url: string; include?: boolean }>;
+    /** When false, the full-page sheet is omitted from the report. */
+    includeSheet?: boolean;
+    /** Valuer acceptance of proposed field values. */
+    acceptedFields?: Record<string, boolean>;
+    /** Valuer overrides of proposed field values. */
+    fieldOverrides?: Record<string, string>;
+    /** Working-report only verification link for public-source values. */
+    verificationLink?: string;
   }>;
 }
 

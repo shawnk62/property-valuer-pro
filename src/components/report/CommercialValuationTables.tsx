@@ -6,6 +6,7 @@
 import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/types";
 import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
 import { RELATIVITY_OPTIONS, relativitySelectClass, type Relativity } from "@/lib/report/adjustmentGrid";
+import { sheetPersistFieldsFromSale } from "@/components/report/comparableSheetHelpers";
 
 function imageFileFromClipboard(e: React.ClipboardEvent): File | null {
   const items = e.clipboardData?.items;
@@ -203,29 +204,27 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
     const existing = meta.ciLeaseComps ?? [];
     if (checked) {
       if (existing.some((c) => c.id === sale.id)) return;
+      const created = {
+        id: sale.id,
+        address: sale.address,
+        date: sale.saleDate,
+        leaseAmount: sale.passingRent ?? "",
+        nla: sale.gla ?? "",
+        netRentPerM2: "",
+        term: "",
+        incentives: "",
+        outgoings: "",
+        notes: sale.comments ?? "",
+        proximity: sale.proximity ?? "",
+        clearHeight: sale.clearHeight ?? "",
+        loading: sale.loading ?? "",
+        officeRatio: sale.officeRatio ?? "",
+        condition: sale.condition ?? "",
+        hardstand: sale.hardstand ?? "",
+      };
+      Object.assign(created, sheetPersistFieldsFromSale(sale), sale.photoUrl ? { photoUrl: sale.photoUrl } : {});
       onMeta({
-        ciLeaseComps: [
-          ...existing,
-          {
-            id: sale.id,
-            address: sale.address,
-            date: sale.saleDate,
-            leaseAmount: sale.passingRent ?? "",
-            nla: sale.gla ?? "",
-            netRentPerM2: "",
-            term: "",
-            incentives: "",
-            outgoings: "",
-            notes: sale.comments ?? "",
-            proximity: sale.proximity ?? "",
-            photoUrl: sale.photoUrl,
-            clearHeight: sale.clearHeight ?? "",
-            loading: sale.loading ?? "",
-            officeRatio: sale.officeRatio ?? "",
-            condition: sale.condition ?? "",
-            hardstand: sale.hardstand ?? "",
-          },
-        ],
+        ciLeaseComps: [...existing, created],
       });
     } else {
       onMeta({ ciLeaseComps: existing.filter((c) => c.id !== sale.id) });

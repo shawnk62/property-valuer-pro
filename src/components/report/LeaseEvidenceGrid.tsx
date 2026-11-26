@@ -10,6 +10,13 @@ import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
 import { RELATIVITY_OPTIONS, relativitySelectClass, type Relativity } from "@/lib/report/adjustmentGrid";
 import type { ComparableSale } from "@/lib/report/types";
 import { ensureSaleAdjustments } from "@/lib/report/adjustmentGrid";
+import { ComparableSheet } from "@/components/report/ComparableSheet";
+import {
+  effectiveLeaseSheet,
+  leaseFromSheetPatch,
+  normAddr,
+  sheetPersistFieldsFromLease,
+} from "@/components/report/comparableSheetHelpers";
 
 function imageFileFromClipboard(e: React.ClipboardEvent): File | null {
   const items = e.clipboardData?.items;
@@ -32,7 +39,6 @@ function imageFileFromClipboard(e: React.ClipboardEvent): File | null {
   }
   return null;
 }
-function normAddr(s: string): string { return s.toLowerCase().replace(/[^a-z0-9]/g, ""); }
 function num(raw: string | number | null | undefined): number | null {
   if (raw == null) return null;
   const n = Number(String(raw).replace(/[^0-9.-]/g, ""));
@@ -74,6 +80,13 @@ export interface LeaseComp {
   rentBasis?: "net" | "gross";
   /** When set, this lease is also present in the sales comparison grid. */
   linkedSaleId?: string;
+  leaseAmount?: string;
+  description?: string;
+  extraPhotos?: Array<{ url: string; include?: boolean }>;
+  includeSheet?: boolean;
+  acceptedFields?: Record<string, boolean>;
+  fieldOverrides?: Record<string, string>;
+  verificationLink?: string;
 }
 
 function blank(): LeaseComp {
@@ -177,19 +190,20 @@ export function LeaseEvidenceGrid({
         landArea: "",
         gla: comp.nla,
         comments: comp.notes,
-        proximity: comp.proximity,
-        photoUrl: comp.photoUrl,
-        photoLocalKey: comp.photoLocalKey,
-        photoStoragePath: comp.photoStoragePath,
-        clearHeight: comp.clearHeight,
-        loading: comp.loading,
-        officeRatio: comp.officeRatio,
-        condition: comp.condition,
-        quality: comp.quality,
-        hardstand: comp.hardstand,
-        passingRent: comp.leaseAmount,
+        ...(comp.proximity !== undefined ? { proximity: comp.proximity } : {}),
+        ...(comp.photoUrl !== undefined ? { photoUrl: comp.photoUrl } : {}),
+        ...(comp.photoLocalKey !== undefined ? { photoLocalKey: comp.photoLocalKey } : {}),
+        ...(comp.photoStoragePath !== undefined ? { photoStoragePath: comp.photoStoragePath } : {}),
+        ...(comp.clearHeight !== undefined ? { clearHeight: comp.clearHeight } : {}),
+        ...(comp.loading !== undefined ? { loading: comp.loading } : {}),
+        ...(comp.officeRatio !== undefined ? { officeRatio: comp.officeRatio } : {}),
+        ...(comp.condition !== undefined ? { condition: comp.condition } : {}),
+        ...(comp.quality !== undefined ? { quality: comp.quality } : {}),
+        ...(comp.hardstand !== undefined ? { hardstand: comp.hardstand } : {}),
+        ...(comp.leaseAmount !== undefined ? { passingRent: comp.leaseAmount } : {}),
         marketRent: comp.netRentPerM2 && comp.nla ? String(Number(comp.netRentPerM2) * Number(comp.nla.replace(/[^0-9.]/g, "")) || "") : "",
       });
+      Object.assign(fromLease, sheetPersistFieldsFromLease(comp));
       const exists = sales.some((s) => s.id === saleId);
       onSales(exists ? sales.map((s) => (s.id === saleId ? { ...s, ...fromLease } : s)) : [...sales, fromLease]);
       update(comp.id, { linkedSaleId: saleId });
@@ -489,6 +503,18 @@ export function LeaseEvidenceGrid({
           </label>
         )}
       </div>
+      {comps.filter((c) => c.address || c.leaseAmount || c.netRentPerM2 || c.nla).map((c, idx) => (
+        <ComparableSheet
+          key={c.id}
+          data={effectiveLeaseSheet(c, idx + 1, {
+            sales,
+            leases: comps,
+            landSales: meta.ciLandSales,
+          })}
+          values={values}
+          onChange={(patch) => update(c.id, leaseFromSheetPatch(c, patch))}
+        />
+      ))}
       {agentCallId ? (
         <AgentCallSheet
           comp={comps.find((c) => c.id === agentCallId)!}
