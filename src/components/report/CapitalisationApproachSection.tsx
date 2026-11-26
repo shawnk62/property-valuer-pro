@@ -51,6 +51,40 @@ function pvAnnuity(annual: number, rate: number, years: number): number | null {
   return (annual * (1 - Math.pow(1 + rate, -years))) / rate;
 }
 
+
+function parseDate(raw: string | undefined | null): Date | null {
+  if (!raw) return null;
+  const s = raw.trim();
+  if (!s) return null;
+  // Accept ISO, dd/mm/yyyy, dd-mm-yyyy
+  const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  if (iso) {
+    const d = new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+    return Number.isFinite(d.getTime()) ? d : null;
+  }
+  const dmy = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/.exec(s);
+  if (dmy) {
+    const year = Number(dmy[3].length === 2 ? `20${dmy[3]}` : dmy[3]);
+    const d = new Date(year, Number(dmy[2]) - 1, Number(dmy[1]));
+    return Number.isFinite(d.getTime()) ? d : null;
+  }
+  const d = new Date(s);
+  return Number.isFinite(d.getTime()) ? d : null;
+}
+
+function yearsBetween(from: Date, to: Date): number | null {
+  const ms = to.getTime() - from.getTime();
+  if (!Number.isFinite(ms)) return null;
+  return Math.max(0, ms / (365.25 * 24 * 60 * 60 * 1000));
+}
+
+function formatDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 /** Present value of a series of year-end differences discounted at decimal rate. */
 function pvSeries(diffs: number[], rate: number): number | null {
   if (!diffs.length || !Number.isFinite(rate) || rate <= 0) return null;
@@ -105,7 +139,11 @@ export function CapitalisationApproachSection({
   const monthsLoss = num(meta.ciLettingUpMonths);
   const monthsIncentive = num(meta.ciIncentiveMonths);
   const commissionPct = num(meta.ciAgentCommissionPct);
-  const remainingYears = num(meta.ciRemainingYears) ?? remainingFromInspection;
+  // Remaining term: explicit override, else calculated from lease end date to valuation/inspection date
+  const valuationDate = parseDate(str(values, "insp_date")) ?? new Date();
+  const leaseEnd = parseDate(meta.ciLeaseEndDate);
+  const calculatedRemaining = leaseEnd ? yearsBetween(valuationDate, leaseEnd) : null;
+  const remainingYears = num(meta.ciRemainingYears) ?? calculatedRemaining ?? remainingFromInspection;
   const passing = num(meta.ciPassingRentOverride) ?? passingFromInspection;
   const includeOption = meta.ciIncludeOption === true;
   const optionYears = num(meta.ciOptionYears) ?? 0;
@@ -282,8 +320,9 @@ export function CapitalisationApproachSection({
         </p>
       </div>
 
-      {/* Consolidated input list */}
+      {/* Consolidated input list — market rent, then existing lease, then options, then capitalisation */}
       <div className="border border-slate-200 rounded-md divide-y divide-slate-100 text-xs">
+        <div className="px-3 py-1.5 bg-slate-50 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">Market rent</div>
         <InputRow
           label="Lettable / building area (m²)"
           value={meta.ciAreaOverride ?? (areaFromInspection != null ? String(areaFromInspection) : "")}
@@ -300,20 +339,8 @@ export function CapitalisationApproachSection({
         <div className="flex items-center gap-3 px-3 py-2">
           <span className="text-slate-600 w-56 shrink-0">Rent basis</span>
           <div className="flex rounded border border-slate-300 overflow-hidden">
-            <button
-              type="button"
-              className={`px-3 py-1 ${basis === "net" ? "bg-slate-700 text-white" : "bg-white text-slate-600"}`}
-              onClick={() => onMeta({ ciRentBasis: "net" })}
-            >
-              Net
-            </button>
-            <button
-              type="button"
-              className={`px-3 py-1 ${basis === "gross" ? "bg-slate-700 text-white" : "bg-white text-slate-600"}`}
-              onClick={() => onMeta({ ciRentBasis: "gross" })}
-            >
-              Gross
-            </button>
+            <button type="button" className={`px-3 py-1 ${basis === "net" ? "bg-slate-700 text-white" : "bg-white text-slate-600"}`} onClick={() => onMeta({ ciRentBasis: "net" })}>Net</button>
+            <button type="button" className={`px-3 py-1 ${basis === "gross" ? "bg-slate-700 text-white" : "bg-white text-slate-600"}`} onClick={() => onMeta({ ciRentBasis: "gross" })}>Gross</button>
           </div>
           <span className="text-slate-400">Default: Net</span>
         </div>
@@ -326,103 +353,122 @@ export function CapitalisationApproachSection({
           onChange={(v) => onMeta({ ciAdoptedRentPerM2: v })}
           hint="Rate assessed from the lease evidence"
         />
+        <InputRow label="Outgoings ($/m²)" value={meta.ciRecoverableOutgoings ?? ""} source="working report" onChange={(v) => onMeta({ ciRecoverableOutgoings: v })} />
+        <InputRow label="Vacancy allowance (% of gross)" value={meta.ciVacancyAllowance ?? ""} source="working report" onChange={(v) => onMeta({ ciVacancyAllowance: v })} />
 
+        <div className="px-3 py-1.5 bg-slate-50 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">Existing lease</div>
         <InputRow
-          label="Outgoings ($/m²)"
-          value={meta.ciRecoverableOutgoings ?? ""}
-          source="working report"
-          onChange={(v) => onMeta({ ciRecoverableOutgoings: v })}
+          label="Lease start date"
+          value={meta.ciLeaseStartDate ?? ""}
+          source="user entered"
+          onChange={(v) => {
+            const start = parseDate(v);
+            const term = num(meta.ciLeaseTermYears);
+            const patch: Partial<typeof meta> = { ciLeaseStartDate: v };
+            if (start && term != null && !meta.ciLeaseEndDate) {
+              const end = new Date(start);
+              end.setFullYear(end.getFullYear() + Math.floor(term));
+              end.setMonth(end.getMonth() + Math.round((term % 1) * 12));
+              patch.ciLeaseEndDate = formatDate(end);
+            }
+            onMeta(patch);
+          }}
+          hint="dd/mm/yyyy or yyyy-mm-dd"
         />
-
         <InputRow
-          label="Vacancy allowance (% of gross)"
-          value={meta.ciVacancyAllowance ?? ""}
-          source="working report"
-          onChange={(v) => onMeta({ ciVacancyAllowance: v })}
-          hint="Typically 2–5 %"
+          label="Lease term (years)"
+          value={meta.ciLeaseTermYears ?? ""}
+          source="user entered"
+          onChange={(v) => {
+            const patch: Partial<typeof meta> = { ciLeaseTermYears: v };
+            const start = parseDate(meta.ciLeaseStartDate);
+            const term = num(v);
+            if (start && term != null && !meta.ciLeaseEndDate) {
+              const end = new Date(start);
+              end.setFullYear(end.getFullYear() + Math.floor(term));
+              end.setMonth(end.getMonth() + Math.round((term % 1) * 12));
+              patch.ciLeaseEndDate = formatDate(end);
+            }
+            onMeta(patch);
+          }}
         />
-
         <InputRow
-          label="Capitalisation rate (%)"
-          value={meta.ciCapRate ?? ""}
-          source="sales analysis / working report"
-          onChange={(v) => onMeta({ ciCapRate: v })}
-          hint="Rate assessed from the comparable sales"
+          label="Lease end date"
+          value={meta.ciLeaseEndDate ?? ""}
+          source="user entered or calculated"
+          onChange={(v) => onMeta({ ciLeaseEndDate: v })}
+          hint="Remaining term is calculated from this date"
         />
-
         <InputRow
-          label="Passing rent (total $ p.a.)"
-          value={meta.ciPassingRentOverride ?? (passingFromInspection != null ? String(passingFromInspection) : "")}
-          source="inspection – comm_passing_rent"
-          overridden={overridden.has("passing")}
-          onChange={(v) =>
-            requestChange(
-              "passing",
-              "Passing rent",
-              "inspection – comm_passing_rent",
-              String(passingFromInspection ?? ""),
-              meta.ciPassingRentOverride,
-              v,
-              () => onMeta({ ciPassingRentOverride: v }),
-            )
-          }
-          onReset={() =>
-            onMeta({
-              ciPassingRentOverride: undefined,
-              ciOverriddenFields: (meta.ciOverriddenFields ?? []).filter((k) => k !== "passing"),
-            })
-          }
-        />
-
-        <InputRow
-          label="Years to next market review"
-          value={meta.ciRemainingYears ?? (remainingFromInspection != null ? String(remainingFromInspection) : "")}
-          source={remainingSource || "not found on inspection"}
-          overridden={overridden.has("remaining")}
-          onChange={(v) =>
-            requestChange(
-              "remaining",
-              "Remaining term",
-              remainingSource,
-              String(remainingFromInspection ?? ""),
-              meta.ciRemainingYears,
-              v,
-              () => onMeta({ ciRemainingYears: v }),
-            )
-          }
-          onReset={() =>
-            onMeta({
-              ciRemainingYears: undefined,
-              ciOverriddenFields: (meta.ciOverriddenFields ?? []).filter((k) => k !== "remaining"),
-            })
-          }
+          label="Starting rent ($ p.a.)"
+          value={meta.ciStartingRent ?? ""}
+          source="user entered"
+          onChange={(v) => onMeta({ ciStartingRent: v })}
+          hint="Rent at commencement"
         />
 
         <div className="flex items-center gap-3 px-3 py-2">
+          <span className="text-slate-600 w-56 shrink-0">Contractual increases</span>
+          <select className="border border-slate-300 rounded px-2 py-1" value={increaseType} onChange={(e) => onMeta({ ciIncreaseType: e.target.value as IncreaseType })}>
+            <option value="none">None</option>
+            <option value="fixed-pct">Fixed % per year</option>
+            <option value="fixed-dollar">Fixed $ per year</option>
+            <option value="cpi">CPI</option>
+            <option value="manual">Manual steps</option>
+          </select>
+        </div>
+        {(increaseType === "fixed-pct" || increaseType === "cpi") && (
+          <InputRow label="Increase % per year" value={meta.ciIncreasePct ?? ""} source="user entered" onChange={(v) => onMeta({ ciIncreasePct: v })} />
+        )}
+        {increaseType === "fixed-dollar" && (
+          <InputRow label="Increase $ per year" value={meta.ciIncreaseDollar ?? ""} source="user entered" onChange={(v) => onMeta({ ciIncreaseDollar: v })} />
+        )}
+        {increaseType === "manual" && (
+          <div className="px-3 py-2 space-y-1">
+            <div className="text-slate-600">Manual contractual rent steps (year → total $ p.a.)</div>
+            {manualSteps.map((step, i) => (
+              <div key={i} className="flex gap-2">
+                <input className="border border-slate-300 rounded px-1 py-0.5 w-16" placeholder="Year" value={step.year} onChange={(e) => { const next = manualSteps.map((s, j) => (j === i ? { ...s, year: e.target.value } : s)); onMeta({ ciManualSteps: next }); }} />
+                <input className="border border-slate-300 rounded px-1 py-0.5 w-32" placeholder="Rent $" value={step.rent} onChange={(e) => { const next = manualSteps.map((s, j) => (j === i ? { ...s, rent: e.target.value } : s)); onMeta({ ciManualSteps: next }); }} />
+                <button type="button" className="text-red-600" onClick={() => onMeta({ ciManualSteps: manualSteps.filter((_, j) => j !== i) })}>Remove</button>
+              </div>
+            ))}
+            {manualSteps.length < 8 && (
+              <button type="button" className="text-slate-600 underline" onClick={() => onMeta({ ciManualSteps: [...manualSteps, { year: "", rent: "" }] })}>Add step</button>
+            )}
+          </div>
+        )}
+
+        <InputRow
+          label="Current / passing rent ($ p.a.)"
+          value={meta.ciPassingRentOverride ?? (passingFromInspection != null ? String(passingFromInspection) : "")}
+          source="inspection – comm_passing_rent"
+          overridden={overridden.has("passing")}
+          onChange={(v) => requestChange("passing", "Passing rent", "inspection – comm_passing_rent", String(passingFromInspection ?? ""), meta.ciPassingRentOverride, v, () => onMeta({ ciPassingRentOverride: v }))}
+          onReset={() => onMeta({ ciPassingRentOverride: undefined, ciOverriddenFields: (meta.ciOverriddenFields ?? []).filter((k) => k !== "passing") })}
+        />
+        <InputRow
+          label="Remaining term (years)"
+          value={meta.ciRemainingYears ?? (calculatedRemaining != null ? calculatedRemaining.toFixed(2) : remainingFromInspection != null ? String(remainingFromInspection) : "")}
+          source={calculatedRemaining != null ? "calculated from lease end date" : remainingSource || "not found on inspection"}
+          overridden={overridden.has("remaining")}
+          onChange={(v) => requestChange("remaining", "Remaining term", calculatedRemaining != null ? "calculated from lease end date" : remainingSource, String(calculatedRemaining ?? remainingFromInspection ?? ""), meta.ciRemainingYears, v, () => onMeta({ ciRemainingYears: v }))}
+          onReset={() => onMeta({ ciRemainingYears: undefined, ciOverriddenFields: (meta.ciOverriddenFields ?? []).filter((k) => k !== "remaining") })}
+          hint={calculatedRemaining != null ? `Auto-calculated: ${calculatedRemaining.toFixed(2)} years to lease end` : undefined}
+        />
+
+        <div className="px-3 py-1.5 bg-slate-50 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">Options</div>
+        <div className="flex items-center gap-3 px-3 py-2">
           <span className="text-slate-600 w-56 shrink-0">Include option term?</span>
-          <input
-            type="checkbox"
-            checked={includeOption}
-            onChange={(e) => onMeta({ ciIncludeOption: e.target.checked })}
-          />
+          <input type="checkbox" checked={includeOption} onChange={(e) => onMeta({ ciIncludeOption: e.target.checked })} />
           <span className="text-slate-400">Only if the option rent is not a market review</span>
         </div>
-
         {includeOption && (
           <>
-            <InputRow
-              label="Option years"
-              value={meta.ciOptionYears ?? ""}
-              source="user entered"
-              onChange={(v) => onMeta({ ciOptionYears: v })}
-            />
+            <InputRow label="Option years" value={meta.ciOptionYears ?? ""} source="user entered" onChange={(v) => onMeta({ ciOptionYears: v })} />
             <div className="flex items-center gap-3 px-3 py-2">
               <span className="text-slate-600 w-56 shrink-0">Option rent basis</span>
-              <select
-                className="border border-slate-300 rounded px-2 py-1"
-                value={optionBasis}
-                onChange={(e) => onMeta({ ciOptionRentBasis: e.target.value as OptionBasis })}
-              >
+              <select className="border border-slate-300 rounded px-2 py-1" value={optionBasis} onChange={(e) => onMeta({ ciOptionRentBasis: e.target.value as OptionBasis })}>
                 <option value="market">Market (no further adjustment)</option>
                 <option value="fixed-pct">Fixed % increase</option>
                 <option value="fixed-dollar">Fixed $ increase</option>
@@ -432,141 +478,14 @@ export function CapitalisationApproachSection({
           </>
         )}
 
-        <div className="flex items-center gap-3 px-3 py-2">
-          <span className="text-slate-600 w-56 shrink-0">Contractual increases</span>
-          <select
-            className="border border-slate-300 rounded px-2 py-1"
-            value={increaseType}
-            onChange={(e) => onMeta({ ciIncreaseType: e.target.value as IncreaseType })}
-          >
-            <option value="none">None (constant difference)</option>
-            <option value="fixed-pct">Fixed % per year</option>
-            <option value="fixed-dollar">Fixed $ per year</option>
-            <option value="cpi">CPI</option>
-            <option value="manual">Manual steps</option>
-          </select>
-        </div>
-
-        {(increaseType === "fixed-pct" || increaseType === "cpi" || (includeOption && (optionBasis === "fixed-pct" || optionBasis === "cpi"))) && (
-          <InputRow
-            label="Increase % per year"
-            value={meta.ciIncreasePct ?? ""}
-            source="user entered"
-            onChange={(v) => onMeta({ ciIncreasePct: v })}
-          />
-        )}
-        {(increaseType === "fixed-dollar" || (includeOption && optionBasis === "fixed-dollar")) && (
-          <InputRow
-            label="Increase $ per year"
-            value={meta.ciIncreaseDollar ?? ""}
-            source="user entered"
-            onChange={(v) => onMeta({ ciIncreaseDollar: v })}
-          />
-        )}
-
-        {increaseType === "manual" && (
-          <div className="px-3 py-2 space-y-1">
-            <div className="text-slate-600">Manual contractual rent steps (year → total $ p.a.)</div>
-            {manualSteps.map((step, i) => (
-              <div key={i} className="flex gap-2">
-                <input
-                  className="border border-slate-300 rounded px-1 py-0.5 w-16"
-                  placeholder="Year"
-                  value={step.year}
-                  onChange={(e) => {
-                    const next = manualSteps.map((s, j) => (j === i ? { ...s, year: e.target.value } : s));
-                    onMeta({ ciManualSteps: next });
-                  }}
-                />
-                <input
-                  className="border border-slate-300 rounded px-1 py-0.5 w-32"
-                  placeholder="Rent $"
-                  value={step.rent}
-                  onChange={(e) => {
-                    const next = manualSteps.map((s, j) => (j === i ? { ...s, rent: e.target.value } : s));
-                    onMeta({ ciManualSteps: next });
-                  }}
-                />
-                <button
-                  type="button"
-                  className="text-red-600"
-                  onClick={() => onMeta({ ciManualSteps: manualSteps.filter((_, j) => j !== i) })}
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-            {manualSteps.length < 8 && (
-              <button
-                type="button"
-                className="text-slate-600 underline"
-                onClick={() => onMeta({ ciManualSteps: [...manualSteps, { year: "", rent: "" }] })}
-              >
-                Add step
-              </button>
-            )}
-          </div>
-        )}
-
-        <InputRow
-          label="Letting-up months (gross rent loss)"
-          value={meta.ciLettingUpMonths ?? ""}
-          source="working report"
-          onChange={(v) => onMeta({ ciLettingUpMonths: v })}
-        />
-        <InputRow
-          label="Incentive months (net)"
-          value={meta.ciIncentiveMonths ?? ""}
-          source="working report"
-          onChange={(v) => onMeta({ ciIncentiveMonths: v })}
-        />
-        <InputRow
-          label="Agent commission (% of first-year net)"
-          value={meta.ciAgentCommissionPct ?? ""}
-          source="working report"
-          onChange={(v) => onMeta({ ciAgentCommissionPct: v })}
-        />
-
-        <div className="flex items-center gap-3 px-3 py-2">
-          <span className="text-slate-600 w-56 shrink-0">Discount rate for PV (%)</span>
-          <input
-            className="border border-slate-300 rounded px-1 py-0.5 w-24"
-            value={meta.ciDiscountManual ? (meta.ciExitCapRate ?? "") : (capRate != null ? String(capRate) : "")}
-            onChange={(e) => onMeta({ ciExitCapRate: e.target.value, ciDiscountManual: true })}
-          />
-          <span className="text-slate-400">
-            {meta.ciDiscountManual ? "Manual override" : "Defaults to capitalisation rate"}
-          </span>
-          {meta.ciDiscountManual && (
-            <button
-              type="button"
-              className="text-slate-500 underline"
-              onClick={() => onMeta({ ciDiscountManual: false })}
-            >
-              Reset to cap rate
-            </button>
-          )}
-        </div>
-
-        <InputRow
-          label="Capex (below the line, deducted)"
-          value={meta.ciCapex ?? ""}
-          source="working report"
-          onChange={(v) => onMeta({ ciCapex: v })}
-        />
-        <InputRow
-          label="Non-core income (PV, added)"
-          value={meta.ciNonCoreIncomePv ?? ""}
-          source="working report"
-          onChange={(v) => onMeta({ ciNonCoreIncomePv: v })}
-        />
-        <InputRow
-          label="Round adopted value to nearest"
-          value={meta.ciAdoptRoundTo ?? ""}
-          source="working report"
-          onChange={(v) => onMeta({ ciAdoptRoundTo: v })}
-          hint="e.g. 50000"
-        />
+        <div className="px-3 py-1.5 bg-slate-50 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">Capitalisation and adjustments</div>
+        <InputRow label="Capitalisation rate (%)" value={meta.ciCapRate ?? ""} source="working report" onChange={(v) => onMeta({ ciCapRate: v })} hint="Rate assessed from the comparable sales" />
+        <InputRow label="Letting-up months (gross rent loss)" value={meta.ciLettingUpMonths ?? ""} source="working report" onChange={(v) => onMeta({ ciLettingUpMonths: v })} />
+        <InputRow label="Incentive months (net)" value={meta.ciIncentiveMonths ?? ""} source="working report" onChange={(v) => onMeta({ ciIncentiveMonths: v })} />
+        <InputRow label="Agent commission (% of first-year net)" value={meta.ciAgentCommissionPct ?? ""} source="working report" onChange={(v) => onMeta({ ciAgentCommissionPct: v })} />
+        <InputRow label="Capex (below the line, deducted)" value={meta.ciCapex ?? ""} source="working report" onChange={(v) => onMeta({ ciCapex: v })} />
+        <InputRow label="Non-core income (PV, added)" value={meta.ciNonCoreIncomePv ?? ""} source="working report" onChange={(v) => onMeta({ ciNonCoreIncomePv: v })} />
+        <InputRow label="Round adopted value to nearest" value={meta.ciAdoptRoundTo ?? ""} source="working report" onChange={(v) => onMeta({ ciAdoptRoundTo: v })} hint="e.g. 50000" />
       </div>
 
       {/* Results table */}

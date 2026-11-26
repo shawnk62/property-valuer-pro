@@ -603,6 +603,14 @@ export interface ReportMeta {
   ciAreaOverride?: string;
   /** Manual override of remaining years to next market review. */
   ciRemainingYears?: string;
+  /** Existing lease commencement date (ISO or display). */
+  ciLeaseStartDate?: string;
+  /** Existing lease end date. */
+  ciLeaseEndDate?: string;
+  /** Existing lease term in years. */
+  ciLeaseTermYears?: string;
+  /** Starting rent at lease commencement ($ p.a.). */
+  ciStartingRent?: string;
   /** When true, the option term is included in the rent-difference calculation. */
   ciIncludeOption?: boolean;
   /** Additional years covered by a non-market option. */
