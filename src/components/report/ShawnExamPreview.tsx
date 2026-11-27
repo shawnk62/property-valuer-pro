@@ -1502,13 +1502,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                   />
                 ))
               : null}
-            <Prose text={withoutSourceNotes(draft.narrative.leaseEvidence || "", printedSales)} />
-            {(draft.narrative.incomeReconciliation || m.incomeReconciliation)?.trim() ? (
-              <Prose text={withoutSourceNotes(draft.narrative.incomeReconciliation || m.incomeReconciliation || "", printedSales)} />
-            ) : null}
+            <Prose text={withoutSourceNotes(draft.narrative.leaseEvidence?.trim() || draft.narrative.incomeReconciliation || m.incomeReconciliation || "", printedSales)} />
 
             {m.ciLeaseMapUrl ? (
-              <div className="break-before-page flex min-h-[90vh] flex-col items-center justify-center">
+              <div className="report-map-page break-before-page break-after-page flex min-h-[90vh] flex-col items-center justify-center">
                 <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Income approach — lease evidence map</p>
                 <img src={m.ciLeaseMapUrl} alt="Lease evidence map" className="max-h-[85vh] w-auto max-w-full object-contain" style={{ border: `1px solid ${RULE}` }} />
               </div>
@@ -1552,21 +1549,14 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           <Keep>
             <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the income approach</h3>
             <Prose text={incomeBoilerplate(m, v)} />
-            {m.incomeApproachValue || m.ciAdoptedValueOverride ? (
-              <table className="mt-3 w-full border-collapse text-xs">
-                <tbody>
-                  <tr className="font-semibold"><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Adopt for practical purposes</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${formatCurrencyDisplay(m.incomeApproachValue || m.ciAdoptedValueOverride || "")}</td></tr>
-                </tbody>
-              </table>
-            ) : null}
           </Keep>
         ) : null}
 
         {showCost ? (
-          <Keep>
-            <h3 id="exam-8-cost" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
+          <div className="report-keep-block break-before-page">
+            <h2 id="exam-8-cost" className="report-h2 report-heading-lead mt-8 border-b pb-1 text-[1.05rem] font-semibold" style={{ color: TEAL, borderColor: RULE }}>
               {`${major[8]}.${n8[2]} Cost approach`}
-            </h3>
+            </h2>
             <h3 className="mt-2 text-[0.9rem] font-semibold" style={{ color: TEAL }}>Land value</h3>
             {m.printLandEvidence !== false ? (
               <LandEvidenceSchedule
@@ -1574,12 +1564,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 headerStyle={{ background: TEAL, color: "#fff" }}
                 cellStyle={{ borderColor: RULE }}
               />
-            ) : null}
-            {m.ciLandMapUrl && m.printLandMap !== false ? (
-              <div className="break-before-page flex min-h-[90vh] flex-col items-center justify-center">
-                <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Cost approach — land sales map</p>
-                <img src={m.ciLandMapUrl} alt="Land sales map" className="max-h-[85vh] w-auto max-w-full object-contain" style={{ border: `1px solid ${RULE}` }} />
-              </div>
             ) : null}
             {m.printFullPageSheets !== false && m.printLandSheets !== false
               ? (m.ciLandSales ?? []).filter((l) => l.omitFromReport !== true && l.includeSheet !== false && (l.address || l.price)).map((l, idx) => (
@@ -1592,6 +1576,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                   />
                 ))
               : null}
+            {m.ciLandMapUrl && m.printLandMap !== false ? (
+              <div className="report-map-page break-before-page break-after-page flex min-h-[90vh] flex-col items-center justify-center">
+                <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Cost approach — land sales map</p>
+                <img src={m.ciLandMapUrl} alt="Land sales map" className="max-h-[85vh] w-auto max-w-full object-contain" style={{ border: `1px solid ${RULE}` }} />
+              </div>
+            ) : null}
 
             <h3 className="mt-4 text-[0.9rem] font-semibold" style={{ color: TEAL }}>Summation method</h3>
             {m.costApproach ? (
@@ -1630,7 +1620,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 </tbody>
               </table>
             ) : null}
-          </Keep>
+          </div>
         ) : null}
         {showCostRec ? (
           <Keep>
