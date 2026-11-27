@@ -28,14 +28,12 @@ const SALE_HEADERS = [
 const LEASE_HEADERS = [
   "No.",
   "Address",
-  "Lease amount",
-  "Lease date",
-  "Building area",
-  "Price/m² bldg",
+  "Date",
+  "Distance",
   "Land area",
-  "Price/m² land",
-  "Indicated yield",
-  "Overall rating",
+  "Building area",
+  "Lease amount",
+  "Rent/m²",
 ] as const;
 
 const COL_CLASSES = [
@@ -123,18 +121,29 @@ export function CommercialEvidenceSchedule({
     <div className="sales-evidence-list space-y-3">
       {rows.map((row) => {
         const comments = commentParagraphs(row.comments);
-        const valuesRow = [
-          row.number,
-          printedAddress(row.address),
-          dash(row.price),
-          printDate(row.date),
-          dash(row.buildingArea),
-          dash(row.pricePerM2Building),
-          dash(row.landArea),
-          dash(row.pricePerM2Land),
-          dash(row.indicatedYield),
-          dash(row.overallRating),
-        ];
+        const valuesRow = kind === "leases"
+          ? [
+              row.number,
+              printedAddress(row.address),
+              printDate(row.date),
+              dash(row.proximity),
+              dash(row.landArea),
+              dash(row.buildingArea),
+              dash(row.price),
+              dash(row.pricePerM2Building),
+            ]
+          : [
+              row.number,
+              printedAddress(row.address),
+              dash(row.price),
+              printDate(row.date),
+              dash(row.buildingArea),
+              dash(row.pricePerM2Building),
+              dash(row.landArea),
+              dash(row.pricePerM2Land),
+              dash(row.indicatedYield),
+              dash(row.overallRating),
+            ];
         return (
           <table
             key={row.id}
@@ -181,7 +190,7 @@ export function CommercialEvidenceSchedule({
                       />
                     ) : null}
                   </td>
-                  <td className={cell} style={cellStyle} colSpan={8}>
+                  <td className={cell} style={cellStyle} colSpan={kind === "leases" ? 6 : 8}>
                     {comments.map((part, i) => (
                       <p key={i} className="report-prose-para text-left leading-relaxed">
                         {part}

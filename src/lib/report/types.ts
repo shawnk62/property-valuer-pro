@@ -258,6 +258,7 @@ export type EvidenceSummaryOverrides = Partial<{
   pricePerM2Land: string;
   indicatedYield: string;
   overallRating: string;
+  proximity: string;
   comments: string;
 }>;
 

@@ -33,14 +33,12 @@ const SALE_HEADERS = [
 const LEASE_HEADERS = [
   "No.",
   "Address",
-  "Lease amount",
-  "Lease date",
-  "Building area",
-  "Price/m² bldg",
+  "Date",
+  "Distance",
   "Land area",
-  "Price/m² land",
-  "Indicated yield",
-  "Overall rating",
+  "Building area",
+  "Lease amount",
+  "Rent/m²",
 ] as const;
 
 const COL_CLASSES = [
@@ -56,7 +54,7 @@ const COL_CLASSES = [
   "ci-col-rating",
 ] as const;
 
-const EDIT_KEYS: SummaryOverrideKey[] = [
+const SALE_EDIT_KEYS: SummaryOverrideKey[] = [
   "price",
   "date",
   "buildingArea",
@@ -65,6 +63,14 @@ const EDIT_KEYS: SummaryOverrideKey[] = [
   "pricePerM2Land",
   "indicatedYield",
   "overallRating",
+];
+const LEASE_EDIT_KEYS: SummaryOverrideKey[] = [
+  "date",
+  "proximity",
+  "landArea",
+  "buildingArea",
+  "price",
+  "pricePerM2Building",
 ];
 
 const INPUT_CLASS =
@@ -154,7 +160,7 @@ export function CommercialEvidenceSummaryEditor({
                     {row.number}
                   </td>
                   <td className="border border-slate-300 px-2 py-1.5 align-top">{row.address || "—"}</td>
-                  {EDIT_KEYS.map((key) => (
+                  {(kind === "leases" ? LEASE_EDIT_KEYS : SALE_EDIT_KEYS).map((key) => (
                     <td key={key} className="border border-slate-300 px-1 py-1 align-top">
                       <PausedInput
                         className={INPUT_CLASS}
@@ -176,7 +182,7 @@ export function CommercialEvidenceSummaryEditor({
                       <span className="text-[0.7rem] text-slate-400">No photo</span>
                     )}
                   </td>
-                  <td className="border border-slate-300 px-1 py-1 align-top" colSpan={8}>
+                  <td className="border border-slate-300 px-1 py-1 align-top" colSpan={kind === "leases" ? 6 : 8}>
                     <PausedTextarea
                       className="min-h-[5rem] w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-[0.75rem] leading-relaxed text-slate-800"
                       value={row.comments}

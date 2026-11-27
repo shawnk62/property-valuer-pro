@@ -34,6 +34,7 @@ export interface EvidenceSummaryRow {
   pricePerM2Land: string;
   indicatedYield: string;
   overallRating: string;
+  proximity: string;
   comments: string;
 }
 
@@ -46,6 +47,7 @@ export const SUMMARY_OVERRIDE_KEYS = [
   "pricePerM2Land",
   "indicatedYield",
   "overallRating",
+  "proximity",
   "comments",
 ] as const satisfies ReadonlyArray<keyof EvidenceSummaryOverrides>;
 
@@ -283,6 +285,7 @@ export function buildSaleSummaryRow(
     pricePerM2Land: formatRatePerM2(priceNum, landM2),
     indicatedYield: computedSaleYield(sale, lease),
     overallRating: overallRatingFromPrices(priceNum, subjectIndicatedSaleValue(meta)),
+    proximity: sheet.proximity?.trim() ?? "",
     comments: sheet.description?.trim() ?? "",
   };
   const o = sale.summaryOverrides;
@@ -299,6 +302,7 @@ export function buildSaleSummaryRow(
     pricePerM2Land: withSummaryOverride(o, "pricePerM2Land", auto.pricePerM2Land),
     indicatedYield: withSummaryOverride(o, "indicatedYield", auto.indicatedYield),
     overallRating: withSummaryOverride(o, "overallRating", auto.overallRating),
+    proximity: withSummaryOverride(o, "proximity", auto.proximity),
     comments: withSummaryOverride(o, "comments", auto.comments),
   };
 }
@@ -328,6 +332,7 @@ export function buildLeaseSummaryRow(
     pricePerM2Land: formatRatePerM2(annual, landM2),
     indicatedYield: computedLeaseYield(lease, sale),
     overallRating: leaseOverallRating(lease, values, meta),
+    proximity: sheet.proximity?.trim() ?? lease.proximity?.trim() ?? "",
     comments: sheet.description?.trim() ?? "",
   };
   const o = lease.summaryOverrides;
@@ -344,6 +349,7 @@ export function buildLeaseSummaryRow(
     pricePerM2Land: withSummaryOverride(o, "pricePerM2Land", auto.pricePerM2Land),
     indicatedYield: withSummaryOverride(o, "indicatedYield", auto.indicatedYield),
     overallRating: withSummaryOverride(o, "overallRating", auto.overallRating),
+    proximity: withSummaryOverride(o, "proximity", auto.proximity),
     comments: withSummaryOverride(o, "comments", auto.comments),
   };
 }
