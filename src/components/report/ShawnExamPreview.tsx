@@ -1445,14 +1445,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the market approach</h3>
             {(draft.narrative.marketReconciliation || m.marketReconciliation)?.trim() ? <Prose text={(draft.narrative.marketReconciliation || m.marketReconciliation || "").trim()} /> : null}
             {marketCalc(m, v) ? (
-              <table className="mt-3 w-full border-collapse text-xs">
-                <tbody>
-                  <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Building area</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{marketCalc(m, v)!.area.toLocaleString("en-AU")} m²</td></tr>
-                  <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Adopted rate</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${marketCalc(m, v)!.rate.toLocaleString("en-AU")} / m²</td></tr>
-                  <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Calculated value</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${marketCalc(m, v)!.calculated.toLocaleString("en-AU")}</td></tr>
-                  <tr className="font-semibold"><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Adopt for practical purposes</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${marketCalc(m, v)!.adopted.toLocaleString("en-AU")}</td></tr>
-                </tbody>
-              </table>
+              <>
+                <Para>Therefore,</Para>
+                <Para>
+                  ${marketCalc(m, v)!.rate.toLocaleString("en-AU")} x {marketCalc(m, v)!.area.toLocaleString("en-AU")}m² (subject building area) becomes ${marketCalc(m, v)!.calculated.toLocaleString("en-AU")}, rounded to ${marketCalc(m, v)!.adopted.toLocaleString("en-AU")}.
+                </Para>
+              </>
             ) : m.marketApproachValue ? <Para>The market approach indicates a value of ${m.marketApproachValue}.</Para> : null}
           </Keep>
         ) : null}
