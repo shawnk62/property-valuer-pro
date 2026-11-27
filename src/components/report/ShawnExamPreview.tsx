@@ -703,7 +703,14 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const n4 = includedNumbers([show41, show42, show43, show44]);
   const n5 = includedNumbers([show51, show52, show53, show54]);
   const n6 = includedNumbers([show61, show62, show63, show64]);
-  const n8 = includedNumbers([true, show82, showLease, showCap, showDcf, showCost, show83, show84, show85, true, prints("disclaimer")]);
+  const showMarket = true;
+  const showIncome = showLease || showCap || showDcf;
+  const showCostSection = showCost || (m.printLandEvidence !== false && (m.ciLandSales ?? []).some((l) => l.omitFromReport !== true && (l.address || l.price)));
+  const showMarketRec = Boolean(m.marketReconciliation?.trim() || m.marketApproachValue);
+  const showIncomeRec = showIncome && Boolean(m.incomeReconciliation?.trim() || m.incomeApproachValue);
+  const showCostRec = showCostSection && Boolean(m.costReconciliation?.trim() || m.costApproachValue);
+  const showFinalRec = show83 || Boolean(m.marketApproachValue || m.incomeApproachValue || m.costApproachValue);
+  const n8 = includedNumbers([true, showMarket, showIncome, showCostSection, showFinalRec, true, prints("disclaimer")]);
   const t = (n: number, title: string) => majorTitle(n, title);
   const toc = [
     { id: "exam-summary", label: "Executive Summary" },
@@ -716,14 +723,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     ...(show6 ? [{ id: "exam-6", label: t(major[6], "Market Commentary") }] : []),
     { id: "exam-7", label: t(major[7], "Risk Assessment") },
     { id: "exam-8", label: t(major[8], "Valuation approaches and methods") },
-    ...(show82 ? [{ id: "exam-8-2", label: `${major[8]}.${n8[1]} Comments on comparable sales` }] : []),
-    ...(showLease ? [{ id: "exam-8-lease", label: `${major[8]}.${n8[2]} Lease Evidence` }] : []),
-    ...(showCap ? [{ id: "exam-8-cap", label: `${major[8]}.${n8[3]} Capitalisation method` }] : []),
-    ...(showDcf ? [{ id: "exam-8-dcf", label: `${major[8]}.${n8[4]} Discounted cash flow method` }] : []),
-    ...(showCost ? [{ id: "exam-8-cost", label: `${major[8]}.${n8[5]} Cost approach` }] : []),
-    ...(show83 ? [{ id: "exam-8-3", label: `${major[8]}.${n8[6]} Final reconciliation of value` }] : []),
+    ...(showMarket ? [{ id: "exam-8-market", label: `${major[8]}.${n8[1]} Market approach` }] : []),
+    ...(showIncome ? [{ id: "exam-8-income", label: `${major[8]}.${n8[2]} Income approach` }] : []),
+    ...(showCostSection ? [{ id: "exam-8-cost", label: `${major[8]}.${n8[3]} Cost approach` }] : []),
+    ...(showFinalRec ? [{ id: "exam-8-3", label: `${major[8]}.${n8[4]} Final reconciliation` }] : []),
     ...(prints("disclaimer")
-      ? [{ id: "exam-reliance", label: subTitle(major[8], n8[10], "Reliance and terms of use") }]
+      ? [{ id: "exam-reliance", label: subTitle(major[8], n8[6], "Reliance and terms of use") }]
       : []),
     ...(show9 ? [{ id: "exam-9", label: t(major[9], "List of References") }] : []),
     ...(showReflection
@@ -1266,7 +1271,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </Keep>
         </Lead>
         <Keep>
-        <H2>{subTitle(major[8], n8[0], "Comparable sales evidence (sales schedule)")}</H2>
+        <H2 id="exam-8-market">{`${major[8]}.${n8[1]} Market approach`}</H2>
+        <h3 className="report-h2 report-heading-lead mt-3 text-[0.9rem] font-semibold" style={{ color: TEAL }}>Direct comparison method</h3>
         {m.printFullPageSheets !== false
           ? printedSales.filter((s) => s.includeSheet !== false).map((s, idx) => (
               <ComparableSheet
@@ -1317,24 +1323,33 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {show82 ? (
           <Keep>
             <h3 id="exam-8-2" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
-              {`${major[8]}.${n8[1]} Comments on comparable sales`}
+              Comments on comparable sales
             </h3>
             <Prose text={salesCommentsText} />
           </Keep>
         ) : null}
 
-        {draft.reportMeta.salesMapUrl ? (
+        {draft.reportMeta.salesMapUrl && m.printSalesMap !== false ? (
           <div className="report-map-page break-before-page break-after-page flex min-h-[90vh] flex-col items-center justify-center">
             <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Direct comparison — sales map</p>
             <img src={draft.reportMeta.salesMapUrl} alt="Sales map" className="max-h-[85vh] w-auto max-w-full object-contain" style={{ border: `1px solid ${RULE}` }} />
           </div>
         ) : null}
+        {showMarketRec ? (
+          <Keep>
+            <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the market approach</h3>
+            {m.marketApproachValue ? <Para>The market approach indicates a value of ${m.marketApproachValue}.</Para> : null}
+            {m.marketReconciliation?.trim() ? <Prose text={m.marketReconciliation.trim()} /> : null}
+          </Keep>
+        ) : null}
+
+        {showIncome ? <H2 id="exam-8-income">{`${major[8]}.${n8[2]} Income approach`}</H2> : null}
         {showLease ? (
           <Keep>
             <h3 id="exam-8-lease" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
-              {`${major[8]}.${n8[2]} Lease Evidence`}
+              Lease evidence
             </h3>
-            {m.printFullPageSheets !== false
+            {m.printFullPageSheets !== false && m.printLeaseSheets !== false
               ? (m.ciLeaseComps ?? []).filter((c) => c.omitFromReport !== true && c.includeSheet !== false && (c.address || c.leaseAmount || c.netRentPerM2 || c.nla)).map((c, idx) => (
                   <ComparableSheet
                     key={`lease-${c.id}`}
@@ -1368,7 +1383,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {showCap ? (
           <Keep>
             <h3 id="exam-8-cap" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
-              {`${major[8]}.${n8[3]} Capitalisation method`}
+              Capitalisation method
             </h3>
             <table className="mt-2 w-full border-collapse text-xs">
               <tbody>
@@ -1387,16 +1402,25 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {showDcf ? (
           <Keep>
             <h3 id="exam-8-dcf" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
-              {`${major[8]}.${n8[4]} Discounted cash flow method`}
+              Discounted cash flow method
             </h3>
             <Prose text={withoutSourceNotes(draft.narrative.dcfApproach || "", printedSales)} />
           </Keep>
         ) : null}
+        {showIncomeRec ? (
+          <Keep>
+            <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the income approach</h3>
+            {m.incomeApproachValue ? <Para>The income approach indicates a value of ${m.incomeApproachValue}.</Para> : null}
+            {m.incomeReconciliation?.trim() ? <Prose text={m.incomeReconciliation.trim()} /> : null}
+          </Keep>
+        ) : null}
+
         {showCost ? (
           <Keep>
             <h3 id="exam-8-cost" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
-              {`${major[8]}.${n8[5]} Cost approach`}
+              {`${major[8]}.${n8[3]} Cost approach`}
             </h3>
+            <h3 className="mt-2 text-[0.9rem] font-semibold" style={{ color: TEAL }}>Summation method</h3>
             {m.costApproach ? (
               <table className="mt-2 w-full border-collapse text-xs">
                 <thead>
@@ -1438,13 +1462,13 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 cellStyle={{ borderColor: RULE }}
               />
             ) : null}
-            {m.ciLandMapUrl ? (
+            {m.ciLandMapUrl && m.printLandMap !== false ? (
               <div className="break-before-page flex min-h-[90vh] flex-col items-center justify-center">
                 <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Cost approach — land sales map</p>
                 <img src={m.ciLandMapUrl} alt="Land sales map" className="max-h-[85vh] w-auto max-w-full object-contain" style={{ border: `1px solid ${RULE}` }} />
               </div>
             ) : null}
-            {m.printFullPageSheets !== false
+            {m.printFullPageSheets !== false && m.printLandSheets !== false
               ? (m.ciLandSales ?? []).filter((l) => l.omitFromReport !== true && l.includeSheet !== false && (l.address || l.price)).map((l, idx) => (
                   <ComparableSheet
                     key={`land-${l.id}`}
@@ -1458,12 +1482,34 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <Prose text={withoutSourceNotes(draft.narrative.costApproach || "", printedSales)} />
           </Keep>
         ) : null}
-        {show83 ? (
+        {showCostRec ? (
+          <Keep>
+            <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the cost approach</h3>
+            {m.costApproachValue ? <Para>The cost approach indicates a value of ${m.costApproachValue}.</Para> : null}
+            {m.costReconciliation?.trim() ? <Prose text={m.costReconciliation.trim()} /> : null}
+          </Keep>
+        ) : null}
+
+        {showFinalRec ? (
           <Keep>
             <h3 id="exam-8-3" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
-              {`${major[8]}.${n8[6]} Final reconciliation of value`}
+              {`${major[8]}.${n8[4]} Final reconciliation`}
             </h3>
-            <Prose text={reconciliationText} />
+            <table className="mt-2 w-full border-collapse text-xs">
+              <thead>
+                <tr style={{ background: TEAL, color: "#fff" }}>
+                  <th className="border px-2 py-1.5 text-left" style={{ borderColor: RULE }}>Approach</th>
+                  <th className="border px-2 py-1.5 text-left" style={{ borderColor: RULE }}>Method</th>
+                  <th className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>Indicated value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {m.marketApproachValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Market</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Direct comparison</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${m.marketApproachValue}</td></tr> : null}
+                {m.incomeApproachValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Income</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{[showCap ? "Capitalisation" : "", showDcf ? "DCF" : ""].filter(Boolean).join(" / ") || "Income"}</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${m.incomeApproachValue}</td></tr> : null}
+                {m.costApproachValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Cost</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Summation</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${m.costApproachValue}</td></tr> : null}
+              </tbody>
+            </table>
+            {reconciliationText ? <Prose text={reconciliationText} /> : null}
           </Keep>
         ) : null}
         {get(v, "exam_on_market") ? (
@@ -1491,7 +1537,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           </>
         ) : null}
         <div className="report-result-sign">
-        <H2>{subTitle(major[8], n8[9], "Valuation result")}</H2>
+        <H2>{subTitle(major[8], n8[5], "Valuation result")}</H2>
         <Para>
           Having regard to the sales evidence and market conditions at the date of valuation, it is
           my opinion that the market value of the unencumbered fee simple interest in the subject
@@ -1516,7 +1562,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       {prints("disclaimer") ? (
         <SectionOpen
           id="exam-reliance"
-          title={subTitle(major[8], n8[10], "Reliance and terms of use")}
+          title={subTitle(major[8], n8[6], "Reliance and terms of use")}
           text={
             draft.narrative.disclaimer?.trim() ||
             get(v, "exam_limitations") ||

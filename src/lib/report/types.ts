@@ -718,6 +718,20 @@ export interface ReportMeta {
   ciAdoptedLandRate?: string;
   /** When true, print the land sales evidence summary table in the cost approach. */
   printLandEvidence?: boolean;
+  /** Block include flags for printed approach content. Missing means included. */
+  printSalesMap?: boolean;
+  printLeaseSheets?: boolean;
+  printLeaseMap?: boolean;
+  printLandSheets?: boolean;
+  printLandMap?: boolean;
+  printCapTable?: boolean;
+  /** Indicated values and reconciliations by approach. */
+  marketApproachValue?: string;
+  incomeApproachValue?: string;
+  costApproachValue?: string;
+  marketReconciliation?: string;
+  incomeReconciliation?: string;
+  costReconciliation?: string;
   /** Comparable land sales for the cost approach. */
   ciLandSales?: Array<{
     id: string;
