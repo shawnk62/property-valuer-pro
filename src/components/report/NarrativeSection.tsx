@@ -584,7 +584,7 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
       key: "valueReconciliation",
       label: "Final reconciliation of value",
       hint: "Prints immediately after the comments on comparable sales.",
-    ,
+    },
     {
       key: "valuationResult",
       label: "Valuation result — opinion of value",
