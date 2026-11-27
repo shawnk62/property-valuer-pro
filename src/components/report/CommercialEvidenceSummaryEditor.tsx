@@ -81,7 +81,7 @@ const INPUT_CLASS =
   "w-full min-w-0 rounded border border-slate-300 bg-white px-1 py-0.5 text-[0.7rem] text-slate-800";
 
 function fieldValue(row: EvidenceSummaryRow, key: SummaryOverrideKey): string {
-  return row[key];
+  return row[key] ?? "";
 }
 
 export function CommercialEvidenceSummaryEditor({

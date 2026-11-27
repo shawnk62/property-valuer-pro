@@ -3,8 +3,8 @@
  * summary tables. Explicit summaryOverrides (including "") always win so a
  * cleared cell does not snap back to the calculated value.
  */
-import { addressesMatch } from "./comparableSheetHelpers";
 import {
+  addressesMatch,
   effectiveLeaseSheet,
   effectiveSaleSheet,
   resolveLeaseLand,
