@@ -278,10 +278,10 @@ export const COST_BOILERPLATE =
   "The land value of ${{land}} and the depreciated replacement cost of the improvements of ${{improvements}} total ${{unrounded}}. For practical purposes, and rounding to the nearest ${{rounding}}, a value of ${{adopted}} is adopted for the cost approach.";
 
 export const FINAL_LEASED =
-  "The market approach indicates ${{market}}. The income approach, having regard to the existing lease, indicates ${{income}}. The cost approach indicates ${{cost}}. Having regard to the evidence, {{weight}}, and a value of ${{adopted}} is adopted as at the date of valuation.";
+  "The market approach indicates ${{market}}. The income approach, having regard to the existing lease, indicates ${{income}}. The cost approach indicates ${{cost}}. Having regard to the evidence, {{weight}}, and a value of ${{adopted}} is adopted as at {{date}}.";
 
 export const FINAL_VACANT =
-  "The market approach indicates ${{market}}. The cost approach indicates ${{cost}}. The property is vacant at the date of valuation, and primary weight has been given to the market approach. A value of ${{adopted}} is adopted as at the date of valuation.";
+  "The market approach indicates ${{market}}. The cost approach indicates ${{cost}}. The property is vacant at the date of valuation, and primary weight has been given to the market approach. A value of ${{adopted}} is adopted as at {{date}}.";
 
 function costLine(line: { area?: string; rate?: string; depreciation?: string; nominal?: string }): number | null {
   const nominal = num(line.nominal);
@@ -355,6 +355,7 @@ export function finalBoilerplate(meta: ReportMeta, values: InspectionValues, tem
     income: moneyOf(income),
     cost: moneyOf(cost),
     adopted: moneyOf(adopted),
+    date: meta.valueDate || String(values["insp_date"] ?? "") || "the date of valuation",
     weight: "primary weight has been given to the market approach, supported by the income approach",
   });
 }

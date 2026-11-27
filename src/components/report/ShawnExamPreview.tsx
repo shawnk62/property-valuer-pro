@@ -774,6 +774,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   );
   const showWorkingFile = hasWorkingFile(draft);
   const valueWords = m.valueAmount ? amountInWords(m.valueAmount) : "";
+  const valuerCount = 1 + (m.valuers ?? []).filter((row) => row.include !== false && row.name).length;
+  const opinionPronoun = valuerCount > 1 ? "our" : "my";
+  const valueDateText = formatNarrativeDateOr(m.valueDate || get(v, "insp_date"), "[date of valuation]");
+  const valueStatement = m.valueAmount
+    ? `It is ${opinionPronoun} opinion that the value of the subject property as at ${valueDateText} is $${formatCurrencyDisplay(m.valueAmount)}${valueWords ? ` (${valueWords})` : ""}.`
+    : "";
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], " ");
   const usableSiteArea = formatUsableSiteAreaIfDifferent(v);
   const servicesText = narrativePrints(m, "servicesAmenities")
@@ -984,11 +990,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           <figcaption className="mt-1 text-[0.7rem] text-slate-500">Zoning — {get(v, "prop_zoning") || "subject"}</figcaption>
         </figure>
       ) : null}
-      {m.valueAmount ? (
+      {valueStatement ? (
         <div className="mt-4 text-left">
-          <p>The Market Valuation of {addressLine || "the subject property"} is:</p>
+          <p>{valueStatement}</p>
           <p className="mt-2 text-xl font-semibold">${formatCurrencyDisplay(m.valueAmount)}</p>
-          {valueWords ? <p className="mt-1">({valueWords})</p> : null}
         </div>
       ) : null}
       <div className="mt-4">
@@ -1693,7 +1698,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {prints("valuationResult") ? (
           <Para>
             {draft.narrative.valuationResult?.trim() ||
-              `Having regard to the sales evidence and market conditions at the date of valuation, it is my opinion that the market value of the unencumbered fee simple interest in the subject property located at ${addressLine || "[property address]"} as at ${formatNarrativeDateOr(m.valueDate, "[date of valuation]")} is${m.valueAmount ? ` $${formatCurrencyDisplay(m.valueAmount)}${valueWords ? ` (${valueWords})` : ""}.` : " [value in numbers and words]."}`}
+              `Having regard to the sales evidence and market conditions at the date of valuation, it is ${opinionPronoun} opinion that the value of the subject property located at ${addressLine || "[property address]"} as at ${valueDateText} is${m.valueAmount ? ` $${formatCurrencyDisplay(m.valueAmount)}${valueWords ? ` (${valueWords})` : ""}.` : " [value in numbers and words]." }`}
           </Para>
         ) : null}
         {prints("valuationReliance") ? (

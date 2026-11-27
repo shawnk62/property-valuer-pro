@@ -68,7 +68,11 @@ export function FinalReconciliationSection({ controller }: { controller: ReportD
 
       <section className="space-y-3 rounded-md border border-border bg-card p-4">
         <h3 className="text-sm font-semibold text-foreground">Final estimate of value</h3>
-        <p className="text-xs text-muted-foreground">Entered here only. This figure fills the cover, the valuation result and the reconciliation.</p>
+        <p className="text-xs text-muted-foreground">Entered here only. This figure and this date fill every statement of value in the report.</p>
+        <label className="flex items-center gap-2 text-sm">
+          <span className="w-40">Date of valuation</span>
+          <input className="flex-1 rounded border border-input px-2 py-1" value={reportMeta.valueDate ?? ""} onChange={(e) => setMeta({ valueDate: e.target.value })} placeholder={String(draft.values["insp_date"] ?? "dd/mm/yyyy")} />
+        </label>
         <label className="flex items-center gap-2 text-sm">
           <span className="w-40">Market value</span>
           <input
