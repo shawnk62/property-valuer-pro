@@ -251,7 +251,7 @@ const RULE = EXAM.rule;
 const IVSC_MARKET_VALUE =
   "Market Value is the estimated amount for which an asset or liability should exchange on the date of valuation between a willing buyer and a willing seller in an arm’s-length transaction after proper marketing where the parties had each acted knowledgeably, prudently and without compulsion (International Valuation Standards Council 2025).";
 
-function amountInWords(raw: string): string {
+export function amountInWords(raw: string): string {
   const n = Number(String(raw).replace(/[^0-9.]/g, ""));
   if (!Number.isFinite(n) || n < 0) return "";
   const ones = [
@@ -644,6 +644,14 @@ function SafePhotoFigure({
       {caption ? <figcaption className={captionClassName}>{caption}</figcaption> : null}
     </figure>
   );
+}
+
+
+/** The formal opinion, unless the valuer has written their own. A stored discussion is ignored. */
+function opinionText(stored: string | undefined, generated: string): string {
+  const text = (stored ?? "").trim();
+  if (!text || /^in forming an opinion/i.test(text) || text.length > 500) return generated || "[value in numbers, then words].";
+  return text;
 }
 
 export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
@@ -1674,8 +1682,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 {m.costApproachValue || m.costApproach?.adoptedValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Cost</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Summation</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${formatCurrencyDisplay(m.costApproachValue || m.costApproach?.adoptedValue || "")}</td></tr> : null}
               </tbody>
             </table>
-            {draft.narrative.valueReconciliation?.trim() ? (
-              <Prose text={finalBoilerplate(m, v, draft.narrative.valueReconciliation, draft.narrative.finalValueReason)} />
+            {draft.narrative.finalValueReason?.trim() ? (
+              <Prose text={draft.narrative.finalValueReason.trim()} />
             ) : null}
           </Keep>
         ) : null}
@@ -1707,8 +1715,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         <H2>{subTitle(major[8], n8[6], "Valuation result")}</H2>
         {prints("valuationResult") ? (
           <Para>
-            {draft.narrative.valuationResult?.trim() ||
-              `Having regard to the sales evidence and market conditions at the date of valuation, it is ${opinionPronoun} opinion that the market value of ${interest} in the subject property located at ${addressLine || "[property address]"} as at ${valueDateText} is ${m.valueAmount ? `${valueInFigures}${valueWords ? ` (${valueWords})` : ""}, ${gst}.` : "[value in numbers, then words]." }`}
+            {opinionText(draft.narrative.valuationResult, valueStatement)}
           </Para>
         ) : null}
         {prints("valuationReliance") ? (

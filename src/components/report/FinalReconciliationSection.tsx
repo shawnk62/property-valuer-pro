@@ -11,6 +11,28 @@ import {
   propertyIsLeased,
 } from "@/lib/report/commercialCalculations";
 import { formatCurrencyInput } from "@/lib/report/salesRelativity";
+import { amountInWords } from "@/components/report/ShawnExamPreview";
+
+
+function opinionSentence(meta: ReportDraftController["draft"]["reportMeta"], draft: ReportDraftController["draft"]): string {
+  const amount = String(meta.valueAmount ?? "").replace(/[^0-9.]/g, "");
+  if (!amount) return "";
+  const n = Number(amount);
+  const figures = Number.isFinite(n) ? `$${n.toLocaleString("en-AU")}` : "";
+  const words = amountInWords(amount);
+  const date = meta.valueDate || String(draft.values["insp_date"] ?? "") || "the date of valuation";
+  const interest = meta.interestValued?.trim() || "the unencumbered fee simple";
+  const count = 1 + (meta.valuers ?? []).filter((row) => row.include !== false && row.name).length;
+  const pronoun = count > 1 ? "our" : "my";
+  const gst = meta.gstTreatment === "inclusive" ? "inclusive of GST" : meta.gstTreatment === "not-applicable" ? "GST not being applicable" : "exclusive of GST";
+  return `It is ${pronoun} opinion that the market value of ${interest} in the subject property as at ${date} is ${figures}${words ? ` (${words})` : ""}, ${gst}.`;
+}
+
+function opinionOrGenerated(stored: string | undefined, generated: string): string {
+  const text = (stored ?? "").trim();
+  if (!text || /^in forming an opinion/i.test(text) || text.length > 500) return generated;
+  return text;
+}
 
 function money(raw: string | number | null | undefined): string {
   const n = Number(String(raw ?? "").replace(/[^0-9.-]/g, ""));
@@ -138,11 +160,12 @@ export function FinalReconciliationSection({ controller }: { controller: ReportD
           Include opinion of value
         </label>
         <PausedTextarea
-          value={draft.narrative.valuationResult ?? ""}
+          value={opinionOrGenerated(draft.narrative.valuationResult, opinionSentence(reportMeta, draft))}
           onCommit={(v) => setNarrative({ valuationResult: v })}
           placeholder="Opinion of value…"
           className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm"
         />
+        <p className="text-xs text-muted-foreground">Filled from the value, the date and the interest. Edit it if you need to. This is the only text that prints as the valuation result.</p>
         <label className="flex cursor-pointer items-center gap-2 text-xs">
           <input
             type="checkbox"
