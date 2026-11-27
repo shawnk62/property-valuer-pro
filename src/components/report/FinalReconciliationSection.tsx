@@ -74,6 +74,27 @@ export function FinalReconciliationSection({ controller }: { controller: ReportD
           <input className="flex-1 rounded border border-input px-2 py-1" value={reportMeta.valueDate ?? ""} onChange={(e) => setMeta({ valueDate: e.target.value })} placeholder={String(draft.values["insp_date"] ?? "dd/mm/yyyy")} />
         </label>
         <label className="flex items-center gap-2 text-sm">
+          <span className="w-40">GST</span>
+          <select className="rounded border border-input px-2 py-1" value={reportMeta.gstTreatment ?? "exclusive"} onChange={(e) => setMeta({ gstTreatment: e.target.value as "exclusive" | "inclusive" | "not-applicable" })}>
+            <option value="exclusive">Exclusive of GST</option>
+            <option value="inclusive">Inclusive of GST</option>
+            <option value="not-applicable">GST not applicable</option>
+          </select>
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <span className="w-40">Weight</span>
+          <select className="rounded border border-input px-2 py-1" value={reportMeta.approachWeight ?? ""} onChange={(e) => setMeta({ approachWeight: (e.target.value || undefined) as "market" | "income" | "equal" | undefined })}>
+            <option value="">As appropriate to the property</option>
+            <option value="market">Primary weight to the market approach</option>
+            <option value="income">Primary weight to the income approach</option>
+            <option value="equal">Equal weight</option>
+          </select>
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <span className="w-40">Interest valued</span>
+          <input className="flex-1 rounded border border-input px-2 py-1" value={reportMeta.interestValued ?? "the unencumbered fee simple"} onChange={(e) => setMeta({ interestValued: e.target.value })} />
+        </label>
+        <label className="flex items-center gap-2 text-sm">
           <span className="w-40">Market value</span>
           <input
             className="flex-1 rounded border border-input px-2 py-1"

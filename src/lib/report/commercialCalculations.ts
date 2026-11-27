@@ -276,7 +276,7 @@ export function marketCalculationSentence(meta: ReportMeta, values: InspectionVa
 }
 
 export const INCOME_BOILERPLATE =
-  "The capitalisation of the net market rent of ${{rent}} at {{capRate}}% indicates ${{capitalised}}. After allowing ${{adjustment}} for the difference between the passing rent and the market rent over the remaining term, the income approach indicates ${{adopted}}, rounded to the nearest ${{rounding}}.";
+  "A net market rent of ${{rent}} per square metre has been adopted. Applied to the subject building area of {{area}} m², this produces a net market rent of ${{netRent}}. Capitalised at {{capRate}}%, this indicates ${{capitalised}}. After allowing ${{adjustment}} for the passing rent being below market over the remaining term, the income approach indicates ${{adopted}}, rounded to the nearest ${{rounding}}.";
 
 export const COST_BOILERPLATE =
   "The land value of ${{land}} and the depreciated replacement cost of the improvements of ${{improvements}} total ${{unrounded}}. For practical purposes, and rounding to the nearest ${{rounding}}, a value of ${{adopted}} is adopted for the cost approach.";
@@ -347,6 +347,8 @@ export function incomeBoilerplate(meta: ReportMeta, values?: InspectionValues, t
   const adopted = num(meta.incomeApproachValue) ?? num(meta.ciAdoptedValueOverride);
   return fill((template ?? "").trim() || INCOME_BOILERPLATE, {
     rent: moneyOf(rate),
+    area: area != null ? area.toLocaleString("en-AU") : "—",
+    netRent: moneyOf(net != null ? Math.round(net) : null),
     capRate: meta.ciCapRate || "—",
     capitalised: moneyOf(capitalised != null ? Math.round(capitalised) : null),
     adjustment: moneyOf(adjustment != null ? Math.round(adjustment) : null),
@@ -379,6 +381,10 @@ export function finalBoilerplate(meta: ReportMeta, values: InspectionValues, tem
     cost: moneyOf(cost),
     adopted: moneyOf(adopted),
     date: meta.valueDate || String(values["insp_date"] ?? "") || "the date of valuation",
-    weight: "primary weight has been given to the market approach, supported by the income approach",
+    weight: meta.approachWeight === "income"
+      ? "primary weight has been given to the income approach, supported by the market approach"
+      : meta.approachWeight === "equal"
+        ? "equal weight has been given to the market approach and the income approach"
+        : "primary weight has been given to the market approach, supported by the income approach",
   });
 }

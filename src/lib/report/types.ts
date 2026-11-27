@@ -748,6 +748,12 @@ export interface ReportMeta {
   costRounding?: string;
   /** leased, vacant, or omitted to follow the lease inputs. */
   occupancyStatus?: "leased" | "vacant";
+  /** exclusive, inclusive, or not applicable. */
+  gstTreatment?: "exclusive" | "inclusive" | "not-applicable";
+  /** Which approach carries the weight. */
+  approachWeight?: "market" | "income" | "equal";
+  /** Interest valued, e.g. unencumbered fee simple. */
+  interestValued?: string;
   incomeApproachValue?: string;
   costApproachValue?: string;
   marketReconciliation?: string;

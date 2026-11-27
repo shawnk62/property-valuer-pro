@@ -778,8 +778,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const opinionPronoun = valuerCount > 1 ? "our" : "my";
   const valueDateText = formatNarrativeDateOr(m.valueDate || get(v, "insp_date"), "[date of valuation]");
   const valueInFigures = m.valueAmount ? `$${formatCurrencyDisplay(m.valueAmount)}` : "";
+  const interest = m.interestValued?.trim() || "the unencumbered fee simple";
+  const gst = m.gstTreatment === "inclusive" ? "inclusive of GST" : m.gstTreatment === "not-applicable" ? "GST not being applicable" : "exclusive of GST";
   const valueStatement = m.valueAmount
-    ? `It is ${opinionPronoun} opinion that the market value of the subject property as at ${valueDateText} is ${valueInFigures}${valueWords ? ` (${valueWords})` : ""}.`
+    ? `It is ${opinionPronoun} opinion that the market value of ${interest} in the subject property as at ${valueDateText} is ${valueInFigures}${valueWords ? ` (${valueWords})` : ""}, ${gst}.`
     : "";
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], " ");
   const usableSiteArea = formatUsableSiteAreaIfDifferent(v);
@@ -868,6 +870,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     ...(showFinalRec ? [{ id: "exam-8-3", label: `${major[8]}.${n8[3]} Final reconciliation` }] : []),
     ...(prints("disclaimer")
       ? [{ id: "exam-reliance", label: subTitle(major[8], n8[7], "Reliance and terms of use") }]
+      : []),
+    ...(draft.narrative.assumptions?.trim() || get(v, "exam_assumptions")
+      ? [{ id: "exam-assumptions", label: subTitle(major[8], n8[7] + 1, "Assumptions") }]
       : []),
     ...(show9 ? [{ id: "exam-9", label: t(major[9], "List of References") }] : []),
     ...(showReflection
@@ -1010,6 +1015,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       />
       </Keep>
       </Lead>
+      <Keep>
+      <H2>{subTitle(major[0], n1[0] + 1, "Extent of investigation")}</H2>
+      <Para>
+        {`The subject property was inspected on ${formatNarrativeDateOr(m.inspectionDate, "the date recorded in this report")}, including an internal inspection of the improvements. The title particulars and the planning controls set out in this report have been relied upon. The building areas have been adopted from the inspection. No structural survey or environmental audit has been undertaken.`}
+      </Para>
+      </Keep>
 
       <Keep>
       <H2>{subTitle(major[0], n1[1], "Valuation Standards")}</H2>
@@ -1020,6 +1031,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         Value, defined as follows:
       </Para>
       <p className="mt-2 italic">{IVSC_MARKET_VALUE}</p>
+      <Para>The market value reported is {gst}. The interest valued is {interest}.</Para>
       </Keep>
 
       <Keep>
@@ -1680,7 +1692,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {prints("valuationResult") ? (
           <Para>
             {draft.narrative.valuationResult?.trim() ||
-              `Having regard to the sales evidence and market conditions at the date of valuation, it is ${opinionPronoun} opinion that the market value of the subject property located at ${addressLine || "[property address]"} as at ${valueDateText} is ${m.valueAmount ? `${valueInFigures}${valueWords ? ` (${valueWords})` : ""}.` : "[value in numbers, then words]." }`}
+              `Having regard to the sales evidence and market conditions at the date of valuation, it is ${opinionPronoun} opinion that the market value of ${interest} in the subject property located at ${addressLine || "[property address]"} as at ${valueDateText} is ${m.valueAmount ? `${valueInFigures}${valueWords ? ` (${valueWords})` : ""}, ${gst}.` : "[value in numbers, then words]." }`}
           </Para>
         ) : null}
         {prints("valuationReliance") ? (
@@ -1708,7 +1720,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       ) : null}
       {draft.narrative.assumptions?.trim() || get(v, "exam_assumptions") ? (
         <div className="mt-4">
-          <H2>Assumptions</H2>
+          <H2 id="exam-assumptions">{subTitle(major[8], n8[7] + 1, "Assumptions")}</H2>
           <Prose
             text={draft.narrative.assumptions?.trim() || get(v, "exam_assumptions")}
           />
