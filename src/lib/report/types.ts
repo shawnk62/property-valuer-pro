@@ -597,6 +597,8 @@ export interface ReportMeta {
   ciNonCoreIncomePv?: string;
   /** Round adopted capitalised value to nearest (e.g. 25000). */
   ciAdoptRoundTo?: string;
+  /** Manual override of the capitalised value adopted for practical purposes. */
+  ciAdoptedValueOverride?: string;
   /** Rent basis for the assessed market rent rate. Missing means "net". */
   ciRentBasis?: "net" | "gross";
   /** Manual override of lettable / building area (m²) used in capitalisation. */

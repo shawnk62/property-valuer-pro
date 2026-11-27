@@ -308,10 +308,11 @@ export function CapitalisationApproachSection({
     null,
   );
   const beforeAdopt = afterLetting != null && below != null ? afterLetting + below : afterLetting;
-  const adopted =
+  const calculatedAdopted =
     roundTo != null && roundTo > 0 && beforeAdopt != null
       ? Math.round(beforeAdopt / roundTo) * roundTo
       : beforeAdopt;
+  const adopted = num(meta.ciAdoptedValueOverride) ?? calculatedAdopted;
   const effective =
     adopted != null && adopted > 0 && adjustedNet != null ? (adjustedNet / adopted) * 100 : null;
 
@@ -531,73 +532,126 @@ export function CapitalisationApproachSection({
         <InputRow label="Round adopted value to nearest" value={meta.ciAdoptRoundTo ?? ""} source="working report" onChange={(v) => onMeta({ ciAdoptRoundTo: v })} hint="e.g. 50000" />
       </div>
 
-      {/* Results table */}
+      {/* Results table — only elements that were considered */}
       <table className="w-full text-xs border-collapse">
         <tbody>
-          <tr className="border-b border-slate-100">
-            <td className="py-1 text-slate-600">Gross annual income</td>
-            <td className="py-1 text-right font-medium">{money(grossIncome)}</td>
-          </tr>
-          <tr className="border-b border-slate-100">
-            <td className="py-1 text-slate-600">Less outgoings</td>
-            <td className="py-1 text-right font-medium">{money(outgoings || null)}</td>
-          </tr>
-          <tr className="border-b border-slate-100">
-            <td className="py-1 text-slate-600">Net annual income</td>
-            <td className="py-1 text-right font-medium">{money(netIncome)}</td>
-          </tr>
-          <tr className="border-b border-slate-100">
-            <td className="py-1 text-slate-600">Less vacancy allowance</td>
-            <td className="py-1 text-right font-medium">{money(vacancy)}</td>
-          </tr>
-          <tr className="border-b border-slate-200 bg-slate-50 font-medium">
-            <td className="py-1">Adjusted net income</td>
-            <td className="py-1 text-right">{money(adjustedNet)}</td>
-          </tr>
-          <tr className="border-b border-slate-100">
-            <td className="py-1 text-slate-600">Capitalised at {pct(capRate)}</td>
-            <td className="py-1 text-right font-medium">{money(capitalised)}</td>
-          </tr>
-          <tr className="border-b border-slate-100">
-            <td className="py-1 text-slate-600">Less letting-up — rent loss</td>
-            <td className="py-1 text-right">{money(rentLoss)}</td>
-          </tr>
-          <tr className="border-b border-slate-100">
-            <td className="py-1 text-slate-600">Less letting-up — incentives</td>
-            <td className="py-1 text-right">{money(incentives)}</td>
-          </tr>
-          <tr className="border-b border-slate-100">
-            <td className="py-1 text-slate-600">Less letting-up — commission</td>
-            <td className="py-1 text-right">{money(commission)}</td>
-          </tr>
-          <tr className="border-b border-slate-200 bg-slate-50 font-medium">
-            <td className="py-1">Value after letting-up</td>
-            <td className="py-1 text-right">{money(afterLetting)}</td>
-          </tr>
-          <tr className="border-b border-slate-100">
-            <td className="py-1 text-slate-600">Less capex</td>
-            <td className="py-1 text-right">{money(capex != null ? -Math.abs(capex) : null)}</td>
-          </tr>
-          <tr className="border-b border-slate-100">
-            <td className="py-1 text-slate-600">
-              Market rent adjustment (PV)
-              {annualDiff != null ? ` — ${money(annualDiff)} p.a. ${annualDiff > 0 ? "(below market)" : annualDiff < 0 ? "(above market)" : ""}` : ""}
-              {useDetailed ? " — detailed" : ""}
-            </td>
-            <td className="py-1 text-right">{money(rentAdjustment)}</td>
-          </tr>
-          <tr className="border-b border-slate-100">
-            <td className="py-1 text-slate-600">Add non-core income (PV)</td>
-            <td className="py-1 text-right">{money(nonCore)}</td>
-          </tr>
+          {marketRate != null && area != null ? (
+            <tr className="border-b border-slate-100">
+              <td className="py-1 text-slate-600">Market rent ({money(marketRate)}/m² × {area.toLocaleString("en-AU")} m², {basis})</td>
+              <td className="py-1 text-right font-medium">{money(rateTimesArea)}</td>
+            </tr>
+          ) : null}
+          {passing != null ? (
+            <tr className="border-b border-slate-100">
+              <td className="py-1 text-slate-600">Current / passing rent</td>
+              <td className="py-1 text-right font-medium">{money(passing)}</td>
+            </tr>
+          ) : null}
+          {grossIncome != null ? (
+            <tr className="border-b border-slate-100">
+              <td className="py-1 text-slate-600">Gross annual income</td>
+              <td className="py-1 text-right font-medium">{money(grossIncome)}</td>
+            </tr>
+          ) : null}
+          {outgoings ? (
+            <tr className="border-b border-slate-100">
+              <td className="py-1 text-slate-600">Less outgoings</td>
+              <td className="py-1 text-right font-medium">{money(outgoings)}</td>
+            </tr>
+          ) : null}
+          {netIncome != null ? (
+            <tr className="border-b border-slate-100">
+              <td className="py-1 text-slate-600">Net annual income</td>
+              <td className="py-1 text-right font-medium">{money(netIncome)}</td>
+            </tr>
+          ) : null}
+          {vacancy != null ? (
+            <tr className="border-b border-slate-100">
+              <td className="py-1 text-slate-600">Less vacancy allowance ({vacancyPct}%)</td>
+              <td className="py-1 text-right font-medium">{money(vacancy)}</td>
+            </tr>
+          ) : null}
+          {adjustedNet != null ? (
+            <tr className="border-b border-slate-200 bg-slate-50 font-medium">
+              <td className="py-1">Adjusted net income</td>
+              <td className="py-1 text-right">{money(adjustedNet)}</td>
+            </tr>
+          ) : null}
+          {capitalised != null ? (
+            <tr className="border-b border-slate-100">
+              <td className="py-1 text-slate-600">Capitalised at {pct(capRate)}</td>
+              <td className="py-1 text-right font-medium">{money(capitalised)}</td>
+            </tr>
+          ) : null}
+          {rentLoss != null ? (
+            <tr className="border-b border-slate-100">
+              <td className="py-1 text-slate-600">Less letting-up — rent loss ({monthsLoss} months)</td>
+              <td className="py-1 text-right">{money(rentLoss)}</td>
+            </tr>
+          ) : null}
+          {incentives != null ? (
+            <tr className="border-b border-slate-100">
+              <td className="py-1 text-slate-600">Less letting-up — incentives ({monthsIncentive} months)</td>
+              <td className="py-1 text-right">{money(incentives)}</td>
+            </tr>
+          ) : null}
+          {commission != null ? (
+            <tr className="border-b border-slate-100">
+              <td className="py-1 text-slate-600">Less letting-up — commission ({commissionPct}%)</td>
+              <td className="py-1 text-right">{money(commission)}</td>
+            </tr>
+          ) : null}
+          {afterLetting != null && (rentLoss != null || incentives != null || commission != null) ? (
+            <tr className="border-b border-slate-200 bg-slate-50 font-medium">
+              <td className="py-1">Value after letting-up</td>
+              <td className="py-1 text-right">{money(afterLetting)}</td>
+            </tr>
+          ) : null}
+          {capex != null ? (
+            <tr className="border-b border-slate-100">
+              <td className="py-1 text-slate-600">Less capex</td>
+              <td className="py-1 text-right">{money(-Math.abs(capex))}</td>
+            </tr>
+          ) : null}
+          {rentAdjustment != null ? (
+            <tr className="border-b border-slate-100">
+              <td className="py-1 text-slate-600">
+                Market rent adjustment (PV)
+                {annualDiff != null ? ` — ${money(annualDiff)} p.a. ${annualDiff > 0 ? "(below market)" : annualDiff < 0 ? "(above market)" : ""}` : ""}
+                {remainingYears != null ? ` over ${remainingYears.toFixed(2)} years` : ""}
+                {useDetailed ? " — detailed" : ""}
+              </td>
+              <td className="py-1 text-right">{money(rentAdjustment)}</td>
+            </tr>
+          ) : null}
+          {nonCore != null ? (
+            <tr className="border-b border-slate-100">
+              <td className="py-1 text-slate-600">Add non-core income (PV)</td>
+              <td className="py-1 text-right">{money(nonCore)}</td>
+            </tr>
+          ) : null}
           <tr className="border-b border-slate-300 font-semibold">
             <td className="py-1">Adopt for practical purposes</td>
-            <td className="py-1 text-right">{money(adopted)}</td>
+            <td className="py-1 text-right">
+              <input
+                className="w-36 border border-slate-300 rounded px-2 py-0.5 text-right"
+                value={meta.ciAdoptedValueOverride ?? (calculatedAdopted != null ? String(Math.round(calculatedAdopted)) : "")}
+                placeholder={calculatedAdopted != null ? String(Math.round(calculatedAdopted)) : ""}
+                onChange={(e) => onMeta({ ciAdoptedValueOverride: e.target.value })}
+              />
+              {meta.ciAdoptedValueOverride ? (
+                <button type="button" className="ml-2 text-[10px] text-slate-500 underline" onClick={() => onMeta({ ciAdoptedValueOverride: undefined })}>Reset</button>
+              ) : calculatedAdopted != null ? (
+                <span className="ml-2 text-[10px] text-slate-400">calculated</span>
+              ) : null}
+            </td>
           </tr>
-          <tr>
-            <td className="py-1 text-slate-600">Effective capitalisation rate</td>
-            <td className="py-1 text-right">{pct(effective)}</td>
-          </tr>
+          {effective != null ? (
+            <tr>
+              <td className="py-1 text-slate-600">Effective capitalisation rate</td>
+              <td className="py-1 text-right">{pct(effective)}</td>
+            </tr>
+          ) : null}
         </tbody>
       </table>
 
