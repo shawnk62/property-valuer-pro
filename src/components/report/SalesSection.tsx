@@ -541,13 +541,18 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
       replaceSales(withDistance);
       const leases = draft.reportMeta.ciLeaseComps ?? [];
       if (leases.length) {
-        const byId = new Map(withDistance.map((s) => [s.id, s.proximity]));
-        setMeta({
-          ciLeaseComps: leases.map((lease) => {
-            const fromSale = byId.get(lease.linkedSaleId || lease.id);
-            return fromSale && fromSale !== lease.proximity ? { ...lease, proximity: fromSale } : lease;
-          }),
-        });
+        const leasePins = pinsFromLeases({ values: draft.values, leases, saved: pins });
+        const leaseNeed = pinsNeedingGeocode(leasePins).filter((p) => p.address);
+        let leaseResolved = leasePins;
+        if (leaseNeed.length) {
+          const geo = await geocodeGoogleAddresses({ data: { apiKey: key, addresses: leaseNeed.map((p) => p.address!) } });
+          const byPin = new Map(leaseNeed.map((p, i) => [p.id, geo.results[i]]));
+          leaseResolved = leasePins.map((p) => {
+            const hit = byPin.get(p.id);
+            return hit?.lat != null && hit.lng != null ? { ...p, lat: hit.lat, lng: hit.lng } : p;
+          });
+        }
+        setMeta({ ciLeaseComps: proximityForRecords(leases, leaseResolved, true) });
       }
       toast.success("Maps generated", {
         description:
