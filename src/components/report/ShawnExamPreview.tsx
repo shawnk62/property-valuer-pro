@@ -121,7 +121,16 @@ function capPrintRows(meta: ReportMeta, values: InspectionValues): { label: stri
   if (vacancy != null) rows.push({ label: `Less vacancy allowance (${vacancyPct}%)`, value: capMoney(vacancy) });
   if (adjusted != null) rows.push({ label: "Adjusted net income", value: capMoney(adjusted), strong: true });
   if (capitalised != null) rows.push({ label: `Capitalised at ${capRate}%`, value: capMoney(capitalised), strong: true });
+  const monthsLoss = capNum(meta.ciLettingUpMonths);
+  const monthsIncentive = capNum(meta.ciIncentiveMonths);
+  const commissionPct = capNum(meta.ciAgentCommissionPct);
+  if (gross != null && monthsLoss != null) rows.push({ label: `Less letting-up — rent loss (${monthsLoss} months)`, value: capMoney((gross / 12) * monthsLoss) });
+  if (net != null && monthsIncentive != null) rows.push({ label: `Less letting-up — incentives (${monthsIncentive} months)`, value: capMoney((net / 12) * monthsIncentive) });
+  if (net != null && commissionPct != null) rows.push({ label: `Less letting-up — commission (${commissionPct}%)`, value: capMoney(net * (commissionPct / 100)) });
+  const capex = capNum(meta.ciCapex);
+  if (capex != null) rows.push({ label: "Less capex", value: capMoney(-Math.abs(capex)) });
   if (adopted != null) rows.push({ label: "Adopt for practical purposes", value: capMoney(adopted), strong: true });
+  if (rows.length === 0 && capRate != null) rows.push({ label: "Capitalisation rate", value: `${capRate}%` });
   return rows;
 }
 
@@ -1418,8 +1427,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             ) : null}
           </Keep>
         ) : null}
-        {showCap && m.printCapTable !== false ? (
-          <Keep>
+        {(m.ciCapRate || m.ciAdoptedRentPerM2 || m.ciAdoptedValueOverride || m.ciPassingRentOverride) && m.printCapTable !== false ? (
+          <div className="report-keep-block">
             <h3 id="exam-8-cap" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
               Capitalisation method
             </h3>
@@ -1433,8 +1442,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 ))}
               </tbody>
             </table>
-            <Prose text={withoutSourceNotes(draft.narrative.capitalisationApproach || "", printedSales)} />
-          </Keep>
+            {prints("capitalisationApproach") && draft.narrative.capitalisationApproach?.trim() ? (
+              <Prose text={withoutSourceNotes(draft.narrative.capitalisationApproach, printedSales)} />
+            ) : null}
+          </div>
         ) : null}
         {showDcf ? (
           <Keep>
