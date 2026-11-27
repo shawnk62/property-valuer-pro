@@ -102,9 +102,22 @@ function capNum(raw: string | undefined): number | null {
   const n = Number(String(raw).replace(/[^0-9.-]/g, ""));
   return Number.isFinite(n) ? n : null;
 }
+function parseAuDate(raw: string | undefined): number {
+  if (!raw) return NaN;
+  const s = raw.trim();
+  const m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if (m) {
+    const day = Number(m[1]);
+    const month = Number(m[2]) - 1;
+    const year = Number(m[3].length === 2 ? `20${m[3]}` : m[3]);
+    return new Date(year, month, day).getTime();
+  }
+  return Date.parse(s);
+}
 function capMoney(n: number | null): string {
-  if (n == null) return "—";
-  return n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+  if (n == null || !Number.isFinite(n)) return "—";
+  const abs = Math.abs(Math.round(n)).toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+  return n < 0 ? `(${abs})` : abs;
 }
 function capPrintRows(meta: ReportMeta, values: InspectionValues): { label: string; value: string; strong?: boolean }[] {
   const area = capNum(meta.ciAreaOverride) ?? capNum(String(values["comm_nla"] ?? "")) ?? capNum(String(values["comm_gba"] ?? ""));
@@ -120,8 +133,8 @@ function capPrintRows(meta: ReportMeta, values: InspectionValues): { label: stri
   const startDate = meta.ciLeaseStartDate;
   const endDate = meta.ciLeaseEndDate;
   const valDate = String(values["insp_date"] ?? "");
-  const startMs = startDate ? Date.parse(startDate) : NaN;
-  const asAtMs = valDate ? Date.parse(valDate) : Date.now();
+  const startMs = parseAuDate(startDate);
+  const asAtMs = Number.isFinite(parseAuDate(valDate)) ? parseAuDate(valDate) : (meta.valueDate ? parseAuDate(meta.valueDate) : Date.now());
   const yearsElapsed = Number.isFinite(startMs) ? Math.max(0, (asAtMs - startMs) / (365.25 * 86400000)) : 0;
   const anniversaries = Math.floor(yearsElapsed);
   let calculated = starting;
@@ -139,8 +152,8 @@ function capPrintRows(meta: ReportMeta, values: InspectionValues): { label: stri
   const vacancy = gross != null && vacancyPct != null ? gross * (vacancyPct / 100) : null;
   const adjusted = net != null && vacancy != null ? net - vacancy : net;
   const capitalised = adjusted != null && capRate != null && capRate > 0 ? adjusted / (capRate / 100) : null;
-  const endMs = endDate ? Date.parse(endDate) : NaN;
-  const remaining = Number.isFinite(endMs) ? Math.max(0, (endMs - asAtMs) / (365.25 * 86400000)) : capNum(meta.ciRemainingYears);
+  const endMs = parseAuDate(endDate);
+  const remaining = Number.isFinite(endMs) && Number.isFinite(asAtMs) ? Math.max(0, (endMs - asAtMs) / (365.25 * 86400000)) : capNum(meta.ciRemainingYears);
   const annualDiff = net != null && passing != null ? net - passing : null;
   const discount = capRate;
   let rentPv: number | null = null;
@@ -149,7 +162,10 @@ function capPrintRows(meta: ReportMeta, values: InspectionValues): { label: stri
     const n = Math.ceil(remaining);
     rentPv = annualDiff * (1 - Math.pow(1 + r, -n)) / r;
   }
-  const adopted = capNum(meta.ciAdoptedValueOverride) ?? (capitalised != null && rentPv != null ? capitalised - rentPv : capitalised);
+  const afterAdjustment = capitalised != null ? capitalised + (rentPv != null ? -rentPv : 0) : null;
+  const roundTo = capNum(meta.ciAdoptRoundTo);
+  const rounded = afterAdjustment != null && roundTo != null && roundTo > 0 ? Math.round(afterAdjustment / roundTo) * roundTo : afterAdjustment != null ? Math.round(afterAdjustment / 1000) * 1000 : null;
+  const adopted = capNum(meta.ciAdoptedValueOverride) ?? rounded;
   const rows: { label: string; value: string; strong?: boolean }[] = [];
 
   if (startDate || endDate || starting != null) {
@@ -168,7 +184,7 @@ function capPrintRows(meta: ReportMeta, values: InspectionValues): { label: stri
   }
 
   if (rate != null && area != null) rows.push({ label: `Market rent (${capMoney(rate)}/m² × ${area.toLocaleString("en-AU")} m², ${basis})`, value: capMoney(rateTimesArea) });
-  if (gross != null) rows.push({ label: "Gross annual income", value: capMoney(gross) });
+  if (gross != null) rows.push({ label: basis === "net" ? "Nett annual income" : "Gross annual income", value: capMoney(gross) });
   if (outgoings) rows.push({ label: "Less outgoings", value: capMoney(outgoings) });
   if (net != null) rows.push({ label: "Net annual market rent", value: capMoney(net), strong: true });
   if (vacancy != null) rows.push({ label: `Less vacancy allowance (${vacancyPct}%)`, value: capMoney(vacancy) });
@@ -192,7 +208,8 @@ function capPrintRows(meta: ReportMeta, values: InspectionValues): { label: stri
   if (net != null && commissionPct != null) rows.push({ label: `Less letting-up — commission (${commissionPct}%)`, value: capMoney(net * (commissionPct / 100)) });
   const capex = capNum(meta.ciCapex);
   if (capex != null) rows.push({ label: "Less capex", value: capMoney(-Math.abs(capex)) });
-  if (adopted != null) rows.push({ label: "Adopt for practical purposes", value: capMoney(adopted), strong: true });
+  if (afterAdjustment != null) rows.push({ label: "Value after rent adjustment", value: capMoney(afterAdjustment) });
+  if (adopted != null) rows.push({ label: "Adopt for practical purposes (rounded)", value: capMoney(adopted), strong: true });
   return rows;
 }
 
