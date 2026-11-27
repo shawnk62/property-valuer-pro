@@ -405,7 +405,9 @@ export function useReportDraft(
   const hydrated = useRef(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const draftRef = useRef(draft);
-  draftRef.current = draft;
+  // Do not assign draftRef.current = draft here. A render can still hold the
+  // previous state and would wipe a comment just written to the ref. Setters
+  // and hydration own the ref; Save reads it.
 
   useEffect(() => {
     let cancelled = false;
@@ -639,11 +641,10 @@ export function useReportDraft(
 
   const update = useCallback(
     (patch: Partial<ReportDraft>) => {
-      setDraft((prev) => {
-        const next = { ...prev, ...patch };
-        scheduleCloudSave(next);
-        return next;
-      });
+      const next = { ...draftRef.current, ...patch };
+      draftRef.current = next;
+      setDraft(next);
+      scheduleCloudSave(next);
       setDirty(true);
     },
     [scheduleCloudSave],
@@ -651,7 +652,8 @@ export function useReportDraft(
 
   const setValue = useCallback(
     (name: string, value: FieldValue) => {
-      setDraft((prev) => {
+      const prev = draftRef.current;
+      {
         let values = { ...prev.values, [name]: value };
         let reportMeta = prev.reportMeta;
         // Report type Phil/Murray → fill Valuer + Firm (and membership) when chosen
@@ -672,9 +674,10 @@ export function useReportDraft(
           }
         }
         const next = { ...prev, values, reportMeta };
+        draftRef.current = next;
+        setDraft(next);
         scheduleCloudSave(next);
-        return next;
-      });
+      }
       setDirty(true);
       // Signature lives on the inspection form — persist form_values so lock
       // state is shared between form and report across devices.
@@ -762,12 +765,12 @@ export function useReportDraft(
 
   const setPhotos = useCallback(
     (next: ReportPhoto[] | ((prev: ReportPhoto[]) => ReportPhoto[])) => {
-      setDraft((prev) => {
-        const photos = typeof next === "function" ? next(prev.photos) : next;
-        const updated = { ...prev, photos };
-        scheduleCloudSave(updated);
-        return updated;
-      });
+      const prev = draftRef.current;
+      const photos = typeof next === "function" ? next(prev.photos) : next;
+      const updated = { ...prev, photos };
+      draftRef.current = updated;
+      setDraft(updated);
+      scheduleCloudSave(updated);
       setDirty(true);
     },
     [scheduleCloudSave],
