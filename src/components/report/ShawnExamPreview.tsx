@@ -1513,14 +1513,13 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                   />
                 ))
               : null}
-            <Prose text={withoutSourceNotes(draft.narrative.leaseEvidence?.trim() || draft.narrative.incomeReconciliation || m.incomeReconciliation || "", printedSales)} />
-
             {m.ciLeaseMapUrl ? (
               <div className="report-map-page break-before-page break-after-page flex min-h-[90vh] flex-col items-center justify-center">
                 <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Income approach — lease evidence map</p>
                 <img src={m.ciLeaseMapUrl} alt="Lease evidence map" className="max-h-[85vh] w-auto max-w-full object-contain" style={{ border: `1px solid ${RULE}` }} />
               </div>
             ) : null}
+            <Prose text={withoutSourceNotes(draft.narrative.leaseEvidence?.trim() || draft.narrative.incomeReconciliation || m.incomeReconciliation || "", printedSales)} />
           </div>
         ) : null}
         {showIncome && !showLease ? (
