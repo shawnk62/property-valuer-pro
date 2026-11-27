@@ -1211,18 +1211,14 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         <Lead id="exam-8" title={t(major[8], "Valuation approaches and methods")}>
         <Keep>
         {narrativePrints(m, "valuationApproach") && draft.narrative.valuationApproach?.trim() ? (
-          <Prose
-            text={`${draft.narrative.valuationApproach.trim()}\n\nThe opinion is as at ${formatNarrativeDateOr(m.valueDate, "the date of valuation")} and is not to be read after the reliance period without a review.`}
-          />
+          <Prose text={draft.narrative.valuationApproach.trim()} />
         ) : narrativePrints(m, "valuationApproach") ? (
         <Para>
           The market value of the subject property has been determined using the Direct Comparison
           Approach. Recent sales of similar properties are analysed and adjusted for points of
           difference. For vacant residential land those factors typically include date of sale, land
           area and shape, topography and zoning, location and proximity to amenities, aspect and
-          views, and surrounding development. The opinion is as at{" "}
-          {formatNarrativeDateOr(m.valueDate, "the date of valuation")} and is not to be read after
-          the reliance period without a review.
+          views, and surrounding development.
         </Para>
         ) : null}
         </Keep>
@@ -1286,7 +1282,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ) : null}
 
         {draft.reportMeta.salesMapUrl ? (
-          <div className="break-before-page flex min-h-[90vh] flex-col items-center justify-center">
+          <div className="break-before-page break-after-page flex min-h-[90vh] flex-col items-center justify-center">
             <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Direct comparison — sales map</p>
             <img src={draft.reportMeta.salesMapUrl} alt="Sales map" className="max-h-[85vh] w-auto max-w-full object-contain" style={{ border: `1px solid ${RULE}` }} />
           </div>
@@ -1462,6 +1458,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           {m.valueAmount
             ? ` $${formatCurrencyDisplay(m.valueAmount)}${valueWords ? ` (${valueWords})` : ""}.`
             : " [value in numbers and words]."}
+        </Para>
+        <Para>
+          The opinion of market value is current as at the date of valuation and is not to be read or
+          relied upon after the expiration of the reliance period without further review by the valuer.
+          The opinion is as at {formatNarrativeDateOr(m.valueDate, "the date of valuation")} and is not
+          to be read after the reliance period without a review.
         </Para>
         <div className="mt-4">
           <ExamSignature draft={draft} />
