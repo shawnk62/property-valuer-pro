@@ -537,7 +537,18 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
         subjectMapZoom: locationBuilt.zoom,
         subjectMapManual: draft.reportMeta.subjectMapManual === true,
       });
-      replaceSales(proximityWithBearingFromPins(sales, pins));
+      const withDistance = proximityWithBearingFromPins(sales, pins);
+      replaceSales(withDistance);
+      const leases = draft.reportMeta.ciLeaseComps ?? [];
+      if (leases.length) {
+        const byId = new Map(withDistance.map((s) => [s.id, s.proximity]));
+        setMeta({
+          ciLeaseComps: leases.map((lease) => {
+            const fromSale = byId.get(lease.linkedSaleId || lease.id);
+            return fromSale && fromSale !== lease.proximity ? { ...lease, proximity: fromSale } : lease;
+          }),
+        });
+      }
       toast.success("Maps generated", {
         description:
           "Location map is under Photos → Maps & overlays. Sales map is this Sales map tile.",
@@ -584,8 +595,10 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
         reader.onerror = () => reject(new Error("Could not read map"));
         reader.readAsDataURL(file);
       });
-      if (kind === "lease") setMeta({ ciLeaseMapUrl: dataUrl });
-      else {
+      if (kind === "lease") {
+        const leases = draft.reportMeta.ciLeaseComps ?? [];
+        setMeta({ ciLeaseMapUrl: dataUrl, ciLeaseComps: proximityForRecords(leases, resolved, true) });
+      } else {
         const lands = draft.reportMeta.ciLandSales ?? [];
         setMeta({ ciLandMapUrl: dataUrl, ciLandSales: proximityForRecords(lands, resolved, true) });
       }
@@ -1798,7 +1811,18 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
           const salesFile = await buildComparableSalesMap({ apiKey: key, pins });
           await onSalesMapFile(salesFile);
           setMeta({ salesMapPins: pins });
-          replaceSales(proximityWithBearingFromPins(sales, pins));
+          const withDistance = proximityWithBearingFromPins(sales, pins);
+          replaceSales(withDistance);
+          const leases = draft.reportMeta.ciLeaseComps ?? [];
+          if (leases.length) {
+            const byId = new Map(withDistance.map((s) => [s.id, s.proximity]));
+            setMeta({
+              ciLeaseComps: leases.map((lease) => {
+                const fromSale = byId.get(lease.linkedSaleId || lease.id);
+                return fromSale && fromSale !== lease.proximity ? { ...lease, proximity: fromSale } : lease;
+              }),
+            });
+          }
           setMapEditorOpen(false);
           toast.success("Maps updated");
         }}

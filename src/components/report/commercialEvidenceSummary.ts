@@ -335,7 +335,7 @@ export function buildLeaseSummaryRow(
     pricePerM2Land: formatRatePerM2(annual, landM2),
     indicatedYield: computedLeaseYield(lease, sale),
     overallRating: leaseOverallRating(lease, values, meta),
-    proximity: sheet.proximity?.trim() ?? lease.proximity?.trim() ?? "",
+    proximity: sheet.proximity?.trim() || lease.proximity?.trim() || sale?.proximity?.trim() || "",
     rentBasis: lease.rentBasis === "gross" ? "Gross" : lease.rentBasis === "net" ? "Net" : "Ex GST",
     term: lease.term?.trim() ?? "",
     comments: sheet.description?.trim() ?? "",
