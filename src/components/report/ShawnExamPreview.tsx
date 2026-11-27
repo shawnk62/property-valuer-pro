@@ -1472,13 +1472,11 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           </Keep>
         ) : null}
 
-        {showIncome ? (
-          <div className="report-keep-block break-before-page">
-            <h2 id="exam-8-income" className="report-h2 report-heading-lead mt-8 border-b pb-1 text-[1.05rem] font-semibold" style={{ color: TEAL, borderColor: RULE }}>{`${major[8]}.${n8[1]} Income approach`}</h2>
-          </div>
-        ) : null}
         {showLease ? (
-          <Keep>
+          <div className="report-keep-block break-before-page">
+            {showIncome ? (
+              <h2 id="exam-8-income" className="report-h2 report-heading-lead mt-8 border-b pb-1 text-[1.05rem] font-semibold" style={{ color: TEAL, borderColor: RULE }}>{`${major[8]}.${n8[1]} Income approach`}</h2>
+            ) : null}
             <h3 id="exam-8-lease" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
               Lease evidence
             </h3>
@@ -1511,7 +1509,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 <img src={m.ciLeaseMapUrl} alt="Lease evidence map" className="max-h-[85vh] w-auto max-w-full object-contain" style={{ border: `1px solid ${RULE}` }} />
               </div>
             ) : null}
-          </Keep>
+          </div>
+        ) : null}
+        {showIncome && !showLease ? (
+          <div className="report-keep-block break-before-page">
+            <h2 id="exam-8-income" className="report-h2 report-heading-lead mt-8 border-b pb-1 text-[1.05rem] font-semibold" style={{ color: TEAL, borderColor: RULE }}>{`${major[8]}.${n8[1]} Income approach`}</h2>
+          </div>
         ) : null}
         {(m.ciCapRate || m.ciAdoptedRentPerM2 || m.ciAdoptedValueOverride || m.ciPassingRentOverride || m.ciStartingRent || m.ciLeaseStartDate) && m.printCapTable !== false ? (
           <div className="report-keep-block">
