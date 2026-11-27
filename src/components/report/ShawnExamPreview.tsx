@@ -179,7 +179,7 @@ function capPrintRows(meta: ReportMeta, values: InspectionValues): { label: stri
     }
     if (anniversaries > 0 && starting != null) rows.push({ label: `Increases elapsed to valuation date`, value: `${anniversaries} anniversary increase${anniversaries === 1 ? "" : "s"}` });
     if (calculated != null && starting != null && calculated !== starting) rows.push({ label: "Current rent calculated from starting rent and increases", value: capMoney(calculated) });
-    if (passing != null) rows.push({ label: "Current / passing rent (not the starting rent)", value: capMoney(passing), strong: true });
+    if (passing != null) rows.push({ label: "Current / passing rent", value: capMoney(passing), strong: true });
     if (remaining != null) rows.push({ label: "Remaining term", value: `${remaining.toFixed(2)} years` });
   }
 
