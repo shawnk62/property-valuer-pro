@@ -154,7 +154,10 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
   const lock = useEditLock(inspectionId);
   const controller = useReportDraft(inspectionId, { readOnly: !lock.canEdit });
   const { draft, dirty, savedAt, save, loaded, loadError, setValue, setNarrative, setMeta } = controller;
-  const reportSigned = isAppliedSignature(draft.values["sign_sig"]);
+  const primarySigned = isAppliedSignature(draft.values["sign_sig"]);
+  const coValuers = (draft.reportMeta.valuers ?? []).filter((row) => row.include !== false && (row.name || row.signature));
+  const coValuersSigned = coValuers.every((row) => isAppliedSignature(row.signature));
+  const reportSigned = primarySigned && (coValuers.length === 0 || coValuersSigned);
   const editsLocked = !lock.canEdit || reportSigned;
   const [tab, setTab] = useState<TabId>("subject");
   const [downloading, setDownloading] = useState(false);
@@ -287,8 +290,12 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
         />
         {lock.canEdit && reportSigned ? (
           <div className="border-b border-amber-500/40 bg-amber-500/10 px-4 py-2 text-center text-sm text-foreground">
-            Signature is applied, so the report tabs are locked. Open the Signature tab and
-            remove the signature to edit.
+            All signatures are applied, so the report tabs are locked. Open the Signature tab and
+            remove a signature to edit.
+          </div>
+        ) : lock.canEdit && primarySigned && coValuers.length > 0 && !coValuersSigned ? (
+          <div className="border-b border-amber-500/40 bg-amber-500/10 px-4 py-2 text-center text-sm text-foreground">
+            Your signature is applied. The report stays open until the co-valuer has signed.
           </div>
         ) : null}
       </div>
@@ -505,7 +512,8 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
                   onChange={(v) => {
                     setValue("sign_sig", v);
                     if (v) {
-                      toast.success("Signature applied — report locked");
+                      const waiting = (draft.reportMeta.valuers ?? []).some((row) => row.include !== false && (row.name || row.signature) && !isAppliedSignature(row.signature));
+                      toast.success(waiting ? "Signature applied — waiting for the co-valuer" : "Signature applied — report locked");
                     } else {
                       toast.success("Signature removed — report unlocked");
                     }

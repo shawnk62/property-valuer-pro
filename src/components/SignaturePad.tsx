@@ -401,13 +401,13 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
 
       {signed ? (
         <p className="text-xs text-muted-foreground">
-          Signature applied — report is locked for editing until the signature is removed.
-          It appears on the valuation summary and closing signature blocks in the report.
+          Signature applied. It appears on the valuation summary and closing signature blocks.
+          If a co-valuer is on this report, the report stays open until they have signed.
         </p>
       ) : (
         <p className="text-xs text-muted-foreground">
           Draw and apply, upload a PNG/JPEG, paste an image, or select a saved signature.
-          Applying locks the valuation report until cleared.
+          With one valuer, applying locks the report. With a co-valuer, it locks when both have signed.
         </p>
       )}
     </div>
