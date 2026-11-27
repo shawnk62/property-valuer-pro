@@ -1417,6 +1417,8 @@ export function generateNarrative(
     salesAnalysis: v(values, "exam_sales_analysis"),
     salesComments: "",
     valueReconciliation: "",
+    valuationResult: "",
+    valuationReliance: "",
     marketReconciliation: "",
     incomeReconciliation: "",
     costReconciliation: "",

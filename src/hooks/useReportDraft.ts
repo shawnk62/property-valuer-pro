@@ -80,6 +80,8 @@ function emptyNarrative(): ReportNarrative {
     salesAnalysis: "",
     salesComments: "",
     valueReconciliation: "",
+    valuationResult: "",
+    valuationReliance: "",
     marketReconciliation: "",
     incomeReconciliation: "",
     costReconciliation: "",
@@ -148,6 +150,8 @@ function normalizeNarrative(raw: Partial<ReportNarrative> | null | undefined): R
     salesComments: typeof raw.salesComments === "string" ? raw.salesComments : "",
     valueReconciliation:
       typeof raw.valueReconciliation === "string" ? raw.valueReconciliation : "",
+    valuationResult: typeof raw.valuationResult === "string" ? raw.valuationResult : "",
+    valuationReliance: typeof raw.valuationReliance === "string" ? raw.valuationReliance : "",
     marketReconciliation: typeof raw.marketReconciliation === "string" ? raw.marketReconciliation : "",
     incomeReconciliation: typeof raw.incomeReconciliation === "string" ? raw.incomeReconciliation : "",
     costReconciliation: typeof raw.costReconciliation === "string" ? raw.costReconciliation : "",

@@ -1688,21 +1688,18 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ) : null}
         <div className="report-result-sign">
         <H2>{subTitle(major[8], n8[6], "Valuation result")}</H2>
-        <Para>
-          Having regard to the sales evidence and market conditions at the date of valuation, it is
-          my opinion that the market value of the unencumbered fee simple interest in the subject
-          property located at {addressLine || "[property address]"} as at{" "}
-          {formatNarrativeDateOr(m.valueDate, "[date of valuation]")} is
-          {m.valueAmount
-            ? ` $${formatCurrencyDisplay(m.valueAmount)}${valueWords ? ` (${valueWords})` : ""}.`
-            : " [value in numbers and words]."}
-        </Para>
-        <Para>
-          The opinion of market value is current as at the date of valuation and is not to be read or
-          relied upon after the expiration of the reliance period without further review by the valuer.
-          The opinion is as at {formatNarrativeDateOr(m.valueDate, "the date of valuation")} and is not
-          to be read after the reliance period without a review.
-        </Para>
+        {prints("valuationResult") ? (
+          <Para>
+            {draft.narrative.valuationResult?.trim() ||
+              `Having regard to the sales evidence and market conditions at the date of valuation, it is my opinion that the market value of the unencumbered fee simple interest in the subject property located at ${addressLine || "[property address]"} as at ${formatNarrativeDateOr(m.valueDate, "[date of valuation]")} is${m.valueAmount ? ` $${formatCurrencyDisplay(m.valueAmount)}${valueWords ? ` (${valueWords})` : ""}.` : " [value in numbers and words]."}`}
+          </Para>
+        ) : null}
+        {prints("valuationReliance") ? (
+          <Para>
+            {draft.narrative.valuationReliance?.trim() ||
+              `The opinion of market value is current as at the date of valuation and is not to be read or relied upon after the expiration of the reliance period without further review by the valuer. The opinion is as at ${formatNarrativeDateOr(m.valueDate, "the date of valuation")} and is not to be read after the reliance period without a review.`}
+          </Para>
+        ) : null}
         <div className="mt-4">
           <ExamSignature draft={draft} />
         </div>

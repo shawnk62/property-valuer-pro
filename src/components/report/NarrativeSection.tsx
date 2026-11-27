@@ -478,6 +478,16 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           hint: "Prints after the approach values table. Discuss the weight given to each approach.",
         },
         {
+          key: "valuationResult",
+          label: "Valuation result — opinion of value",
+          hint: "Prints under Valuation result. The address, date and value fill in if you leave this blank.",
+        },
+        {
+          key: "valuationReliance",
+          label: "Valuation result — reliance",
+          hint: "Prints under the opinion of value. Untick to leave it off the report.",
+        },
+        {
           key: "salesAnalysis",
           label: "8.5 Analysis",
           hint: "Prints under 8.5 Analysis.",
@@ -574,6 +584,16 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
       key: "valueReconciliation",
       label: "Final reconciliation of value",
       hint: "Prints immediately after the comments on comparable sales.",
+    ,
+    {
+      key: "valuationResult",
+      label: "Valuation result — opinion of value",
+      hint: "Prints under Valuation result.",
+    },
+    {
+      key: "valuationReliance",
+      label: "Valuation result — reliance",
+      hint: "Prints under the opinion of value.",
     },
     {
       key: "remarks",
@@ -671,6 +691,23 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     envSeeded.current = true;
     setNarrative(patch);
   }, [loaded, draft.inspectionId, draft.reportMeta.overlayAnalyses, draft.narrative.acidSulphate, draft.narrative.floodAssessment, draft.narrative.noiseNuisances, setNarrative]);
+  const resultSeeded = useRef(false);
+  useEffect(() => {
+    if (!loaded || resultSeeded.current) return;
+    const address = [draft.values["prop_address"], draft.values["prop_suburb"], draft.values["prop_state"], draft.values["prop_postcode"]].filter((part) => typeof part === "string" && part.trim()).join(", ");
+    const date = String(draft.reportMeta.valueDate || "[date of valuation]");
+    const amount = String(draft.reportMeta.valueAmount || "").trim();
+    const patch: Partial<ReportNarrative> = {};
+    if (!String(draft.narrative.valuationResult ?? "").trim()) {
+      patch.valuationResult = `Having regard to the sales evidence and market conditions at the date of valuation, it is my opinion that the market value of the unencumbered fee simple interest in the subject property located at ${address || "[property address]"} as at ${date} is${amount ? ` $${amount}.` : " [value in numbers and words]." }`;
+    }
+    if (!String(draft.narrative.valuationReliance ?? "").trim()) {
+      patch.valuationReliance = `The opinion of market value is current as at the date of valuation and is not to be read or relied upon after the expiration of the reliance period without further review by the valuer. The opinion is as at ${date} and is not to be read after the reliance period without a review.`;
+    }
+    if (Object.keys(patch).length === 0) return;
+    resultSeeded.current = true;
+    setNarrative(patch);
+  }, [loaded, draft.inspectionId, draft.narrative.valuationResult, draft.narrative.valuationReliance, draft.values, draft.reportMeta.valueDate, draft.reportMeta.valueAmount, setNarrative]);
   const approachSeeded = useRef(false);
   useEffect(() => {
     if (!loaded || !shawnExam || approachSeeded.current) return;
