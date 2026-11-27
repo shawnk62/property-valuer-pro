@@ -790,14 +790,21 @@ export function useReportDraft(
   );
 
   const save = useCallback(async () => {
-    // The box holds the text. Take it from the box, so a field that has not
-    // committed yet is still stored.
+    // A pending auto-save may hold the draft from before these boxes were
+    // left. If it lands after this save, a hard refresh loads the old text.
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    // The box holds the text. Take it from the box. If the same field is in
+    // two places, keep the one that has text.
     if (typeof document !== "undefined") {
       const patch: Partial<ReportNarrative> = {};
       document.querySelectorAll<HTMLTextAreaElement>("[data-narrative-key]").forEach((el) => {
         const key = el.dataset.narrativeKey as keyof ReportNarrative | undefined;
         if (!key) return;
-        patch[key] = el.value;
+        const value = el.value;
+        if (!patch[key]?.trim() || value.trim()) patch[key] = value;
       });
       if (Object.keys(patch).length > 0) {
         const prev = draftRef.current;
