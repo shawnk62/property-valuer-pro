@@ -52,7 +52,8 @@ export function PausedTextarea({
         const next = e.target.value;
         latest.current = next;
         setText(next);
-        commit(next);
+        if (timer.current) clearTimeout(timer.current);
+        timer.current = setTimeout(() => commit(next), 400);
       }}
       onBlur={() => {
         focused.current = false;
@@ -62,7 +63,7 @@ export function PausedTextarea({
   );
 }
 
-/** Same commit-as-you-type behaviour for single-line inputs. */
+/** Same pause-before-commit behaviour for single-line inputs. */
 export function PausedInput({
   value,
   onCommit,

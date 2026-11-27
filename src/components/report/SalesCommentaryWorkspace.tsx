@@ -173,7 +173,8 @@ function Editor({
           const next = e.target.value;
           latest.current = next;
           setText(next);
-          commit(next);
+          if (timer.current) clearTimeout(timer.current);
+          timer.current = setTimeout(() => commit(next), 400);
         }}
         onBlur={() => {
           focused.current = false;

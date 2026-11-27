@@ -342,6 +342,8 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
               type="button"
               disabled={saving}
               onClick={() => {
+                const active = document.activeElement;
+                if (active instanceof HTMLElement) active.blur();
                 setSaving(true);
                 void save()
                   .then(() => toast.success("Draft saved — available on all devices"))
