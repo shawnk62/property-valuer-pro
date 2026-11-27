@@ -437,7 +437,12 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                       <input
                         className="w-full border border-slate-300 rounded px-1 py-0.5"
                         value={s.gla ?? ""}
-                        onChange={(e) => patchSale(s.id, { gla: e.target.value })}
+                        onChange={(e) => {
+                          const gla = e.target.value;
+                          patchSale(s.id, { gla });
+                          const linked = meta.ciLeaseComps?.find(c => c.id === s.id || c.linkedSaleId === s.id);
+                          if (linked && !linked.nla) onMeta({ ciLeaseComps: (meta.ciLeaseComps ?? []).map(c => c.id === linked.id ? { ...c, nla: gla } : c) });
+                        }}
                       />
                       <span className="text-slate-500 text-[0.65rem] whitespace-nowrap">m²</span>
                     </div>
@@ -524,13 +529,13 @@ export function CommercialValuationTables({ values, sales, meta, onSales, onMeta
                       const rent = num(passingRent);
                       const calculated = price && rent ? ((rent / price) * 100).toFixed(2) : "";
                       patchSale(s.id, s.saleYieldManual ? { passingRent, marketRent: passingRent } : { passingRent, marketRent: passingRent, saleYield: calculated });
-                      const linked = meta.ciLeaseComps?.find(c => c.id === s.id);
+                      const linked = meta.ciLeaseComps?.find(c => c.id === s.id || c.linkedSaleId === s.id);
                       if (linked && !linked.leaseAmountManual) {
                         onMeta({ ciLeaseComps: (meta.ciLeaseComps ?? []).map(c => c.id === s.id ? { ...c, leaseAmount: passingRent } : c) });
                       }
                     }} onBlur={(e) => { const f = formatCurrency(e.target.value); if (f !== e.target.value) {
                       patchSale(s.id, { passingRent: f, marketRent: f });
-                      const linked = meta.ciLeaseComps?.find(c => c.id === s.id);
+                      const linked = meta.ciLeaseComps?.find(c => c.id === s.id || c.linkedSaleId === s.id);
                       if (linked && !linked.leaseAmountManual) onMeta({ ciLeaseComps: (meta.ciLeaseComps ?? []).map(c => c.id === s.id ? { ...c, leaseAmount: f } : c) });
                     }}} />
                   </td>

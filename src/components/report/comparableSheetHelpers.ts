@@ -352,10 +352,14 @@ export function effectiveLeaseSheet(
   number: number | undefined,
   pools: SheetPools,
 ): ComparableSheetData {
-  const linked = pools.sales?.find((s) => s.id === lease.id || s.id === lease.linkedSaleId);
+  const linked = pools.sales?.find((s) => s.id === lease.id || s.id === lease.linkedSaleId)
+    ?? pools.sales?.find((s) => {
+      const a = String(s.address ?? "").trim().toLowerCase();
+      return Boolean(a) && a === String(lease.address ?? "").trim().toLowerCase();
+    });
   const withLinked: LeaseSheetRecord = {
     ...lease,
-    leaseAmount: lease.leaseAmount || linked?.passingRent || "",
+    leaseAmount: lease.leaseAmount || linked?.passingRent || linked?.marketRent || "",
     nla: lease.nla || linked?.gla || "",
   };
   const source = findExistingSheet(
