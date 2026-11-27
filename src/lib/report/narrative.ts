@@ -1333,14 +1333,23 @@ function buildValuationApproach(values: InspectionValues): string {
   const vacant = isVacantLand(values);
   const commercialOrIndustrial =
     (isCommercialType(values) || isIndustrialType(values)) && !isMixedUseCommercial(values);
+  if (commercialOrIndustrial && !vacant) {
+    return [
+      "Market approach",
+      "The market approach estimates value by comparing the subject with recent sales of similar properties, adjusting for differences in location, size, quality, condition, tenure and market conditions. For commercial and industrial property the usual method is direct comparison, analysed on a rate per square metre of building area, land area, or both.",
+      "Its strength is that it reflects what buyers and sellers have actually paid. It is the primary approach where there is a sufficient body of comparable transactions. Its weakness is that true comparables are often scarce for specialised or thinly traded property, and the adjustments required can be large and subjective. It also reflects the circumstances of each sale, which may not match the interest being valued.",
+      "Income approach",
+      "The income approach estimates value from the income the property can produce. The capitalisation method converts a single year's net market rent into value by dividing by a capitalisation rate drawn from analysed sales. Adjustments are then made for the difference between market and passing rent, vacancy, incentives and capital expenditure. The discounted cash flow method projects income and expenditure over a holding period and discounts the cash flows and terminal value to a present value.",
+      "Its strength is that it mirrors how investors price income-producing commercial and industrial property, and it can reflect lease structure, reviews and reversion. The capitalisation method is direct and market-supported where yields are observable. Its weakness is that the result is sensitive to the rent and the rate adopted. The discounted cash flow method is more sensitive still to assumptions about growth, vacancy, expenditure and the exit yield, and it is less reliable where those inputs are not well supported by the market.",
+      "Cost approach",
+      "The cost approach estimates value as the value of the land, assessed from comparable land sales, plus the depreciated replacement cost of the improvements. Depreciation accounts for physical deterioration and for functional and external obsolescence.",
+      "Its strength is that it can be applied where sales and income evidence are limited, and it is useful for specialised industrial property, new improvements, or as a check on the other approaches. Its weakness is that cost does not equal value. It does not directly measure what a purchaser would pay, and the allowances for depreciation and obsolescence are difficult to support from the market. For an income-producing property it is generally supporting evidence rather than the primary approach.",
+    ].join("\n\n");
+  }
   const factors = vacant
     ? "date of sale, land area and usable area, shape and position, topography and zoning, location and proximity to amenities, aspect and views, and surrounding development"
-    : commercialOrIndustrial
-      ? "date of sale, building area, land area, clear height and loading, office ratio, access and proximity to major transport, zoning, condition and presentation, and the passing and market rent"
-      : "date of sale, accommodation, living area, land area, condition and presentation, location, and ancillary improvements";
-  const method = commercialOrIndustrial
-    ? "The market value of the subject property has been determined having regard to the Direct Comparison Approach on a rate per square metre of building and land, the capitalisation of net income, and the Cost Approach as a check"
-    : "The market value of the subject property has been determined using the Direct Comparison Approach";
+    : "date of sale, accommodation, living area, land area, condition and presentation, location, and ancillary improvements";
+  const method = "The market value of the subject property has been determined using the Direct Comparison Approach";
   return [
     sentence([method]),
     sentence([

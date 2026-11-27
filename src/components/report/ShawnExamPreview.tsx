@@ -1259,14 +1259,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         <Keep>
         {narrativePrints(m, "valuationApproach") && draft.narrative.valuationApproach?.trim() ? (
           <Prose text={stripValuationDateCommentary(draft.narrative.valuationApproach.trim())} />
-        ) : narrativePrints(m, "valuationApproach") ? (
-        <Para>
-          The market value of the subject property has been determined using the Direct Comparison
-          Approach. Recent sales of similar properties are analysed and adjusted for points of
-          difference. For vacant residential land those factors typically include date of sale, land
-          area and shape, topography and zoning, location and proximity to amenities, aspect and
-          views, and surrounding development.
-        </Para>
         ) : null}
         </Keep>
         </Lead>

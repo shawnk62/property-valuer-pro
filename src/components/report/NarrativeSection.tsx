@@ -429,8 +429,8 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
         },
         {
           key: "valuationApproach",
-          label: "8.0 Valuation Approach",
-          hint: "Prints at the start of 8.0 Valuation Approach.",
+          label: "Valuation approaches and methods",
+          hint: "Prints under the Valuation approaches and methods heading. Prints only when this field has text.",
         },
         {
           key: "salesComments",
@@ -671,6 +671,23 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
     envSeeded.current = true;
     setNarrative(patch);
   }, [loaded, draft.inspectionId, draft.reportMeta.overlayAnalyses, draft.narrative.acidSulphate, draft.narrative.floodAssessment, draft.narrative.noiseNuisances, setNarrative]);
+  const approachSeeded = useRef(false);
+  useEffect(() => {
+    if (!loaded || !shawnExam || approachSeeded.current) return;
+    const current = String(draft.narrative.valuationApproach ?? "").trim();
+    const commercial = Boolean(String(draft.values["prop_type_commercial"] ?? "").trim());
+    const industrial = Boolean(String(draft.values["prop_type_industrial"] ?? "").trim());
+    if (!commercial && !industrial) return;
+    const oldDefault = current.startsWith("The market value of the subject property has been determined");
+    if (current && !oldDefault) {
+      approachSeeded.current = true;
+      return;
+    }
+    const next = generateNarrative(draft.values).valuationApproach;
+    if (!next.trim() || next === current) return;
+    approachSeeded.current = true;
+    setNarrative({ valuationApproach: next });
+  }, [loaded, shawnExam, draft.inspectionId, draft.narrative.valuationApproach, draft.values, setNarrative]);
   const narrativeRef = useRef(draft.narrative);
   narrativeRef.current = draft.narrative;
 
