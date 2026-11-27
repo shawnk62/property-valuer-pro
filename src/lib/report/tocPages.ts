@@ -88,7 +88,7 @@ export function fillExamTocPages(): void {
     }
     const blocks = Array.from(
       el.querySelectorAll<HTMLElement>(
-        ":scope > .report-section-open, :scope > .report-keep-block, :scope > .report-result-sign, .sales-evidence-item, .report-table-keep",
+        ":scope > .report-section-open, :scope > .report-keep-block, :scope > .report-result-sign, :scope > .report-map-page, .sales-evidence-item, .report-table-keep",
       ),
     );
     if (el.classList.contains("report-section-sales") && blocks.length > 0) {
@@ -97,11 +97,14 @@ export function fillExamTocPages(): void {
       used = 40;
       blocks.forEach((block) => {
         const blockH = Math.max(block.getBoundingClientRect().height, 48);
+        const mapPage = block.classList.contains("report-map-page");
         const start = block.classList.contains("sales-evidence-item") || block.classList.contains("report-table-keep") || block.querySelector("h3[id]");
-        if (used > 8 && used + blockH > pageH) open();
+        if (mapPage) open();
+        else if (used > 8 && used + blockH > pageH) open();
         else if (start && used > pageH * 0.72) open();
         pageEl!.appendChild(block);
         used += blockH;
+        if (mapPage) { used = pageH; }
       });
       return;
     }

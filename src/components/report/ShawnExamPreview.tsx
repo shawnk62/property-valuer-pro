@@ -74,6 +74,16 @@ import { SHAWN_EXAM_STYLE as EXAM } from "@/lib/report/shawnExamStyle";
 
 
 
+
+function stripValuationDateCommentary(text: string): string {
+  return text
+    .split(/\n+/)
+    .filter((para) => !/opinion of market value is current as at the date of valuation/i.test(para))
+    .filter((para) => !/the opinion is as at\b/i.test(para))
+    .join("\n\n")
+    .trim();
+}
+
 function costLineNum(raw: string | undefined): number | null {
   if (!raw) return null;
   const n = Number(String(raw).replace(/[^0-9.-]/g, ""));
@@ -1243,7 +1253,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         <Lead id="exam-8" title={t(major[8], "Valuation approaches and methods")}>
         <Keep>
         {narrativePrints(m, "valuationApproach") && draft.narrative.valuationApproach?.trim() ? (
-          <Prose text={draft.narrative.valuationApproach.trim()} />
+          <Prose text={stripValuationDateCommentary(draft.narrative.valuationApproach.trim())} />
         ) : narrativePrints(m, "valuationApproach") ? (
         <Para>
           The market value of the subject property has been determined using the Direct Comparison
@@ -1314,7 +1324,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ) : null}
 
         {draft.reportMeta.salesMapUrl ? (
-          <div className="break-before-page break-after-page flex min-h-[90vh] flex-col items-center justify-center">
+          <div className="report-map-page break-before-page break-after-page flex min-h-[90vh] flex-col items-center justify-center">
             <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Direct comparison — sales map</p>
             <img src={draft.reportMeta.salesMapUrl} alt="Sales map" className="max-h-[85vh] w-auto max-w-full object-contain" style={{ border: `1px solid ${RULE}` }} />
           </div>
