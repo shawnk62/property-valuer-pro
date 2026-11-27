@@ -43,12 +43,22 @@ function printedAddress(raw: string): string {
   return text.toLowerCase().replace(/\b([a-z])/g, (letter) => letter.toUpperCase()).replace(/\bQld\b/g, "QLD");
 }
 
+function suggested(saleRate: string, subjectRate?: string): string {
+  const sale = Number(String(saleRate).replace(/[^0-9.]/g, ""));
+  const subject = Number(String(subjectRate ?? "").replace(/[^0-9.]/g, ""));
+  if (!Number.isFinite(sale) || !Number.isFinite(subject) || sale <= 0 || subject <= 0) return "";
+  if (Math.abs(sale - subject) / subject <= 0.02) return "Similar";
+  return sale > subject ? "Superior" : "Inferior";
+}
+
 export function LandEvidenceSchedule({
   sales,
+  subjectLandRate,
   headerStyle,
   cellStyle,
 }: {
   sales: LandSale[];
+  subjectLandRate?: string;
   headerStyle?: CSSProperties;
   cellStyle?: CSSProperties;
 }) {
@@ -68,7 +78,7 @@ export function LandEvidenceSchedule({
           areaText(sale),
           pricePerM2(sale),
           sale.proximity?.trim() || "—",
-          "—",
+          sale.overallRating?.trim() || suggested(pricePerM2(sale), subjectLandRate) || "—",
         ];
         return (
           <table key={sale.id} className="sales-evidence-item w-full border-collapse text-[0.8125rem]">

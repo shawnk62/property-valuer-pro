@@ -679,6 +679,8 @@ export interface ReportMeta {
     outgoings: string;
     notes: string;
     proximity?: string;
+    /** Valuer's rating. Pre-filled from the price comparison; editable. */
+    overallRating?: string;
     photoUrl?: string;
     clearHeight?: string;
     loading?: string;
@@ -770,6 +772,8 @@ export interface ReportMeta {
     landUnit?: "m2" | "ha";
     notes: string;
     proximity?: string;
+    /** Valuer's rating. Pre-filled from the price comparison; editable. */
+    overallRating?: string;
     photoUrl?: string;
     topography?: string;
     zoning?: string;

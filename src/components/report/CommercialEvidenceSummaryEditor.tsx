@@ -22,6 +22,7 @@ const SALE_HEADERS = [
   "Address",
   "Sale price",
   "Sale date",
+  "Distance",
   "Building area",
   "Price/m² bldg",
   "Land area",
@@ -39,6 +40,8 @@ const LEASE_HEADERS = [
   "Building area",
   "Lease amount",
   "Rent/m²",
+  "Basis",
+  "Term",
 ] as const;
 
 const COL_CLASSES = [
@@ -57,6 +60,7 @@ const COL_CLASSES = [
 const SALE_EDIT_KEYS: SummaryOverrideKey[] = [
   "price",
   "date",
+  "proximity",
   "buildingArea",
   "pricePerM2Building",
   "landArea",
@@ -169,6 +173,12 @@ export function CommercialEvidenceSummaryEditor({
                       />
                     </td>
                   ))}
+                  {kind === "leases" ? (
+                    <>
+                      <td className="border border-slate-300 px-2 py-1.5 align-top">{row.rentBasis || "—"}</td>
+                      <td className="border border-slate-300 px-2 py-1.5 align-top">{row.term || "—"}</td>
+                    </>
+                  ) : null}
                 </tr>
                 <tr>
                   <td className="border border-slate-300 px-2 py-1.5 align-top" colSpan={2}>
@@ -182,7 +192,7 @@ export function CommercialEvidenceSummaryEditor({
                       <span className="text-[0.7rem] text-slate-400">No photo</span>
                     )}
                   </td>
-                  <td className="border border-slate-300 px-1 py-1 align-top" colSpan={kind === "leases" ? 6 : 8}>
+                  <td className="border border-slate-300 px-1 py-1 align-top" colSpan={kind === "leases" ? 8 : 9}>
                     <PausedTextarea
                       className="min-h-[5rem] w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-[0.75rem] leading-relaxed text-slate-800"
                       value={row.comments}

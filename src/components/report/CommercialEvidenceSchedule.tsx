@@ -17,6 +17,7 @@ const SALE_HEADERS = [
   "Address",
   "Sale price",
   "Sale date",
+  "Distance",
   "Building area",
   "Price/m² bldg",
   "Land area",
@@ -34,6 +35,8 @@ const LEASE_HEADERS = [
   "Building area",
   "Lease amount",
   "Rent/m²",
+  "Basis",
+  "Term",
 ] as const;
 
 const COL_CLASSES = [
@@ -131,12 +134,15 @@ export function CommercialEvidenceSchedule({
               dash(row.buildingArea),
               dash(row.price),
               dash(row.pricePerM2Building),
+              dash(row.rentBasis ?? ""),
+              dash(row.term ?? ""),
             ]
           : [
               row.number,
               printedAddress(row.address),
               dash(row.price),
               printDate(row.date),
+              dash(row.proximity),
               dash(row.buildingArea),
               dash(row.pricePerM2Building),
               dash(row.landArea),
@@ -190,7 +196,7 @@ export function CommercialEvidenceSchedule({
                       />
                     ) : null}
                   </td>
-                  <td className={cell} style={cellStyle} colSpan={kind === "leases" ? 6 : 8}>
+                  <td className={cell} style={cellStyle} colSpan={kind === "leases" ? 8 : 9}>
                     {comments.map((part, i) => (
                       <p key={i} className="report-prose-para text-left leading-relaxed">
                         {part}

@@ -28,6 +28,14 @@ function landAreaM2(area: string, unit?: string): number | null {
   return unit === "ha" ? n * 10000 : n;
 }
 
+function suggestedLandRating(saleRate: string, subjectRate: string): string {
+  const sale = Number(String(saleRate).replace(/[^0-9.]/g, ""));
+  const subject = Number(String(subjectRate).replace(/[^0-9.]/g, ""));
+  if (!Number.isFinite(sale) || !Number.isFinite(subject) || sale <= 0 || subject <= 0) return "";
+  if (Math.abs(sale - subject) / subject <= 0.02) return "Similar";
+  return sale > subject ? "Superior" : "Inferior";
+}
+
 function ratePerM2(price: string, area: string, unit?: string): string {
   const p = num(price);
   const a = landAreaM2(area, unit);
@@ -488,7 +496,7 @@ export function LandSalesSection({
           <table className="w-full border-collapse text-xs">
             <thead>
               <tr className="bg-slate-100 text-left">
-                {["No.", "Address", "Price", "Date", "Land area", "Price/m²", "Distance"].map((h) => (
+                {["No.", "Address", "Price", "Date", "Land area", "Price/m²", "Distance", "Overall rating"].map((h) => (
                   <th key={h} className="border border-slate-300 px-2 py-1.5 font-semibold">{h}</th>
                 ))}
               </tr>
@@ -503,6 +511,7 @@ export function LandSalesSection({
                   <td className="border border-slate-300 px-1 py-1"><input className="w-full rounded border border-slate-300 px-1 py-0.5" value={s.landArea} onChange={(e) => update(s.id, { landArea: e.target.value })} /></td>
                   <td className="border border-slate-300 px-2 py-1">{ratePerM2(s.price, s.landArea, s.landUnit) || "—"}</td>
                   <td className="border border-slate-300 px-1 py-1"><input className="w-full rounded border border-slate-300 px-1 py-0.5" value={s.proximity ?? ""} placeholder="e.g. 1.2 km N" onChange={(e) => update(s.id, { proximity: e.target.value })} /></td>
+                  <td className="border border-slate-300 px-1 py-1"><input className="w-full rounded border border-slate-300 px-1 py-0.5" value={s.overallRating ?? ""} placeholder={suggestedLandRating(ratePerM2(s.price, s.landArea, s.landUnit), meta.costApproach?.landRate ?? "") || "Similar"} onChange={(e) => update(s.id, { overallRating: e.target.value })} /></td>
                 </tr>
               ))}
             </tbody>

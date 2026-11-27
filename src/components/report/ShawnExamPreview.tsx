@@ -1572,6 +1572,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             {m.printLandEvidence !== false ? (
               <LandEvidenceSchedule
                 sales={m.ciLandSales ?? []}
+                subjectLandRate={m.costApproach?.landRate}
                 headerStyle={{ background: TEAL, color: "#fff" }}
                 cellStyle={{ borderColor: RULE }}
               />

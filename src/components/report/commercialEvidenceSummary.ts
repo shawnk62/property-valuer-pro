@@ -36,6 +36,8 @@ export interface EvidenceSummaryRow {
   overallRating: string;
   proximity: string;
   comments: string;
+  rentBasis?: string;
+  term?: string;
 }
 
 export const SUMMARY_OVERRIDE_KEYS = [
@@ -304,6 +306,8 @@ export function buildSaleSummaryRow(
     overallRating: withSummaryOverride(o, "overallRating", auto.overallRating),
     proximity: withSummaryOverride(o, "proximity", auto.proximity),
     comments: withSummaryOverride(o, "comments", auto.comments),
+    rentBasis: auto.rentBasis,
+    term: auto.term,
   };
 }
 
@@ -333,6 +337,8 @@ export function buildLeaseSummaryRow(
     indicatedYield: computedLeaseYield(lease, sale),
     overallRating: leaseOverallRating(lease, values, meta),
     proximity: sheet.proximity?.trim() ?? lease.proximity?.trim() ?? "",
+    rentBasis: lease.rentBasis === "gross" ? "Gross" : lease.rentBasis === "net" ? "Net" : "",
+    term: lease.term?.trim() ?? "",
     comments: sheet.description?.trim() ?? "",
   };
   const o = lease.summaryOverrides;
@@ -351,6 +357,8 @@ export function buildLeaseSummaryRow(
     overallRating: withSummaryOverride(o, "overallRating", auto.overallRating),
     proximity: withSummaryOverride(o, "proximity", auto.proximity),
     comments: withSummaryOverride(o, "comments", auto.comments),
+    rentBasis: auto.rentBasis,
+    term: auto.term,
   };
 }
 
