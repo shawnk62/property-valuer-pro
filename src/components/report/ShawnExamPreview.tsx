@@ -1516,26 +1516,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <h2 id="exam-8-income" className="report-h2 report-heading-lead mt-8 border-b pb-1 text-[1.05rem] font-semibold" style={{ color: TEAL, borderColor: RULE }}>{`${major[8]}.${n8[1]} Income approach`}</h2>
           </div>
         ) : null}
-        {(m.ciCapRate || m.ciAdoptedRentPerM2 || m.ciAdoptedValueOverride || m.ciPassingRentOverride || m.ciStartingRent || m.ciLeaseStartDate) && m.printCapTable !== false ? (
-          <div className="report-keep-block">
-            <h3 id="exam-8-cap" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
-              Capitalisation method
-            </h3>
-            <table className="mt-2 w-full border-collapse text-xs">
-              <tbody>
-                {capPrintRows(m, v).map((row) => (
-                  <tr key={row.label} className={row.strong ? "font-semibold" : undefined} style={{ background: row.strong ? STRIPE : undefined }}>
-                    <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{row.label}</td>
-                    <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{row.value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {prints("capitalisationApproach") && draft.narrative.capitalisationApproach?.trim() ? (
-              <Prose text={withoutSourceNotes(draft.narrative.capitalisationApproach, printedSales)} />
-            ) : null}
-          </div>
-        ) : null}
         {showDcf ? (
           <Keep>
             <h3 id="exam-8-dcf" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
@@ -1556,6 +1536,26 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
               </table>
             ) : null}
           </Keep>
+        ) : null}
+        {(m.ciCapRate || m.ciAdoptedRentPerM2 || m.ciAdoptedValueOverride || m.ciPassingRentOverride || m.ciStartingRent || m.ciLeaseStartDate) && m.printCapTable !== false ? (
+          <div className="report-keep-block">
+            <h3 id="exam-8-cap" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
+              Capitalisation method
+            </h3>
+            <table className="mt-2 w-full border-collapse text-xs">
+              <tbody>
+                {capPrintRows(m, v).map((row) => (
+                  <tr key={row.label} className={row.strong ? "font-semibold" : undefined} style={{ background: row.strong ? STRIPE : undefined }}>
+                    <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{row.label}</td>
+                    <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{row.value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {prints("capitalisationApproach") && draft.narrative.capitalisationApproach?.trim() ? (
+              <Prose text={withoutSourceNotes(draft.narrative.capitalisationApproach, printedSales)} />
+            ) : null}
+          </div>
         ) : null}
 
         {showCost ? (
