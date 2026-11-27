@@ -1236,12 +1236,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
 
       {show4 ? <Lead id="exam-4" title={t(major[3], "Environmental Issues")}>
       <Keep>
-      {show40 ? <Prose
-        text={
-          draft.narrative.envIntro?.trim() ||
-          "No separate contaminated-land search is assumed beyond the inspection record and any planning overlays noted. The valuation assumes there are no environmental issues other than those set out below."
-        }
-      /> : null}
+      {show40 ? <Para>
+        The environmental issues affecting the subject property are those set out below. No separate contaminated-land search has been undertaken beyond the inspection record and the planning overlays noted. The valuation assumes there are no environmental issues other than those addressed in this section.
+      </Para> : null}
       </Keep>
       </Lead> : null}
       {show41 ? <Keep>
@@ -1260,6 +1257,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep> : null}
       {show43 ? <Keep>
       <H2>{subTitle(major[3], n4[2], "Noise and other nuisances")}</H2>
+      {draft.narrative.envIntro?.trim() ? <Prose text={draft.narrative.envIntro} /> : null}
       <Para>
         {draft.narrative.noiseNuisances?.trim() ||
           "No formal acoustic report has been obtained. Comment is limited to features recorded on the inspection."}
