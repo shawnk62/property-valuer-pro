@@ -293,7 +293,7 @@ function proseParagraphs(text: string): string[] {
 
 function Para({ children }: { children: React.ReactNode }) {
   if (!children) return null;
-  return <p className="text-left leading-relaxed">{children}</p>;
+  return <p className="report-prose-para text-left leading-relaxed">{children}</p>;
 }
 
 function renderWithLinks(text: string): React.ReactNode[] {

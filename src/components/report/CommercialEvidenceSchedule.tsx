@@ -31,12 +31,25 @@ const LEASE_HEADERS = [
   "Address",
   "Date",
   "Distance",
-  "Land area",
-  "Building area",
-  "Lease amount",
+  "Land",
+  "Bldg",
+  "Lease",
   "Rent/m²",
   "Basis",
   "Term",
+] as const;
+
+const LEASE_COL_CLASSES = [
+  "ci-lease-num",
+  "ci-lease-address",
+  "ci-lease-date",
+  "ci-lease-distance",
+  "ci-lease-land",
+  "ci-lease-bldg",
+  "ci-lease-amount",
+  "ci-lease-rate",
+  "ci-lease-basis",
+  "ci-lease-term",
 ] as const;
 
 const COL_CLASSES = [
@@ -157,7 +170,7 @@ export function CommercialEvidenceSchedule({
             className="sales-evidence-item sales-evidence-ci w-full border-collapse text-[0.8125rem]"
           >
             <colgroup>
-              {COL_CLASSES.map((cls) => (
+              {(kind === "leases" ? LEASE_COL_CLASSES : COL_CLASSES).map((cls) => (
                 <col key={cls} className={cls} />
               ))}
             </colgroup>
@@ -178,7 +191,7 @@ export function CommercialEvidenceSchedule({
               <tr>
                 {valuesRow.map((value, i) => (
                   <td
-                    key={COL_CLASSES[i]}
+                    key={(kind === "leases" ? LEASE_COL_CLASSES : COL_CLASSES)[i]}
                     className={`${cell}${i === 0 ? " whitespace-nowrap font-semibold" : i === 2 || i === 4 || i === 10 ? " whitespace-nowrap" : i === 3 || i === 5 || i === 7 || i === 8 ? " ci-wrap-cell" : ""}`}
                     style={cellStyle}
                   >
