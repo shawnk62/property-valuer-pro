@@ -161,6 +161,14 @@ export function LandSalesSection({
       <p className="text-xs text-slate-500 mb-2">
         Land sales support the land value in the cost approach. Improved sales stay in the sales comparison grid.
       </p>
+      <label className="mb-2 flex cursor-pointer items-center gap-2 text-xs">
+        <input
+          type="checkbox"
+          checked={meta.printLandEvidence !== false}
+          onChange={(e) => onMeta({ printLandEvidence: e.target.checked })}
+        />
+        Include land sales evidence table on report
+      </label>
       <button
         type="button"
         onClick={() => onMeta({ ciLandSales: [...sales, blank()] })}

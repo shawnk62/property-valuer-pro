@@ -714,6 +714,8 @@ export interface ReportMeta {
   ciAdoptedBuildingRate?: string;
   /** Adopted land rate $/m² for direct comparison. */
   ciAdoptedLandRate?: string;
+  /** When true, print the land sales evidence summary table in the cost approach. */
+  printLandEvidence?: boolean;
   /** Comparable land sales for the cost approach. */
   ciLandSales?: Array<{
     id: string;

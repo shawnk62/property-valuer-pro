@@ -45,6 +45,7 @@ import { isVacantLand, isCommercialType, isIndustrialType } from "@/lib/inspecti
 import { hasWorkingFile, WorkingNotesAnnex } from "@/components/report/WorkingNotesAnnex";
 import { AdjustmentGridPrint } from "@/components/report/AdjustmentGridPrint";
 import { CommercialEvidenceSchedule } from "@/components/report/CommercialEvidenceSchedule";
+import { LandEvidenceSchedule } from "@/components/report/LandEvidenceSchedule";
 import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
 import {
   printAdjustmentGridEnabled,
@@ -71,6 +72,37 @@ import { RiskRatingsPrintTable } from "@/components/report/RiskRatingsPrintTable
 import { SHAWN_EXAM_STYLE as EXAM } from "@/lib/report/shawnExamStyle";
 
 
+
+
+function costLineNum(raw: string | undefined): number | null {
+  if (!raw) return null;
+  const n = Number(String(raw).replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Depreciated line value — same rule as the working cost table. */
+function costLineValue(line: { area?: string; rate?: string; depreciation?: string; nominal?: string }): number | null {
+  const nominal = costLineNum(line.nominal);
+  if (nominal != null) {
+    const dep = costLineNum(line.depreciation);
+    return dep != null ? nominal * (1 - dep / 100) : nominal;
+  }
+  const area = costLineNum(line.area);
+  const rate = costLineNum(line.rate);
+  if (area == null || rate == null) return null;
+  const gross = area * rate;
+  const dep = costLineNum(line.depreciation);
+  return dep != null ? gross * (1 - dep / 100) : gross;
+}
+
+function costLineEntered(line: { area?: string; rate?: string; nominal?: string }): boolean {
+  return Boolean(String(line.area ?? "").trim() || String(line.rate ?? "").trim() || String(line.nominal ?? "").trim());
+}
+
+function formatCostMoney(n: number | null): string {
+  if (n == null) return "—";
+  return n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+}
 
 const TEAL = EXAM.navy;
 const STRIPE = EXAM.stripe;
@@ -1363,26 +1395,19 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                     <th className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>Area / qty</th>
                     <th className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>Rate</th>
                     <th className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>Dep %</th>
-                    <th className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>$</th>
+                    <th className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>Depreciated $</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {m.costApproach.mainBuilding?.map((line, i) => (
-                    <tr key={`main-${i}`} style={{ background: i % 2 === 0 ? STRIPE : "#fff" }}>
+                  {[...(m.costApproach.mainBuilding ?? []), ...(m.costApproach.ancillary ?? [])]
+                    .filter(costLineEntered)
+                    .map((line, i) => (
+                    <tr key={`cost-${i}`} style={{ background: i % 2 === 0 ? STRIPE : "#fff" }}>
                       <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{line.name}</td>
                       <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{line.area || "—"}</td>
                       <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{line.rate || line.nominal || "—"}</td>
                       <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{line.depreciation || "—"}</td>
-                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{line.nominal || "—"}</td>
-                    </tr>
-                  ))}
-                  {m.costApproach.ancillary?.map((line, i) => (
-                    <tr key={`anc-${i}`} style={{ background: i % 2 === 0 ? STRIPE : "#fff" }}>
-                      <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{line.name}</td>
-                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{line.area || "—"}</td>
-                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{line.rate || line.nominal || "—"}</td>
-                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{line.depreciation || "—"}</td>
-                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{line.nominal || "—"}</td>
+                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{formatCostMoney(costLineValue(line))}</td>
                     </tr>
                   ))}
                   {m.costApproach.adoptedValue ? (
@@ -1396,6 +1421,13 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             ) : null}
             {m.costApproach?.notes ? <Para>{m.costApproach.notes}</Para> : null}
 
+            {m.printLandEvidence !== false ? (
+              <LandEvidenceSchedule
+                sales={m.ciLandSales ?? []}
+                headerStyle={{ background: TEAL, color: "#fff" }}
+                cellStyle={{ borderColor: RULE }}
+              />
+            ) : null}
             {m.ciLandMapUrl ? (
               <div className="break-before-page flex min-h-[90vh] flex-col items-center justify-center">
                 <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Cost approach — land sales map</p>
