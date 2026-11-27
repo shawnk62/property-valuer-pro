@@ -23,7 +23,7 @@ const SALE_HEADERS = [
   "Land area",
   "Price/m² land",
   "Indicated yield",
-  "Overall rating",
+  "Rating",
 ] as const;
 
 const LEASE_HEADERS = [
@@ -44,6 +44,7 @@ const COL_CLASSES = [
   "ci-col-address",
   "ci-col-price",
   "ci-col-date",
+  "ci-col-distance",
   "ci-col-bldg",
   "ci-col-bldg-rate",
   "ci-col-land",
@@ -148,7 +149,7 @@ export function CommercialEvidenceSchedule({
               dash(row.landArea),
               dash(row.pricePerM2Land),
               dash(row.indicatedYield),
-              dash(row.overallRating),
+              dash(row.overallRating === "Superior" ? "Sup" : row.overallRating === "Inferior" ? "Inf" : row.overallRating === "Similar" ? "Sim" : row.overallRating),
             ];
         return (
           <table
@@ -178,7 +179,7 @@ export function CommercialEvidenceSchedule({
                 {valuesRow.map((value, i) => (
                   <td
                     key={COL_CLASSES[i]}
-                    className={`${cell}${i === 0 ? " whitespace-nowrap font-semibold" : i === 2 || i === 4 || i === 6 || i === 9 ? " whitespace-nowrap" : i === 3 || i === 5 || i === 7 || i === 8 ? " ci-wrap-cell" : ""}`}
+                    className={`${cell}${i === 0 ? " whitespace-nowrap font-semibold" : i === 2 || i === 4 || i === 10 ? " whitespace-nowrap" : i === 3 || i === 5 || i === 7 || i === 8 ? " ci-wrap-cell" : ""}`}
                     style={cellStyle}
                   >
                     {value}

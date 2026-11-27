@@ -8,7 +8,7 @@ import type { ReportMeta } from "@/lib/report/types";
 
 type LandSale = NonNullable<ReportMeta["ciLandSales"]>[number];
 
-const HEADERS = ["No.", "Address", "Price", "Date", "Land area", "Price/m²", "Distance", "Overall rating"] as const;
+const HEADERS = ["No.", "Address", "Price", "Date", "Land area", "Price/m²", "Distance", "Rating"] as const;
 
 function num(raw: string | undefined): number | null {
   if (!raw) return null;
@@ -41,6 +41,13 @@ function printedAddress(raw: string): string {
   if (!text) return "—";
   if (text !== text.toUpperCase()) return text;
   return text.toLowerCase().replace(/\b([a-z])/g, (letter) => letter.toUpperCase()).replace(/\bQld\b/g, "QLD");
+}
+
+function abbreviate(rating: string): string {
+  if (rating === "Superior") return "Sup";
+  if (rating === "Inferior") return "Inf";
+  if (rating === "Similar") return "Sim";
+  return rating || "—";
 }
 
 function suggested(saleRate: string, subjectRate?: string): string {
@@ -78,7 +85,7 @@ export function LandEvidenceSchedule({
           areaText(sale),
           pricePerM2(sale),
           sale.proximity?.trim() || "—",
-          sale.overallRating?.trim() || suggested(pricePerM2(sale), subjectLandRate) || "—",
+          abbreviate(sale.overallRating?.trim() || suggested(pricePerM2(sale), subjectLandRate)),
         ];
         return (
           <table key={sale.id} className="sales-evidence-item w-full border-collapse text-[0.8125rem]">

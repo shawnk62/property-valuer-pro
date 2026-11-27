@@ -16,8 +16,8 @@ function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: num
 export function formatDistanceFromSubject(km: number): string {
   if (!Number.isFinite(km) || km < 0) return "";
   if (km < 0.1) return `${Math.round(km * 1000)} m`;
-  if (km < 1) return `${km.toFixed(2)} km`;
-  return `${km.toFixed(1)} km`;
+  if (km < 1) return `${km.toFixed(2)}km`;
+  return `${km.toFixed(1)}km`;
 }
 
 const BEARING_ABBR = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
