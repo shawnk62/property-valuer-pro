@@ -1491,6 +1491,16 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <h3 id="exam-8-lease" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
               Lease evidence
             </h3>
+            <CommercialEvidenceSchedule
+              kind="leases"
+              leases={m.ciLeaseComps}
+              values={v}
+              meta={m}
+              pools={sheetPools}
+              headerStyle={{ background: TEAL, color: "#fff" }}
+              cellBorderClassName="border"
+              cellStyle={{ borderColor: RULE }}
+            />
             {m.printFullPageSheets !== false && m.printLeaseSheets !== false
               ? (m.ciLeaseComps ?? []).filter((c) => c.omitFromReport !== true && c.includeSheet !== false && (c.address || c.leaseAmount || c.netRentPerM2 || c.nla)).map((c, idx) => (
                   <ComparableSheet
@@ -1502,16 +1512,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                   />
                 ))
               : null}
-            <CommercialEvidenceSchedule
-              kind="leases"
-              leases={m.ciLeaseComps}
-              values={v}
-              meta={m}
-              pools={sheetPools}
-              headerStyle={{ background: TEAL, color: "#fff" }}
-              cellBorderClassName="border"
-              cellStyle={{ borderColor: RULE }}
-            />
             <Prose text={withoutSourceNotes(draft.narrative.leaseEvidence || "", printedSales)} />
 
             {m.ciLeaseMapUrl ? (
