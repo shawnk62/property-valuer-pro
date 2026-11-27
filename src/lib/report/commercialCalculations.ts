@@ -270,3 +270,91 @@ export function marketBoilerplate(meta: ReportMeta, values: InspectionValues, te
     .replace(/\{\{rounding\}\}/g, money(calc.rounding))
     .replace(/\{\{adopted\}\}/g, money(calc.adopted));
 }
+
+export const INCOME_BOILERPLATE =
+  "The capitalisation of the net market rent of ${{rent}} at {{capRate}}% indicates ${{capitalised}}. After allowing ${{adjustment}} for the difference between the passing rent and the market rent over the remaining term, the income approach indicates ${{adopted}}, rounded to the nearest ${{rounding}}.";
+
+export const COST_BOILERPLATE =
+  "The land value of ${{land}} and the depreciated replacement cost of the improvements of ${{improvements}} total ${{unrounded}}. For practical purposes, and rounding to the nearest ${{rounding}}, a value of ${{adopted}} is adopted for the cost approach.";
+
+export const FINAL_LEASED =
+  "The market approach indicates ${{market}}. The income approach, having regard to the existing lease, indicates ${{income}}. The cost approach indicates ${{cost}}. Having regard to the evidence, {{weight}}, and a value of ${{adopted}} is adopted as at the date of valuation.";
+
+export const FINAL_VACANT =
+  "The market approach indicates ${{market}}. The cost approach indicates ${{cost}}. The property is vacant at the date of valuation, and primary weight has been given to the market approach. A value of ${{adopted}} is adopted as at the date of valuation.";
+
+function costLine(line: { area?: string; rate?: string; depreciation?: string; nominal?: string }): number | null {
+  const nominal = num(line.nominal);
+  const area = num(line.area);
+  const rate = num(line.rate);
+  const gross = nominal ?? (area != null && rate != null ? area * rate : null);
+  if (gross == null) return null;
+  const dep = num(line.depreciation);
+  return dep != null ? gross * (1 - dep / 100) : gross;
+}
+
+export function costApproachCalc(meta: ReportMeta): { land: number; improvements: number; calculated: number; rounding: number; adopted: number } | null {
+  const cost = meta.costApproach;
+  if (!cost) return null;
+  const land = num(cost.landValue) ?? ((num(cost.landArea) != null && num(cost.landRate) != null) ? num(cost.landArea)! * num(cost.landRate)! : null);
+  const improvements = [...(cost.mainBuilding ?? []), ...(cost.ancillary ?? [])].reduce<number>((sum, line) => sum + (costLine(line) ?? 0), 0);
+  if (land == null && improvements === 0) return null;
+  const calculated = Math.round((land ?? 0) + improvements);
+  const rounding = num(meta.costRounding) ?? 10000;
+  const step = rounding > 0 ? rounding : 1;
+  const adopted = Math.round(calculated / step) * step;
+  return { land: land ?? 0, improvements, calculated, rounding: step, adopted };
+}
+
+export function propertyIsLeased(meta: ReportMeta): boolean {
+  if (meta.occupancyStatus === "leased") return true;
+  if (meta.occupancyStatus === "vacant") return false;
+  return Boolean(meta.ciLeaseStartDate || meta.ciStartingRent || meta.ciPassingRentOverride || meta.ciLeaseEndDate);
+}
+
+function fill(template: string, values: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => values[key] ?? "—");
+}
+
+function moneyOf(n: number | null | undefined): string {
+  return n == null ? "—" : n.toLocaleString("en-AU");
+}
+
+export function incomeBoilerplate(meta: ReportMeta, template?: string): string {
+  const adopted = num(meta.incomeApproachValue) ?? num(meta.ciAdoptedValueOverride);
+  return fill((template ?? "").trim() || INCOME_BOILERPLATE, {
+    rent: moneyOf(num(meta.ciAdoptedRentPerM2)),
+    capRate: meta.ciCapRate || "—",
+    capitalised: "—",
+    adjustment: "—",
+    adopted: moneyOf(adopted),
+    rounding: moneyOf(num(meta.ciAdoptRoundTo) ?? 10000),
+  });
+}
+
+export function costBoilerplate(meta: ReportMeta, template?: string): string {
+  const calc = costApproachCalc(meta);
+  return fill((template ?? "").trim() || COST_BOILERPLATE, {
+    land: moneyOf(calc?.land),
+    improvements: moneyOf(calc?.improvements),
+    unrounded: moneyOf(calc?.calculated),
+    rounding: moneyOf(calc?.rounding),
+    adopted: moneyOf(calc?.adopted),
+  });
+}
+
+export function finalBoilerplate(meta: ReportMeta, values: InspectionValues, template?: string): string {
+  const market = marketApproachCalc(meta, values)?.adopted ?? num(meta.marketApproachValue);
+  const income = num(meta.incomeApproachValue) ?? num(meta.ciAdoptedValueOverride);
+  const cost = costApproachCalc(meta)?.adopted ?? num(meta.costApproachValue);
+  const adopted = num(meta.valueAmount) ?? market ?? income ?? cost;
+  const leased = propertyIsLeased(meta);
+  const source = (template ?? "").trim() || (leased ? FINAL_LEASED : FINAL_VACANT);
+  return fill(source, {
+    market: moneyOf(market),
+    income: moneyOf(income),
+    cost: moneyOf(cost),
+    adopted: moneyOf(adopted),
+    weight: "primary weight has been given to the market approach, supported by the income approach",
+  });
+}

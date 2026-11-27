@@ -6,6 +6,7 @@
  */
 import { useEffect, useRef } from "react";
 import type { InspectionValues, ReportMeta } from "@/lib/report/types";
+import { costApproachCalc } from "@/lib/report/commercialCalculations";
 import { isCommercialType, isIndustrialType, isVacantLand } from "@/lib/inspection/visibility";
 
 type Line = { name: string; area?: string; rate?: string; depreciation?: string; nominal?: string };
@@ -198,7 +199,9 @@ export function CostApproachSection({
   const ancillary = stored.ancillary?.length ? stored.ancillary : defaults(variant).ancillary;
 
   function patch(next: Partial<NonNullable<ReportMeta["costApproach"]>>) {
-    onMeta({ costApproach: { ...stored, variant, ...next } });
+    const costApproach = { ...stored, variant, ...next };
+    const calc = costApproachCalc({ ...meta, costApproach });
+    onMeta({ costApproach, costApproachValue: calc ? String(calc.adopted) : meta.costApproachValue });
   }
 
   function updateLine(list: "mainBuilding" | "ancillary", index: number, field: keyof Line, value: string) {

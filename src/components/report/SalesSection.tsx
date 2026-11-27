@@ -13,7 +13,7 @@ import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { CostApproachSection } from "@/components/report/CostApproachSection";
 import { CapitalisationApproachSection } from "@/components/report/CapitalisationApproachSection";
 import { CommercialEvidenceSummaryEditor } from "@/components/report/CommercialEvidenceSummaryEditor";
-import { MARKET_BOILERPLATE, marketApproachCalc, marketBoilerplate } from "@/lib/report/commercialCalculations";
+import { COST_BOILERPLATE, INCOME_BOILERPLATE, MARKET_BOILERPLATE, costApproachCalc, costBoilerplate, incomeBoilerplate, marketApproachCalc, marketBoilerplate } from "@/lib/report/commercialCalculations";
 import { CommercialValuationTables } from "@/components/report/CommercialValuationTables";
 import { ComparableSheet } from "@/components/report/ComparableSheet";
 import { effectiveSaleSheet, saleFromSheetPatch } from "@/components/report/comparableSheetHelpers";
@@ -3203,11 +3203,9 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
       {(panel === "all" || panel === "income") && (Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) || Boolean(String(draft.values["prop_type_industrial"] ?? "").trim())) ? (
         <div className="space-y-3 rounded-md border border-border bg-card p-4">
           <h3 className="text-sm font-semibold text-foreground">Income approach — reconciliation</h3>
-          <label className="flex items-center gap-2 text-xs">
-            <span className="w-40">Indicated value</span>
-            <input className="flex-1 rounded border border-input px-2 py-1" value={draft.reportMeta.incomeApproachValue ?? ""} onChange={(e) => setMeta({ incomeApproachValue: e.target.value })} placeholder="e.g. 3,050,000" />
-          </label>
-          <PausedTextarea value={draft.narrative.incomeReconciliation ?? ""} onCommit={(v) => setNarrative({ incomeReconciliation: v })} placeholder="Reconciliation of the income approach…" className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          <p className="text-xs text-muted-foreground">Indicated value: ${Number(draft.reportMeta.incomeApproachValue || draft.reportMeta.ciAdoptedValueOverride || 0).toLocaleString("en-AU") || "—"} (from the capitalisation method)</p>
+          <PausedTextarea value={draft.narrative.incomeReconciliation ?? ""} onCommit={(v) => setNarrative({ incomeReconciliation: v })} placeholder={INCOME_BOILERPLATE} className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          <p className="text-xs text-muted-foreground">Prints as: {incomeBoilerplate(draft.reportMeta, draft.narrative.incomeReconciliation)}</p>
           <label className="flex cursor-pointer items-center gap-2 text-xs">
             <input type="checkbox" checked={draft.reportMeta.printLeaseSheets !== false} onChange={(e) => setMeta({ printLeaseSheets: e.target.checked })} />
             Include full-page lease sheets
@@ -3245,10 +3243,16 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
         <div className="space-y-3 rounded-md border border-border bg-card p-4">
           <h3 className="text-sm font-semibold text-foreground">Cost approach — reconciliation</h3>
           <label className="flex items-center gap-2 text-xs">
-            <span className="w-40">Indicated value</span>
-            <input className="flex-1 rounded border border-input px-2 py-1" value={draft.reportMeta.costApproachValue ?? ""} onChange={(e) => setMeta({ costApproachValue: e.target.value })} placeholder="e.g. 2,950,000" />
+            <span className="w-40">Round to nearest</span>
+            <input className="flex-1 rounded border border-input px-2 py-1" value={draft.reportMeta.costRounding ?? "10000"} onChange={(e) => {
+              const costRounding = e.target.value;
+              const calc = costApproachCalc({ ...draft.reportMeta, costRounding });
+              setMeta({ costRounding, costApproachValue: calc ? String(calc.adopted) : draft.reportMeta.costApproachValue });
+            }} />
           </label>
-          <PausedTextarea value={draft.narrative.costReconciliation ?? ""} onCommit={(v) => setNarrative({ costReconciliation: v })} placeholder="Reconciliation of the cost approach…" className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          {(() => { const calc = costApproachCalc(draft.reportMeta); return calc ? <p className="text-xs text-muted-foreground">Land ${calc.land.toLocaleString("en-AU")} + improvements ${calc.improvements.toLocaleString("en-AU")} = ${calc.calculated.toLocaleString("en-AU")}, adopted at ${calc.adopted.toLocaleString("en-AU")}.</p> : null; })()}
+          <PausedTextarea value={draft.narrative.costReconciliation ?? ""} onCommit={(v) => setNarrative({ costReconciliation: v })} placeholder={COST_BOILERPLATE} className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          <p className="text-xs text-muted-foreground">Prints as: {costBoilerplate(draft.reportMeta, draft.narrative.costReconciliation)}</p>
           <label className="flex cursor-pointer items-center gap-2 text-xs">
             <input type="checkbox" checked={draft.reportMeta.printLandSheets !== false} onChange={(e) => setMeta({ printLandSheets: e.target.checked })} />
             Include full-page land sale sheets

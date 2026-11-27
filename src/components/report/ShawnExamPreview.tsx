@@ -47,7 +47,7 @@ import { isVacantLand, isCommercialType, isIndustrialType } from "@/lib/inspecti
 import { hasWorkingFile, WorkingNotesAnnex } from "@/components/report/WorkingNotesAnnex";
 import { AdjustmentGridPrint } from "@/components/report/AdjustmentGridPrint";
 import { CommercialEvidenceSchedule } from "@/components/report/CommercialEvidenceSchedule";
-import { marketApproachCalc, marketBoilerplate } from "@/lib/report/commercialCalculations";
+import { costBoilerplate, finalBoilerplate, incomeBoilerplate, marketApproachCalc, marketBoilerplate } from "@/lib/report/commercialCalculations";
 import { LandEvidenceSchedule } from "@/components/report/LandEvidenceSchedule";
 import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
 import {
@@ -1527,7 +1527,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {showIncomeRec ? (
           <Keep>
             <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the income approach</h3>
-            {(draft.narrative.incomeReconciliation || m.incomeReconciliation)?.trim() ? <Prose text={(draft.narrative.incomeReconciliation || m.incomeReconciliation || "").trim()} /> : null}
+            <Prose text={incomeBoilerplate(m, draft.narrative.incomeReconciliation || m.incomeReconciliation)} />
             {m.incomeApproachValue || m.ciAdoptedValueOverride ? (
               <table className="mt-3 w-full border-collapse text-xs">
                 <tbody>
@@ -1631,7 +1631,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {showCostRec ? (
           <Keep>
             <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the cost approach</h3>
-            {(draft.narrative.costReconciliation || m.costReconciliation)?.trim() ? <Prose text={(draft.narrative.costReconciliation || m.costReconciliation || "").trim()} /> : null}
+            <Prose text={costBoilerplate(m, draft.narrative.costReconciliation || m.costReconciliation)} />
             {m.costApproachValue || m.costApproach?.adoptedValue ? (
               <table className="mt-3 w-full border-collapse text-xs">
                 <tbody>
@@ -1661,7 +1661,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 {m.costApproachValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Cost</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Summation</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${m.costApproachValue}</td></tr> : null}
               </tbody>
             </table>
-            {reconciliationText ? <Prose text={reconciliationText} /> : null}
+            <Prose text={finalBoilerplate(m, v, draft.narrative.valueReconciliation)} />
           </Keep>
         ) : null}
         {get(v, "exam_on_market") ? (

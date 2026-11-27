@@ -744,6 +744,10 @@ export interface ReportMeta {
   marketBuildingArea?: string;
   /** Rounding amount for the market approach, e.g. 10000. */
   marketRounding?: string;
+  /** Rounding amount for the cost approach. */
+  costRounding?: string;
+  /** leased, vacant, or omitted to follow the lease inputs. */
+  occupancyStatus?: "leased" | "vacant";
   incomeApproachValue?: string;
   costApproachValue?: string;
   marketReconciliation?: string;

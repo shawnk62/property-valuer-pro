@@ -1,6 +1,7 @@
 import type { ReportDraftController } from "@/hooks/useReportDraft";
 import { PausedTextarea } from "@/components/report/PausedTextarea";
 import { narrativePrints } from "@/lib/narrative/neighbourhoodAssist";
+import { FINAL_LEASED, FINAL_VACANT, finalBoilerplate, propertyIsLeased } from "@/lib/report/commercialCalculations";
 import { PROP_ASSIGNMENT_OPTIONS } from "@/lib/inspection/schema";
 import { formatCurrencyInput } from "@/lib/report/salesRelativity";
 import { pick } from "@/lib/report/schema";
@@ -232,13 +233,22 @@ export function SubjectSection({ controller }: { controller: ReportDraftControll
       <section className="space-y-3 rounded-md border border-border bg-card p-4">
         <h3 className="text-sm font-semibold text-foreground">Final reconciliation and valuation result</h3>
         <p className="text-xs text-muted-foreground">
-          Edited here only. The approach commentary is edited on the Market evidence, Income approach and Cost approach tabs.
+          The figures are taken from the three approaches. The words are edited here.
         </p>
+        <label className="flex items-center gap-2 text-xs">
+          <span className="w-40">Occupancy</span>
+          <select className="rounded border border-input px-2 py-1" value={reportMeta.occupancyStatus ?? ""} onChange={(e) => setMeta({ occupancyStatus: (e.target.value || undefined) as "leased" | "vacant" | undefined })}>
+            <option value="">As indicated by the lease ({propertyIsLeased(reportMeta) ? "leased" : "vacant"})</option>
+            <option value="leased">Leased</option>
+            <option value="vacant">Vacant</option>
+          </select>
+        </label>
         <label className="flex cursor-pointer items-center gap-2 text-xs">
           <input type="checkbox" checked={narrativePrints(reportMeta, "valueReconciliation")} onChange={(e) => setMeta({ printNarrative: { ...(reportMeta.printNarrative ?? {}), valueReconciliation: e.target.checked } })} />
           Include final reconciliation
         </label>
-        <PausedTextarea value={draft.narrative.valueReconciliation ?? ""} onCommit={(v) => setNarrative({ valueReconciliation: v })} placeholder="Final reconciliation of the approaches…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+        <PausedTextarea value={draft.narrative.valueReconciliation ?? ""} onCommit={(v) => setNarrative({ valueReconciliation: v })} placeholder={propertyIsLeased(reportMeta) ? FINAL_LEASED : FINAL_VACANT} className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+        <p className="text-xs text-muted-foreground">Prints as: {finalBoilerplate(reportMeta, draft.values, draft.narrative.valueReconciliation)}</p>
         <label className="flex cursor-pointer items-center gap-2 text-xs">
           <input type="checkbox" checked={narrativePrints(reportMeta, "valuationResult")} onChange={(e) => setMeta({ printNarrative: { ...(reportMeta.printNarrative ?? {}), valuationResult: e.target.checked } })} />
           Include opinion of value

@@ -16,7 +16,7 @@
  * - Optional detailed modelling of remaining term, non-market options,
  *   and contractual increases
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/types";
 import { isCommercialType, isIndustrialType, isVacantLand } from "@/lib/inspection/visibility";
 
@@ -313,6 +313,11 @@ export function CapitalisationApproachSection({
       ? Math.round(beforeAdopt / roundTo) * roundTo
       : beforeAdopt;
   const adopted = num(meta.ciAdoptedValueOverride) ?? calculatedAdopted;
+  useEffect(() => {
+    if (adopted == null) return;
+    const next = String(Math.round(adopted));
+    if (next !== (meta.incomeApproachValue ?? "")) onMeta({ incomeApproachValue: next });
+  }, [adopted]);
   const effective =
     adopted != null && adopted > 0 && adjustedNet != null ? (adjustedNet / adopted) * 100 : null;
 
