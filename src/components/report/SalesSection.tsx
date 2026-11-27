@@ -3118,8 +3118,16 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
         <div className="space-y-3 rounded-md border border-border bg-card p-4">
           <h3 className="text-sm font-semibold text-foreground">Market approach — reconciliation</h3>
           <label className="flex items-center gap-2 text-xs">
-            <span className="w-40">Indicated value</span>
-            <input className="flex-1 rounded border border-input px-2 py-1" value={draft.reportMeta.marketApproachValue ?? ""} onChange={(e) => setMeta({ marketApproachValue: e.target.value })} placeholder="e.g. 3,100,000" />
+            <span className="w-40">Building area (m²)</span>
+            <input className="flex-1 rounded border border-input px-2 py-1" value={draft.reportMeta.marketBuildingArea ?? String(draft.values["comm_nla"] || draft.values["comm_gba"] || "")} onChange={(e) => setMeta({ marketBuildingArea: e.target.value })} />
+          </label>
+          <label className="flex items-center gap-2 text-xs">
+            <span className="w-40">Adopted rate ($/m²)</span>
+            <input className="flex-1 rounded border border-input px-2 py-1" value={draft.reportMeta.marketAdoptedRate ?? ""} onChange={(e) => setMeta({ marketAdoptedRate: e.target.value })} placeholder="e.g. 3000" />
+          </label>
+          <label className="flex items-center gap-2 text-xs">
+            <span className="w-40">Adopted value</span>
+            <input className="flex-1 rounded border border-input px-2 py-1" value={draft.reportMeta.marketApproachValue ?? ""} onChange={(e) => setMeta({ marketApproachValue: e.target.value })} placeholder="Calculated from area × rate; edit to round" />
           </label>
           <PausedTextarea value={draft.narrative.marketReconciliation ?? ""} onChange={(v) => setNarrative({ marketReconciliation: v })} placeholder="Reconciliation of the market approach…" className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
           <label className="flex cursor-pointer items-center gap-2 text-xs">

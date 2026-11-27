@@ -87,6 +87,16 @@ function stripValuationDateCommentary(text: string): string {
 }
 
 
+
+function marketCalc(meta: ReportMeta, values: InspectionValues): { area: number; rate: number; calculated: number; adopted: number } | null {
+  const area = capNum(meta.marketBuildingArea) ?? capNum(String(values["comm_nla"] ?? "")) ?? capNum(String(values["comm_gba"] ?? ""));
+  const rate = capNum(meta.marketAdoptedRate);
+  if (area == null || rate == null) return null;
+  const calculated = Math.round(area * rate);
+  const adopted = capNum(meta.marketApproachValue) ?? calculated;
+  return { area, rate, calculated, adopted };
+}
+
 function capNum(raw: string | undefined): number | null {
   if (!raw) return null;
   const n = Number(String(raw).replace(/[^0-9.-]/g, ""));
@@ -1433,13 +1443,22 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {showMarketRec ? (
           <Keep>
             <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the market approach</h3>
-            {m.marketApproachValue ? <Para>The market approach indicates a value of ${m.marketApproachValue}.</Para> : null}
             {(draft.narrative.marketReconciliation || m.marketReconciliation)?.trim() ? <Prose text={(draft.narrative.marketReconciliation || m.marketReconciliation || "").trim()} /> : null}
+            {marketCalc(m, v) ? (
+              <table className="mt-3 w-full border-collapse text-xs">
+                <tbody>
+                  <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Building area</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{marketCalc(m, v)!.area.toLocaleString("en-AU")} m²</td></tr>
+                  <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Adopted rate</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${marketCalc(m, v)!.rate.toLocaleString("en-AU")} / m²</td></tr>
+                  <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Calculated value</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${marketCalc(m, v)!.calculated.toLocaleString("en-AU")}</td></tr>
+                  <tr className="font-semibold"><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Adopt for practical purposes</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${marketCalc(m, v)!.adopted.toLocaleString("en-AU")}</td></tr>
+                </tbody>
+              </table>
+            ) : m.marketApproachValue ? <Para>The market approach indicates a value of ${m.marketApproachValue}.</Para> : null}
           </Keep>
         ) : null}
 
         {showIncome ? (
-          <div className="report-keep-block">
+          <div className="report-keep-block break-before-page">
             <h2 id="exam-8-income" className="report-h2 report-heading-lead mt-8 border-b pb-1 text-[1.05rem] font-semibold" style={{ color: TEAL, borderColor: RULE }}>{`${major[8]}.${n8[1]} Income approach`}</h2>
           </div>
         ) : null}
@@ -1510,8 +1529,14 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {showIncomeRec ? (
           <Keep>
             <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the income approach</h3>
-            {m.incomeApproachValue ? <Para>The income approach indicates a value of ${m.incomeApproachValue}.</Para> : null}
             {(draft.narrative.incomeReconciliation || m.incomeReconciliation)?.trim() ? <Prose text={(draft.narrative.incomeReconciliation || m.incomeReconciliation || "").trim()} /> : null}
+            {m.incomeApproachValue || m.ciAdoptedValueOverride ? (
+              <table className="mt-3 w-full border-collapse text-xs">
+                <tbody>
+                  <tr className="font-semibold"><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Adopt for practical purposes</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${m.incomeApproachValue || m.ciAdoptedValueOverride}</td></tr>
+                </tbody>
+              </table>
+            ) : null}
           </Keep>
         ) : null}
 
@@ -1587,8 +1612,14 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {showCostRec ? (
           <Keep>
             <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the cost approach</h3>
-            {m.costApproachValue ? <Para>The cost approach indicates a value of ${m.costApproachValue}.</Para> : null}
             {(draft.narrative.costReconciliation || m.costReconciliation)?.trim() ? <Prose text={(draft.narrative.costReconciliation || m.costReconciliation || "").trim()} /> : null}
+            {m.costApproachValue || m.costApproach?.adoptedValue ? (
+              <table className="mt-3 w-full border-collapse text-xs">
+                <tbody>
+                  <tr className="font-semibold"><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Adopt for practical purposes</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${m.costApproachValue || m.costApproach?.adoptedValue}</td></tr>
+                </tbody>
+              </table>
+            ) : null}
           </Keep>
         ) : null}
 
@@ -1606,7 +1637,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 </tr>
               </thead>
               <tbody>
-                {m.marketApproachValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Market</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Direct comparison</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${m.marketApproachValue}</td></tr> : null}
+                {marketCalc(m, v) || m.marketApproachValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Market</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Direct comparison</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${(marketCalc(m, v)?.adopted ?? m.marketApproachValue)?.toLocaleString?.("en-AU") ?? m.marketApproachValue}</td></tr> : null}
                 {m.incomeApproachValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Income</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{[showCap ? "Capitalisation" : "", showDcf ? "DCF" : ""].filter(Boolean).join(" / ") || "Income"}</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${m.incomeApproachValue}</td></tr> : null}
                 {m.costApproachValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Cost</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Summation</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${m.costApproachValue}</td></tr> : null}
               </tbody>

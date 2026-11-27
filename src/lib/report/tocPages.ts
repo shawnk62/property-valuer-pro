@@ -99,8 +99,9 @@ export function fillExamTocPages(): void {
       ordered.forEach((block) => {
         const blockH = Math.max(block.getBoundingClientRect().height, 48);
         const mapPage = block.classList.contains("report-map-page");
+        const newPage = block.classList.contains("break-before-page");
         const heading = block.classList.contains("report-section-open") || Boolean(block.querySelector("h2, h3"));
-        if (mapPage || (heading && used > pageH * 0.8)) open();
+        if (mapPage || newPage || (heading && used > pageH * 0.8)) open();
         else if (used > 8 && used + blockH > pageH) open();
         pageEl!.appendChild(block);
         used += blockH;

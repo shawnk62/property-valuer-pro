@@ -733,6 +733,10 @@ export interface ReportMeta {
   printCapTable?: boolean;
   /** Indicated values and reconciliations by approach. */
   marketApproachValue?: string;
+  /** Adopted direct-comparison rate ($/m² of building). Value = area × rate. */
+  marketAdoptedRate?: string;
+  /** Override of the building area used in the market approach calculation. */
+  marketBuildingArea?: string;
   incomeApproachValue?: string;
   costApproachValue?: string;
   marketReconciliation?: string;
