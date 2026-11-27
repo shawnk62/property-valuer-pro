@@ -43,6 +43,26 @@ function printedAddress(raw: string): string {
   return text.toLowerCase().replace(/\b([a-z])/g, (letter) => letter.toUpperCase()).replace(/\bQld\b/g, "QLD");
 }
 
+function stacked(value: string): string {
+  const text = value.trim();
+  if (!text || text === "—") return text;
+  const bearing = text.match(/^(.*?)\s+(N|NE|E|SE|S|SW|W|NW)$/);
+  if (bearing) return `${bearing[1]}\n${bearing[2]}`;
+  const unit = text.match(/^(.*?)(\s*\/\s*m²|\s+m²|\s+ha)$/i);
+  if (unit) return `${unit[1].trim()}\n${unit[2].replace(/^\s*\/\s*/, "/").trim()}`;
+  return text;
+}
+
+function Stacked({ value }: { value: string }) {
+  return (
+    <>
+      {stacked(value).split("\n").map((line, i) => (
+        <span key={i} className="block">{line}</span>
+      ))}
+    </>
+  );
+}
+
 function abbreviate(rating: string): string {
   if (rating === "Superior") return "Sup";
   if (rating === "Inferior") return "Inf";
@@ -99,7 +119,7 @@ export function LandEvidenceSchedule({
             <tbody>
               <tr>
                 {values.map((value, i) => (
-                  <td key={HEADERS[i]} className={cell} style={cellStyle}>{value}</td>
+                  <td key={HEADERS[i]} className={cell} style={cellStyle}><Stacked value={String(value)} /></td>
                 ))}
               </tr>
               {sale.photoUrl || comments ? (

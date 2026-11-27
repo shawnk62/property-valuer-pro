@@ -96,6 +96,28 @@ function dash(value: string): string {
   return value.trim() ? value : "—";
 }
 
+/** Keep a figure in its cell: the unit or the direction sits on the line below. */
+function stacked(value: string): string {
+  const text = value.trim();
+  if (!text || text === "—") return text;
+  const bearing = text.match(/^(.*?)\s+(N|NE|E|SE|S|SW|W|NW)$/);
+  if (bearing) return `${bearing[1]}\n${bearing[2]}`;
+  const unit = text.match(/^(.*?)(\s*\/\s*m²|\s+m²|\s+ha)$/i);
+  if (unit) return `${unit[1].trim()}\n${unit[2].replace(/^\s*\/\s*/, "/").trim()}`;
+  return text;
+}
+
+function Stacked({ value }: { value: string }) {
+  const lines = stacked(value).split("\n");
+  return (
+    <>
+      {lines.map((line, i) => (
+        <span key={i} className="block">{line}</span>
+      ))}
+    </>
+  );
+}
+
 /**
  * Printed commercial/industrial sales or lease evidence summary.
  * One mini-table per comparable, matching SalesEvidenceSchedule pagination
@@ -192,10 +214,10 @@ export function CommercialEvidenceSchedule({
                 {valuesRow.map((value, i) => (
                   <td
                     key={(kind === "leases" ? LEASE_COL_CLASSES : COL_CLASSES)[i]}
-                    className={`${cell}${i === 0 ? " whitespace-nowrap font-semibold" : i === 2 || i === 4 || i === 10 ? " whitespace-nowrap" : i === 3 || i === 5 || i === 7 || i === 8 ? " ci-wrap-cell" : ""}`}
+                    className={`${cell}${i === 0 ? " whitespace-nowrap font-semibold" : " ci-wrap-cell"}`}
                     style={cellStyle}
                   >
-                    {value}
+                    <Stacked value={String(value)} />
                   </td>
                 ))}
               </tr>

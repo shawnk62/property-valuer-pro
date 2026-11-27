@@ -131,9 +131,9 @@ export function formatAreaDisplay(raw: string | null | undefined, unit?: "m2" | 
   if (/ha|hectare|acre|m²|m2/i.test(text)) return text.replace(/\bm2\b/gi, "m²");
   const n = parseNumericAmount(text);
   if (n == null) return text;
-  const suffix = unit === "ha" ? " ha" : " m²";
+  const suffix = unit === "ha" ? "ha" : "m²";
   const digits = Number.isInteger(n) ? 0 : 2;
-  return `${n.toLocaleString("en-AU", { maximumFractionDigits: digits })}${suffix}`;
+  return `${n.toLocaleString("en-AU", { maximumFractionDigits: digits })}\n${suffix}`;
 }
 
 export function formatRatePerM2(price: number | null, areaM2: number | null): string {
@@ -143,7 +143,7 @@ export function formatRatePerM2(price: number | null, areaM2: number | null): st
 
 function formatUnitRate(rate: number): string {
   if (!Number.isFinite(rate) || rate <= 0) return "";
-  return `$${Math.round(rate).toLocaleString("en-AU")}/m²`;
+  return `$${Math.round(rate).toLocaleString("en-AU")}\n/m²`;
 }
 
 export function formatYieldDisplay(raw: string | number | null | undefined): string {

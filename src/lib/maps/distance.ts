@@ -39,7 +39,7 @@ export function bearingFromSubject(
 export function formatProximityWithBearing(km: number, bearing: string): string {
   const dist = formatDistanceFromSubject(km);
   if (!dist) return "";
-  return bearing ? `${dist} ${bearing}` : dist;
+  return bearing ? `${dist}\n${bearing}` : dist;
 }
 
 /**
