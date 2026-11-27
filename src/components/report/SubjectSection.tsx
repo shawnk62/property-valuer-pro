@@ -174,12 +174,6 @@ export function SubjectSection({ controller }: { controller: ReportDraftControll
         </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
 <MetaInput
-            label="Date of valuation"
-            value={reportMeta.valueDate}
-            onChange={(v) => setMeta({ valueDate: v })}
-            placeholder="dd/mm/yyyy"
-          />
-          <MetaInput
             label="Date of inspection"
             value={reportMeta.inspectionDate}
             onChange={(v) => setMeta({ inspectionDate: v })}
