@@ -1305,9 +1305,6 @@
     white-space: normal !important;
   }
 
-  #report-preview-sheet .report-prose-para:last-child {
-    margin-bottom: 0 !important;
-  }
 
   #report-preview-sheet li {
     break-inside: avoid !important;
@@ -1786,12 +1783,6 @@
 .report-prose-para {
   margin: 0 0 14pt !important;
   white-space: normal;
-}
-.report-prose-para:last-child {
-  margin-bottom: 0 !important;
-}
-#report-preview-sheet .report-prose-para:last-child {
-  margin-bottom: 0;
 }
 
 .adjustment-grid-table {
