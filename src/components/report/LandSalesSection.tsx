@@ -146,6 +146,20 @@ export function LandSalesSection({
     });
   }
 
+  function move(id: string, direction: -1 | 1) {
+    const visible = sales.filter((s) => s.omitFromReport !== true);
+    const idx = visible.findIndex((s) => s.id === id);
+    const target = idx + direction;
+    if (idx < 0 || target < 0 || target >= visible.length) return;
+    const a = visible[idx];
+    const b = visible[target];
+    const next = [...sales];
+    const ia = next.findIndex((s) => s.id === a.id);
+    const ib = next.findIndex((s) => s.id === b.id);
+    [next[ia], next[ib]] = [next[ib], next[ia]];
+    onMeta({ ciLandSales: next });
+  }
+
   function archive(id: string) {
     update(id, { omitFromReport: true });
   }
@@ -205,6 +219,8 @@ export function LandSalesSection({
                     />
                     <div className="mt-0.5 flex gap-1 text-[0.65rem]">
                       <button type="button" className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-slate-600" onClick={() => setAgentCallId(s.id)}>Agent call</button>
+                      <button type="button" disabled={idx === 0} className="text-slate-500 disabled:opacity-30" onClick={() => move(s.id, -1)}>←</button>
+                      <button type="button" disabled={idx === visibleSales.length - 1} className="text-slate-500 disabled:opacity-30" onClick={() => move(s.id, 1)}>→</button>
                       <button type="button" className="text-slate-500" onClick={() => archive(s.id)} title="Hold in working file">Archive</button>
                       <button type="button" className="text-red-500" onClick={() => remove(s.id)}>×</button>
                     </div>
