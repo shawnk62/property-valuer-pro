@@ -838,9 +838,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const show5 = show51 || show52 || show53 || show54;
   const show6 = show61 || show62 || show63 || show64 || Boolean(get(v, "exam_market_commentary"));
   const major = includedNumbers([true, true, true, show4, show32, show5, show6, true, true, show9, hasAnnexures]);
-  const n1 = includedNumbers([show11, true, true, true]);
+  const n1 = includedNumbers([show11, true, true, true, true]);
   const n2 = includedNumbers([show21, true, true]);
-  const n3 = includedNumbers([true]);
+  const n3 = includedNumbers([true, selectedOverlays.length > 0]);
   const n4 = includedNumbers([show41, show42, show43, show44]);
   const n5 = includedNumbers([show51, show52, show53, show54]);
   const n6 = includedNumbers([show61, show62, show63, show64]);
@@ -860,7 +860,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     { id: "exam-3", label: t(major[2], "Planning Controls") },
     ...(show4 ? [{ id: "exam-4", label: t(major[3], "Environmental Issues") }] : []),
     ...(show32 ? [{ id: "exam-hbu", label: t(major[4], "Highest and Best Use") }] : []),
-    ...(show5 ? [{ id: "exam-5", label: t(major[5], "Locality and Location") }] : []),
+    ...(show5 ? [{ id: "exam-5", label: t(major[5], draft.narrative.location?.trim() ? "Locality and Location" : "Locality") }] : []),
     ...(show6 ? [{ id: "exam-6", label: t(major[6], "Market Commentary") }] : []),
     { id: "exam-7", label: t(major[7], "Risk Assessment") },
     { id: "exam-8", label: t(major[8], "Valuation approaches and methods") },
@@ -1016,14 +1016,14 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep>
       </Lead>
       <Keep>
-      <H2>{subTitle(major[0], n1[0] + 1, "Extent of investigation")}</H2>
+      <H2>{subTitle(major[0], n1[1], "Extent of investigation")}</H2>
       <Para>
-        {`The subject property was inspected on ${formatNarrativeDateOr(m.inspectionDate, "the date recorded in this report")}, including an internal inspection of the improvements. The title particulars and the planning controls set out in this report have been relied upon. The building areas have been adopted from the inspection. No structural survey or environmental audit has been undertaken.`}
+        The improvements were inspected internally. The title particulars and the planning controls set out in this report have been relied upon. The building areas have been adopted from the inspection. No structural survey or environmental audit has been undertaken.
       </Para>
       </Keep>
 
       <Keep>
-      <H2>{subTitle(major[0], n1[1], "Valuation Standards")}</H2>
+      <H2>{subTitle(major[0], n1[2], "Valuation Standards")}</H2>
       <Para>
         The methodological framework for this valuation is grounded in the standards established by
         the International Valuation Standards Council (IVSC), the Australian Property Institute (API),
@@ -1035,7 +1035,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep>
 
       <Keep>
-      <H2>{subTitle(major[0], n1[2], "Valuer’s Interest")}</H2>
+      <H2>{subTitle(major[0], n1[3], "Valuer’s Interest")}</H2>
       <Para>
         The valuer declares that there is no pecuniary, professional or other interest that would
         constitute a conflict of interest or otherwise compromise the ability to provide an
@@ -1045,7 +1045,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep>
 
       <Keep>
-      <H2>{subTitle(major[0], n1[3], "Date of Valuation / Liability")}</H2>
+      <H2>{subTitle(major[0], n1[4], "Date of Valuation / Liability")}</H2>
       <Para>
         The subject property was inspected on {formatNarrativeDateOr(m.inspectionDate, "the date recorded in this report")}.
         The valuation is effective as at {formatNarrativeDateOr(m.valueDate, "the date of valuation")} only. The concluded
@@ -1183,7 +1183,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Lead>
       {selectedOverlays.length > 0 ? (
         <Keep>
-          <H2>Overlays</H2>
+          <H2>{subTitle(major[2], n3[1], "Overlays")}</H2>
           <table className="mt-2 w-full border-collapse text-xs">
             <thead>
               <tr style={{ background: TEAL, color: "#fff" }}>
@@ -1257,11 +1257,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </Keep> : null}
       {show43 ? <Keep>
       <H2>{subTitle(major[3], n4[2], "Noise and other nuisances")}</H2>
-      {draft.narrative.envIntro?.trim() ? <Prose text={draft.narrative.envIntro} /> : null}
-      <Para>
-        {draft.narrative.noiseNuisances?.trim() ||
-          "No formal acoustic report has been obtained. Comment is limited to features recorded on the inspection."}
-      </Para>
+      {draft.narrative.envIntro?.trim() ? <Prose text={draft.narrative.envIntro} /> : (
+        <Para>
+          {draft.narrative.noiseNuisances?.trim() ||
+            "No formal acoustic report has been obtained. Comment is limited to features recorded on the inspection."}
+        </Para>
+      )}
       </Keep> : null}
       {show44 ? <Keep>
       <H2>{subTitle(major[3], n4[3], "Title notices")}</H2>
@@ -1280,7 +1281,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </Lead>
       ) : null}
 
-      {show5 ? <Lead id="exam-5" title={t(major[5], "Locality and Location")}>
+      {show5 ? <Lead id="exam-5" title={t(major[5], draft.narrative.location?.trim() ? "Locality and Location" : "Locality")}>
       <Keep>
       {show51 ? <H2>{subTitle(major[5], n5[0], "Location")}</H2> : null}
       {narrativePrints(m, "location") ? (
