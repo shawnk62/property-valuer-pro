@@ -522,11 +522,6 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
       hint: "Prints once, immediately under the sales grids that are included.",
     },
     {
-      key: "valueReconciliation",
-      label: "Final reconciliation of value",
-      hint: "Prints immediately after the comments on comparable sales.",
-    },
-    {
       key: "valuationResult",
       label: "Valuation result — opinion of value",
       hint: "Prints under Valuation result.",

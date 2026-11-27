@@ -64,7 +64,7 @@ export function FinalReconciliationSection({ controller }: { controller: ReportD
           placeholder={propertyIsLeased(reportMeta) ? FINAL_LEASED : FINAL_VACANT}
           className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm"
         />
-        <p className="text-xs text-muted-foreground">Prints as: {finalBoilerplate(reportMeta, draft.values, draft.narrative.valueReconciliation, draft.narrative.finalValueReason)}</p>
+        <p className="text-xs text-muted-foreground">Prints as: {draft.narrative.valueReconciliation?.trim() ? finalBoilerplate(reportMeta, draft.values, draft.narrative.valueReconciliation, draft.narrative.finalValueReason) : "(nothing — the line is omitted)"}</p>
       </section>
 
       <section className="space-y-3 rounded-md border border-border bg-card p-4">
