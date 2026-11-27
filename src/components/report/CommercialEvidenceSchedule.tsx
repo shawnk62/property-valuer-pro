@@ -15,14 +15,14 @@ import { salesOnReport } from "@/lib/report/types";
 const SALE_HEADERS = [
   "No.",
   "Address",
-  "Sale price",
-  "Sale date",
-  "Distance",
-  "Building area",
-  "Price/m² bldg",
-  "Land area",
-  "Price/m² land",
-  "Indicated yield",
+  "Price",
+  "Date",
+  "Dist.",
+  "Bldg",
+  "Bldg/m²",
+  "Land",
+  "Land/m²",
+  "Yield",
   "Rating",
 ] as const;
 
