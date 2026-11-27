@@ -243,13 +243,16 @@ export function CostApproachSection({
           </tr>
         </thead>
         <tbody>
-          <tr className="border-b border-slate-200 bg-slate-50">
+          <tr className={`border-b border-slate-200 ${landArea == null || landRate == null ? "bg-amber-50" : "bg-slate-50"}`}>
             <td className="py-1 pr-2 font-medium">Assessed market vacant land value</td>
             <td className="py-1 pr-1"><input className="w-full border border-slate-300 rounded px-1 py-0.5" value={stored.landArea ?? ""} placeholder="Land area m²" onChange={(e) => patch({ landArea: e.target.value })} /></td>
             <td className="py-1 pr-1"><input className="w-full border border-slate-300 rounded px-1 py-0.5" value={stored.landRate ?? ""} placeholder="$/m²" onChange={(e) => patch({ landRate: e.target.value })} /></td>
             <td colSpan={2} className="py-1 pr-1"><input className="w-full border border-slate-300 rounded px-1 py-0.5" value={stored.landValue ?? ""} placeholder="Or enter value" onChange={(e) => patch({ landValue: e.target.value })} /></td>
             <td className="py-1 text-right font-medium">{money(landValue)}</td>
           </tr>
+          {landArea == null || landRate == null ? (
+            <tr><td colSpan={6} className="py-1 text-xs text-amber-700">Land value needs an area and a rate, so the report can show how it was arrived at.</td></tr>
+          ) : null}
           <tr><td colSpan={6} className="pt-2 pb-1 text-xs font-semibold text-slate-600">Add — replacement costs of main building</td></tr>
           {main.map((line, i) => <LineRow key={`main-${i}`} line={line} index={i} list="mainBuilding" onUpdate={updateLine} />)}
           <tr className="border-b border-slate-200 bg-slate-50 font-medium">

@@ -282,10 +282,10 @@ export const COST_BOILERPLATE =
   "The land value of ${{land}} and the depreciated replacement cost of the improvements of ${{improvements}} total ${{unrounded}}. For practical purposes, and rounding to the nearest ${{rounding}}, a value of ${{adopted}} is adopted for the cost approach.";
 
 export const FINAL_LEASED =
-  "The market approach indicates ${{market}}. The income approach, having regard to the existing lease, indicates ${{income}}. The cost approach indicates ${{cost}}. Having regard to the evidence, {{weight}}, and a value of ${{adopted}} is adopted as at {{date}}.";
+  "The market approach indicates ${{market}}. The income approach, having regard to the existing lease, indicates ${{income}}. The cost approach indicates ${{cost}}. Having regard to the evidence, {{weight}}. A value of ${{adopted}} is adopted as at {{date}}{{reason}}.";
 
 export const FINAL_VACANT =
-  "The market approach indicates ${{market}}. The cost approach indicates ${{cost}}. The property is vacant at the date of valuation, and primary weight has been given to the market approach. A value of ${{adopted}} is adopted as at {{date}}.";
+  "The market approach indicates ${{market}}. The cost approach indicates ${{cost}}. The property is vacant at the date of valuation, and primary weight has been given to the market approach. A value of ${{adopted}} is adopted as at {{date}}{{reason}}.";
 
 function costLine(line: { area?: string; rate?: string; depreciation?: string; nominal?: string }): number | null {
   const nominal = num(line.nominal);
@@ -368,7 +368,7 @@ export function costBoilerplate(meta: ReportMeta, template?: string): string {
   });
 }
 
-export function finalBoilerplate(meta: ReportMeta, values: InspectionValues, template?: string): string {
+export function finalBoilerplate(meta: ReportMeta, values: InspectionValues, template?: string, reason?: string): string {
   const market = marketApproachCalc(meta, values)?.adopted ?? num(meta.marketApproachValue);
   const income = num(meta.incomeApproachValue) ?? num(meta.ciAdoptedValueOverride);
   const cost = costApproachCalc(meta)?.adopted ?? num(meta.costApproachValue);
@@ -381,6 +381,7 @@ export function finalBoilerplate(meta: ReportMeta, values: InspectionValues, tem
     cost: moneyOf(cost),
     adopted: moneyOf(adopted),
     date: meta.valueDate || String(values["insp_date"] ?? "") || "the date of valuation",
+    reason: reason?.trim() ? `, ${reason.trim().replace(/\.$/, "")}` : "",
     weight: meta.approachWeight === "income"
       ? "primary weight has been given to the income approach, supported by the market approach"
       : meta.approachWeight === "equal"

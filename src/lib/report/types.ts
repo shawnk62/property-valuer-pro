@@ -421,6 +421,8 @@ export interface ReportNarrative {
   salesComments: string;
   /** Final reconciliation of value. Prints after the sales comments. */
   valueReconciliation: string;
+  /** Why the adopted figure was chosen from the indicated values. */
+  finalValueReason: string;
   /** Valuation result opinion. Prints under Valuation result. */
   valuationResult: string;
   /** Valuation result reliance note. Prints under the opinion. */

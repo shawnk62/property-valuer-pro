@@ -1625,7 +1625,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                   ))}
                   {costApproachCalc(m)?.land ? (
                     <tr>
-                      <td className="border px-2 py-1.5" style={{ borderColor: RULE }} colSpan={6}>Land value</td>
+                      <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Land</td>
+                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{m.costApproach?.landArea || "—"}</td>
+                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{m.costApproach?.landRate || "—"}</td>
+                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }} colSpan={3}>{m.costApproach?.landArea && m.costApproach?.landRate ? `${m.costApproach.landArea} m² × $${m.costApproach.landRate}` : ""}</td>
                       <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{formatCostMoney(costApproachCalc(m)!.land)}</td>
                     </tr>
                   ) : null}
@@ -1672,7 +1675,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 {m.costApproachValue || m.costApproach?.adoptedValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Cost</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Summation</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${formatCurrencyDisplay(m.costApproachValue || m.costApproach?.adoptedValue || "")}</td></tr> : null}
               </tbody>
             </table>
-            <Prose text={finalBoilerplate(m, v, draft.narrative.valueReconciliation)} />
+            <Prose text={finalBoilerplate(m, v, draft.narrative.valueReconciliation, draft.narrative.finalValueReason)} />
           </Keep>
         ) : null}
         {get(v, "exam_on_market") ? (

@@ -63,7 +63,7 @@ export function FinalReconciliationSection({ controller }: { controller: ReportD
           placeholder={propertyIsLeased(reportMeta) ? FINAL_LEASED : FINAL_VACANT}
           className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm"
         />
-        <p className="text-xs text-muted-foreground">Prints as: {finalBoilerplate(reportMeta, draft.values, draft.narrative.valueReconciliation)}</p>
+        <p className="text-xs text-muted-foreground">Prints as: {finalBoilerplate(reportMeta, draft.values, draft.narrative.valueReconciliation, draft.narrative.finalValueReason)}</p>
       </section>
 
       <section className="space-y-3 rounded-md border border-border bg-card p-4">
@@ -103,6 +103,18 @@ export function FinalReconciliationSection({ controller }: { controller: ReportD
             placeholder="3,500,000"
           />
         </label>
+        {(() => {
+          const adopted = Number(String(reportMeta.valueAmount ?? "").replace(/[^0-9.]/g, ""));
+          const indicated = [market, income, cost].map((n) => Number(String(n ?? "").replace(/[^0-9.]/g, ""))).filter((n) => n > 0);
+          const needsReason = adopted > 0 && !indicated.includes(adopted) && !draft.narrative.finalValueReason?.trim();
+          return (
+            <label className={`block text-sm ${needsReason ? "rounded border border-amber-400 bg-amber-50 p-2" : ""}`}>
+              <span className="mb-1 block text-xs">Why this figure, given the three indicated values</span>
+              <textarea className="min-h-[4rem] w-full rounded border border-input px-2 py-1" value={draft.narrative.finalValueReason ?? ""} placeholder="e.g. the income approach reflects the existing lease, which a purchaser would assume" onChange={(e) => setNarrative({ finalValueReason: e.target.value })} />
+              {needsReason ? <span className="mt-1 block text-xs text-amber-700">The adopted figure is not one of the three indicated values. A reader cannot see why it was chosen unless this is completed.</span> : null}
+            </label>
+          );
+        })()}
       </section>
 
       <section className="space-y-3 rounded-md border border-border bg-card p-4">
