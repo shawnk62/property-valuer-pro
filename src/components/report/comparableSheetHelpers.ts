@@ -352,12 +352,18 @@ export function effectiveLeaseSheet(
   number: number | undefined,
   pools: SheetPools,
 ): ComparableSheetData {
+  const linked = pools.sales?.find((s) => s.id === lease.id || s.id === lease.linkedSaleId);
+  const withLinked: LeaseSheetRecord = {
+    ...lease,
+    leaseAmount: lease.leaseAmount || linked?.passingRent || "",
+    nla: lease.nla || linked?.gla || "",
+  };
   const source = findExistingSheet(
     { id: lease.id, address: lease.address, ...opt("linkedSaleId", lease.linkedSaleId) },
     "lease",
     pools,
   );
-  const prefilled = withSheetPrefill(leaseToSheet(lease, number), source);
+  const prefilled = withSheetPrefill(leaseToSheet(withLinked, number), source);
   const land = resolveLeaseLand(lease, pools);
   const landArea = land ? formatSheetArea(land.area, land.unit) : undefined;
   return landArea ? { ...prefilled, landArea } : prefilled;

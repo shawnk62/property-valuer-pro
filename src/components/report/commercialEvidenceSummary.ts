@@ -312,15 +312,17 @@ export function buildLeaseSummaryRow(
 ): EvidenceSummaryRow {
   const sheet = effectiveLeaseSheet(lease, number, pools);
   const sale = linkedSale(lease, pools.sales);
-  const annual = annualLeaseAmount(lease);
-  const building = parseNumericAmount(lease.nla);
+  const amountSource = lease.leaseAmount || sale?.passingRent || "";
+  const areaSource = lease.nla || sale?.gla || "";
+  const annual = annualLeaseAmount({ ...lease, leaseAmount: amountSource, nla: areaSource });
+  const building = parseNumericAmount(areaSource);
   const land = resolveLeaseLand(lease, pools);
   const landM2 = areaToM2(land?.area, land?.unit);
   const rate = leaseRentRate(lease);
   const auto: Omit<EvidenceSummaryRow, "id" | "number" | "address" | "photoUrl"> = {
-    price: annual != null ? formatSalePrice(String(annual)) : formatSalePrice(lease.leaseAmount ?? lease.netRentPerM2 ?? ""),
+    price: annual != null ? formatSalePrice(String(annual)) : formatSalePrice(amountSource || lease.netRentPerM2 || ""),
     date: lease.date?.trim() ?? "",
-    buildingArea: formatAreaDisplay(lease.nla),
+    buildingArea: formatAreaDisplay(areaSource),
     pricePerM2Building: rate != null ? formatUnitRate(rate) : formatRatePerM2(annual, building != null && building > 0 ? building : null),
     landArea: land ? formatAreaDisplay(land.area, land.unit) : "",
     pricePerM2Land: formatRatePerM2(annual, landM2),
