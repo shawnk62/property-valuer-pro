@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from "react";
+import { printedBlockNumber } from "@/lib/report/sectionNumbers";
 import { flushSync } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -1874,6 +1875,10 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
       ) : null}
 
       {BLOCKS.map((block) => {
+        const printedNumber = shawnExam ? printedBlockNumber(draft, block.key) : "";
+        const blockLabel = printedNumber
+          ? `${printedNumber} ${block.label.replace(/^\d+(?:\.\d+)*\s*/, "")}`
+          : block.label;
         const blockText =
           block.key === "remarks"
             ? localRemarks
