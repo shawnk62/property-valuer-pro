@@ -2,7 +2,7 @@
  * Comparable land sales for the cost approach (commercial / industrial Shawn Full).
  * Separate from the improved sales comparison grid.
  */
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ComparableSale, InspectionValues, ReportMeta } from "@/lib/report/types";
 import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
@@ -169,6 +169,7 @@ export function LandSalesSection({
   }
 
   const [distancesBusy, setDistancesBusy] = useState(false);
+  const distancesTried = useRef(false);
   async function calculateDistances() {
     if (!isGoogleMapsConfigured()) {
       toast.error("Add a Google Maps API key in Settings first");
@@ -198,6 +199,14 @@ export function LandSalesSection({
       setDistancesBusy(false);
     }
   }
+
+  useEffect(() => {
+    if (distancesTried.current || distancesBusy) return;
+    const missing = sales.some((s) => s.omitFromReport !== true && s.address?.trim() && !s.proximity?.trim());
+    if (!missing) return;
+    distancesTried.current = true;
+    void calculateDistances();
+  }, [sales]);
 
   function remove(id: string) {
     if (!window.confirm("Delete this land sale from the working file?")) return;
