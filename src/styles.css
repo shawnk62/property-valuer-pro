@@ -1791,3 +1791,10 @@
 .adjustment-grid-table tbody tr:nth-child(odd) td {
   background: #fff;
 }
+
+.report-sheet-source {
+  display: none !important;
+}
+#report-preview-pages {
+  display: block;
+}

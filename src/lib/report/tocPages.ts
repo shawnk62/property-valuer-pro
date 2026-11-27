@@ -37,8 +37,30 @@ function unwrap(sheet: HTMLElement) {
 }
 
 export function fillExamTocPages(): void {
-  const sheet = document.getElementById("report-preview-sheet");
-  if (!sheet) return;
+  const source = document.getElementById("report-preview-sheet");
+  if (!source) return;
+  const host = source.closest(".report-print-host") as HTMLElement | null;
+  if (!host) return;
+  let pages = host.querySelector<HTMLElement>("#report-preview-pages");
+  if (!pages) {
+    pages = document.createElement("div");
+    pages.id = "report-preview-pages";
+    host.appendChild(pages);
+  }
+  pages.replaceChildren();
+  const sheet = source.cloneNode(true) as HTMLElement;
+  sheet.removeAttribute("id");
+  host.insertBefore(pages, source);
+  pages.appendChild(sheet);
+  try {
+    paginateSheet(sheet);
+  } catch (err) {
+    console.error("Preview pagination failed", err);
+  }
+  source.classList.add("report-sheet-source");
+}
+
+function paginateSheet(sheet: HTMLElement): void {
   const host = sheet.closest(".report-print-host") as HTMLElement | null;
   const hostWasHidden = host?.classList.contains("hidden") ?? false;
   if (hostWasHidden) host.classList.remove("hidden");
@@ -128,7 +150,7 @@ export function fillExamTocPages(): void {
     if (section.id && first?.dataset.page) section.dataset.page = first.dataset.page;
   });
 
-  document.querySelectorAll<HTMLElement>("[data-toc-id]").forEach((slot) => {
+  sheet.querySelectorAll<HTMLElement>("[data-toc-id]").forEach((slot) => {
     const id = slot.getAttribute("data-toc-id");
     if (!id) return;
     const target = document.getElementById(id);
