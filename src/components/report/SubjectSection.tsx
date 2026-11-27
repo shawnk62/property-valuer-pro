@@ -1,4 +1,6 @@
 import type { ReportDraftController } from "@/hooks/useReportDraft";
+import { PausedTextarea } from "@/components/report/PausedTextarea";
+import { narrativePrints } from "@/lib/narrative/neighbourhoodAssist";
 import { PROP_ASSIGNMENT_OPTIONS } from "@/lib/inspection/schema";
 import { formatCurrencyInput } from "@/lib/report/salesRelativity";
 import { pick } from "@/lib/report/schema";
@@ -226,6 +228,28 @@ export function SubjectSection({ controller }: { controller: ReportDraftControll
         To change them, open the inspection form (Edit inspection form on Review). Fields left
         unset in the inspection are omitted entirely, in the report as well as above.
       </p>
+
+      <section className="space-y-3 rounded-md border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold text-foreground">Final reconciliation and valuation result</h3>
+        <p className="text-xs text-muted-foreground">
+          Edited here only. The approach commentary is edited on the Market evidence, Income approach and Cost approach tabs.
+        </p>
+        <label className="flex cursor-pointer items-center gap-2 text-xs">
+          <input type="checkbox" checked={narrativePrints(reportMeta, "valueReconciliation")} onChange={(e) => setMeta({ printNarrative: { ...(reportMeta.printNarrative ?? {}), valueReconciliation: e.target.checked } })} />
+          Include final reconciliation
+        </label>
+        <PausedTextarea value={draft.narrative.valueReconciliation ?? ""} onCommit={(v) => setNarrative({ valueReconciliation: v })} placeholder="Final reconciliation of the approaches…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+        <label className="flex cursor-pointer items-center gap-2 text-xs">
+          <input type="checkbox" checked={narrativePrints(reportMeta, "valuationResult")} onChange={(e) => setMeta({ printNarrative: { ...(reportMeta.printNarrative ?? {}), valuationResult: e.target.checked } })} />
+          Include opinion of value
+        </label>
+        <PausedTextarea value={draft.narrative.valuationResult ?? ""} onCommit={(v) => setNarrative({ valuationResult: v })} placeholder="Opinion of value…" className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+        <label className="flex cursor-pointer items-center gap-2 text-xs">
+          <input type="checkbox" checked={narrativePrints(reportMeta, "valuationReliance")} onChange={(e) => setMeta({ printNarrative: { ...(reportMeta.printNarrative ?? {}), valuationReliance: e.target.checked } })} />
+          Include reliance note
+        </label>
+        <PausedTextarea value={draft.narrative.valuationReliance ?? ""} onCommit={(v) => setNarrative({ valuationReliance: v })} placeholder="Reliance note…" className="min-h-[4rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+      </section>
     </div>
   );
 }

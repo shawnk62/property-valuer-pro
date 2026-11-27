@@ -3134,6 +3134,11 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
           </label>
           <PausedTextarea value={draft.narrative.marketReconciliation ?? ""} onCommit={(v) => setNarrative({ marketReconciliation: v })} placeholder="Reconciliation of the market approach…" className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
           <label className="flex cursor-pointer items-center gap-2 text-xs">
+            <input type="checkbox" checked={narrativePrints(draft.reportMeta, "salesAnalysis")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), salesAnalysis: e.target.checked } })} />
+            Include analysis on report
+          </label>
+          <PausedTextarea value={draft.narrative.salesAnalysis ?? ""} onCommit={(v) => setNarrative({ salesAnalysis: v })} placeholder="Analysis of the sales evidence…" className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          <label className="flex cursor-pointer items-center gap-2 text-xs">
             <input type="checkbox" checked={draft.reportMeta.printSalesMap !== false} onChange={(e) => setMeta({ printSalesMap: e.target.checked })} />
             Include sales comparison map on report
           </label>
@@ -3168,10 +3173,7 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
             <PausedTextarea value={draft.narrative.dcfApproach ?? ""} onCommit={(v) => setNarrative({ dcfApproach: v })} placeholder="Discounted cash flow commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
           </div>
 
-          <div className="space-y-4 rounded-md border border-border bg-card p-4">
-            <h3 className="text-sm font-semibold text-foreground">Reconciliation</h3>
-            <PausedTextarea value={draft.narrative.valueReconciliation ?? ""} onCommit={(v) => setNarrative({ valueReconciliation: v })} placeholder="Reconciliation of value…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
-          </div>
+
         </>
       ) : null}
 

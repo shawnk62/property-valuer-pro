@@ -434,66 +434,6 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           hint: "Prints under the Valuation approaches and methods heading. Prints only when this field has text.",
         },
         {
-          key: "salesComments",
-          label: "Market approach — comments on comparable sales",
-          hint: "Prints under the Market approach, after the sales evidence.",
-        },
-        {
-          key: "marketReconciliation",
-          label: "Market approach — reconciliation",
-          hint: "Prints at the end of the Market approach. State the value indicated by direct comparison and the reasons.",
-        },
-        {
-          key: "leaseEvidence",
-          label: "Lease Evidence",
-          hint: "Prints under Valuation Approach for commercial and industrial. Leasing comparables as recorded. Manual text is kept.",
-        },
-        {
-          key: "capitalisationApproach",
-          label: "Capitalisation Approach",
-          hint: "Prints under Valuation Approach for commercial and industrial. Income capitalisation from recorded rent and yield. Manual text is kept.",
-        },
-        {
-          key: "dcfApproach",
-          label: "Discounted Cash Flow",
-          hint: "Prints under Valuation Approach for commercial and industrial. DCF from recorded cash flows and exit rate. Manual text is kept.",
-        },
-        {
-          key: "incomeReconciliation",
-          label: "Income approach — reconciliation",
-          hint: "Prints at the end of the Income approach. Reconcile capitalisation and DCF to one income-approach value.",
-        },
-        {
-          key: "costApproach",
-          label: "Cost approach — summation method",
-          hint: "Prints under the Cost approach. Depreciated replacement cost where recorded. Manual text is kept.",
-        },
-        {
-          key: "costReconciliation",
-          label: "Cost approach — reconciliation",
-          hint: "Prints at the end of the Cost approach. State the cost-approach value.",
-        },
-        {
-          key: "valueReconciliation",
-          label: "Final reconciliation of the approaches",
-          hint: "Prints after the approach values table. Discuss the weight given to each approach.",
-        },
-        {
-          key: "valuationResult",
-          label: "Valuation result — opinion of value",
-          hint: "Prints under Valuation result. The address, date and value fill in if you leave this blank.",
-        },
-        {
-          key: "valuationReliance",
-          label: "Valuation result — reliance",
-          hint: "Prints under the opinion of value. Untick to leave it off the report.",
-        },
-        {
-          key: "salesAnalysis",
-          label: "8.5 Analysis",
-          hint: "Prints under 8.5 Analysis.",
-        },
-        {
           key: "disclaimer",
           label: "Reliance and terms of use",
           hint: "Prints under its own heading before the references. States who instructed the report, the purpose, who may rely on it, and the terms. Manual text is kept.",
