@@ -31,7 +31,7 @@ import {
   SUBJECT_ZOOM_MIN,
 } from "@/lib/maps/generateMaps";
 import { geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
-import { proximityFromPins, proximityWithBearingFromPins } from "@/lib/maps/distance";
+import { proximityForRecords, proximityFromPins, proximityWithBearingFromPins } from "@/lib/maps/distance";
 import {
   pinsFromDraft,
   pinsFromLeases,
@@ -591,7 +591,10 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
         reader.readAsDataURL(file);
       });
       if (kind === "lease") setMeta({ ciLeaseMapUrl: dataUrl });
-      else setMeta({ ciLandMapUrl: dataUrl });
+      else {
+        const lands = draft.reportMeta.ciLandSales ?? [];
+        setMeta({ ciLandMapUrl: dataUrl, ciLandSales: proximityForRecords(lands, resolved, true) });
+      }
       toast.success(`${kind === "lease" ? "Lease" : "Land sales"} map generated`);
       setStatus("Map generated.");
     } catch (err) {

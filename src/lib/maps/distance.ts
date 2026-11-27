@@ -79,3 +79,25 @@ export function proximityFromPins(
     return { ...sale, proximity };
   });
 }
+
+/** Fill distance from the subject on any evidence that has an id, using map pins. */
+export function proximityForRecords<T extends { id: string; proximity?: string }>(
+  records: T[],
+  pins: SalesMapPin[],
+  withBearing = true,
+): T[] {
+  const asSales = records.map((r) => ({
+    id: r.id,
+    salePrice: "",
+    comments: "",
+    proximity: r.proximity ?? "",
+  }));
+  const next = withBearing
+    ? proximityWithBearingFromPins(asSales, pins)
+    : proximityFromPins(asSales, pins);
+  const byId = new Map(next.map((s) => [s.id, s.proximity]));
+  return records.map((r) => {
+    const proximity = byId.get(r.id);
+    return proximity && proximity !== r.proximity ? { ...r, proximity } : r;
+  });
+}

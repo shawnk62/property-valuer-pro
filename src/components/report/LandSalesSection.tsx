@@ -9,6 +9,10 @@ import { attachComparablePhoto } from "@/lib/report/attachComparablePhoto";
 import { RELATIVITY_OPTIONS, relativitySelectClass, type Relativity } from "@/lib/report/adjustmentGrid";
 import { ComparableSheet } from "@/components/report/ComparableSheet";
 import { effectiveLandSheet, landFromSheetPatch } from "@/components/report/comparableSheetHelpers";
+import { geocodeGoogleAddresses } from "@/lib/maps/maps.functions";
+import { proximityForRecords } from "@/lib/maps/distance";
+import { pinsFromLandSales, pinsNeedingGeocode } from "@/lib/maps/salesMapPins";
+import { isGoogleMapsConfigured, loadGoogleMapsKey } from "@/lib/maps/googleSettings";
 
 function num(raw: string | number | null | undefined): number | null {
   if (raw == null) return null;
@@ -164,6 +168,37 @@ export function LandSalesSection({
     update(id, { omitFromReport: true });
   }
 
+  const [distancesBusy, setDistancesBusy] = useState(false);
+  async function calculateDistances() {
+    if (!isGoogleMapsConfigured()) {
+      toast.error("Add a Google Maps API key in Settings first");
+      return;
+    }
+    const key = loadGoogleMapsKey();
+    setDistancesBusy(true);
+    try {
+      const pins = pinsFromLandSales({ values, landSales: sales, saved: null });
+      const need = pinsNeedingGeocode(pins).filter((p) => p.address);
+      let resolved = pins;
+      if (need.length > 0) {
+        const geo = await geocodeGoogleAddresses({ data: { apiKey: key, addresses: need.map((p) => p.address!) } });
+        const byId = new Map(need.map((p, i) => [p.id, geo.results[i]]));
+        resolved = pins.map((p) => {
+          const hit = byId.get(p.id);
+          return hit?.lat != null && hit.lng != null ? { ...p, lat: hit.lat, lng: hit.lng } : p;
+        });
+      }
+      const next = proximityForRecords(sales, resolved, true);
+      const filled = next.filter((s, i) => s.proximity && s.proximity !== sales[i]?.proximity).length;
+      onMeta({ ciLandSales: next });
+      toast.success(filled ? `Distance filled for ${filled} land sale${filled === 1 ? "" : "s"}` : "No distances could be calculated. Check the addresses.");
+    } catch (err) {
+      toast.error("Could not calculate distances", { description: err instanceof Error ? err.message : "Geocoding failed" });
+    } finally {
+      setDistancesBusy(false);
+    }
+  }
+
   function remove(id: string) {
     if (!window.confirm("Delete this land sale from the working file?")) return;
     onMeta({ ciLandSales: sales.filter((s) => s.id !== id) });
@@ -183,6 +218,7 @@ export function LandSalesSection({
         />
         Include land sales evidence table on report
       </label>
+      <button type="button" className="mb-2 rounded border border-slate-300 px-2 py-0.5 text-xs" disabled={distancesBusy} onClick={() => void calculateDistances()}>{distancesBusy ? "Calculating…" : "Calculate distances"}</button>
       <button
         type="button"
         onClick={() => onMeta({ ciLandSales: [...sales, blank()] })}
@@ -435,6 +471,33 @@ export function LandSalesSection({
               </li>
             ))}
           </ul>
+        </div>
+      ) : null}
+      {visibleSales.length > 0 ? (
+        <div className="mt-4 overflow-x-auto">
+          <h3 className="mb-1 text-sm font-semibold text-slate-700">Land sales table</h3>
+          <table className="w-full border-collapse text-xs">
+            <thead>
+              <tr className="bg-slate-100 text-left">
+                {["No.", "Address", "Price", "Date", "Land area", "Price/m²", "Distance"].map((h) => (
+                  <th key={h} className="border border-slate-300 px-2 py-1.5 font-semibold">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {visibleSales.map((s, idx) => (
+                <tr key={s.id}>
+                  <td className="border border-slate-300 px-2 py-1">{idx + 1}</td>
+                  <td className="border border-slate-300 px-1 py-1"><input className="w-full rounded border border-slate-300 px-1 py-0.5" value={s.address} onChange={(e) => update(s.id, { address: e.target.value })} /></td>
+                  <td className="border border-slate-300 px-1 py-1"><input className="w-full rounded border border-slate-300 px-1 py-0.5" value={s.price} onChange={(e) => update(s.id, { price: e.target.value })} /></td>
+                  <td className="border border-slate-300 px-1 py-1"><input className="w-full rounded border border-slate-300 px-1 py-0.5" value={s.date} onChange={(e) => update(s.id, { date: e.target.value })} /></td>
+                  <td className="border border-slate-300 px-1 py-1"><input className="w-full rounded border border-slate-300 px-1 py-0.5" value={s.landArea} onChange={(e) => update(s.id, { landArea: e.target.value })} /></td>
+                  <td className="border border-slate-300 px-2 py-1">{ratePerM2(s.price, s.landArea, s.landUnit) || "—"}</td>
+                  <td className="border border-slate-300 px-1 py-1"><input className="w-full rounded border border-slate-300 px-1 py-0.5" value={s.proximity ?? ""} placeholder="e.g. 1.2 km N" onChange={(e) => update(s.id, { proximity: e.target.value })} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : null}
       {visibleSales.filter((s) => s.address || s.price).map((s, idx) => (
