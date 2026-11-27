@@ -779,7 +779,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const valueDateText = formatNarrativeDateOr(m.valueDate || get(v, "insp_date"), "[date of valuation]");
   const valueInFigures = m.valueAmount ? `$${formatCurrencyDisplay(m.valueAmount)}` : "";
   const valueStatement = m.valueAmount
-    ? `It is ${opinionPronoun} opinion that the value of the subject property as at ${valueDateText} is ${valueInFigures}${valueWords ? ` (${valueWords})` : ""}.`
+    ? `It is ${opinionPronoun} opinion that the market value of the subject property as at ${valueDateText} is ${valueInFigures}${valueWords ? ` (${valueWords})` : ""}.`
     : "";
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], " ");
   const usableSiteArea = formatUsableSiteAreaIfDifferent(v);
@@ -992,11 +992,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         </figure>
       ) : null}
       {valueStatement ? (
-        <div className="mt-4 text-left">
-          <p className="text-xl font-semibold">{valueInFigures}</p>
-          {valueWords ? <p className="mt-1">({valueWords})</p> : null}
-          <p className="mt-2">{valueStatement}</p>
-        </div>
+        <p className="mt-4 text-left">{valueStatement}</p>
       ) : null}
       <div className="mt-4">
         <ExamSignature draft={draft} />
@@ -1700,7 +1696,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {prints("valuationResult") ? (
           <Para>
             {draft.narrative.valuationResult?.trim() ||
-              `Having regard to the sales evidence and market conditions at the date of valuation, it is ${opinionPronoun} opinion that the value of the subject property located at ${addressLine || "[property address]"} as at ${valueDateText} is ${m.valueAmount ? `${valueInFigures}${valueWords ? ` (${valueWords})` : ""}.` : "[value in numbers, then words]." }`}
+              `Having regard to the sales evidence and market conditions at the date of valuation, it is ${opinionPronoun} opinion that the market value of the subject property located at ${addressLine || "[property address]"} as at ${valueDateText} is ${m.valueAmount ? `${valueInFigures}${valueWords ? ` (${valueWords})` : ""}.` : "[value in numbers, then words]." }`}
           </Para>
         ) : null}
         {prints("valuationReliance") ? (
