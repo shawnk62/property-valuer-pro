@@ -777,8 +777,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const valuerCount = 1 + (m.valuers ?? []).filter((row) => row.include !== false && row.name).length;
   const opinionPronoun = valuerCount > 1 ? "our" : "my";
   const valueDateText = formatNarrativeDateOr(m.valueDate || get(v, "insp_date"), "[date of valuation]");
+  const valueInFigures = m.valueAmount ? `$${formatCurrencyDisplay(m.valueAmount)}` : "";
   const valueStatement = m.valueAmount
-    ? `It is ${opinionPronoun} opinion that the value of the subject property as at ${valueDateText} is $${formatCurrencyDisplay(m.valueAmount)}${valueWords ? ` (${valueWords})` : ""}.`
+    ? `It is ${opinionPronoun} opinion that the value of the subject property as at ${valueDateText} is ${valueInFigures}${valueWords ? ` (${valueWords})` : ""}.`
     : "";
   const siteArea = joinValues(v, ["prop_sitearea", "prop_areaunit"], " ");
   const usableSiteArea = formatUsableSiteAreaIfDifferent(v);
@@ -992,8 +993,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       ) : null}
       {valueStatement ? (
         <div className="mt-4 text-left">
-          <p>{valueStatement}</p>
-          <p className="mt-2 text-xl font-semibold">${formatCurrencyDisplay(m.valueAmount)}</p>
+          <p className="text-xl font-semibold">{valueInFigures}</p>
+          {valueWords ? <p className="mt-1">({valueWords})</p> : null}
+          <p className="mt-2">{valueStatement}</p>
         </div>
       ) : null}
       <div className="mt-4">
@@ -1698,7 +1700,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {prints("valuationResult") ? (
           <Para>
             {draft.narrative.valuationResult?.trim() ||
-              `Having regard to the sales evidence and market conditions at the date of valuation, it is ${opinionPronoun} opinion that the value of the subject property located at ${addressLine || "[property address]"} as at ${valueDateText} is${m.valueAmount ? ` $${formatCurrencyDisplay(m.valueAmount)}${valueWords ? ` (${valueWords})` : ""}.` : " [value in numbers and words]." }`}
+              `Having regard to the sales evidence and market conditions at the date of valuation, it is ${opinionPronoun} opinion that the value of the subject property located at ${addressLine || "[property address]"} as at ${valueDateText} is ${m.valueAmount ? `${valueInFigures}${valueWords ? ` (${valueWords})` : ""}.` : "[value in numbers, then words]." }`}
           </Para>
         ) : null}
         {prints("valuationReliance") ? (
