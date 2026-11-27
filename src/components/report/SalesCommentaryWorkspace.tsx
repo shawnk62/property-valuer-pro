@@ -119,11 +119,13 @@ export function SalesCommentaryWorkspace({
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
           <Editor
             label="Comments on comparable sales"
+            narrativeKey="salesComments"
             value={draft.narrative.salesComments ?? ""}
             onChange={(value) => write("salesComments", value)}
           />
           <Editor
             label="Final reconciliation of value"
+            narrativeKey="valueReconciliation"
             value={draft.narrative.valueReconciliation ?? ""}
             onChange={(value) => write("valueReconciliation", value)}
           />
@@ -135,10 +137,12 @@ export function SalesCommentaryWorkspace({
 
 function Editor({
   label,
+  narrativeKey,
   value,
   onChange,
 }: {
   label: string;
+  narrativeKey: string;
   value: string;
   onChange: (value: string) => void;
 }) {
@@ -165,6 +169,7 @@ function Editor({
     <label className="flex min-h-[16rem] flex-1 flex-col gap-1">
       <span className="text-sm font-medium text-foreground">{label}</span>
       <textarea
+        data-narrative-key={narrativeKey}
         value={text}
         onFocus={() => {
           focused.current = true;

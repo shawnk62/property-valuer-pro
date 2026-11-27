@@ -1955,6 +1955,7 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
             </div>
           ) : null}
           <NarrativeField
+            narrativeKey={block.key}
             value={blockText}
             rows={
               block.key === "salesComments" || block.key === "valueReconciliation"
@@ -2282,11 +2283,13 @@ export function NarrativeSection({ controller }: { controller: ReportDraftContro
 }
 
 function NarrativeField({
+  narrativeKey,
   value,
   rows,
   onCommit,
   onSelectText,
 }: {
+  narrativeKey?: string;
   value: string;
   rows: number;
   onCommit: (value: string) => void;

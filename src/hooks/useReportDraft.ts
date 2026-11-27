@@ -790,6 +790,21 @@ export function useReportDraft(
   );
 
   const save = useCallback(async () => {
+    // The box holds the text. Take it from the box, so a field that has not
+    // committed yet is still stored.
+    if (typeof document !== "undefined") {
+      const patch: Partial<ReportNarrative> = {};
+      document.querySelectorAll<HTMLTextAreaElement>("[data-narrative-key]").forEach((el) => {
+        const key = el.dataset.narrativeKey as keyof ReportNarrative | undefined;
+        if (!key) return;
+        patch[key] = el.value;
+      });
+      if (Object.keys(patch).length > 0) {
+        const prev = draftRef.current;
+        const next = { ...prev, narrative: { ...prev.narrative, ...patch } };
+        draftRef.current = next;
+      }
+    }
     const d = draftRef.current;
     writeLocalCache(d);
     try {
