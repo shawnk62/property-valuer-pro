@@ -715,6 +715,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   }
   subjectInlinePhotos.push(...extraSubject.filter((p) => !p.insertAfter));
   const student = get(v, "exam_student_name") || get(v, "insp_valuer") || m.valuerName;
+  const coValuers = (m.valuers ?? []).filter((row) => row.include !== false && row.name).map((row) => row.name);
+  const preparedBy = [student, ...coValuers].filter(Boolean).join(" and ");
   const studentNo = get(v, "exam_student_number");
   const instructing = get(v, "instr_from_name") || get(v, "prop_owner") || "the instructing party";
   const purpose =
@@ -913,7 +915,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         <p className="exam-cover-meta">
           Purpose of the report: {purpose || "—"}
         </p>
-        {student ? <p className="exam-cover-meta">Prepared by {student}</p> : null}
+        {preparedBy ? <p className="exam-cover-meta">Prepared by {preparedBy}</p> : null}
         {studentNo ? <p className="exam-cover-meta">Student number {studentNo}</p> : null}
         {get(v, "instr_from_email") ? (
           <p className="exam-cover-meta">Email: {get(v, "instr_from_email")}</p>
@@ -1622,9 +1624,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 </tbody>
               </table>
             ) : null}
-            {m.costApproach?.notes ? <Para>{m.costApproach.notes}</Para> : null}
-
-            <Prose text={withoutSourceNotes(draft.narrative.costApproach || "", printedSales)} />
           </Keep>
         ) : null}
         {showCostRec ? (
@@ -1963,11 +1962,11 @@ function ExamSignature({ draft }: { draft: ReportDraft }) {
       : "";
   const name = m.valuerName || get(v, "exam_student_name") || get(v, "insp_valuer");
   const extras = (m.valuers ?? []).filter((row) => row.include !== false && (row.name || row.signature));
-  return (
-    <div className="report-signature mt-4">
-      {sig ? (
+  const signatory = (label: string, who: string, role: string, signature?: string, registration?: string) => (
+    <div className="min-w-[12rem] flex-1">
+      {signature ? (
         <div className="report-sig-stage">
-          <img src={sig} alt="Signature" className="report-sig-image" />
+          <img src={signature} alt={`${who} signature`} className="report-sig-image" />
           <div className="report-sig-line" aria-hidden />
         </div>
       ) : (
@@ -1975,29 +1974,24 @@ function ExamSignature({ draft }: { draft: ReportDraft }) {
           <div className="report-sig-line" aria-hidden />
         </div>
       )}
-      <p className="report-sig-name font-semibold">{name}</p>
-      <p className="text-sm">Student Valuer</p>
-      {m.valueDate ? (
-        <p className="mt-1 text-sm">{formatNarrativeDate(m.valueDate)}</p>
-      ) : null}
+      <p className="report-sig-name font-semibold">{who}</p>
+      {role ? <p className="text-sm">{role}</p> : null}
+      {registration ? <p className="text-sm">{registration}</p> : null}
+    </div>
+  );
+  return (
+    <div className={`report-signature mt-4 ${extras.length === 1 ? "flex flex-wrap gap-8" : ""}`}>
+      {signatory("primary", name, "Student Valuer", sig)}
       {extras.map((row) => (
-        <div key={row.id} className="mt-4">
-          {row.signature ? (
-            <div className="report-sig-stage">
-              <img src={row.signature} alt={`${row.name} signature`} className="report-sig-image" />
-              <div className="report-sig-line" aria-hidden />
-            </div>
-          ) : (
-            <div className="report-sig-stage report-sig-stage--empty">
-              <div className="report-sig-line" aria-hidden />
-            </div>
-          )}
-          <p className="report-sig-name font-semibold">{row.name}</p>
-          {row.role ? <p className="text-sm">{row.role}</p> : null}
-          {row.registration ? <p className="text-sm">{row.registration}</p> : null}
+        <div key={row.id} className={extras.length === 1 ? "" : "mt-4"}>
+          {signatory(row.id, row.name, row.role || "Co-signatory", row.signature, row.registration)}
         </div>
       ))}
+      {m.valueDate ? (
+        <p className="mt-1 w-full text-sm">{formatNarrativeDate(m.valueDate)}</p>
+      ) : null}
     </div>
   );
 }
+
 
