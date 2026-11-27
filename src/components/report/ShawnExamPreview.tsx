@@ -1621,7 +1621,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                   {m.costApproach.adoptedValue ? (
                     <tr style={{ background: STRIPE }}>
                       <td className="border px-2 py-1.5 font-semibold" style={{ borderColor: RULE }} colSpan={6}>Adopted value (rounded)</td>
-                      <td className="border px-2 py-1.5 text-right font-semibold" style={{ borderColor: RULE }}>{m.costApproach.adoptedValue}</td>
+                      <td className="border px-2 py-1.5 text-right font-semibold" style={{ borderColor: RULE }}>${formatCurrencyDisplay(m.costApproach.adoptedValue)}</td>
                     </tr>
                   ) : null}
                 </tbody>
@@ -1633,13 +1633,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           <Keep>
             <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the cost approach</h3>
             <Prose text={costBoilerplate(m, draft.narrative.costReconciliation || m.costReconciliation)} />
-            {m.costApproachValue || m.costApproach?.adoptedValue ? (
-              <table className="mt-3 w-full border-collapse text-xs">
-                <tbody>
-                  <tr className="font-semibold"><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Adopt for practical purposes</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${m.costApproachValue || m.costApproach?.adoptedValue}</td></tr>
-                </tbody>
-              </table>
-            ) : null}
           </Keep>
         ) : null}
 
@@ -1657,9 +1650,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 </tr>
               </thead>
               <tbody>
-                {marketApproachCalc(m, v) || m.marketApproachValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Market</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Direct comparison</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${(marketApproachCalc(m, v)?.adopted ?? m.marketApproachValue)?.toLocaleString?.("en-AU") ?? m.marketApproachValue}</td></tr> : null}
-                {m.incomeApproachValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Income</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{[showCap ? "Capitalisation" : "", showDcf ? "DCF" : ""].filter(Boolean).join(" / ") || "Income"}</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${m.incomeApproachValue}</td></tr> : null}
-                {m.costApproachValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Cost</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Summation</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${m.costApproachValue}</td></tr> : null}
+                {marketApproachCalc(m, v) || m.marketApproachValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Market</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Direct comparison</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${formatCurrencyDisplay(String(marketApproachCalc(m, v)?.adopted ?? m.marketApproachValue ?? ""))}</td></tr> : null}
+                {m.incomeApproachValue || m.ciAdoptedValueOverride ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Income</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{[showCap ? "Capitalisation" : "", showDcf ? "DCF" : ""].filter(Boolean).join(" / ") || "Income"}</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${formatCurrencyDisplay(m.incomeApproachValue || m.ciAdoptedValueOverride || "")}</td></tr> : null}
+                {m.costApproachValue || m.costApproach?.adoptedValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Cost</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Summation</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${formatCurrencyDisplay(m.costApproachValue || m.costApproach?.adoptedValue || "")}</td></tr> : null}
               </tbody>
             </table>
             <Prose text={finalBoilerplate(m, v, draft.narrative.valueReconciliation)} />
