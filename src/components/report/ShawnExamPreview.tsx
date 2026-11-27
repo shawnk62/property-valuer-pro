@@ -47,7 +47,7 @@ import { isVacantLand, isCommercialType, isIndustrialType } from "@/lib/inspecti
 import { hasWorkingFile, WorkingNotesAnnex } from "@/components/report/WorkingNotesAnnex";
 import { AdjustmentGridPrint } from "@/components/report/AdjustmentGridPrint";
 import { CommercialEvidenceSchedule } from "@/components/report/CommercialEvidenceSchedule";
-import { costBoilerplate, finalBoilerplate, incomeBoilerplate, marketApproachCalc, marketCalculationSentence } from "@/lib/report/commercialCalculations";
+import { costApproachCalc, costBoilerplate, finalBoilerplate, incomeBoilerplate, marketApproachCalc, marketCalculationSentence } from "@/lib/report/commercialCalculations";
 import { LandEvidenceSchedule } from "@/components/report/LandEvidenceSchedule";
 import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
 import {
@@ -1623,10 +1623,22 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                       <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{formatCostMoney(costLineValue(line))}</td>
                     </tr>
                   ))}
-                  {m.costApproach.adoptedValue ? (
+                  {costApproachCalc(m)?.land ? (
+                    <tr>
+                      <td className="border px-2 py-1.5" style={{ borderColor: RULE }} colSpan={6}>Land value</td>
+                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{formatCostMoney(costApproachCalc(m)!.land)}</td>
+                    </tr>
+                  ) : null}
+                  {costApproachCalc(m) ? (
+                    <tr>
+                      <td className="border px-2 py-1.5" style={{ borderColor: RULE }} colSpan={6}>Total before rounding</td>
+                      <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{formatCostMoney(costApproachCalc(m)!.calculated)}</td>
+                    </tr>
+                  ) : null}
+                  {m.costApproach.adoptedValue || costApproachCalc(m) ? (
                     <tr style={{ background: STRIPE }}>
-                      <td className="border px-2 py-1.5 font-semibold" style={{ borderColor: RULE }} colSpan={6}>Adopted value (rounded)</td>
-                      <td className="border px-2 py-1.5 text-right font-semibold" style={{ borderColor: RULE }}>${formatCurrencyDisplay(m.costApproach.adoptedValue)}</td>
+                      <td className="border px-2 py-1.5 font-semibold" style={{ borderColor: RULE }} colSpan={6}>Adopted, rounded to the nearest ${Number(m.costRounding || 10000).toLocaleString("en-AU")}</td>
+                      <td className="border px-2 py-1.5 text-right font-semibold" style={{ borderColor: RULE }}>${formatCurrencyDisplay(m.costApproach.adoptedValue || String(costApproachCalc(m)?.adopted ?? ""))}</td>
                     </tr>
                   ) : null}
                 </tbody>
