@@ -434,8 +434,13 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
         },
         {
           key: "salesComments",
-          label: "8.2 Comments on comparable sales",
-          hint: "Prints once, immediately under the sales grids that are included.",
+          label: "Market approach — comments on comparable sales",
+          hint: "Prints under the Market approach, after the sales evidence.",
+        },
+        {
+          key: "marketReconciliation",
+          label: "Market approach — reconciliation",
+          hint: "Prints at the end of the Market approach. State the value indicated by direct comparison and the reasons.",
         },
         {
           key: "leaseEvidence",
@@ -453,14 +458,24 @@ function narrativeBlocks(murray: boolean, shawnExam: boolean): {
           hint: "Prints under Valuation Approach for commercial and industrial. DCF from recorded cash flows and exit rate. Manual text is kept.",
         },
         {
+          key: "incomeReconciliation",
+          label: "Income approach — reconciliation",
+          hint: "Prints at the end of the Income approach. Reconcile capitalisation and DCF to one income-approach value.",
+        },
+        {
           key: "costApproach",
-          label: "Cost Approach",
-          hint: "Prints under Valuation Approach for commercial and industrial. Depreciated replacement cost where recorded. Manual text is kept.",
+          label: "Cost approach — summation method",
+          hint: "Prints under the Cost approach. Depreciated replacement cost where recorded. Manual text is kept.",
+        },
+        {
+          key: "costReconciliation",
+          label: "Cost approach — reconciliation",
+          hint: "Prints at the end of the Cost approach. State the cost-approach value.",
         },
         {
           key: "valueReconciliation",
-          label: "8.3 Final reconciliation of value",
-          hint: "Prints immediately after the approaches to value.",
+          label: "Final reconciliation of the approaches",
+          hint: "Prints after the approach values table. Discuss the weight given to each approach.",
         },
         {
           key: "salesAnalysis",

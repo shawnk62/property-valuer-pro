@@ -420,6 +420,12 @@ export interface ReportNarrative {
   salesComments: string;
   /** Final reconciliation of value. Prints after the sales comments. */
   valueReconciliation: string;
+  /** Reconciliation of the market approach. */
+  marketReconciliation: string;
+  /** Reconciliation of the income approach. */
+  incomeReconciliation: string;
+  /** Reconciliation of the cost approach. */
+  costReconciliation: string;
   disclaimer: string;
   assumptions: string;
   /** Commercial / industrial — occupancy and outgoings. */

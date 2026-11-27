@@ -706,9 +706,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const showMarket = true;
   const showIncome = showLease || showCap || showDcf;
   const showCostSection = showCost || (m.printLandEvidence !== false && (m.ciLandSales ?? []).some((l) => l.omitFromReport !== true && (l.address || l.price)));
-  const showMarketRec = Boolean(m.marketReconciliation?.trim() || m.marketApproachValue);
-  const showIncomeRec = showIncome && Boolean(m.incomeReconciliation?.trim() || m.incomeApproachValue);
-  const showCostRec = showCostSection && Boolean(m.costReconciliation?.trim() || m.costApproachValue);
+  const showMarketRec = Boolean((draft.narrative.marketReconciliation || m.marketReconciliation)?.trim() || m.marketApproachValue);
+  const showIncomeRec = showIncome && Boolean((draft.narrative.incomeReconciliation || m.incomeReconciliation)?.trim() || m.incomeApproachValue);
+  const showCostRec = showCostSection && Boolean((draft.narrative.costReconciliation || m.costReconciliation)?.trim() || m.costApproachValue);
   const showFinalRec = show83 || Boolean(m.marketApproachValue || m.incomeApproachValue || m.costApproachValue);
   const n8 = includedNumbers([true, showMarket, showIncome, showCostSection, showFinalRec, true, prints("disclaimer")]);
   const t = (n: number, title: string) => majorTitle(n, title);
@@ -1339,7 +1339,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           <Keep>
             <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the market approach</h3>
             {m.marketApproachValue ? <Para>The market approach indicates a value of ${m.marketApproachValue}.</Para> : null}
-            {m.marketReconciliation?.trim() ? <Prose text={m.marketReconciliation.trim()} /> : null}
+            {(draft.narrative.marketReconciliation || m.marketReconciliation)?.trim() ? <Prose text={(draft.narrative.marketReconciliation || m.marketReconciliation || "").trim()} /> : null}
           </Keep>
         ) : null}
 
@@ -1411,7 +1411,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           <Keep>
             <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the income approach</h3>
             {m.incomeApproachValue ? <Para>The income approach indicates a value of ${m.incomeApproachValue}.</Para> : null}
-            {m.incomeReconciliation?.trim() ? <Prose text={m.incomeReconciliation.trim()} /> : null}
+            {(draft.narrative.incomeReconciliation || m.incomeReconciliation)?.trim() ? <Prose text={(draft.narrative.incomeReconciliation || m.incomeReconciliation || "").trim()} /> : null}
           </Keep>
         ) : null}
 
@@ -1486,7 +1486,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           <Keep>
             <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the cost approach</h3>
             {m.costApproachValue ? <Para>The cost approach indicates a value of ${m.costApproachValue}.</Para> : null}
-            {m.costReconciliation?.trim() ? <Prose text={m.costReconciliation.trim()} /> : null}
+            {(draft.narrative.costReconciliation || m.costReconciliation)?.trim() ? <Prose text={(draft.narrative.costReconciliation || m.costReconciliation || "").trim()} /> : null}
           </Keep>
         ) : null}
 
