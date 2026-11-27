@@ -103,7 +103,25 @@ function capPrintRows(meta: ReportMeta, values: InspectionValues): { label: stri
   const outgoingsRate = capNum(meta.ciRecoverableOutgoings);
   const vacancyPct = capNum(meta.ciVacancyAllowance);
   const capRate = capNum(meta.ciCapRate);
-  const passing = capNum(meta.ciPassingRentOverride) ?? capNum(meta.ciStartingRent) ?? capNum(String(values["comm_passing_rent"] ?? ""));
+  const starting = capNum(meta.ciStartingRent);
+  const increasePct = capNum(meta.ciIncreasePct);
+  const increaseDollar = capNum(meta.ciIncreaseDollar);
+  const increaseType = meta.ciIncreaseType ?? "none";
+  const startDate = meta.ciLeaseStartDate;
+  const endDate = meta.ciLeaseEndDate;
+  const valDate = String(values["insp_date"] ?? "");
+  const startMs = startDate ? Date.parse(startDate) : NaN;
+  const asAtMs = valDate ? Date.parse(valDate) : Date.now();
+  const yearsElapsed = Number.isFinite(startMs) ? Math.max(0, (asAtMs - startMs) / (365.25 * 86400000)) : 0;
+  const anniversaries = Math.floor(yearsElapsed);
+  let calculated = starting;
+  if (calculated != null && anniversaries > 0) {
+    for (let y = 1; y <= anniversaries; y++) {
+      if ((increaseType === "fixed-pct" || increaseType === "cpi") && increasePct != null) calculated *= 1 + increasePct / 100;
+      else if (increaseType === "fixed-dollar" && increaseDollar != null) calculated += increaseDollar;
+    }
+  }
+  const passing = capNum(meta.ciPassingRentOverride) ?? calculated ?? capNum(String(values["comm_passing_rent"] ?? ""));
   const outgoings = outgoingsRate != null && area != null ? outgoingsRate * area : 0;
   const rateTimesArea = rate != null && area != null ? rate * area : null;
   const gross = rateTimesArea != null ? (basis === "gross" ? rateTimesArea : rateTimesArea + outgoings) : passing;
@@ -111,16 +129,51 @@ function capPrintRows(meta: ReportMeta, values: InspectionValues): { label: stri
   const vacancy = gross != null && vacancyPct != null ? gross * (vacancyPct / 100) : null;
   const adjusted = net != null && vacancy != null ? net - vacancy : net;
   const capitalised = adjusted != null && capRate != null && capRate > 0 ? adjusted / (capRate / 100) : null;
-  const adopted = capNum(meta.ciAdoptedValueOverride) ?? capitalised;
+  const endMs = endDate ? Date.parse(endDate) : NaN;
+  const remaining = Number.isFinite(endMs) ? Math.max(0, (endMs - asAtMs) / (365.25 * 86400000)) : capNum(meta.ciRemainingYears);
+  const annualDiff = net != null && passing != null ? net - passing : null;
+  const discount = capRate;
+  let rentPv: number | null = null;
+  if (annualDiff != null && remaining != null && remaining > 0 && discount != null && discount > 0) {
+    const r = discount / 100;
+    const n = Math.ceil(remaining);
+    rentPv = annualDiff * (1 - Math.pow(1 + r, -n)) / r;
+  }
+  const adopted = capNum(meta.ciAdoptedValueOverride) ?? (capitalised != null && rentPv != null ? capitalised - rentPv : capitalised);
   const rows: { label: string; value: string; strong?: boolean }[] = [];
+
+  if (startDate || endDate || starting != null) {
+    rows.push({ label: "Existing lease", value: "", strong: true });
+    if (startDate) rows.push({ label: "Lease start", value: startDate });
+    if (endDate) rows.push({ label: "Lease end", value: endDate });
+    if (starting != null) rows.push({ label: "Starting rent", value: capMoney(starting) });
+    if (increaseType !== "none") {
+      const how = increaseType === "fixed-pct" ? `${increasePct ?? "—"}% per year` : increaseType === "fixed-dollar" ? `${capMoney(increaseDollar)} per year` : increaseType;
+      rows.push({ label: "Contractual increases", value: how });
+    }
+    if (anniversaries > 0 && starting != null) rows.push({ label: `Increases elapsed to valuation date`, value: `${anniversaries} anniversary increase${anniversaries === 1 ? "" : "s"}` });
+    if (calculated != null && starting != null && calculated !== starting) rows.push({ label: "Current rent calculated from starting rent and increases", value: capMoney(calculated) });
+    if (passing != null) rows.push({ label: "Current / passing rent (not the starting rent)", value: capMoney(passing), strong: true });
+    if (remaining != null) rows.push({ label: "Remaining term", value: `${remaining.toFixed(2)} years` });
+  }
+
   if (rate != null && area != null) rows.push({ label: `Market rent (${capMoney(rate)}/m² × ${area.toLocaleString("en-AU")} m², ${basis})`, value: capMoney(rateTimesArea) });
-  if (passing != null) rows.push({ label: "Current / passing rent", value: capMoney(passing) });
   if (gross != null) rows.push({ label: "Gross annual income", value: capMoney(gross) });
   if (outgoings) rows.push({ label: "Less outgoings", value: capMoney(outgoings) });
-  if (net != null) rows.push({ label: "Net annual income", value: capMoney(net) });
+  if (net != null) rows.push({ label: "Net annual market rent", value: capMoney(net), strong: true });
   if (vacancy != null) rows.push({ label: `Less vacancy allowance (${vacancyPct}%)`, value: capMoney(vacancy) });
   if (adjusted != null) rows.push({ label: "Adjusted net income", value: capMoney(adjusted), strong: true });
   if (capitalised != null) rows.push({ label: `Capitalised at ${capRate}%`, value: capMoney(capitalised), strong: true });
+
+  if (annualDiff != null) {
+    const kind = annualDiff > 0 ? "below market — discount" : annualDiff < 0 ? "above market — premium" : "at market";
+    rows.push({ label: `Annual rent difference (market net − passing) — ${kind}`, value: capMoney(annualDiff) });
+    if (rentPv != null && remaining != null && discount != null) {
+      rows.push({ label: `Present value of rent difference over ${remaining.toFixed(2)} years at ${discount}%`, value: capMoney(rentPv) });
+      rows.push({ label: "Adjustment to value for above/below market lease", value: capMoney(-rentPv), strong: true });
+    }
+  }
+
   const monthsLoss = capNum(meta.ciLettingUpMonths);
   const monthsIncentive = capNum(meta.ciIncentiveMonths);
   const commissionPct = capNum(meta.ciAgentCommissionPct);
@@ -130,7 +183,6 @@ function capPrintRows(meta: ReportMeta, values: InspectionValues): { label: stri
   const capex = capNum(meta.ciCapex);
   if (capex != null) rows.push({ label: "Less capex", value: capMoney(-Math.abs(capex)) });
   if (adopted != null) rows.push({ label: "Adopt for practical purposes", value: capMoney(adopted), strong: true });
-  if (rows.length === 0 && capRate != null) rows.push({ label: "Capitalisation rate", value: `${capRate}%` });
   return rows;
 }
 
@@ -1427,7 +1479,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             ) : null}
           </Keep>
         ) : null}
-        {(m.ciCapRate || m.ciAdoptedRentPerM2 || m.ciAdoptedValueOverride || m.ciPassingRentOverride) && m.printCapTable !== false ? (
+        {(m.ciCapRate || m.ciAdoptedRentPerM2 || m.ciAdoptedValueOverride || m.ciPassingRentOverride || m.ciStartingRent || m.ciLeaseStartDate) && m.printCapTable !== false ? (
           <div className="report-keep-block">
             <h3 id="exam-8-cap" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
               Capitalisation method
@@ -1468,7 +1520,33 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <h3 id="exam-8-cost" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
               {`${major[8]}.${n8[3]} Cost approach`}
             </h3>
-            <h3 className="mt-2 text-[0.9rem] font-semibold" style={{ color: TEAL }}>Summation method</h3>
+            <h3 className="mt-2 text-[0.9rem] font-semibold" style={{ color: TEAL }}>Land value</h3>
+            {m.printLandEvidence !== false ? (
+              <LandEvidenceSchedule
+                sales={m.ciLandSales ?? []}
+                headerStyle={{ background: TEAL, color: "#fff" }}
+                cellStyle={{ borderColor: RULE }}
+              />
+            ) : null}
+            {m.ciLandMapUrl && m.printLandMap !== false ? (
+              <div className="break-before-page flex min-h-[90vh] flex-col items-center justify-center">
+                <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Cost approach — land sales map</p>
+                <img src={m.ciLandMapUrl} alt="Land sales map" className="max-h-[85vh] w-auto max-w-full object-contain" style={{ border: `1px solid ${RULE}` }} />
+              </div>
+            ) : null}
+            {m.printFullPageSheets !== false && m.printLandSheets !== false
+              ? (m.ciLandSales ?? []).filter((l) => l.omitFromReport !== true && l.includeSheet !== false && (l.address || l.price)).map((l, idx) => (
+                  <ComparableSheet
+                    key={`land-${l.id}`}
+                    printMode
+                    data={effectiveLandSheet(l, idx + 1, sheetPools)}
+                    values={v}
+                    onChange={() => {}}
+                  />
+                ))
+              : null}
+
+            <h3 className="mt-4 text-[0.9rem] font-semibold" style={{ color: TEAL }}>Summation method</h3>
             {m.costApproach ? (
               <table className="mt-2 w-full border-collapse text-xs">
                 <thead>
@@ -1503,30 +1581,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             ) : null}
             {m.costApproach?.notes ? <Para>{m.costApproach.notes}</Para> : null}
 
-            {m.printLandEvidence !== false ? (
-              <LandEvidenceSchedule
-                sales={m.ciLandSales ?? []}
-                headerStyle={{ background: TEAL, color: "#fff" }}
-                cellStyle={{ borderColor: RULE }}
-              />
-            ) : null}
-            {m.ciLandMapUrl && m.printLandMap !== false ? (
-              <div className="break-before-page flex min-h-[90vh] flex-col items-center justify-center">
-                <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Cost approach — land sales map</p>
-                <img src={m.ciLandMapUrl} alt="Land sales map" className="max-h-[85vh] w-auto max-w-full object-contain" style={{ border: `1px solid ${RULE}` }} />
-              </div>
-            ) : null}
-            {m.printFullPageSheets !== false && m.printLandSheets !== false
-              ? (m.ciLandSales ?? []).filter((l) => l.omitFromReport !== true && l.includeSheet !== false && (l.address || l.price)).map((l, idx) => (
-                  <ComparableSheet
-                    key={`land-${l.id}`}
-                    printMode
-                    data={effectiveLandSheet(l, idx + 1, sheetPools)}
-                    values={v}
-                    onChange={() => {}}
-                  />
-                ))
-              : null}
             <Prose text={withoutSourceNotes(draft.narrative.costApproach || "", printedSales)} />
           </Keep>
         ) : null}
