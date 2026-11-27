@@ -273,11 +273,18 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
           <>
             <button
               type="button"
-              onClick={applyDrawn}
-              disabled={!hasInk || disabled}
+              disabled={disabled}
+              onClick={() => {
+                if (saved.length === 1) {
+                  applySaved(saved[0]!);
+                  return;
+                }
+                setPickerOpen(true);
+                void refreshSaved();
+              }}
               className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
             >
-              Apply drawn signature
+              Apply saved signature
             </button>
             <button
               type="button"
@@ -289,14 +296,11 @@ export function SignaturePad({ value, disabled, onChange, height = 160 }: Props)
             </button>
             <button
               type="button"
-              disabled={disabled}
-              onClick={() => {
-                setPickerOpen((o) => !o);
-                void refreshSaved();
-              }}
+              onClick={applyDrawn}
+              disabled={!hasInk || disabled}
               className="rounded-md border border-input bg-card px-3 py-2 text-sm font-semibold text-foreground disabled:opacity-50"
             >
-              Select saved signature
+              Apply drawn signature
             </button>
             <input
               ref={fileRef}
