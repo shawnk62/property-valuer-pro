@@ -295,7 +295,7 @@ export function buildSaleSummaryRow(
     price: withSummaryOverride(o, "price", auto.price),
     date: withSummaryOverride(o, "date", auto.date),
     buildingArea: withSummaryOverride(o, "buildingArea", auto.buildingArea),
-    pricePerM2Building: withSummaryOverride(o, "pricePerM2Building", auto.pricePerM2Building),
+    pricePerM2Building: o?.pricePerM2Building?.trim() ? o.pricePerM2Building : auto.pricePerM2Building,
     landArea: withSummaryOverride(o, "landArea", auto.landArea),
     pricePerM2Land: withSummaryOverride(o, "pricePerM2Land", auto.pricePerM2Land),
     indicatedYield: withSummaryOverride(o, "indicatedYield", auto.indicatedYield),
@@ -318,16 +318,19 @@ export function buildLeaseSummaryRow(
   const sale = linkedSale(lease, pools.sales);
   const amountSource = lease.leaseAmount || sale?.passingRent || sale?.marketRent || "";
   const areaSource = lease.nla || sale?.gla || sale?.summaryOverrides?.buildingArea || "";
-  const annual = annualLeaseAmount({ ...lease, leaseAmount: amountSource, nla: areaSource });
-  const building = parseNumericAmount(areaSource);
+  const o = lease.summaryOverrides;
+  const annual = annualLeaseAmount({ ...lease, leaseAmount: amountSource, nla: areaSource })
+    ?? parseNumericAmount(o?.price);
+  const building = parseNumericAmount(areaSource) ?? parseNumericAmount(o?.buildingArea);
   const land = resolveLeaseLand(lease, pools);
   const landM2 = areaToM2(land?.area, land?.unit);
-  const rate = leaseRentRate(lease);
+  const rate = leaseRentRate({ ...lease, leaseAmount: amountSource || o?.price || "", nla: areaSource || o?.buildingArea || "" })
+    ?? (annual != null && building != null && building > 0 ? annual / building : null);
   const auto: Omit<EvidenceSummaryRow, "id" | "number" | "address" | "photoUrl"> = {
     price: annual != null ? formatSalePrice(String(annual)) : formatSalePrice(amountSource || lease.netRentPerM2 || ""),
     date: lease.date?.trim() ?? "",
-    buildingArea: formatAreaDisplay(areaSource),
-    pricePerM2Building: rate != null ? formatUnitRate(rate) : formatRatePerM2(annual, building != null && building > 0 ? building : null),
+    buildingArea: formatAreaDisplay(areaSource || o?.buildingArea || ""),
+    pricePerM2Building: rate != null ? formatUnitRate(rate) : "",
     landArea: land ? formatAreaDisplay(land.area, land.unit) : "",
     pricePerM2Land: formatRatePerM2(annual, landM2),
     indicatedYield: computedLeaseYield(lease, sale),
@@ -337,7 +340,6 @@ export function buildLeaseSummaryRow(
     term: lease.term?.trim() ?? "",
     comments: sheet.description?.trim() ?? "",
   };
-  const o = lease.summaryOverrides;
   return {
     id: lease.id,
     number,
@@ -346,7 +348,7 @@ export function buildLeaseSummaryRow(
     price: withSummaryOverride(o, "price", auto.price),
     date: withSummaryOverride(o, "date", auto.date),
     buildingArea: withSummaryOverride(o, "buildingArea", auto.buildingArea),
-    pricePerM2Building: withSummaryOverride(o, "pricePerM2Building", auto.pricePerM2Building),
+    pricePerM2Building: o?.pricePerM2Building?.trim() ? o.pricePerM2Building : auto.pricePerM2Building,
     landArea: withSummaryOverride(o, "landArea", auto.landArea),
     pricePerM2Land: withSummaryOverride(o, "pricePerM2Land", auto.pricePerM2Land),
     indicatedYield: withSummaryOverride(o, "indicatedYield", auto.indicatedYield),
