@@ -1270,8 +1270,8 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       <div>
       <H2>{subTitle(major[7], 1, "Property risk assessment")}</H2>
       <Para>
-        Each category has been considered against the criteria in the PropertyPRO Supporting
-        Memorandum (API).
+        Each category has been considered against the property risk assessment criteria of the
+        Australian Property Institute.
       </Para>
       <RiskRatingsPrintTable values={v} />
       </div>
