@@ -1503,6 +1503,9 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 ))
               : null}
             <Prose text={withoutSourceNotes(draft.narrative.leaseEvidence || "", printedSales)} />
+            {(draft.narrative.incomeReconciliation || m.incomeReconciliation)?.trim() ? (
+              <Prose text={withoutSourceNotes(draft.narrative.incomeReconciliation || m.incomeReconciliation || "", printedSales)} />
+            ) : null}
 
             {m.ciLeaseMapUrl ? (
               <div className="break-before-page flex min-h-[90vh] flex-col items-center justify-center">
@@ -1548,7 +1551,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {showIncomeRec ? (
           <Keep>
             <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the income approach</h3>
-            <Prose text={incomeBoilerplate(m, draft.narrative.incomeReconciliation || m.incomeReconciliation)} />
+            <Prose text={incomeBoilerplate(m)} />
             {m.incomeApproachValue || m.ciAdoptedValueOverride ? (
               <table className="mt-3 w-full border-collapse text-xs">
                 <tbody>
