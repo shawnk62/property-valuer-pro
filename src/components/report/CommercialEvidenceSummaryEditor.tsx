@@ -175,7 +175,9 @@ export function CommercialEvidenceSummaryEditor({
                   ))}
                   {kind === "leases" ? (
                     <>
-                      <td className="border border-slate-300 px-2 py-1.5 align-top">{row.rentBasis || "—"}</td>
+                      <td className="border border-slate-300 px-1 py-1 align-top">
+                        <PausedInput className={INPUT_CLASS} value={fieldValue(row, "rentBasis") || "Ex GST"} onCommit={(value) => commit(row.id, overrides, "rentBasis", value)} />
+                      </td>
                       <td className="border border-slate-300 px-2 py-1.5 align-top">{row.term || "—"}</td>
                     </>
                   ) : null}

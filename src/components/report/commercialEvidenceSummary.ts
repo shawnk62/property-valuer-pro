@@ -3,6 +3,7 @@
  * summary tables. Explicit summaryOverrides (including "") always win so a
  * cleared cell does not snap back to the calculated value.
  */
+import { addressesMatch } from "./comparableSheetHelpers";
 import {
   effectiveLeaseSheet,
   effectiveSaleSheet,
@@ -10,7 +11,9 @@ import {
   type LeaseSheetRecord,
   type SheetPools,
 } from "./comparableSheetHelpers";
+import { addressesMatch } from "./comparableSheetHelpers";
 import { formatNarrativeDateOr } from "@/lib/report/dates";
+import { addressesMatch } from "./comparableSheetHelpers";
 import { formatSalePrice } from "@/lib/report/salesRelativity";
 import type {
   ComparableSale,
@@ -51,6 +54,7 @@ export const SUMMARY_OVERRIDE_KEYS = [
   "overallRating",
   "proximity",
   "comments",
+  "rentBasis",
 ] as const satisfies ReadonlyArray<keyof EvidenceSummaryOverrides>;
 
 export type SummaryOverrideKey = (typeof SUMMARY_OVERRIDE_KEYS)[number];
@@ -186,10 +190,7 @@ function normAddr(s: string | undefined): string {
 function linkedLease(sale: ComparableSale, leases: LeaseSheetRecord[] | undefined): LeaseSheetRecord | undefined {
   const list = leases ?? [];
   return list.find((l) => l.linkedSaleId === sale.id || l.id === sale.id)
-    ?? list.find((l) => {
-      const a = normAddr(l.address);
-      return Boolean(a) && a === normAddr(sale.address);
-    });
+    ?? list.find((l) => addressesMatch(l.address, sale.address));
 }
 
 function linkedSale(lease: LeaseSheetRecord, sales: ComparableSale[] | undefined): ComparableSale | undefined {
@@ -199,10 +200,7 @@ function linkedSale(lease: LeaseSheetRecord, sales: ComparableSale[] | undefined
     if (found) return found;
   }
   return list.find((s) => s.id === lease.id)
-    ?? list.find((s) => {
-      const a = normAddr(s.address);
-      return Boolean(a) && a === normAddr(lease.address);
-    });
+    ?? list.find((s) => addressesMatch(s.address, lease.address));
 }
 
 function annualLeaseAmount(lease: LeaseSheetRecord): number | null {
@@ -306,7 +304,7 @@ export function buildSaleSummaryRow(
     overallRating: withSummaryOverride(o, "overallRating", auto.overallRating),
     proximity: withSummaryOverride(o, "proximity", auto.proximity),
     comments: withSummaryOverride(o, "comments", auto.comments),
-    rentBasis: auto.rentBasis,
+    rentBasis: withSummaryOverride(o, "rentBasis", auto.rentBasis),
     term: auto.term,
   };
 }
@@ -320,8 +318,8 @@ export function buildLeaseSummaryRow(
 ): EvidenceSummaryRow {
   const sheet = effectiveLeaseSheet(lease, number, pools);
   const sale = linkedSale(lease, pools.sales);
-  const amountSource = lease.leaseAmount || sale?.passingRent || "";
-  const areaSource = lease.nla || sale?.gla || "";
+  const amountSource = lease.leaseAmount || sale?.passingRent || sale?.marketRent || "";
+  const areaSource = lease.nla || sale?.gla || sale?.summaryOverrides?.buildingArea || "";
   const annual = annualLeaseAmount({ ...lease, leaseAmount: amountSource, nla: areaSource });
   const building = parseNumericAmount(areaSource);
   const land = resolveLeaseLand(lease, pools);
@@ -337,7 +335,7 @@ export function buildLeaseSummaryRow(
     indicatedYield: computedLeaseYield(lease, sale),
     overallRating: leaseOverallRating(lease, values, meta),
     proximity: sheet.proximity?.trim() ?? lease.proximity?.trim() ?? "",
-    rentBasis: lease.rentBasis === "gross" ? "Gross" : lease.rentBasis === "net" ? "Net" : "",
+    rentBasis: lease.rentBasis === "gross" ? "Gross" : lease.rentBasis === "net" ? "Net" : "Ex GST",
     term: lease.term?.trim() ?? "",
     comments: sheet.description?.trim() ?? "",
   };
@@ -357,7 +355,7 @@ export function buildLeaseSummaryRow(
     overallRating: withSummaryOverride(o, "overallRating", auto.overallRating),
     proximity: withSummaryOverride(o, "proximity", auto.proximity),
     comments: withSummaryOverride(o, "comments", auto.comments),
-    rentBasis: auto.rentBasis,
+    rentBasis: withSummaryOverride(o, "rentBasis", auto.rentBasis),
     term: auto.term,
   };
 }

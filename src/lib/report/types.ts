@@ -260,6 +260,7 @@ export type EvidenceSummaryOverrides = Partial<{
   overallRating: string;
   proximity: string;
   comments: string;
+  rentBasis: string;
 }>;
 
 export interface ComparableSale {

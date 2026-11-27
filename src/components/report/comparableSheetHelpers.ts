@@ -55,6 +55,14 @@ export function normAddr(s: string | undefined): string {
   return String(s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
+/** True when two addresses are the same property. A suburb on one side still matches. */
+export function addressesMatch(a?: string, b?: string): boolean {
+  const na = normAddr(a);
+  const nb = normAddr(b);
+  if (!na || !nb) return false;
+  return na === nb || na.startsWith(nb) || nb.startsWith(na);
+}
+
 function opt<K extends string, V>(key: K, value: V | undefined): Partial<Record<K, V>> {
   return value === undefined ? {} : ({ [key]: value } as Record<K, V>);
 }
@@ -259,7 +267,7 @@ export function findExistingSheet(
 
   const addr = normAddr(current.address);
   if (addr) {
-    const foundByAddr = pick(others.filter((item) => normAddr(item.data.address) === addr));
+    const foundByAddr = pick(others.filter((item) => addressesMatch(item.data.address, current.address)));
     if (foundByAddr) return foundByAddr;
   }
 
@@ -353,14 +361,11 @@ export function effectiveLeaseSheet(
   pools: SheetPools,
 ): ComparableSheetData {
   const linked = pools.sales?.find((s) => s.id === lease.id || s.id === lease.linkedSaleId)
-    ?? pools.sales?.find((s) => {
-      const a = String(s.address ?? "").trim().toLowerCase();
-      return Boolean(a) && a === String(lease.address ?? "").trim().toLowerCase();
-    });
+    ?? pools.sales?.find((s) => addressesMatch(s.address, lease.address));
   const withLinked: LeaseSheetRecord = {
     ...lease,
     leaseAmount: lease.leaseAmount || linked?.passingRent || linked?.marketRent || "",
-    nla: lease.nla || linked?.gla || "",
+    nla: lease.nla || linked?.gla || linked?.summaryOverrides?.buildingArea || "",
   };
   const source = findExistingSheet(
     { id: lease.id, address: lease.address, ...opt("linkedSaleId", lease.linkedSaleId) },
