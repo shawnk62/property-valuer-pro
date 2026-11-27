@@ -242,7 +242,7 @@ export function formatCostLines(cost: CostIndication): { label: string; value: s
 }
 
 export const MARKET_BOILERPLATE =
-  "Having regard to the sales evidence, a rate of ${{rate}} per square metre of building area has been adopted. Applied to the subject building area of {{area}} m², this produces ${{unrounded}}. For practical purposes, and rounding to the nearest ${{rounding}}, a value of ${{adopted}} is adopted for the market approach.";
+  "${{rate}} per square metre applied to the subject building area of {{area}} m² produces ${{unrounded}}. Rounded to the nearest ${{rounding}}, ${{adopted}} is adopted for the market approach.";
 
 export function marketApproachCalc(
   meta: ReportMeta,
@@ -269,6 +269,10 @@ export function marketBoilerplate(meta: ReportMeta, values: InspectionValues, te
     .replace(/\{\{unrounded\}\}/g, money(calc.calculated))
     .replace(/\{\{rounding\}\}/g, money(calc.rounding))
     .replace(/\{\{adopted\}\}/g, money(calc.adopted));
+}
+
+export function marketCalculationSentence(meta: ReportMeta, values: InspectionValues): string {
+  return marketBoilerplate(meta, values, MARKET_BOILERPLATE);
 }
 
 export const INCOME_BOILERPLATE =

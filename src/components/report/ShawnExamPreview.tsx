@@ -47,7 +47,7 @@ import { isVacantLand, isCommercialType, isIndustrialType } from "@/lib/inspecti
 import { hasWorkingFile, WorkingNotesAnnex } from "@/components/report/WorkingNotesAnnex";
 import { AdjustmentGridPrint } from "@/components/report/AdjustmentGridPrint";
 import { CommercialEvidenceSchedule } from "@/components/report/CommercialEvidenceSchedule";
-import { costBoilerplate, finalBoilerplate, incomeBoilerplate, marketApproachCalc, marketBoilerplate } from "@/lib/report/commercialCalculations";
+import { costBoilerplate, finalBoilerplate, incomeBoilerplate, marketApproachCalc, marketCalculationSentence } from "@/lib/report/commercialCalculations";
 import { LandEvidenceSchedule } from "@/components/report/LandEvidenceSchedule";
 import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
 import {
@@ -1466,12 +1466,10 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {showMarketRec ? (
           <Keep>
             <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the market approach</h3>
-            <Prose text={marketBoilerplate(m, v, draft.narrative.marketReconciliation || m.marketReconciliation)} />
-            {marketApproachCalc(m, v) ? (
-              <Para>
-                Unrounded: ${marketApproachCalc(m, v)!.calculated.toLocaleString("en-AU")}. Adopted, rounded to the nearest ${marketApproachCalc(m, v)!.rounding.toLocaleString("en-AU")}: ${marketApproachCalc(m, v)!.adopted.toLocaleString("en-AU")}.
-              </Para>
+            {(draft.narrative.marketReconciliation || m.marketReconciliation)?.trim() ? (
+              <Prose text={(draft.narrative.marketReconciliation || m.marketReconciliation || "").replace(/\n*Therefore,?[\s\S]*$/i, "").trim()} />
             ) : null}
+            {marketApproachCalc(m, v) ? <Para>{marketCalculationSentence(m, v)}</Para> : null}
           </Keep>
         ) : null}
 
