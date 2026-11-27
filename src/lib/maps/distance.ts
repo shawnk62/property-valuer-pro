@@ -43,8 +43,7 @@ export function formatProximityWithBearing(km: number, bearing: string): string 
 }
 
 /**
- * Commercial / industrial only. Same pin matching and haversine as proximityFromPins,
- * plus abbreviated bearing FROM the subject. Residential continues to use proximityFromPins.
+ * Distance plus abbreviated bearing FROM the subject, for every report type.
  */
 export function proximityWithBearingFromPins(
   sales: ComparableSale[],

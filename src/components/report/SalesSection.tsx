@@ -537,14 +537,7 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
         subjectMapZoom: locationBuilt.zoom,
         subjectMapManual: draft.reportMeta.subjectMapManual === true,
       });
-      const isCommercialOrIndustrial =
-        Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) ||
-        Boolean(String(draft.values["prop_type_industrial"] ?? "").trim());
-      replaceSales(
-        isCommercialOrIndustrial
-          ? proximityWithBearingFromPins(sales, pins)
-          : proximityFromPins(sales, pins),
-      );
+      replaceSales(proximityWithBearingFromPins(sales, pins));
       toast.success("Maps generated", {
         description:
           "Location map is under Photos → Maps & overlays. Sales map is this Sales map tile.",
@@ -1805,14 +1798,7 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
           const salesFile = await buildComparableSalesMap({ apiKey: key, pins });
           await onSalesMapFile(salesFile);
           setMeta({ salesMapPins: pins });
-          const isCommercialOrIndustrial =
-        Boolean(String(draft.values["prop_type_commercial"] ?? "").trim()) ||
-        Boolean(String(draft.values["prop_type_industrial"] ?? "").trim());
-      replaceSales(
-        isCommercialOrIndustrial
-          ? proximityWithBearingFromPins(sales, pins)
-          : proximityFromPins(sales, pins),
-      );
+          replaceSales(proximityWithBearingFromPins(sales, pins));
           setMapEditorOpen(false);
           toast.success("Maps updated");
         }}
