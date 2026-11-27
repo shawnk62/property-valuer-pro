@@ -812,7 +812,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
   const showIncomeRec = showIncome && Boolean((draft.narrative.incomeReconciliation || m.incomeReconciliation)?.trim() || m.incomeApproachValue);
   const showCostRec = showCostSection && Boolean((draft.narrative.costReconciliation || m.costReconciliation)?.trim() || m.costApproachValue);
   const showFinalRec = show83 || Boolean(m.marketApproachValue || m.incomeApproachValue || m.costApproachValue);
-  const n8 = includedNumbers([true, showMarket, showIncome, showCostSection, showFinalRec, true, prints("disclaimer")]);
+  const n8 = includedNumbers([showMarket, showIncome, showCostSection, showFinalRec, show84, show85, true, prints("disclaimer")]);
   const t = (n: number, title: string) => majorTitle(n, title);
   const toc = [
     { id: "exam-summary", label: "Executive Summary" },
@@ -825,12 +825,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
     ...(show6 ? [{ id: "exam-6", label: t(major[6], "Market Commentary") }] : []),
     { id: "exam-7", label: t(major[7], "Risk Assessment") },
     { id: "exam-8", label: t(major[8], "Valuation approaches and methods") },
-    ...(showMarket ? [{ id: "exam-8-market", label: `${major[8]}.${n8[1]} Market approach` }] : []),
-    ...(showIncome ? [{ id: "exam-8-income", label: `${major[8]}.${n8[2]} Income approach` }] : []),
-    ...(showCostSection ? [{ id: "exam-8-cost", label: `${major[8]}.${n8[3]} Cost approach` }] : []),
-    ...(showFinalRec ? [{ id: "exam-8-3", label: `${major[8]}.${n8[4]} Final reconciliation` }] : []),
+    ...(showMarket ? [{ id: "exam-8-market", label: `${major[8]}.${n8[0]} Market approach` }] : []),
+    ...(showIncome ? [{ id: "exam-8-income", label: `${major[8]}.${n8[1]} Income approach` }] : []),
+    ...(showCostSection ? [{ id: "exam-8-cost", label: `${major[8]}.${n8[2]} Cost approach` }] : []),
+    ...(showFinalRec ? [{ id: "exam-8-3", label: `${major[8]}.${n8[3]} Final reconciliation` }] : []),
     ...(prints("disclaimer")
-      ? [{ id: "exam-reliance", label: subTitle(major[8], n8[6], "Reliance and terms of use") }]
+      ? [{ id: "exam-reliance", label: subTitle(major[8], n8[7], "Reliance and terms of use") }]
       : []),
     ...(show9 ? [{ id: "exam-9", label: t(major[9], "List of References") }] : []),
     ...(showReflection
@@ -1366,7 +1366,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           ) : null}
         </div>
         <Keep>
-        <H2 id="exam-8-market">{`${major[8]}.${n8[1]} Market approach`}</H2>
+        <H2 id="exam-8-market">{`${major[8]}.${n8[0]} Market approach`}</H2>
         <h3 className="report-h2 report-heading-lead mt-3 text-[0.9rem] font-semibold" style={{ color: TEAL }}>Direct comparison method</h3>
         {printedSales.length === 0 ? (
           <Para>No sales evidence has been recorded.</Para>
@@ -1440,7 +1440,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
 
         {showIncome ? (
           <div className="report-keep-block">
-            <h2 id="exam-8-income" className="report-h2 report-heading-lead mt-8 border-b pb-1 text-[1.05rem] font-semibold" style={{ color: TEAL, borderColor: RULE }}>{`${major[8]}.${n8[2]} Income approach`}</h2>
+            <h2 id="exam-8-income" className="report-h2 report-heading-lead mt-8 border-b pb-1 text-[1.05rem] font-semibold" style={{ color: TEAL, borderColor: RULE }}>{`${major[8]}.${n8[1]} Income approach`}</h2>
           </div>
         ) : null}
         {showLease ? (
@@ -1518,7 +1518,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {showCost ? (
           <Keep>
             <h3 id="exam-8-cost" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
-              {`${major[8]}.${n8[3]} Cost approach`}
+              {`${major[8]}.${n8[2]} Cost approach`}
             </h3>
             <h3 className="mt-2 text-[0.9rem] font-semibold" style={{ color: TEAL }}>Land value</h3>
             {m.printLandEvidence !== false ? (
@@ -1595,7 +1595,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {showFinalRec ? (
           <Keep>
             <h3 id="exam-8-3" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
-              {`${major[8]}.${n8[4]} Final reconciliation`}
+              {`${major[8]}.${n8[3]} Final reconciliation`}
             </h3>
             <table className="mt-2 w-full border-collapse text-xs">
               <thead>
@@ -1616,7 +1616,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ) : null}
         {get(v, "exam_on_market") ? (
           <>
-            {show84 ? <H2>{subTitle(major[8], n8[7], "On-the-market listings")}</H2> : null}
+            {show84 ? <H2>{subTitle(major[8], n8[4], "On-the-market listings")}</H2> : null}
             <Para>
               The following listings were considered. They are not settled sales and are not used as
               primary evidence.
@@ -1626,7 +1626,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         ) : null}
         {draft.narrative.salesAnalysis?.trim() || get(v, "exam_sales_analysis") ? (
           <>
-            {show85 ? <H2>{subTitle(major[8], n8[8], "Analysis")}</H2> : null}
+            {show85 ? <H2>{subTitle(major[8], n8[5], "Analysis")}</H2> : null}
             <Prose
               text={withoutSourceNotes(
                 (draft.narrative.salesAnalysis?.trim() || get(v, "exam_sales_analysis")).replace(
@@ -1639,7 +1639,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           </>
         ) : null}
         <div className="report-result-sign">
-        <H2>{subTitle(major[8], n8[5], "Valuation result")}</H2>
+        <H2>{subTitle(major[8], n8[6], "Valuation result")}</H2>
         <Para>
           Having regard to the sales evidence and market conditions at the date of valuation, it is
           my opinion that the market value of the unencumbered fee simple interest in the subject
@@ -1664,7 +1664,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       {prints("disclaimer") ? (
         <SectionOpen
           id="exam-reliance"
-          title={subTitle(major[8], n8[6], "Reliance and terms of use")}
+          title={subTitle(major[8], n8[7], "Reliance and terms of use")}
           text={
             draft.narrative.disclaimer?.trim() ||
             get(v, "exam_limitations") ||
