@@ -390,7 +390,10 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
             </button>
             <button
               type="button"
-              onClick={() => setTab("preview")}
+              onClick={() => {
+                setTab("preview");
+                window.setTimeout(() => fillExamTocPages(), 50);
+              }}
               className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
               Refresh preview

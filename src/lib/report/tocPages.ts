@@ -50,6 +50,7 @@ export function fillExamTocPages(): void {
   pages.replaceChildren();
   const sheet = source.cloneNode(true) as HTMLElement;
   sheet.removeAttribute("id");
+  sheet.classList.remove("report-sheet-source");
   host.insertBefore(pages, source);
   pages.appendChild(sheet);
   try {
@@ -57,7 +58,7 @@ export function fillExamTocPages(): void {
   } catch (err) {
     console.error("Preview pagination failed", err);
   }
-  source.classList.add("report-sheet-source");
+  if (pages.childElementCount > 0) source.classList.add("report-sheet-source");
 }
 
 function paginateSheet(sheet: HTMLElement): void {
