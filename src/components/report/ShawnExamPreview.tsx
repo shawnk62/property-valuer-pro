@@ -1525,19 +1525,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             <Prose text={withoutSourceNotes(draft.narrative.dcfApproach || "", printedSales)} />
           </Keep>
         ) : null}
-        {showIncomeRec ? (
-          <Keep>
-            <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the income approach</h3>
-            <Prose text={incomeBoilerplate(m, draft.narrative.incomeReconciliation || m.incomeReconciliation)} />
-            {m.incomeApproachValue || m.ciAdoptedValueOverride ? (
-              <table className="mt-3 w-full border-collapse text-xs">
-                <tbody>
-                  <tr className="font-semibold"><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Adopt for practical purposes</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${m.incomeApproachValue || m.ciAdoptedValueOverride}</td></tr>
-                </tbody>
-              </table>
-            ) : null}
-          </Keep>
-        ) : null}
         {(m.ciCapRate || m.ciAdoptedRentPerM2 || m.ciAdoptedValueOverride || m.ciPassingRentOverride || m.ciStartingRent || m.ciLeaseStartDate) && m.printCapTable !== false ? (
           <div className="report-keep-block">
             <h3 id="exam-8-cap" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
@@ -1557,6 +1544,19 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
               <Prose text={withoutSourceNotes(draft.narrative.capitalisationApproach, printedSales)} />
             ) : null}
           </div>
+        ) : null}
+        {showIncomeRec ? (
+          <Keep>
+            <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the income approach</h3>
+            <Prose text={incomeBoilerplate(m, draft.narrative.incomeReconciliation || m.incomeReconciliation)} />
+            {m.incomeApproachValue || m.ciAdoptedValueOverride ? (
+              <table className="mt-3 w-full border-collapse text-xs">
+                <tbody>
+                  <tr className="font-semibold"><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Adopt for practical purposes</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${formatCurrencyDisplay(m.incomeApproachValue || m.ciAdoptedValueOverride || "")}</td></tr>
+                </tbody>
+              </table>
+            ) : null}
+          </Keep>
         ) : null}
 
         {showCost ? (
