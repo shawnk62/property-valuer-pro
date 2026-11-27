@@ -39,6 +39,8 @@ import {
   annexPageLabel,
   type ReportDraft,
   type ReportPhoto,
+  type ReportMeta,
+  type InspectionValues,
 } from "@/lib/report/types";
 import { A4DocumentAnnex } from "@/components/report/A4DocumentAnnex";
 import { isVacantLand, isCommercialType, isIndustrialType } from "@/lib/inspection/visibility";
@@ -82,6 +84,45 @@ function stripValuationDateCommentary(text: string): string {
     .filter((para) => !/the opinion is as at\b/i.test(para))
     .join("\n\n")
     .trim();
+}
+
+
+function capNum(raw: string | undefined): number | null {
+  if (!raw) return null;
+  const n = Number(String(raw).replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(n) ? n : null;
+}
+function capMoney(n: number | null): string {
+  if (n == null) return "—";
+  return n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+}
+function capPrintRows(meta: ReportMeta, values: InspectionValues): { label: string; value: string; strong?: boolean }[] {
+  const area = capNum(meta.ciAreaOverride) ?? capNum(String(values["comm_nla"] ?? "")) ?? capNum(String(values["comm_gba"] ?? ""));
+  const rate = capNum(meta.ciAdoptedRentPerM2) ?? capNum(meta.ciMarketRent);
+  const basis = meta.ciRentBasis === "gross" ? "gross" : "net";
+  const outgoingsRate = capNum(meta.ciRecoverableOutgoings);
+  const vacancyPct = capNum(meta.ciVacancyAllowance);
+  const capRate = capNum(meta.ciCapRate);
+  const passing = capNum(meta.ciPassingRentOverride) ?? capNum(meta.ciStartingRent) ?? capNum(String(values["comm_passing_rent"] ?? ""));
+  const outgoings = outgoingsRate != null && area != null ? outgoingsRate * area : 0;
+  const rateTimesArea = rate != null && area != null ? rate * area : null;
+  const gross = rateTimesArea != null ? (basis === "gross" ? rateTimesArea : rateTimesArea + outgoings) : passing;
+  const net = rateTimesArea != null ? (basis === "net" ? rateTimesArea : Math.max(0, rateTimesArea - outgoings)) : gross != null ? gross - outgoings : null;
+  const vacancy = gross != null && vacancyPct != null ? gross * (vacancyPct / 100) : null;
+  const adjusted = net != null && vacancy != null ? net - vacancy : net;
+  const capitalised = adjusted != null && capRate != null && capRate > 0 ? adjusted / (capRate / 100) : null;
+  const adopted = capNum(meta.ciAdoptedValueOverride) ?? capitalised;
+  const rows: { label: string; value: string; strong?: boolean }[] = [];
+  if (rate != null && area != null) rows.push({ label: `Market rent (${capMoney(rate)}/m² × ${area.toLocaleString("en-AU")} m², ${basis})`, value: capMoney(rateTimesArea) });
+  if (passing != null) rows.push({ label: "Current / passing rent", value: capMoney(passing) });
+  if (gross != null) rows.push({ label: "Gross annual income", value: capMoney(gross) });
+  if (outgoings) rows.push({ label: "Less outgoings", value: capMoney(outgoings) });
+  if (net != null) rows.push({ label: "Net annual income", value: capMoney(net) });
+  if (vacancy != null) rows.push({ label: `Less vacancy allowance (${vacancyPct}%)`, value: capMoney(vacancy) });
+  if (adjusted != null) rows.push({ label: "Adjusted net income", value: capMoney(adjusted), strong: true });
+  if (capitalised != null) rows.push({ label: `Capitalised at ${capRate}%`, value: capMoney(capitalised), strong: true });
+  if (adopted != null) rows.push({ label: "Adopt for practical purposes", value: capMoney(adopted), strong: true });
+  return rows;
 }
 
 function costLineNum(raw: string | undefined): number | null {
@@ -230,9 +271,9 @@ function H1({ id, children }: { id?: string; children: React.ReactNode }) {
   );
 }
 
-function H2({ children }: { children: React.ReactNode }) {
+function H2({ id, children }: { id?: string; children: React.ReactNode }) {
   return (
-    <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
+    <h3 id={id} className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
       {children}
     </h3>
   );
@@ -1266,17 +1307,6 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         <Keep>
         <H2 id="exam-8-market">{`${major[8]}.${n8[1]} Market approach`}</H2>
         <h3 className="report-h2 report-heading-lead mt-3 text-[0.9rem] font-semibold" style={{ color: TEAL }}>Direct comparison method</h3>
-        {m.printFullPageSheets !== false
-          ? printedSales.filter((s) => s.includeSheet !== false).map((s, idx) => (
-              <ComparableSheet
-                key={`sale-${s.id}`}
-                printMode
-                data={effectiveSaleSheet(s, idx + 1, sheetPools)}
-                values={v}
-                onChange={() => {}}
-              />
-            ))
-          : null}
         {printedSales.length === 0 ? (
           <Para>No sales evidence has been recorded.</Para>
         ) : (
@@ -1312,6 +1342,17 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             ) : null}
           </div>
         )}
+        {m.printFullPageSheets !== false
+          ? printedSales.filter((s) => s.includeSheet !== false).map((s, idx) => (
+              <ComparableSheet
+                key={`sale-${s.id}`}
+                printMode
+                data={effectiveSaleSheet(s, idx + 1, sheetPools)}
+                values={v}
+                onChange={() => {}}
+              />
+            ))
+          : null}
         </Keep>
         {show82 ? (
           <Keep>
@@ -1377,20 +1418,19 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
             ) : null}
           </Keep>
         ) : null}
-        {showCap ? (
+        {showCap && m.printCapTable !== false ? (
           <Keep>
             <h3 id="exam-8-cap" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
               Capitalisation method
             </h3>
             <table className="mt-2 w-full border-collapse text-xs">
               <tbody>
-                <tr style={{ background: STRIPE }}><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Assessed net rent ($/m²)</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{m.ciAdoptedRentPerM2 || "—"}</td></tr>
-                <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Outgoings ($/m²)</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{m.ciRecoverableOutgoings || "—"}</td></tr>
-                <tr style={{ background: STRIPE }}><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Vacancy allowance (% of gross)</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{m.ciVacancyAllowance || "—"}</td></tr>
-                <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Capitalisation rate (%)</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{m.ciCapRate || "—"}</td></tr>
-                <tr style={{ background: STRIPE }}><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Letting-up months</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{m.ciLettingUpMonths || "—"}</td></tr>
-                <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Incentive months</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{m.ciIncentiveMonths || "—"}</td></tr>
-                <tr style={{ background: STRIPE }}><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Agent commission (%)</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{m.ciAgentCommissionPct || "—"}</td></tr>
+                {capPrintRows(m, v).map((row) => (
+                  <tr key={row.label} className={row.strong ? "font-semibold" : undefined} style={{ background: row.strong ? STRIPE : undefined }}>
+                    <td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{row.label}</td>
+                    <td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>{row.value}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
             <Prose text={withoutSourceNotes(draft.narrative.capitalisationApproach || "", printedSales)} />
