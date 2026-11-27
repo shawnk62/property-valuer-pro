@@ -879,7 +879,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
 
   return (
     <article
-      id="report-preview-sheet"
+      id="report-preview-source"
       className="report-sheet report-type-exam mx-auto max-w-[52rem] px-8 py-10 shadow-sm sm:px-12 sm:py-14"
     >
       {m.includeAcademicCover ? <AcademicCoverSheet draft={draft} /> : null}

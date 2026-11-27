@@ -1278,8 +1278,8 @@
 
   #report-preview-sheet .report-prose-para {
     display: block !important;
-    margin: 0 0 12pt !important;
-    padding: 0 0 2pt !important;
+    margin: 0 0 14pt !important;
+    padding: 0 !important;
     white-space: normal !important;
   }
 
@@ -1762,7 +1762,7 @@
 
 /* Working-report blank lines become the gap between printed paragraphs. */
 #report-preview-sheet .report-prose-para {
-  margin: 0 0 0.9em;
+  margin: 0 0 1em;
   white-space: pre-line;
 }
 #report-preview-sheet .report-prose-para:last-child {

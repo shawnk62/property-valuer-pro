@@ -37,7 +37,7 @@ function unwrap(sheet: HTMLElement) {
 }
 
 export function fillExamTocPages(): void {
-  const source = document.getElementById("report-preview-sheet");
+  const source = document.getElementById("report-preview-source");
   if (!source) return;
   const host = source.closest(".report-print-host") as HTMLElement | null;
   if (!host) return;
@@ -49,7 +49,7 @@ export function fillExamTocPages(): void {
   }
   pages.replaceChildren();
   const sheet = source.cloneNode(true) as HTMLElement;
-  sheet.removeAttribute("id");
+  sheet.id = "report-preview-sheet";
   sheet.classList.remove("report-sheet-source");
   host.insertBefore(pages, source);
   pages.appendChild(sheet);
