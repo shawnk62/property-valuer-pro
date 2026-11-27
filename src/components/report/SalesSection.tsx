@@ -13,6 +13,7 @@ import { PhotoSourceSheet } from "@/components/PhotoSourceSheet";
 import { CostApproachSection } from "@/components/report/CostApproachSection";
 import { CapitalisationApproachSection } from "@/components/report/CapitalisationApproachSection";
 import { CommercialEvidenceSummaryEditor } from "@/components/report/CommercialEvidenceSummaryEditor";
+import { MARKET_BOILERPLATE, marketApproachCalc, marketBoilerplate } from "@/lib/report/commercialCalculations";
 import { CommercialValuationTables } from "@/components/report/CommercialValuationTables";
 import { ComparableSheet } from "@/components/report/ComparableSheet";
 import { effectiveSaleSheet, saleFromSheetPatch } from "@/components/report/comparableSheetHelpers";
@@ -3122,17 +3123,38 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
           <h3 className="text-sm font-semibold text-foreground">Market approach — reconciliation</h3>
           <label className="flex items-center gap-2 text-xs">
             <span className="w-40">Building area (m²)</span>
-            <input className="flex-1 rounded border border-input px-2 py-1" value={draft.reportMeta.marketBuildingArea ?? String(draft.values["comm_nla"] || draft.values["comm_gba"] || "")} onChange={(e) => setMeta({ marketBuildingArea: e.target.value })} />
+            <input className="flex-1 rounded border border-input px-2 py-1" value={draft.reportMeta.marketBuildingArea ?? String(draft.values["comm_nla"] || draft.values["comm_gba"] || "")} onChange={(e) => {
+              const marketBuildingArea = e.target.value;
+              const calc = marketApproachCalc({ ...draft.reportMeta, marketBuildingArea }, draft.values);
+              setMeta({ marketBuildingArea, marketApproachValue: calc ? String(calc.adopted) : draft.reportMeta.marketApproachValue });
+            }} />
           </label>
           <label className="flex items-center gap-2 text-xs">
             <span className="w-40">Adopted rate ($/m²)</span>
-            <input className="flex-1 rounded border border-input px-2 py-1" value={draft.reportMeta.marketAdoptedRate ?? ""} onChange={(e) => setMeta({ marketAdoptedRate: e.target.value })} placeholder="e.g. 3000" />
+            <input className="flex-1 rounded border border-input px-2 py-1" value={draft.reportMeta.marketAdoptedRate ?? ""} onChange={(e) => {
+              const marketAdoptedRate = e.target.value;
+              const calc = marketApproachCalc({ ...draft.reportMeta, marketAdoptedRate }, draft.values);
+              setMeta({ marketAdoptedRate, marketApproachValue: calc ? String(calc.adopted) : "" });
+            }} placeholder="e.g. 3000" />
           </label>
           <label className="flex items-center gap-2 text-xs">
-            <span className="w-40">Adopted value</span>
-            <input className="flex-1 rounded border border-input px-2 py-1" value={draft.reportMeta.marketApproachValue ?? ""} onChange={(e) => setMeta({ marketApproachValue: e.target.value })} placeholder="Calculated from area × rate; edit to round" />
+            <span className="w-40">Round to nearest</span>
+            <input className="flex-1 rounded border border-input px-2 py-1" value={draft.reportMeta.marketRounding ?? "10000"} onChange={(e) => {
+              const marketRounding = e.target.value;
+              const calc = marketApproachCalc({ ...draft.reportMeta, marketRounding }, draft.values);
+              setMeta({ marketRounding, marketApproachValue: calc ? String(calc.adopted) : draft.reportMeta.marketApproachValue });
+            }} />
           </label>
-          <PausedTextarea value={draft.narrative.marketReconciliation ?? ""} onCommit={(v) => setNarrative({ marketReconciliation: v })} placeholder="Reconciliation of the market approach…" className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          {(() => {
+            const calc = marketApproachCalc(draft.reportMeta, draft.values);
+            return calc ? (
+              <p className="text-xs text-muted-foreground">
+                {calc.area.toLocaleString("en-AU")} m² × ${calc.rate.toLocaleString("en-AU")} = ${calc.calculated.toLocaleString("en-AU")}, adopted at ${calc.adopted.toLocaleString("en-AU")} (nearest ${calc.rounding.toLocaleString("en-AU")}).
+              </p>
+            ) : null;
+          })()}
+          <PausedTextarea value={draft.narrative.marketReconciliation ?? ""} onCommit={(v) => setNarrative({ marketReconciliation: v })} placeholder={MARKET_BOILERPLATE} className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          <p className="text-xs text-muted-foreground">Prints as: {marketBoilerplate(draft.reportMeta, draft.values, draft.narrative.marketReconciliation)}</p>
           <label className="flex cursor-pointer items-center gap-2 text-xs">
             <input type="checkbox" checked={narrativePrints(draft.reportMeta, "salesAnalysis")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), salesAnalysis: e.target.checked } })} />
             Include analysis on report

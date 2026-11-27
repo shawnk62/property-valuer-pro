@@ -240,3 +240,33 @@ export function formatCostLines(cost: CostIndication): { label: string; value: s
     { label: "Indicated value", value: money(cost.indicatedValue) },
   ];
 }
+
+export const MARKET_BOILERPLATE =
+  "Having regard to the sales evidence, a rate of ${{rate}} per square metre of building area has been adopted. Applied to the subject building area of {{area}} m², this produces ${{unrounded}}. For practical purposes, and rounding to the nearest ${{rounding}}, a value of ${{adopted}} is adopted for the market approach.";
+
+export function marketApproachCalc(
+  meta: ReportMeta,
+  values: InspectionValues,
+): { area: number; rate: number; rounding: number; calculated: number; adopted: number } | null {
+  const area = num(meta.marketBuildingArea) ?? num(values["comm_nla"]) ?? num(values["comm_gba"]);
+  const rate = num(meta.marketAdoptedRate);
+  if (area == null || rate == null) return null;
+  const rounding = num(meta.marketRounding) ?? 10000;
+  const calculated = Math.round(area * rate);
+  const step = rounding > 0 ? rounding : 1;
+  const adopted = Math.round(calculated / step) * step;
+  return { area, rate, rounding: step, calculated, adopted };
+}
+
+export function marketBoilerplate(meta: ReportMeta, values: InspectionValues, template?: string): string {
+  const calc = marketApproachCalc(meta, values);
+  const source = (template ?? "").trim() || MARKET_BOILERPLATE;
+  if (!calc) return source.replace(/\{\{[^}]+\}\}/g, "—");
+  const money = (n: number) => n.toLocaleString("en-AU");
+  return source
+    .replace(/\{\{rate\}\}/g, money(calc.rate))
+    .replace(/\{\{area\}\}/g, calc.area.toLocaleString("en-AU"))
+    .replace(/\{\{unrounded\}\}/g, money(calc.calculated))
+    .replace(/\{\{rounding\}\}/g, money(calc.rounding))
+    .replace(/\{\{adopted\}\}/g, money(calc.adopted));
+}

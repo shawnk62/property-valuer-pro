@@ -47,6 +47,7 @@ import { isVacantLand, isCommercialType, isIndustrialType } from "@/lib/inspecti
 import { hasWorkingFile, WorkingNotesAnnex } from "@/components/report/WorkingNotesAnnex";
 import { AdjustmentGridPrint } from "@/components/report/AdjustmentGridPrint";
 import { CommercialEvidenceSchedule } from "@/components/report/CommercialEvidenceSchedule";
+import { marketApproachCalc, marketBoilerplate } from "@/lib/report/commercialCalculations";
 import { LandEvidenceSchedule } from "@/components/report/LandEvidenceSchedule";
 import { SalesEvidenceSchedule } from "@/components/report/SalesEvidenceSchedule";
 import {
@@ -87,15 +88,6 @@ function stripValuationDateCommentary(text: string): string {
 }
 
 
-
-function marketCalc(meta: ReportMeta, values: InspectionValues): { area: number; rate: number; calculated: number; adopted: number } | null {
-  const area = capNum(meta.marketBuildingArea) ?? capNum(String(values["comm_nla"] ?? "")) ?? capNum(String(values["comm_gba"] ?? ""));
-  const rate = capNum(meta.marketAdoptedRate);
-  if (area == null || rate == null) return null;
-  const calculated = Math.round(area * rate);
-  const adopted = capNum(meta.marketApproachValue) ?? calculated;
-  return { area, rate, calculated, adopted };
-}
 
 function capNum(raw: string | undefined): number | null {
   if (!raw) return null;
@@ -1471,15 +1463,12 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {showMarketRec ? (
           <Keep>
             <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the market approach</h3>
-            {(draft.narrative.marketReconciliation || m.marketReconciliation)?.trim() ? <Prose text={(draft.narrative.marketReconciliation || m.marketReconciliation || "").trim()} /> : null}
-            {marketCalc(m, v) ? (
-              <>
-                <Para>Therefore,</Para>
-                <Para>
-                  ${marketCalc(m, v)!.rate.toLocaleString("en-AU")} x {marketCalc(m, v)!.area.toLocaleString("en-AU")}m² (subject building area) becomes ${marketCalc(m, v)!.calculated.toLocaleString("en-AU")}, rounded to ${marketCalc(m, v)!.adopted.toLocaleString("en-AU")}.
-                </Para>
-              </>
-            ) : m.marketApproachValue ? <Para>The market approach indicates a value of ${m.marketApproachValue}.</Para> : null}
+            <Prose text={marketBoilerplate(m, v, draft.narrative.marketReconciliation || m.marketReconciliation)} />
+            {marketApproachCalc(m, v) ? (
+              <Para>
+                Unrounded: ${marketApproachCalc(m, v)!.calculated.toLocaleString("en-AU")}. Adopted, rounded to the nearest ${marketApproachCalc(m, v)!.rounding.toLocaleString("en-AU")}: ${marketApproachCalc(m, v)!.adopted.toLocaleString("en-AU")}.
+              </Para>
+            ) : null}
           </Keep>
         ) : null}
 
@@ -1667,7 +1656,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
                 </tr>
               </thead>
               <tbody>
-                {marketCalc(m, v) || m.marketApproachValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Market</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Direct comparison</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${(marketCalc(m, v)?.adopted ?? m.marketApproachValue)?.toLocaleString?.("en-AU") ?? m.marketApproachValue}</td></tr> : null}
+                {marketApproachCalc(m, v) || m.marketApproachValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Market</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Direct comparison</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${(marketApproachCalc(m, v)?.adopted ?? m.marketApproachValue)?.toLocaleString?.("en-AU") ?? m.marketApproachValue}</td></tr> : null}
                 {m.incomeApproachValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Income</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>{[showCap ? "Capitalisation" : "", showDcf ? "DCF" : ""].filter(Boolean).join(" / ") || "Income"}</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${m.incomeApproachValue}</td></tr> : null}
                 {m.costApproachValue ? <tr><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Cost</td><td className="border px-2 py-1.5" style={{ borderColor: RULE }}>Summation</td><td className="border px-2 py-1.5 text-right" style={{ borderColor: RULE }}>${m.costApproachValue}</td></tr> : null}
               </tbody>

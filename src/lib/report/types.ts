@@ -742,6 +742,8 @@ export interface ReportMeta {
   marketAdoptedRate?: string;
   /** Override of the building area used in the market approach calculation. */
   marketBuildingArea?: string;
+  /** Rounding amount for the market approach, e.g. 10000. */
+  marketRounding?: string;
   incomeApproachValue?: string;
   costApproachValue?: string;
   marketReconciliation?: string;

@@ -37,7 +37,7 @@ export function SalesCommentaryWorkspace({
     [draft.values["prop_address"], draft.values["prop_suburb"]].filter(Boolean).join(", ") ||
     "Subject";
 
-  function write(key: "salesComments" | "valueReconciliation", value: string) {
+  function write(key: "salesComments", value: string) {
     setNarrative({ [key]: value });
     setMeta({
       manualNarrative: {
@@ -122,12 +122,6 @@ export function SalesCommentaryWorkspace({
             narrativeKey="salesComments"
             value={draft.narrative.salesComments ?? ""}
             onChange={(value) => write("salesComments", value)}
-          />
-          <Editor
-            label="Final reconciliation of value"
-            narrativeKey="valueReconciliation"
-            value={draft.narrative.valueReconciliation ?? ""}
-            onChange={(value) => write("valueReconciliation", value)}
           />
         </div>
       </div>
