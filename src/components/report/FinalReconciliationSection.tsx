@@ -110,7 +110,7 @@ export function FinalReconciliationSection({ controller }: { controller: ReportD
           return (
             <label className={`block text-sm ${needsReason ? "rounded border border-amber-400 bg-amber-50 p-2" : ""}`}>
               <span className="mb-1 block text-xs">Why this figure, given the three indicated values</span>
-              <textarea className="min-h-[4rem] w-full rounded border border-input px-2 py-1" value={draft.narrative.finalValueReason ?? ""} placeholder="e.g. the income approach reflects the existing lease, which a purchaser would assume" onChange={(e) => setNarrative({ finalValueReason: e.target.value })} />
+              <PausedTextarea className="min-h-[4rem] w-full rounded border border-input px-2 py-1" value={draft.narrative.finalValueReason ?? ""} placeholder="e.g. the income approach reflects the existing lease, which a purchaser would assume" onCommit={(v) => setNarrative({ finalValueReason: v })} />
               {needsReason ? <span className="mt-1 block text-xs text-amber-700">The adopted figure is not one of the three indicated values. A reader cannot see why it was chosen unless this is completed.</span> : null}
             </label>
           );
