@@ -38,6 +38,15 @@ export interface ComparableSheetData {
   verificationLink?: string;
 }
 
+
+function landPricePerM2(price: string | undefined, area: string | undefined): string {
+  const p = Number(String(price ?? "").replace(/[^0-9.-]/g, ""));
+  let a = Number(String(area ?? "").replace(/[^0-9.-]/g, ""));
+  if (/ha|hectare/i.test(String(area ?? ""))) a *= 10000;
+  if (!Number.isFinite(p) || !Number.isFinite(a) || a <= 0) return "—";
+  return (p / a).toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 }) + "/m²";
+}
+
 interface Props {
   data: ComparableSheetData;
   values: InspectionValues;
@@ -338,6 +347,15 @@ export function ComparableSheet({ data, values, onChange, printMode = false, ins
             <div><span className="font-medium">Distance from subject:</span> {data.proximity || "—"}</div>
             <div><span className="font-medium">Rent/m²:</span> {data.rentPerM2 || "—"}</div>
             <div><span className="font-medium">Date:</span> {data.date || "—"}</div>
+          </>
+        ) : data.kind === "land" ? (
+          <>
+            <div><span className="font-medium">Address:</span> {data.address || "—"}</div>
+            <div><span className="font-medium">Area:</span> {data.landArea || "—"}</div>
+            <div><span className="font-medium">Price:</span> {data.price || "—"}</div>
+            <div><span className="font-medium">Date:</span> {data.date || "—"}</div>
+            <div><span className="font-medium">Price/m²:</span> {landPricePerM2(data.price, data.landArea)}</div>
+            <div><span className="font-medium">Distance from subject:</span> {data.proximity || "—"}</div>
           </>
         ) : (
           <>

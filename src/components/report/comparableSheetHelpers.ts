@@ -186,7 +186,7 @@ export function landToSheet(land: LandSheetRecord, number?: number): ComparableS
     address: land.address,
     price: land.price,
     date: land.date,
-    landArea: land.landArea,
+    ...opt("landArea", formatSheetArea(land.landArea, land.landUnit)),
     ...opt("number", number),
     ...opt("proximity", land.proximity),
     ...opt("photoUrl", land.photoUrl),
