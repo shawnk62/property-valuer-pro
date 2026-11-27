@@ -3129,7 +3129,7 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
             <span className="w-40">Adopted value</span>
             <input className="flex-1 rounded border border-input px-2 py-1" value={draft.reportMeta.marketApproachValue ?? ""} onChange={(e) => setMeta({ marketApproachValue: e.target.value })} placeholder="Calculated from area × rate; edit to round" />
           </label>
-          <PausedTextarea value={draft.narrative.marketReconciliation ?? ""} onChange={(v) => setNarrative({ marketReconciliation: v })} placeholder="Reconciliation of the market approach…" className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          <PausedTextarea value={draft.narrative.marketReconciliation ?? ""} onCommit={(v) => setNarrative({ marketReconciliation: v })} placeholder="Reconciliation of the market approach…" className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
           <label className="flex cursor-pointer items-center gap-2 text-xs">
             <input type="checkbox" checked={draft.reportMeta.printSalesMap !== false} onChange={(e) => setMeta({ printSalesMap: e.target.checked })} />
             Include sales comparison map on report
@@ -3147,7 +3147,7 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
               <input type="checkbox" checked={narrativePrints(draft.reportMeta, "leaseEvidence")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), leaseEvidence: e.target.checked } })} />
               Include Lease Evidence on report
             </label>
-            <PausedTextarea value={draft.narrative.leaseEvidence ?? ""} onChange={(v) => setNarrative({ leaseEvidence: v })} placeholder="Lease evidence commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+            <PausedTextarea value={draft.narrative.leaseEvidence ?? ""} onCommit={(v) => setNarrative({ leaseEvidence: v })} placeholder="Lease evidence commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
           </div>
 
           <div className="space-y-4 rounded-md border border-border bg-card p-4">
@@ -3157,17 +3157,17 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
               <input type="checkbox" checked={narrativePrints(draft.reportMeta, "capitalisationApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), capitalisationApproach: e.target.checked } })} />
               Include Capitalisation Approach on report
             </label>
-            <PausedTextarea value={draft.narrative.capitalisationApproach ?? ""} onChange={(v) => setNarrative({ capitalisationApproach: v })} placeholder="Capitalisation approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+            <PausedTextarea value={draft.narrative.capitalisationApproach ?? ""} onCommit={(v) => setNarrative({ capitalisationApproach: v })} placeholder="Capitalisation approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input type="checkbox" checked={narrativePrints(draft.reportMeta, "dcfApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), dcfApproach: e.target.checked } })} />
               Include Discounted Cash Flow on report
             </label>
-            <PausedTextarea value={draft.narrative.dcfApproach ?? ""} onChange={(v) => setNarrative({ dcfApproach: v })} placeholder="Discounted cash flow commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+            <PausedTextarea value={draft.narrative.dcfApproach ?? ""} onCommit={(v) => setNarrative({ dcfApproach: v })} placeholder="Discounted cash flow commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
           </div>
 
           <div className="space-y-4 rounded-md border border-border bg-card p-4">
             <h3 className="text-sm font-semibold text-foreground">Reconciliation</h3>
-            <PausedTextarea value={draft.narrative.valueReconciliation ?? ""} onChange={(v) => setNarrative({ valueReconciliation: v })} placeholder="Reconciliation of value…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+            <PausedTextarea value={draft.narrative.valueReconciliation ?? ""} onCommit={(v) => setNarrative({ valueReconciliation: v })} placeholder="Reconciliation of value…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
           </div>
         </>
       ) : null}
@@ -3180,7 +3180,7 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
             <span className="w-40">Indicated value</span>
             <input className="flex-1 rounded border border-input px-2 py-1" value={draft.reportMeta.incomeApproachValue ?? ""} onChange={(e) => setMeta({ incomeApproachValue: e.target.value })} placeholder="e.g. 3,050,000" />
           </label>
-          <PausedTextarea value={draft.narrative.incomeReconciliation ?? ""} onChange={(v) => setNarrative({ incomeReconciliation: v })} placeholder="Reconciliation of the income approach…" className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          <PausedTextarea value={draft.narrative.incomeReconciliation ?? ""} onCommit={(v) => setNarrative({ incomeReconciliation: v })} placeholder="Reconciliation of the income approach…" className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
           <label className="flex cursor-pointer items-center gap-2 text-xs">
             <input type="checkbox" checked={draft.reportMeta.printLeaseSheets !== false} onChange={(e) => setMeta({ printLeaseSheets: e.target.checked })} />
             Include full-page lease sheets
@@ -3209,7 +3209,7 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
           <input type="checkbox" checked={narrativePrints(draft.reportMeta, "costApproach")} onChange={(e) => setMeta({ printNarrative: { ...(draft.reportMeta.printNarrative ?? {}), costApproach: e.target.checked } })} />
           Include Cost Approach on report
         </label>
-        <PausedTextarea value={draft.narrative.costApproach ?? ""} onChange={(v) => setNarrative({ costApproach: v })} placeholder="Cost approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+        <PausedTextarea value={draft.narrative.costApproach ?? ""} onCommit={(v) => setNarrative({ costApproach: v })} placeholder="Cost approach commentary…" className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
       </div>
       </>
       ) : null}
@@ -3221,7 +3221,7 @@ export function SalesSection({ controller, panel = "all" }: { controller: Report
             <span className="w-40">Indicated value</span>
             <input className="flex-1 rounded border border-input px-2 py-1" value={draft.reportMeta.costApproachValue ?? ""} onChange={(e) => setMeta({ costApproachValue: e.target.value })} placeholder="e.g. 2,950,000" />
           </label>
-          <PausedTextarea value={draft.narrative.costReconciliation ?? ""} onChange={(v) => setNarrative({ costReconciliation: v })} placeholder="Reconciliation of the cost approach…" className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
+          <PausedTextarea value={draft.narrative.costReconciliation ?? ""} onCommit={(v) => setNarrative({ costReconciliation: v })} placeholder="Reconciliation of the cost approach…" className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
           <label className="flex cursor-pointer items-center gap-2 text-xs">
             <input type="checkbox" checked={draft.reportMeta.printLandSheets !== false} onChange={(e) => setMeta({ printLandSheets: e.target.checked })} />
             Include full-page land sale sheets
