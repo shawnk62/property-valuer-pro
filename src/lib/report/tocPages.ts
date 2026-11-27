@@ -92,20 +92,21 @@ export function fillExamTocPages(): void {
       ),
     );
     if (el.classList.contains("report-section-sales") && blocks.length > 0) {
-      if (!pageEl || used > 1) open();
-      pageEl!.appendChild(el);
-      used = 40;
-      blocks.forEach((block) => {
+      // Place the section's blocks in document order. Do not prepend the
+      // section shell — leftover children were appearing before the heading.
+      const ordered = Array.from(el.children).filter((node) => node instanceof Element) as HTMLElement[];
+      if (!pageEl) open();
+      ordered.forEach((block) => {
         const blockH = Math.max(block.getBoundingClientRect().height, 48);
         const mapPage = block.classList.contains("report-map-page");
-        const start = block.classList.contains("sales-evidence-item") || block.classList.contains("report-table-keep") || block.querySelector("h3[id]");
-        if (mapPage) open();
+        const heading = block.classList.contains("report-section-open") || Boolean(block.querySelector("h2, h3"));
+        if (mapPage || (heading && used > pageH * 0.8)) open();
         else if (used > 8 && used + blockH > pageH) open();
-        else if (start && used > pageH * 0.72) open();
         pageEl!.appendChild(block);
         used += blockH;
-        if (mapPage) { used = pageH; }
+        if (mapPage) used = pageH;
       });
+      el.remove();
       return;
     }
     const h = Math.max(el.getBoundingClientRect().height, el.scrollHeight);

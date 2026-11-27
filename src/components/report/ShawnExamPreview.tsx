@@ -1255,13 +1255,14 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
       </div>
 
       <section id="sec-sales" className="report-section report-section-sales">
-        <Lead id="exam-8" title={t(major[8], "Valuation approaches and methods")}>
-        <Keep>
-        {narrativePrints(m, "valuationApproach") && draft.narrative.valuationApproach?.trim() ? (
-          <Prose text={stripValuationDateCommentary(draft.narrative.valuationApproach.trim())} />
-        ) : null}
-        </Keep>
-        </Lead>
+        <div className="report-keep-block">
+          <h2 id="exam-8" className="report-h2 report-heading-lead mt-8 border-b pb-1 text-[1.05rem] font-semibold" style={{ color: TEAL, borderColor: RULE }}>
+            {t(major[8], "Valuation approaches and methods")}
+          </h2>
+          {narrativePrints(m, "valuationApproach") && draft.narrative.valuationApproach?.trim() ? (
+            <Prose text={stripValuationDateCommentary(draft.narrative.valuationApproach.trim())} />
+          ) : null}
+        </div>
         <Keep>
         <H2 id="exam-8-market">{`${major[8]}.${n8[1]} Market approach`}</H2>
         <h3 className="report-h2 report-heading-lead mt-3 text-[0.9rem] font-semibold" style={{ color: TEAL }}>Direct comparison method</h3>
@@ -1335,7 +1336,11 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
           </Keep>
         ) : null}
 
-        {showIncome ? <H2 id="exam-8-income">{`${major[8]}.${n8[2]} Income approach`}</H2> : null}
+        {showIncome ? (
+          <div className="report-keep-block">
+            <h2 id="exam-8-income" className="report-h2 report-heading-lead mt-8 border-b pb-1 text-[1.05rem] font-semibold" style={{ color: TEAL, borderColor: RULE }}>{`${major[8]}.${n8[2]} Income approach`}</h2>
+          </div>
+        ) : null}
         {showLease ? (
           <Keep>
             <h3 id="exam-8-lease" className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>
