@@ -368,6 +368,17 @@ export function costBoilerplate(meta: ReportMeta, template?: string): string {
   });
 }
 
+
+export function finalValueReasonStarter(meta: ReportMeta): string {
+  const weight = meta.approachWeight === "income" ? "income" : meta.approachWeight === "equal" ? "equal" : "market";
+  const named = weight === "income"
+    ? "because the income approach received the most weight, the final opinion of value is closest to the value indicated by the income approach, but it is not that number, as simply adopting that number would ignore the other approaches"
+    : weight === "equal"
+      ? "because equal weight has been given to the market approach and the income approach, the final opinion of value is struck within the range, and is not any one of the indicated values"
+      : "because the market approach received the most weight, the final opinion of value is closest to the value indicated by the market approach, but it is not that number, as simply adopting that number would ignore the other approaches";
+  return `The final opinion of value is based on a weighted consideration of all of the approaches. It does not pick a number from one approach and ignore the others. In this case, ${named}. Rather, the valuer relied upon his judgment and experience in deciding where within the range of values the final number should land.`;
+}
+
 export function finalBoilerplate(meta: ReportMeta, values: InspectionValues, template?: string, reason?: string): string {
   const market = marketApproachCalc(meta, values)?.adopted ?? num(meta.marketApproachValue);
   const income = num(meta.incomeApproachValue) ?? num(meta.ciAdoptedValueOverride);

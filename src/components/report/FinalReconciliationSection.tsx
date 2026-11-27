@@ -6,6 +6,7 @@ import {
   FINAL_VACANT,
   costApproachCalc,
   finalBoilerplate,
+  finalValueReasonStarter,
   marketApproachCalc,
   propertyIsLeased,
 } from "@/lib/report/commercialCalculations";
@@ -106,13 +107,22 @@ export function FinalReconciliationSection({ controller }: { controller: ReportD
         {(() => {
           const adopted = Number(String(reportMeta.valueAmount ?? "").replace(/[^0-9.]/g, ""));
           const indicated = [market, income, cost].map((n) => Number(String(n ?? "").replace(/[^0-9.]/g, ""))).filter((n) => n > 0);
-          const needsReason = adopted > 0 && !indicated.includes(adopted) && !draft.narrative.finalValueReason?.trim();
+          const offTheNumbers = adopted > 0 && !indicated.includes(adopted);
+          const starter = finalValueReasonStarter(reportMeta);
+          const current = draft.narrative.finalValueReason ?? "";
+          const edited = current.trim() !== "" && current.trim() !== starter.trim();
+          const accepted = reportMeta.finalValueReasonAccepted === true || edited;
+          const highlighted = offTheNumbers && !accepted;
           return (
-            <label className={`block text-sm ${needsReason ? "rounded border border-amber-400 bg-amber-50 p-2" : ""}`}>
+            <div id="final-value-reason" className={`block text-sm ${highlighted ? "rounded border border-amber-400 bg-amber-50 p-2" : ""}`}>
               <span className="mb-1 block text-xs">Why this figure, given the three indicated values</span>
-              <PausedTextarea className="min-h-[4rem] w-full rounded border border-input px-2 py-1" value={draft.narrative.finalValueReason ?? ""} placeholder="e.g. the income approach reflects the existing lease, which a purchaser would assume" onCommit={(v) => setNarrative({ finalValueReason: v })} />
-              {needsReason ? <span className="mt-1 block text-xs text-amber-700">The adopted figure is not one of the three indicated values. A reader cannot see why it was chosen unless this is completed.</span> : null}
-            </label>
+              <PausedTextarea className="min-h-[6rem] w-full rounded border border-input px-2 py-1" value={current || starter} onCommit={(v) => setNarrative({ finalValueReason: v })} />
+              <label className="mt-2 flex items-center gap-2 text-xs">
+                <input type="checkbox" checked={accepted} onChange={(e) => setMeta({ finalValueReasonAccepted: e.target.checked })} />
+                Accepted
+              </label>
+              {highlighted ? <span className="mt-1 block text-xs text-amber-700">This is the starting wording. Change it, or tick Accepted. The report will not take a signature until one of those is done.</span> : null}
+            </div>
           );
         })()}
       </section>

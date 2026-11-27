@@ -756,6 +756,8 @@ export interface ReportMeta {
   gstTreatment?: "exclusive" | "inclusive" | "not-applicable";
   /** Which approach carries the weight. */
   approachWeight?: "market" | "income" | "equal";
+  /** The valuer has accepted the reason for a figure that is not one of the indicated values. */
+  finalValueReasonAccepted?: boolean;
   /** Interest valued, e.g. unencumbered fee simple. */
   interestValued?: string;
   incomeApproachValue?: string;

@@ -12,6 +12,7 @@ import { ReportPreview } from "@/components/report/ReportPreview";
 import { SalesSection } from "@/components/report/SalesSection";
 import { SubjectSection } from "@/components/report/SubjectSection";
 import { FinalReconciliationSection } from "@/components/report/FinalReconciliationSection";
+import { costApproachCalc, finalValueReasonStarter, marketApproachCalc } from "@/lib/report/commercialCalculations";
 import { EditLockBanner } from "@/components/EditLockBanner";
 import { useEditLock } from "@/hooks/useEditLock";
 import { useReportDraft } from "@/hooks/useReportDraft";
@@ -28,10 +29,12 @@ function ValuersPanel({
   meta,
   onMeta,
   primaryName,
+  disabled,
 }: {
   meta: ReportMeta;
   onMeta: (patch: Partial<ReportMeta>) => void;
   primaryName: string;
+  disabled?: boolean;
 }) {
   const valuers = Array.isArray(meta.valuers) ? meta.valuers : [];
   function update(id: string, patch: Partial<(typeof valuers)[number]>) {
@@ -90,6 +93,7 @@ function ValuersPanel({
           <SignaturePad
             value={v.signature ?? ""}
             height={100}
+            disabled={disabled}
             onChange={(sig) => update(v.id, { signature: sig })}
           />
         </div>
@@ -161,6 +165,18 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
   const coValuersSigned = coValuers.every((row) => isAppliedSignature(row.signature));
   const reportSigned = primarySigned && (coValuers.length === 0 || coValuersSigned);
   const editsLocked = !lock.canEdit || reportSigned;
+  const reasonPending = (() => {
+    const adopted = Number(String(draft.reportMeta.valueAmount ?? "").replace(/[^0-9.]/g, ""));
+    const market = marketApproachCalc(draft.reportMeta, draft.values)?.adopted ?? draft.reportMeta.marketApproachValue;
+    const income = draft.reportMeta.incomeApproachValue ?? draft.reportMeta.ciAdoptedValueOverride;
+    const cost = costApproachCalc(draft.reportMeta)?.adopted ?? draft.reportMeta.costApproachValue;
+    const indicated = [market, income, cost].map((n) => Number(String(n ?? "").replace(/[^0-9.]/g, ""))).filter((n) => n > 0);
+    if (!(adopted > 0) || indicated.includes(adopted)) return false;
+    const starter = finalValueReasonStarter(draft.reportMeta);
+    const current = draft.narrative.finalValueReason ?? "";
+    const edited = current.trim() !== "" && current.trim() !== starter.trim();
+    return !(draft.reportMeta.finalValueReasonAccepted === true || edited);
+  })();
   const [tab, setTab] = useState<TabId>("subject");
   const [downloading, setDownloading] = useState(false);
   const [printing, setPrinting] = useState(false);
@@ -510,7 +526,14 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
                   Apply your signature to lock this report. Remove the signature to unlock and
                   edit again. Same signature is used on the inspection form sign-off.
                 </p>
+                {reasonPending ? (
+                  <div className="rounded border border-amber-400 bg-amber-50 p-3 text-sm text-amber-800">
+                    The final figure is not one of the indicated values, and the reason has not been accepted.
+                    <button type="button" className="ml-2 font-semibold underline" onClick={() => { setTab("final"); requestAnimationFrame(() => document.getElementById("final-value-reason")?.scrollIntoView({ behavior: "smooth", block: "center" })); }}>Go to the reason</button>
+                  </div>
+                ) : null}
                 <SignaturePad
+                  disabled={reasonPending}
                   value={
                     typeof draft.values["sign_sig"] === "string"
                       ? draft.values["sign_sig"]
@@ -530,6 +553,7 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
                   meta={draft.reportMeta}
                   onMeta={setMeta}
                   primaryName={draft.reportMeta.valuerName || String(draft.values["insp_valuer"] ?? "")}
+                  disabled={reasonPending}
                 />
               </div>
             </SectionGuard>
