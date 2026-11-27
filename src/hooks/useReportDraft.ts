@@ -733,17 +733,16 @@ export function useReportDraft(
 
   const setMeta = useCallback(
     (patch: Partial<ReportMeta>) => {
-      setDraft((prev) => {
-        const reportMeta = { ...prev.reportMeta, ...patch };
-        // When valuation amount changes, refresh inferior/superior on all comps
-        const sales =
-          patch.valueAmount !== undefined
-            ? applyRelativityToSales(prev.sales, reportMeta.valueAmount)
-            : prev.sales;
-        const next = { ...prev, reportMeta, sales };
-        scheduleCloudSave(next);
-        return next;
-      });
+      const prev = draftRef.current;
+      const reportMeta = { ...prev.reportMeta, ...patch };
+      const sales =
+        patch.valueAmount !== undefined
+          ? applyRelativityToSales(prev.sales, reportMeta.valueAmount)
+          : prev.sales;
+      const next = { ...prev, reportMeta, sales };
+      draftRef.current = next;
+      setDraft(next);
+      scheduleCloudSave(next);
       setDirty(true);
     },
     [scheduleCloudSave],
@@ -751,11 +750,11 @@ export function useReportDraft(
 
   const setNarrative = useCallback(
     (patch: Partial<ReportNarrative>) => {
-      setDraft((prev) => {
-        const next = { ...prev, narrative: { ...prev.narrative, ...patch } };
-        scheduleCloudSave(next);
-        return next;
-      });
+      const prev = draftRef.current;
+      const next = { ...prev, narrative: { ...prev.narrative, ...patch } };
+      draftRef.current = next;
+      setDraft(next);
+      scheduleCloudSave(next);
       setDirty(true);
     },
     [scheduleCloudSave],
@@ -775,13 +774,13 @@ export function useReportDraft(
   );
 
   const setSales = useCallback(
-    (next: ComparableSale[]) => {
-      setDraft((prev) => {
-        const sales = applyRelativityToSales(next, prev.reportMeta.valueAmount);
-        const updated = { ...prev, sales };
-        scheduleCloudSave(updated);
-        return updated;
-      });
+    (nextSales: ComparableSale[]) => {
+      const prev = draftRef.current;
+      const sales = applyRelativityToSales(nextSales, prev.reportMeta.valueAmount);
+      const updated = { ...prev, sales };
+      draftRef.current = updated;
+      setDraft(updated);
+      scheduleCloudSave(updated);
       setDirty(true);
     },
     [scheduleCloudSave],
