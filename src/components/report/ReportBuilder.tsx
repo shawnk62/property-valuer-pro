@@ -11,6 +11,7 @@ import { PhotosSection } from "@/components/report/PhotosSection";
 import { ReportPreview } from "@/components/report/ReportPreview";
 import { SalesSection } from "@/components/report/SalesSection";
 import { SubjectSection } from "@/components/report/SubjectSection";
+import { FinalReconciliationSection } from "@/components/report/FinalReconciliationSection";
 import { EditLockBanner } from "@/components/EditLockBanner";
 import { useEditLock } from "@/hooks/useEditLock";
 import { useReportDraft } from "@/hooks/useReportDraft";
@@ -111,6 +112,7 @@ const TABS = [
   { id: "market", label: "Market evidence" },
   { id: "income", label: "Income approach" },
   { id: "cost", label: "Cost approach" },
+  { id: "final", label: "Final reconciliation" },
   { id: "maps", label: "Maps" },
   { id: "signature", label: "Signature" },
   { id: "preview", label: "Preview" },
@@ -488,6 +490,11 @@ export function ReportBuilder({ inspectionId }: { inspectionId: string }) {
           {tab === "cost" ? (
             <SectionGuard>
               <SalesSection controller={controller} panel="cost" />
+            </SectionGuard>
+          ) : null}
+          {tab === "final" ? (
+            <SectionGuard>
+              <FinalReconciliationSection controller={controller} />
             </SectionGuard>
           ) : null}
           {tab === "maps" ? (

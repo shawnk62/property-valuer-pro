@@ -1,9 +1,5 @@
 import type { ReportDraftController } from "@/hooks/useReportDraft";
-import { PausedTextarea } from "@/components/report/PausedTextarea";
-import { narrativePrints } from "@/lib/narrative/neighbourhoodAssist";
-import { FINAL_LEASED, FINAL_VACANT, finalBoilerplate, propertyIsLeased } from "@/lib/report/commercialCalculations";
 import { PROP_ASSIGNMENT_OPTIONS } from "@/lib/inspection/schema";
-import { formatCurrencyInput } from "@/lib/report/salesRelativity";
 import { pick } from "@/lib/report/schema";
 import { resolveValuerProfile } from "@/lib/report/valuerProfiles";
 
@@ -177,14 +173,7 @@ export function SubjectSection({ controller }: { controller: ReportDraftControll
           Entered here for the report; not part of the inspection record.
         </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <MetaInput
-            label="Assessed market value"
-            prefix="$"
-            value={formatCurrencyInput(reportMeta.valueAmount)}
-            onChange={(v) => setMeta({ valueAmount: formatCurrencyInput(v) })}
-            placeholder="895,000"
-          />
-          <MetaInput
+<MetaInput
             label="Date of valuation"
             value={reportMeta.valueDate}
             onChange={(v) => setMeta({ valueDate: v })}
@@ -230,36 +219,6 @@ export function SubjectSection({ controller }: { controller: ReportDraftControll
         unset in the inspection are omitted entirely, in the report as well as above.
       </p>
 
-      <section className="space-y-3 rounded-md border border-border bg-card p-4">
-        <h3 className="text-sm font-semibold text-foreground">Final reconciliation and valuation result</h3>
-        <p className="text-xs text-muted-foreground">
-          The figures are taken from the three approaches. The words are edited here.
-        </p>
-        <label className="flex items-center gap-2 text-xs">
-          <span className="w-40">Occupancy</span>
-          <select className="rounded border border-input px-2 py-1" value={reportMeta.occupancyStatus ?? ""} onChange={(e) => setMeta({ occupancyStatus: (e.target.value || undefined) as "leased" | "vacant" | undefined })}>
-            <option value="">As indicated by the lease ({propertyIsLeased(reportMeta) ? "leased" : "vacant"})</option>
-            <option value="leased">Leased</option>
-            <option value="vacant">Vacant</option>
-          </select>
-        </label>
-        <label className="flex cursor-pointer items-center gap-2 text-xs">
-          <input type="checkbox" checked={narrativePrints(reportMeta, "valueReconciliation")} onChange={(e) => setMeta({ printNarrative: { ...(reportMeta.printNarrative ?? {}), valueReconciliation: e.target.checked } })} />
-          Include final reconciliation
-        </label>
-        <PausedTextarea value={draft.narrative.valueReconciliation ?? ""} onCommit={(v) => setNarrative({ valueReconciliation: v })} placeholder={propertyIsLeased(reportMeta) ? FINAL_LEASED : FINAL_VACANT} className="min-h-[6rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
-        <p className="text-xs text-muted-foreground">Prints as: {finalBoilerplate(reportMeta, draft.values, draft.narrative.valueReconciliation)}</p>
-        <label className="flex cursor-pointer items-center gap-2 text-xs">
-          <input type="checkbox" checked={narrativePrints(reportMeta, "valuationResult")} onChange={(e) => setMeta({ printNarrative: { ...(reportMeta.printNarrative ?? {}), valuationResult: e.target.checked } })} />
-          Include opinion of value
-        </label>
-        <PausedTextarea value={draft.narrative.valuationResult ?? ""} onCommit={(v) => setNarrative({ valuationResult: v })} placeholder="Opinion of value…" className="min-h-[5rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
-        <label className="flex cursor-pointer items-center gap-2 text-xs">
-          <input type="checkbox" checked={narrativePrints(reportMeta, "valuationReliance")} onChange={(e) => setMeta({ printNarrative: { ...(reportMeta.printNarrative ?? {}), valuationReliance: e.target.checked } })} />
-          Include reliance note
-        </label>
-        <PausedTextarea value={draft.narrative.valuationReliance ?? ""} onCommit={(v) => setNarrative({ valuationReliance: v })} placeholder="Reliance note…" className="min-h-[4rem] w-full rounded-md border border-input bg-background p-2 text-sm" />
-      </section>
     </div>
   );
 }
