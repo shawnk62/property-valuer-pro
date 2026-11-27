@@ -1783,9 +1783,12 @@
 }
 
 /* Working-report blank lines become the gap between printed paragraphs. */
-#report-preview-sheet .report-prose-para {
-  margin: 0 0 14pt;
+.report-prose-para {
+  margin: 0 0 14pt !important;
   white-space: normal;
+}
+.report-prose-para:last-child {
+  margin-bottom: 0 !important;
 }
 #report-preview-sheet .report-prose-para:last-child {
   margin-bottom: 0;

@@ -603,9 +603,9 @@ export function citeAcceptedNotes(
   if (!text.trim()) return text;
   const usable = (claims ?? []).filter((claim) => claim.accepted && String(claim.source ?? "").trim());
   if (usable.length === 0) return text;
-  const paragraphs = text.split(/\n{2,}/);
+  const paragraphs = text.split(/\n+/);
   const cited = paragraphs.map((paragraph) => {
-    const sentences = paragraph.split(/(?<=[.!?])\s+/);
+    const sentences = paragraph.split(/(?<=[.!?])[ \t]+/);
     let lastAuthor = "";
     const next = sentences.map((sentence) => {
       if (isCommonKnowledge(sentence, values)) {
