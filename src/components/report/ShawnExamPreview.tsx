@@ -1551,7 +1551,7 @@ export function ShawnExamPreview({ draft }: { draft: ReportDraft }) {
         {showIncomeRec ? (
           <Keep>
             <h3 className="report-h2 report-heading-lead mt-4 text-[0.95rem] font-semibold" style={{ color: TEAL }}>Reconciliation of the income approach</h3>
-            <Prose text={incomeBoilerplate(m)} />
+            <Prose text={incomeBoilerplate(m, v)} />
             {m.incomeApproachValue || m.ciAdoptedValueOverride ? (
               <table className="mt-3 w-full border-collapse text-xs">
                 <tbody>

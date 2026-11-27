@@ -324,13 +324,32 @@ function moneyOf(n: number | null | undefined): string {
   return n == null ? "—" : n.toLocaleString("en-AU");
 }
 
-export function incomeBoilerplate(meta: ReportMeta, template?: string): string {
+export function incomeBoilerplate(meta: ReportMeta, values?: InspectionValues, template?: string): string {
+  const area = num(meta.ciAreaOverride) ?? num(values?.["comm_nla"]) ?? num(values?.["comm_gba"]);
+  const rate = num(meta.ciAdoptedRentPerM2) ?? num(meta.ciMarketRent);
+  const capRate = num(meta.ciCapRate);
+  const vacancyPct = num(meta.ciVacancyAllowance);
+  const net = area != null && rate != null ? area * rate : null;
+  const vacancy = net != null && vacancyPct != null ? net * (vacancyPct / 100) : null;
+  const adjusted = net != null && vacancy != null ? net - vacancy : net;
+  const capitalised = adjusted != null && capRate != null && capRate > 0 ? adjusted / (capRate / 100) : null;
+  const passing = num(meta.ciPassingRentOverride) ?? num(meta.ciStartingRent);
+  const annualDiff = net != null && passing != null ? net - passing : null;
+  const end = meta.ciLeaseEndDate ? Date.parse(meta.ciLeaseEndDate.split("/").reverse().join("-")) : NaN;
+  const asAt = meta.valueDate ? Date.parse(meta.valueDate.split("/").reverse().join("-")) : (values?.["insp_date"] ? Date.parse(String(values["insp_date"]).split("/").reverse().join("-")) : NaN);
+  const fromDates = Number.isFinite(end) && Number.isFinite(asAt) ? Math.max(0, (end - asAt) / (365.25 * 86400000)) : null;
+  const remaining = num(meta.ciRemainingYears) ?? fromDates;
+  let adjustment: number | null = null;
+  if (annualDiff != null && remaining != null && remaining > 0 && capRate != null && capRate > 0) {
+    const r = capRate / 100;
+    adjustment = annualDiff * (1 - Math.pow(1 + r, -Math.ceil(remaining))) / r;
+  }
   const adopted = num(meta.incomeApproachValue) ?? num(meta.ciAdoptedValueOverride);
   return fill((template ?? "").trim() || INCOME_BOILERPLATE, {
-    rent: moneyOf(num(meta.ciAdoptedRentPerM2)),
+    rent: moneyOf(rate),
     capRate: meta.ciCapRate || "—",
-    capitalised: "—",
-    adjustment: "—",
+    capitalised: moneyOf(capitalised != null ? Math.round(capitalised) : null),
+    adjustment: moneyOf(adjustment != null ? Math.round(adjustment) : null),
     adopted: moneyOf(adopted),
     rounding: moneyOf(num(meta.ciAdoptRoundTo) ?? 10000),
   });
